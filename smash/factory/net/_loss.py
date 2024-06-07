@@ -96,19 +96,30 @@ def _hcost_prime(
         grad_reg = np.reshape(grad_reg, (len(grad_reg), -1)).T
 
     # % Get the gradient of parameterization NN if used
-    grad_par_weight = [layer.weight.copy() for layer in parameters_b.nn_parameters.layers]
-    grad_par_bias = [layer.bias.copy() for layer in parameters_b.nn_parameters.layers]
+    grad_par = [
+        parameters_b.nn_parameters.weight_1.copy(),
+        parameters_b.nn_parameters.bias_1.copy(),
+        parameters_b.nn_parameters.weight_2.copy(),
+        parameters_b.nn_parameters.bias_2.copy(),
+    ]
 
-    return grad_reg, (grad_par_weight, grad_par_bias)
+    return grad_reg, grad_par
 
 
-def _inf_norm(grad: np.ndarray | list | tuple) -> float:
-    if isinstance(grad, (list, tuple)):
+def _inf_norm(grad: np.ndarray | list) -> float:
+    if isinstance(grad, list):
         if grad:  # If not an empty list
             return max(_inf_norm(g) for g in grad)
 
         else:
             return 0
 
-    else:
-        return np.amax(np.abs(grad))
+    elif isinstance(grad, np.ndarray):
+        if grad.size > 0:
+            return np.amax(np.abs(grad))
+
+        else:
+            return 0
+
+    else:  # Should be unreachable
+        pass

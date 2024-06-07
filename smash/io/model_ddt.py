@@ -6,20 +6,16 @@ from typing import TYPE_CHECKING
 
 import h5py
 
-from smash.fcore._mwd_nn_parameters import NN_Parameters_LayerDT
 from smash._constant import MODEL_DDT_IO_ATTR_KEYS
 from smash.io._error import ReadHDF5MethodError
 from smash.io.handler._hdf5_handler import (
     _dump_dict,
-    _dump_fortran_derived_type_array,
     _load_hdf5_to_dict,
 )
 
 import h5py
-from f90wrap.runtime import FortranDerivedTypeArray
 import errno
 import os
-from collections import defaultdict
 
 from typing import TYPE_CHECKING
 
@@ -88,26 +84,13 @@ def save_model_ddt(model: Model, path: FilePath):
     if not path.endswith(".hdf5"):
         path += ".hdf5"
 
-    model_ddt = defaultdict(dict)
+    model_ddt = {}
     with h5py.File(path, "w") as h5:
         for attr, keys in MODEL_DDT_IO_ATTR_KEYS.items():
-            for k in keys:
-                try:
-                    value = getattr(getattr(model, attr), k)
-                    if isinstance(value, FortranDerivedTypeArray):
-                        # % NN_Parameters_LayerDT case
-                        if isinstance(value[0], NN_Parameters_LayerDT):
-                            model_ddt[attr][k] = {
-                                f"{i + 1}": {
-                                    "weight": getattr(v, "weight"),
-                                    "bias": getattr(v, "bias"),
-                                }
-                                for i, v in enumerate(value.items())
-                            }
-                    else:
-                        model_ddt[attr][k] = value
-                except Exception:
-                    continue
+            try:
+                model_ddt[attr] = {k: getattr(getattr(model, attr), k) for k in keys}
+            except Exception:
+                continue
         _dump_dict("model_ddt", model_ddt, h5)
         h5.attrs["_save_func"] = "save_model_ddt"
 
@@ -166,7 +149,7 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
 
     >>> model_ddt["setup"]
     {'descriptor_name': array(['slope', 'dd'], dtype='<U5'),
-    'hidden_neuron': array([], dtype=int32), 'dt': 3600.0, 'end_time': '2014-11-14 00:00',
+    'hidden_neuron': 16, 'dt': 3600.0, 'end_time': '2014-11-14 00:00',
     'hydrological_module': 'gr4', 'routing_module': 'lr', 'serr_mu_mapping': 'Zero',
     'serr_sigma_mapping': 'Linear', 'snow_module': 'zero', 'start_time': '2014-09-15 00:00'}
 

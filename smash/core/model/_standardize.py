@@ -423,15 +423,13 @@ def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, *
     return descriptor_name
 
 
-def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **kwargs) -> np.ndarray:
-    if isinstance(hidden_neuron, (int, float)):
-        hidden_neuron = np.array([int(hidden_neuron)])
-    elif isinstance(hidden_neuron, (list, tuple, np.ndarray)):
-        hidden_neuron = np.array(hidden_neuron, ndmin=1)
+def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric, **kwargs) -> int:
+    if isinstance(hidden_neuron, (int, float, np.number)):
+        hidden_neuron = int(hidden_neuron)
+        if hidden_neuron <= 0:
+            raise ValueError("hidden_neuron model setup must be a positive number")
     else:
-        raise TypeError(
-            "hidden_neuron model setup must be of Numeric or ListLike type (int, float, List, Tuple, np.ndarray)"
-        )
+        raise TypeError("hidden_neuron model setup must be of Numeric type (int, float)")
 
     return hidden_neuron
 
@@ -472,6 +470,12 @@ def _standardize_model_setup_finalize(setup: dict):
 
     setup["snow_module_present"] = setup["snow_module"] != "zero"
 
+    if "mlp" in setup["hydrological_module"]:
+        # % fixed NN input size = 4 and fixed NN output size 4, if used
+        setup["neurons"] = np.array([4, setup["hidden_neuron"], 4], dtype=np.int32)
+    else:
+        setup["neurons"] = np.zeros(3, dtype=np.int32)
+
     setup["ntime_step"] = int((setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"])
     setup["nd"] = setup["descriptor_name"].size
     setup["nrrp"] = len(STRUCTURE_RR_PARAMETERS[setup["structure"]])
@@ -479,9 +483,6 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
     setup["nqz"] = ROUTING_MODULE_NQZ[setup["routing_module"]]
-
-    setup["nhl"] = setup["hidden_neuron"].size if "mlp" in setup["hydrological_module"] else -1
-
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
     setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")
 
@@ -730,21 +731,21 @@ def _standardize_set_nn_parameters_weight_value(
         pass
 
     elif isinstance(value, list):
-        layers = model._parameters.nn_parameters.layers
+        weights = [model._parameters.nn_parameters.weight_1, model._parameters.nn_parameters.weight_2]
 
-        if len(value) != len(layers):
+        if len(value) != len(weights):
             raise ValueError(
-                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(layers)}"
+                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(weights)}"
             )
 
         else:
             for i, arr in enumerate(value):
                 if isinstance(arr, (int, float)):
-                    value[i] = arr * np.ones(layers[i].weight.shape)
+                    value[i] = arr * np.ones(weights[i].shape)
                 elif isinstance(arr, np.ndarray):
-                    if arr.shape != layers[i].weight.shape:
+                    if arr.shape != weights[i].shape:
                         raise ValueError(
-                            f"Inconsistent size between the expected weight to set to the current one: {arr.shape} != {layers[i].weight.shape}"
+                            f"Inconsistent size between the expected weight to set to the current one: {arr.shape} != {weights[i].shape}"
                         )
                 else:
                     raise TypeError("Each element of value argument must be a Numpy array")
@@ -762,21 +763,21 @@ def _standardize_set_nn_parameters_bias_value(
         pass
 
     elif isinstance(value, list):
-        layers = model._parameters.nn_parameters.layers
+        biases = [model._parameters.nn_parameters.bias_1, model._parameters.nn_parameters.bias_2]
 
-        if len(value) != len(layers):
+        if len(value) != len(biases):
             raise ValueError(
-                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(layers)}"
+                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(biases)}"
             )
 
         else:
             for i, arr in enumerate(value):
                 if isinstance(arr, (int, float)):
-                    value[i] = arr * np.ones(layers[i].bias.shape)
+                    value[i] = arr * np.ones(biases[i].shape)
                 elif isinstance(arr, np.ndarray):
-                    if arr.shape != layers[i].bias.shape:
+                    if arr.shape != biases[i].shape:
                         raise ValueError(
-                            f"Inconsistent size between the expected bias to set to the current one: {arr.shape} != {layers[i].bias.shape}"
+                            f"Inconsistent size between the expected bias to set to the current one: {arr.shape} != {biases[i].shape}"
                         )
                 else:
                     raise TypeError("Each element of value argument must be a Numpy array")

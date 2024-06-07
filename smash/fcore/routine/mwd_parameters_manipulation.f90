@@ -747,22 +747,8 @@ contains
         type(SetupDT), intent(in) :: setup
         integer, intent(inout) :: n
 
-        integer :: i, n_in_layer
-        integer :: n_in = 4  ! fixed NN input size
-        integer :: n_out = 4  ! fixed NN output size
-
-        n = 0
-
-        n_in_layer = n_in
-
-        do i = 1, setup%nhl
-
-            n = n + setup%hidden_neuron(i)*(n_in_layer + 1)
-            n_in_layer = setup%hidden_neuron(i)
-
-        end do
-
-        if (setup%nhl .ge. 0) n = n + n_out*(n_in_layer + 1)
+        n = setup%neurons(2)*(setup%neurons(1) + 1) + &
+        & setup%neurons(3)*(setup%neurons(2) + 1)
 
     end subroutine nn_parameters_get_control_size
 
@@ -1247,35 +1233,55 @@ contains
         type(ParametersDT), intent(inout) :: parameters
 
         character(lchar) :: name
-        integer :: i, j, k, l
+        integer :: j, k, l
 
         j = sum(parameters%control%nbk(1:4))
 
-        do i = 1, setup%nhl + 1
+        do k = 1, setup%neurons(1)
 
-            do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
-
-                do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
-
-                    j = j + 1
-                    parameters%control%x(j) = parameters%nn_parameters%layers(i)%weight(l, k)
-                    parameters%control%nbd(j) = 0
-                    write (name, '(a,i0,a,i0,a,i0)') "layer", i, "weight", l, "-", k
-                    parameters%control%name(j) = name
-
-                end do
-
-            end do
-
-            do k = 1, size(parameters%nn_parameters%layers(i)%bias)
+            do l = 1, setup%neurons(2)
 
                 j = j + 1
-                parameters%control%x(j) = parameters%nn_parameters%layers(i)%bias(k)
+                parameters%control%x(j) = parameters%nn_parameters%weight_1(l, k)
                 parameters%control%nbd(j) = 0
-                write (name, '(a,i0,a,i0)') "layer", i, "bias", k
+                write (name, '(a,i0,a,i0)') "weight_1", l, "-", k
                 parameters%control%name(j) = name
 
             end do
+
+        end do
+
+        do k = 1, setup%neurons(2)
+
+            do l = 1, setup%neurons(3)
+
+                j = j + 1
+                parameters%control%x(j) = parameters%nn_parameters%weight_2(l, k)
+                parameters%control%nbd(j) = 0
+                write (name, '(a,i0,a,i0)') "weight_2", l, "-", k
+                parameters%control%name(j) = name
+
+            end do
+
+        end do
+
+        do k = 1, setup%neurons(2)
+
+            j = j + 1
+            parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
+            parameters%control%nbd(j) = 0
+            write (name, '(a,i0)') "bias_1", k
+            parameters%control%name(j) = name
+
+        end do
+
+        do k = 1, setup%neurons(3)
+
+            j = j + 1
+            parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
+            parameters%control%nbd(j) = 0
+            write (name, '(a,i0)') "bias_2", k
+            parameters%control%name(j) = name
 
         end do
 
@@ -1729,29 +1735,43 @@ contains
         type(SetupDT), intent(in) :: setup
         type(ParametersDT), intent(inout) :: parameters
 
-        integer :: i, j, k, l
+        integer :: j, k, l
 
         j = sum(parameters%control%nbk(1:4))
 
-        do i = 1, setup%nhl + 1
+        do k = 1, setup%neurons(1)
 
-            do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
-
-                do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
-
-                    j = j + 1
-                    parameters%nn_parameters%layers(i)%weight(l, k) = parameters%control%x(j)
-
-                end do
-
-            end do
-
-            do k = 1, size(parameters%nn_parameters%layers(i)%bias)
+            do l = 1, setup%neurons(2)
 
                 j = j + 1
-                parameters%nn_parameters%layers(i)%bias(k) = parameters%control%x(j)
+                parameters%nn_parameters%weight_1(l, k) = parameters%control%x(j)
 
             end do
+
+        end do
+
+        do k = 1, setup%neurons(2)
+
+            do l = 1, setup%neurons(3)
+
+                j = j + 1
+                parameters%nn_parameters%weight_2(l, k) = parameters%control%x(j)
+
+            end do
+
+        end do
+
+        do k = 1, setup%neurons(2)
+
+            j = j + 1
+            parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+
+        end do
+
+        do k = 1, setup%neurons(3)
+
+            j = j + 1
+            parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
 
         end do
 

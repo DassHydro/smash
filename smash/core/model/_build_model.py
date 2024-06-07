@@ -179,10 +179,12 @@ def _build_parameters(
         parameters.serr_sigma_parameters.values[..., i] = value
 
     # % Initalize weights and biases of ANN if neural ode state-space structure is used
-    if setup.nhl > -1:
-        for layer in parameters.nn_parameters.layers:
-            layer.weight = 0  # zero init
-            layer.bias = 0  # zero init
+    if sum(setup.neurons) > 0:
+        # zero init
+        parameters.nn_parameters.weight_1 = 0
+        parameters.nn_parameters.bias_1 = 0
+        parameters.nn_parameters.weight_2 = 0
+        parameters.nn_parameters.bias_2 = 0
 
 
 def _build_output(

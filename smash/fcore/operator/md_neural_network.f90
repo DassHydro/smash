@@ -9,52 +9,38 @@ module md_neural_network
 
     use md_constant !% only : sp
     use md_algebra !% only: dot_product_2d_1d
-    use mwd_nn_parameters !% only: NN_Parameters_LayerDT
 
     implicit none
 
 contains
 
-    subroutine forward_mlp(layers, neurons, input_layer, output_layer)
+    subroutine forward_mlp(weight_1, bias_1, weight_2, bias_2, input_layer, output_layer)
         !% The forward pass of the multilayer perceptron used in hydrological model structure
 
         implicit none
 
-        type(NN_Parameters_LayerDT), dimension(:), intent(inout) :: layers
-        integer, dimension(:), intent(in) :: neurons
+        real(sp), dimension(:, :), intent(in) :: weight_1
+        real(sp), dimension(:), intent(in) :: bias_1
+
+        real(sp), dimension(:, :), intent(in) :: weight_2
+        real(sp), dimension(:), intent(in) :: bias_2
+
         real(sp), dimension(:), intent(in) :: input_layer
         real(sp), dimension(:), intent(out) :: output_layer
 
-        real(sp), dimension(maxval(neurons)) :: f_in, f_out
-        integer :: i, j
+        real(sp), dimension(size(bias_1)) :: inter_layer
+        integer :: i
 
-        do i = 1, neurons(1)
-            f_in(i) = input_layer(i)
+        call dot_product_2d_1d(weight_1, input_layer, inter_layer)
+        do i = 1, size(inter_layer)
+            inter_layer(i) = inter_layer(i) + bias_1(i)
+            inter_layer(i) = max(0.01_sp*inter_layer(i), inter_layer(i)) ! Leaky ReLU
         end do
 
-        do i = 1, size(layers)
-
-            call dot_product_2d_1d(layers(i)%weight, f_in, f_out)
-
-            do j = 1, neurons(i + 1)
-                f_out(j) = f_out(j) + layers(i)%bias(j)
-
-                if (i .lt. size(layers)) then
-                    f_out(j) = max(0.01_sp*f_out(j), f_out(j)) ! Leaky ReLU
-                else
-                    f_out(j) = 2._sp/(1._sp + exp(-f_out(j))) ! Softmax*2
-                end if
-
-            end do
-
-            do j = 1, neurons(i)
-                f_in(j) = f_out(j)
-            end do
-
-        end do
-
-        do i = 1, neurons(size(neurons))
-            output_layer(i) = f_out(i)
+        call dot_product_2d_1d(weight_2, inter_layer, output_layer)
+        do i = 1, size(output_layer)
+            output_layer(i) = output_layer(i) + bias_2(i)
+            output_layer(i) = 2._sp/(1._sp + exp(-output_layer(i))) ! Softmax*2
         end do
 
     end subroutine forward_mlp

@@ -518,7 +518,8 @@ class Net(object):
         ind = PY_OPTIMIZER.index(optimizer.lower())
         func = eval(PY_OPTIMIZER_CLASS[ind])
 
-        opt_weight = [func(**{"learning_rate": learning_rate}) for _ in range(instance.setup.nhl + 1)]
+        n_layers = 2 if sum(instance.setup.neurons) > 0 else 0
+        opt_weight = [func(**{"learning_rate": learning_rate}) for _ in range(n_layers)]
         opt_bias = copy.deepcopy(opt_weight)
 
         # % Train model
@@ -559,14 +560,22 @@ class Net(object):
 
             # backpropagation and weights update
             if epo < epochs - 1:
-                # update weights of the parameterization NN
-                for i in range(instance.setup.nhl + 1):
-                    instance.nn_parameters.layers[i].weight = opt_weight[i].update(
-                        instance.nn_parameters.layers[i].weight, nn_parameters_b[0][i]
+                if opt_weight:  # update weights of the parameterization NN if used
+                    instance.nn_parameters.weight_1 = opt_weight[0].update(
+                        instance.nn_parameters.weight_1, nn_parameters_b[0]
                     )
-                    instance.nn_parameters.layers[i].bias = opt_bias[i].update(
-                        instance.nn_parameters.layers[i].bias, nn_parameters_b[1][i]
+                    instance.nn_parameters.weight_2 = opt_weight[1].update(
+                        instance.nn_parameters.weight_2, nn_parameters_b[2]
                     )
+
+                if opt_bias:  # update biases of the parameterization NN if used
+                    instance.nn_parameters.bias_1 = opt_bias[0].update(
+                        instance.nn_parameters.bias_1, nn_parameters_b[1]
+                    )
+                    instance.nn_parameters.bias_2 = opt_bias[1].update(
+                        instance.nn_parameters.bias_2, nn_parameters_b[3]
+                    )
+
                 # backpropagation and update weights of the regionalization NN
                 loss_grad = self._backward_pass(init_loss_grad, inplace=True)
             else:  # do not update weights at the last epoch

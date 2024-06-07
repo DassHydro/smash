@@ -145,8 +145,8 @@ class Model:
                 See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>`
                 section
 
-        hidden_neuron : `int` or `list[int, ...]`, default 16
-            Number of neurons in hidden layer(s) of the parameterization neural network used to correct internal fluxes, if used (depending on **hydrological_module**).
+        hidden_neuron : `int`, default 16
+            Number of neurons in the hidden layer of the parameterization neural network used to correct internal fluxes, if used (depending on **hydrological_module**).
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of the mapping used for :math:`\\mu`, the mean of structural errors. Should be one of:
@@ -422,7 +422,7 @@ class Model:
             args = [deepcopy(arg) for arg in [setup, mesh]]
             setup, mesh = _standardize_model_args(*args)
 
-            self.setup = SetupDT(setup["nd"], setup["nhl"])
+            self.setup = SetupDT(setup["nd"])
 
             _map_dict_to_fortran_derived_type(setup, self.setup)
 
@@ -2355,7 +2355,7 @@ class Model:
         Model.set_nn_parameters_weight : Set the values of the weight in the parameterization neural network.
         """
 
-        return [layer.weight for layer in self._parameters.nn_parameters.layers]
+        return [self._parameters.nn_parameters.weight_1, self._parameters.nn_parameters.weight_2]
 
     def get_nn_parameters_bias(self) -> list[NDArray[np.float32]]:
         """
@@ -2372,7 +2372,7 @@ class Model:
         Model.set_nn_parameters_bias : Set the values of the bias in the parameterization neural network.
         """
 
-        return [layer.bias for layer in self._parameters.nn_parameters.layers]
+        return [self._parameters.nn_parameters.bias_1, self._parameters.nn_parameters.bias_2]
 
     def set_nn_parameters_weight(
         self,
@@ -2401,12 +2401,16 @@ class Model:
         if (random_state is not None) and (initializer != "zeros") and (value is None):
             np.random.seed(random_state)
 
-        for i, layer in enumerate(self._parameters.nn_parameters.layers):
-            if value is None:
-                (n_neuron, n_in) = layer.weight.shape
-                layer.weight = _initialize_nn_parameter(n_in, n_neuron, initializer)
-            else:
-                layer.weight = value[i]
+        if value is None:
+            (n_neuron, n_in) = self._parameters.nn_parameters.weight_1.shape
+            self._parameters.nn_parameters.weight_1 = _initialize_nn_parameter(n_in, n_neuron, initializer)
+
+            (n_neuron, n_in) = self._parameters.nn_parameters.weight_2.shape
+            self._parameters.nn_parameters.weight_2 = _initialize_nn_parameter(n_in, n_neuron, initializer)
+        else:
+            self._parameters.nn_parameters.weight_1 = value[0]
+
+            self._parameters.nn_parameters.weight_2 = value[1]
 
     def set_nn_parameters_bias(
         self,
@@ -2435,12 +2439,20 @@ class Model:
         if (random_state is not None) and (initializer != "zeros") and (value is None):
             np.random.seed(random_state)
 
-        for i, layer in enumerate(self._parameters.nn_parameters.layers):
-            if value is None:
-                n_neuron = layer.bias.shape[0]
-                layer.bias = _initialize_nn_parameter(1, n_neuron, initializer).flatten()
-            else:
-                layer.bias = value[i]
+        if value is None:
+            n_neuron = self._parameters.nn_parameters.bias_1.shape[0]
+            self._parameters.nn_parameters.bias_1 = _initialize_nn_parameter(
+                1, n_neuron, initializer
+            ).flatten()
+
+            n_neuron = self._parameters.nn_parameters.bias_2.shape[0]
+            self._parameters.nn_parameters.bias_2 = _initialize_nn_parameter(
+                1, n_neuron, initializer
+            ).flatten()
+        else:
+            self._parameters.nn_parameters.bias_1 = value[0]
+
+            self._parameters.nn_parameters.bias_2 = value[1]
 
     @_model_forward_run_doc_substitution
     @_forward_run_doc_appender

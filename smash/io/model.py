@@ -144,7 +144,7 @@ def read_model(path: FilePath) -> Model:
             h5m = h5["model"]
             model = smash.Model(None, None)
 
-            model.setup = SetupDT(h5m["setup"].attrs["nd"], h5m["setup"].attrs["nhl"])
+            model.setup = SetupDT(h5m["setup"].attrs["nd"])
 
             _map_hdf5_to_fortran_derived_type(h5m["setup"], model.setup)
 

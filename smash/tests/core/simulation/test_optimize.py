@@ -29,6 +29,10 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
         else:
             parameters = None
 
+        # % Hybrid forward hydrological model with NN
+        if sum(model.setup.neurons) > 0:
+            model.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
+
         for mp in MAPPING:
             if mp == "ann":
                 instance = smash.optimize(
@@ -45,7 +49,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
 
             else:
                 # Ignore SBS optimizer if the forward model uses NN
-                opt = "lbfgsb" if model.setup.nhl > -1 else None
+                opt = "lbfgsb" if sum(model.setup.neurons) > 0 else None
 
                 instance, ret = smash.optimize(
                     model,
@@ -229,7 +233,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
             "optimizer",
             "sbs" if kwargs.get("mapping", "uniform") == "uniform" else "...",
         )
-        if model.setup.nhl > -1 and optimizer == "sbs":
+        if sum(model.setup.neurons) > 0 and optimizer == "sbs":
             continue  # ignore SBS optimizer if the forward model uses NN
 
         instance = smash.optimize(model, **kwargs)

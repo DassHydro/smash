@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from smash.fcore._mwd_nn_parameters import NN_Parameters_LayerDT
 
 import h5py
 import numpy as np
@@ -130,14 +129,6 @@ def _dump_fortran_derived_type_array(name: str, fdta: FortranDerivedTypeArray, h
 
         _dump_dict(name, attr_arr, h5)
 
-    # % NN_Parameters_LayerDT case
-    elif isinstance(fdta[0], NN_Parameters_LayerDT):
-        attr_arr = {
-            f"{i + 1}": {"weight": getattr(fdt, "weight"), "bias": getattr(fdt, "bias")}
-            for i, fdt in enumerate(fdta.items())
-        }
-        _dump_dict(name, attr_arr, h5)
-
     # % Should be unreachable
     else:
         pass
@@ -206,12 +197,6 @@ def _map_hdf5_to_fortran_derived_type_array(h5: h5py.File | h5py.Group, fdta: Fo
                     setattr(fdt, attr, h5[attr][0:n, i])
                 except Exception:
                     pass
-
-    # % NN_Parameters_LayerDT case
-    elif isinstance(fdta[0], NN_Parameters_LayerDT):
-        for i, fdt in enumerate(fdta.items()):
-            setattr(fdt, "weight", h5[f"{i + 1}"]["weight"])
-            setattr(fdt, "bias", h5[f"{i + 1}"]["bias"])
 
     # % Should be unreachable
     else:

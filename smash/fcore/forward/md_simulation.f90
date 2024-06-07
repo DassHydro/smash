@@ -207,8 +207,10 @@ contains
                     input_data, &
                     options, &
                     t, &
-                    parameters%nn_parameters%layers, &
-                    parameters%nn_parameters%neurons, &
+                    parameters%nn_parameters%weight_1, &
+                    parameters%nn_parameters%bias_1, &
+                    parameters%nn_parameters%weight_2, &
+                    parameters%nn_parameters%bias_2, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
@@ -271,8 +273,10 @@ contains
                     input_data, &
                     options, &
                     t, &
-                    parameters%nn_parameters%layers, &
-                    parameters%nn_parameters%neurons, &
+                    parameters%nn_parameters%weight_1, &
+                    parameters%nn_parameters%bias_1, &
+                    parameters%nn_parameters%weight_2, &
+                    parameters%nn_parameters%bias_2, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp

@@ -3,31 +3,21 @@
 !%      Type
 !%      ----
 !%
-!%      - NN_Parameters_LayerDT
-!%          Layer containing weight and bias of the neural network
-!%
-!%          ======================== ========================================================
-!%          `Variables`              Description
-!%          ======================== ========================================================
-!%          ``weight``               Transposed weight at current layer of the neural network
-!%          ``bias``                 Bias at current layer of the neural network
-!%          ======================== ========================================================
-!%
 !%      - NN_ParametersDT
-!%          Contain multiple layers of the neural network
+!%          Contain weights and biases of the neural network
 !%
-!%          ======================== ========================================================
+!%          ======================== ===========================================================
 !%          `Variables`              Description
-!%          ======================== ========================================================
-!%          ``layers``               Layers containing weights and biases
-!%          ``neurons``              Number of neurons of the neural network
-!%          ======================== ========================================================
+!%          ======================== ===========================================================
+!%          ``weight_1``             Transposed weight at the first layer of the neural network
+!%          ``bias_1``               Bias at the first layer of the neural network
+!%          ``weight_2``             Transposed weight at the second layer of the neural network
+!%          ``bias_2``               Bias at the second layer of the neural network
+!%          ======================== ===========================================================
 !%
 !%      Subroutine
 !%      ----------
 !%
-!%      - NN_Parameters_LayerDT_initialise
-!%      - NN_Parameters_LayerDT_copy
 !%      - NN_ParametersDT_initialise
 !%      - NN_ParametersDT_copy
 
@@ -38,48 +28,17 @@ module mwd_nn_parameters
 
     implicit none
 
-    type NN_Parameters_LayerDT
-
-        real(sp), dimension(:, :), allocatable :: weight
-        real(sp), dimension(:), allocatable :: bias
-
-    end type NN_Parameters_LayerDT
-
     type NN_ParametersDT
 
-        type(NN_Parameters_LayerDT), dimension(:), allocatable :: layers
-        integer, dimension(:), allocatable :: neurons
+        real(sp), dimension(:, :), allocatable :: weight_1
+        real(sp), dimension(:), allocatable :: bias_1
+
+        real(sp), dimension(:, :), allocatable :: weight_2
+        real(sp), dimension(:), allocatable :: bias_2
 
     end type NN_ParametersDT
 
 contains
-
-    subroutine NN_Parameters_LayerDT_initialise(this, n_neuron, n_in)
-
-        implicit none
-
-        type(NN_Parameters_LayerDT), intent(inout) :: this
-        integer, intent(in) :: n_neuron
-        integer, intent(in) :: n_in
-
-        allocate (this%weight(n_neuron, n_in))
-        this%weight = -99._sp
-
-        allocate (this%bias(n_neuron))
-        this%bias = -99._sp
-
-    end subroutine NN_Parameters_LayerDT_initialise
-
-    subroutine NN_Parameters_LayerDT_copy(this, this_copy)
-
-        implicit none
-
-        type(NN_Parameters_LayerDT), intent(in) :: this
-        type(NN_Parameters_LayerDT), intent(out) :: this_copy
-
-        this_copy = this
-
-    end subroutine NN_Parameters_LayerDT_copy
 
     subroutine NN_ParametersDT_initialise(this, setup)
 
@@ -88,32 +47,19 @@ contains
         type(NN_ParametersDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
 
-        integer :: i, n_in_layer
-        integer :: n_in = 4  ! fixed NN input size
-        integer :: n_out = 4  ! fixed NN output size
+        !% First layer
+        allocate (this%weight_1(setup%neurons(2), setup%neurons(1)))
+        this%weight_1 = -99._sp
 
-        allocate (this%layers(setup%nhl + 1))
-        allocate (this%neurons(setup%nhl + 2))
+        allocate (this%bias_1(setup%neurons(2)))
+        this%bias_1 = -99._sp
 
-        this%neurons(1) = n_in
+        !% Second layer
+        allocate (this%weight_2(setup%neurons(3), setup%neurons(2)))
+        this%weight_2 = -99._sp
 
-        n_in_layer = n_in
-
-        do i = 1, setup%nhl
-
-            call NN_Parameters_LayerDT_initialise(this%layers(i), setup%hidden_neuron(i), n_in_layer)
-            n_in_layer = setup%hidden_neuron(i)
-
-            this%neurons(i + 1) = setup%hidden_neuron(i)
-
-        end do
-
-        if (setup%nhl .ge. 0) then
-
-            call NN_Parameters_LayerDT_initialise(this%layers(setup%nhl + 1), n_out, n_in_layer)
-            this%neurons(setup%nhl + 2) = n_out
-
-        end if
+        allocate (this%bias_2(setup%neurons(3)))
+        this%bias_2 = -99._sp
 
     end subroutine NN_ParametersDT_initialise
 

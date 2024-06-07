@@ -4,7 +4,6 @@ import numpy as np
 
 
 class SGD:
-
     """
     Compile the neural network with Stochastic Gradient Descent (SGD) optimizer.
 
@@ -33,7 +32,6 @@ class SGD:
 
 
 class Adam:
-
     """
     Compile the neural network with Adaptive Moment Estimation (Adam) optimizer.
 
@@ -83,7 +81,6 @@ class Adam:
 
 
 class Adagrad:
-
     """
     Compile the neural network with Adaptive Gradient (Adagrad) optimizer.
 
@@ -114,7 +111,6 @@ class Adagrad:
 
 
 class RMSprop:
-
     """
     Compile the neural network with Root Mean Square Propagation (RMSprop) optimizer.
 

@@ -12,7 +12,7 @@
 !%          ``snow_module``            Snow module
 !%          ``hydrological_module``    Hydrological module
 !%          ``routing_module``         Routing module
-!%          ``hidden_neuron``          Number of neurons in hidden layers
+!%          ``neurons``                Number of neurons in trainable layers
 !%          ``serr_mu_mapping``        Mapping for structural error model
 !%          ``serr_sigma_mapping``     Mapping for structural error model
 !%          ``dt``                     Solver time step        [s]
@@ -52,12 +52,12 @@
 !%          ``snow_module_present``    Presence of snow module
 !%          ``ntime_step``             Number of time steps
 !%          ``nd``                     Number of descriptor maps
+!%          ``hidden_neuron``          Number of neurons in the hidden layer
 !%          ``nrrp``                   Number of rainfall-runoff parameters
 !%          ``nrrs``                   Number of rainfall-runoff states
 !%          ``nsep_mu``                Number of structural error parameters for mu
 !%          ``nsep_sigma``             Number of structural error parameters for sigma
 !%          ``nqz``                    Size of the temporal buffer for discharge grids
-!%          ``nhl``                    Number of hidden layers of the neural network
 !%
 !%      Subroutine
 !%      ----------
@@ -81,8 +81,6 @@ module mwd_setup
         character(lchar) :: snow_module = "..." !$F90W char
         character(lchar) :: hydrological_module = "..." !$F90W char
         character(lchar) :: routing_module = "..."!$F90W char
-
-        integer, allocatable, dimension(:) :: hidden_neuron
 
         character(lchar) :: serr_mu_mapping = "..." !$F90W char
         character(lchar) :: serr_sigma_mapping = "..." !$F90W char
@@ -135,6 +133,8 @@ module mwd_setup
         character(lchar) :: structure = "..." !$F90W char
         logical :: snow_module_present = .false.
 
+        integer, dimension(3) :: neurons = -99
+        integer :: hidden_neuron = -99
         integer :: ntime_step = -99
         integer :: nd = -99
         integer :: nrrp = -99
@@ -142,13 +142,12 @@ module mwd_setup
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
         integer :: nqz = -99
-        integer :: nhl = -99
 
     end type SetupDT
 
 contains
 
-    subroutine SetupDT_initialise(this, nd, nhl)
+    subroutine SetupDT_initialise(this, nd)
 
         !% Notes
         !% -----
@@ -158,16 +157,11 @@ contains
 
         type(SetupDT), intent(inout) :: this
         integer, intent(in) :: nd
-        integer, intent(in) :: nhl
 
         this%nd = nd
 
         allocate (this%descriptor_name(nd))
         this%descriptor_name = "..."
-
-        this%nhl = nhl
-
-        allocate (this%hidden_neuron(max(0, nhl)))
 
     end subroutine SetupDT_initialise
 
