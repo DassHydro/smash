@@ -31,7 +31,7 @@ We assume the reservoir receive a rainfall of :math:`p_n` at time :math:`t`, the
     \end{eqnarray}
 
 
-In the case of fast events with a low permeability, Astagneau suggest a modification of the rate : 
+In the case of fast events with a low permeability, :cite:p:`Astagneau_2022` suggests a modification of the rate : 
 :math:`\eta = \left( 1 - \gamma \right) \left( \frac{h_p}{c_p} \right)^2 + \gamma` with :math:`\gamma = 1 - \exp(-p_n \times \alpha_1)`
 and :math:`\alpha_1` in :math:`mm` per time unit.
 
@@ -74,20 +74,32 @@ Thus
     \end{eqnarray}
 
 
+.. note::
+
+    Note that if :math:`\alpha_1 = 0`, we return to the general writting of the instantaneous production rate.
+    
+    
 Transfer
 ''''''''
 The second hypothesis consist in changing the partitioning coefficient to get a faster routing module. 
-Astagneau suggest to split :math:`p_r` into two branch by the :math:`Q_9` coefficient defined as follow:
+:cite:p:`Astagneau_2022` suggests to split :math:`p_r` into two branch by the :math:`Q_9` coefficient defined as follow:
 
 .. math::
     :nowrap:
 
     \begin{eqnarray}
 
-        &p_{rr}& =& Q_9(p_r + p_{erc}) + l_{exc}\\
-        &p_{rd}& =& (1 - Q_9)(p_r + p_{erc}) \\
+        &p_{rr}& =& (1 - Q_9)(p_r + p_{erc}) + l_{exc}\\
+        &p_{rd}& =& Q_9(p_r + p_{erc}) \\
         &Q_9& =& 0.9 \tanh(\alpha_2 p_n)^2 + 0.1
         
     \end{eqnarray}
 
 with :math:`\alpha_2` in :math:`mm` per time unit.
+
+
+.. note::
+
+    If :math:`\alpha_2 = 0`, we return to the ``gr-4`` writting of the transfer.
+    
+    
