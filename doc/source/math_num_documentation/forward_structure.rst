@@ -4,15 +4,19 @@
 Forward Structure
 =================
 
-In `smash`, a forward model structure :math:`\mathcal{M}` is a combination of 3 modules, the ``snow`` module :math:`\mathcal{M}_{snw}`, the ``hydrological`` module :math:`\mathcal{M}_{rr}` and the ``routing`` module :math:`\mathcal{M}_{hy}` 
-such that :math:`\mathcal{M}=\mathcal{M}_{hy}\circ\mathcal{M}_{rr}\circ\mathcal{M}_{snw}` 
-(:ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`).
-These 3 modules are linked in the following way, :math:`\forall x\in\Omega\;,\;\forall t \in]0 .. T]`:
+This section explains the `smash` forward modeling paradigm. It details the various models structures available, composed of **differentiable hydrological-hydraulic operators**.
 
-- The ``snow`` module :math:`\mathcal{M}_{snw}` generates a melt flux :math:`m_{lt}(x,t)` which is then summed with the precipitation flux to inflow the ``hydrological`` module :math:`\mathcal{M}_{rr}`.
-- The ``hydrological`` module :math:`\mathcal{M}_{rr}` generates an elementary discharge :math:`q_t(x,t)` which is routed by the ``routing`` module :math:`\mathcal{M}_{hy}` to simulate the surface discharge :math:`Q(x,t)`.
+In `smash`, :math:`\forall x \in\Omega\;,\;\forall t \in]0 .. T]`, a forward model structure :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`) is a combination of 3 models:
 
-In this section, we will detail all the operators in each module for a given cell :math:`x\in\Omega` and a time step :math:`t\in]0 .. T]`. 
+- The ``snow`` model :math:`\mathcal{M}_{snw}` generating a melt flux :math:`m_{lt}(x,t)` which is then summed with the precipitation flux to feed the ``hydrological`` model :math:`\mathcal{M}_{rr}`.
+- The ``hydrological`` production module :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t(x,t)` which feeds the routing model. 
+- The ``routing`` model :math:`\mathcal{M}_{hy}` that simulates the routing of discharge :math:`Q(x,t)`.
+
+.. figure:: ../_static/flowchart_forward_gridded.png
+    :align: center
+    :width: 800
+    
+    Schematic view of a gridded model :math:`\mathcal{M}`: input data, model components, simulated quantites.
 
 .. _math_num_documentation.forward_structure.snow_module:
 

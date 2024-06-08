@@ -4,30 +4,42 @@
 Forward & Inverse Problems
 ==========================
 
-This section explains :
+This section explains:
  
-- The **forward hydrologic problem statement**, consisting in modeling the spatio-temporal evolution of water states-fluxes within a basin given atmospheric forcings and basin physical descriptors. 
+- The **hydrological modeling problem statement (forward problem)**, that consists in modeling the spatio-temporal evolution of water states-fluxes within a basin/domain given atmospheric forcings and basin physical descriptors. 
  
-- The **inverse problem statement**, aiming to use spatio-temporal observations of hydrological state-fluxes to estimate uncertain or unknows model parameters.
- 
+- The **parameter estimation problem statement (inverse problem)**, that pertains to estimating uncertain or unknows model parameters from the available spatio-temporal observations of hydrological state-fluxes and from basin physical descriptors.
 
-Forward problem
----------------
+Forward problem statement
+-------------------------
 
-Let :math:`\Omega\subset\mathbb{R}^{2}` denote a 2D spatial domain, :math:`x\in\Omega` the spatial coordinate, and :math:`t\in\left]0,T\right]` the physical time.
+Let :math:`\Omega\subset\mathbb{R}^{2}` denote a 2D spatial domain, :math:`x\in\Omega` the spatial coordinates, and :math:`t\in\left]0,T\right]` the physical time.
 
-Hydrological model
-******************
+Hydrological model definition
+*****************************
 
 The spatially distributed hydrological model is a dynamic operator :math:`\mathcal{M}` projecting fields of atmospheric forcings :math:`\mathcal{\boldsymbol{I}}`,
-catchment physiographic descriptors :math:`\boldsymbol{\mathcal{D}}` onto surface discharge :math:`Q`, model states :math:`\boldsymbol{h}`, and internal fluxes  :math:`\boldsymbol{q}` such that:
+catchment physical descriptors :math:`\boldsymbol{\mathcal{D}}` onto surface discharge :math:`Q`, model states :math:`\boldsymbol{h}`, and internal fluxes  :math:`\boldsymbol{q}` such that:
+
+
 
 .. math::
     :name: math_num_documentation.forward_inverse_problem.forward_problem_M_1
-
+    
+    \boxed{
     \boldsymbol{U}(x,t)=(Q,\boldsymbol{h},\boldsymbol{q})(x,t)=\mathcal{M}\left(\left[\mathcal{\boldsymbol{I}},\boldsymbol{\mathcal{D}}\right](x,t);\left[\boldsymbol{\theta},\boldsymbol{h}_{0}\right](x)\right)
+    }
 
 with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\boldsymbol{\theta}` the parameters and :math:`\boldsymbol{h}_{0}` the initial states.
+
+
+.. figure:: ../_static/forward_simple_flowchart.png
+    :align: center
+    :width: 800
+    
+    Flowchart of the forward modeling problem: input data, forward hydrological model :math:`\mathcal{M}`, simulated quantites.
+
+
 
 .. note:: The dimensions of model arrays, by denoting :math:`N=N_{x} \times N_{t}` with :math:`N_{x}` the number of  cells in :math:`\Omega` and :math:`N_t` the number of simulation time steps in :math:`\left]0,T\right]`, are as follows:
 
@@ -48,21 +60,28 @@ with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\bolds
 Operators composition
 *********************
 
-Note that the operator :math:`\mathcal{M}` can be a composite function containing, at least differentiable operators for vertical and lateral transfert processes within each cell :math:`x\in\Omega`, and routing operator from cells to cells following a flow direction map, plus (optionally) deep neural networks enabling learnable process parameterization and learnable conceptual parameters regionalization as described later.
+The forward hydrological model :math:`\mathcal{M}` is obtained by combining at least two operators: the hydrological operator :math:`\mathcal{M}_{rr}` to simulate runoff from atmospheric forcings and use this runoff to feed a routing operator :math:`\mathcal{M}_{hy}` for cell to cell flow routing. 
+
+A snow module :math:`\mathcal{M}_{snw}` can also be added.
+
+Neural networks ca also be included into this forward model to predict parameters and/or fluxes corrections from data. 
+
+The various model structures proposed in `smash` are differentiable and detailed in :ref:`model strucures section <math_num_documentation.forward_structure>`.
 
 
 Snow, Production and Routing Operators
 ======================================
 
-The hydrological model writes 
+The forward hydrological model is obtained by partial composition (each operator taking various other inputs data and paramters) of the flow operators writes:
 
 .. math:: 
       :name: math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr
       
-      \mathcal{M}=\mathcal{M}_{hy}\circ\mathcal{M}_{rr}\circ\mathcal{M}_{snw}
+      \mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)
       
-and is composed of the snow module :math:`\mathcal{M}_{snw}` producing a melt flux :math:`m_{lt}(x,t)` inflowing the production module :math:`\mathcal{M}_{rr}` that produces elemental discharge  :math:`q_t(x,t)` inflowing a routing module :math:`\mathcal{M}_{hy}`.
+with the snow module :math:`\mathcal{M}_{snw}` producing a melt flux :math:`m_{lt}(x,t)` inflowing the production module :math:`\mathcal{M}_{rr}` that produces elemental discharge  :math:`q_t(x,t)` inflowing a routing module :math:`\mathcal{M}_{hy}`. 
 
+Models structures are detailed in :ref:`model strucures section <math_num_documentation.forward_structure>`.
 
 .. _math_num_documentation.forward_inverse_problem.mapping:
 
@@ -85,8 +104,10 @@ Consequently, replacing in :ref:`Eq. 1 <math_num_documentation.forward_inverse_p
 
     \boldsymbol{U}(x,t)=(Q,\boldsymbol{h},\boldsymbol{q})(x,t)=\mathcal{M}\left(\left[\mathcal{\boldsymbol{I}},\mathcal{\boldsymbol{D}}\right](x,t);\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)\right)
 
-Inverse problem
----------------
+Inverse problem statement
+-------------------------
+
+**ADD general optim flowchart here**
 
 .. _math_num_documentation.forward_inverse_problem.cost_function:
 
@@ -94,7 +115,7 @@ Cost function
 *************
 
 
-Consider the following generic cost function composed of an observation term :math:`J_{obs}` and a regularization term :math:`J_{reg}` weighted by :math:`\alpha\geq0`:
+Consider the following generic differentiable cost function composed of an observation term :math:`J_{obs}` and a regularization term :math:`J_{reg}` weighted by :math:`\alpha\geq0`:
 
 
 .. math::
