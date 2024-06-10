@@ -11,9 +11,9 @@ smash documentation
 `smash` is a computational software framework dedicated to **S**\patially distributed **M**\odelling and
 **AS**\similation for **H**\ydrology, enabling to tackle spatially distributed differentiable hydrological
 modeling, with learnable parameterization-regionalization. This platform enables to combine vertical and
-lateral flow operators, either physically based or hydrid  with neural networks, and perform high dimensional
-non linear optimization from multi-source data. It is designed to simulate discharge hydrographs and
-hydrological states at any spatial location within a basin and reproduce the hydrological response of
+lateral flow operators, either process-based conceptual or hydrid  with neural networks, and perform high 
+dimensional non linear optimization from multi-source data. It is designed to simulate discharge hydrographs 
+and hydrological states at any spatial location within a basin and reproduce the hydrological response of
 contrasted catchments, both for operational forecasting of floods and low flows, by taking advantage of
 spatially distributed meteorological forcings, physiographic data and hydrometric observations.
 
