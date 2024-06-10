@@ -46,7 +46,7 @@ def test_module_name():
     assert SNOW_MODULE == ["zero", "ssn"]
 
     # % Check hydrological module
-    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "grd", "loieau", "vic3l"]
+    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "hortonian", "grd", "loieau", "vic3l"]
 
     # % Check routing module
     assert ROUTING_MODULE == ["lag0", "lr", "kw"]
@@ -69,6 +69,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
+        ["ci", "cp", "ct", "kexc", "aexc"],  # % hortonian
         ["cp", "ct"],  # % grd
         ["ca", "cc", "kb"],  # % loieau
         ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -78,6 +79,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == [
         ["hi", "hp", "ht"],  # % gr4
         ["hi", "hp", "ht"],  # % gr5
+        ["hi", "hp", "ht"],  # % hortonian
         ["hp", "ht"],  # % grd
         ["ha", "hc"],  # % loieau
         ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
