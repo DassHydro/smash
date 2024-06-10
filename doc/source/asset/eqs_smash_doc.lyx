@@ -82,6 +82,19 @@
 \begin_body
 
 \begin_layout Standard
+
+\series bold
+Flowchart graph: Forward problem statement
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset Formula 
 \[
 \mathcal{M}
@@ -134,6 +147,131 @@
 \boldsymbol{U}(x,t)=\left[Q,\boldsymbol{h},\boldsymbol{q}\right](x,t)
 \]
 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Flowchart graph: Forward operators composition
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+q_{snw\rightarrow rr}(x,t)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+q_{rr\rightarrow hy}(x,t)
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\phi_{1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\phi_{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\phi
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{\rho}_{1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{\rho}_{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{\boldsymbol{q}}(x,t)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Flowchart graph: Forward model operators detail
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
 \end_inset
 
 
@@ -230,6 +368,33 @@
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Others:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{U}(x,t)=(Q,\boldsymbol{h},\boldsymbol{q})(x,t)=\mathcal{M}\left(\left[\mathcal{\boldsymbol{I}},\boldsymbol{\mathcal{D}}\right](x,t);\left[\boldsymbol{\theta},\boldsymbol{h}_{0}\right](x)\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset Formula 
 \[
 \mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)
@@ -245,8 +410,70 @@
 \end_layout
 
 \begin_layout Standard
-\begin_inset Graphics
-	filename ../../smash/doc/source/_static/forward_simple_flowchart.png
+\begin_inset Formula 
+\[
+\boldsymbol{U}\left(\boldsymbol{\rho}\right)=\mathcal{M}\left(\,.\,,\boldsymbol{\rho}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+D_{\rho}\mathcal{M}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\nabla_{\boldsymbol{\rho}}J
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{\rho}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\hat{\boldsymbol{\rho}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{\rho}^{*}
+\]
 
 \end_inset
 
@@ -262,7 +489,48 @@
 
 \begin_layout Standard
 \begin_inset Graphics
-	filename ../../smash/doc/source/_static/flowchart_forward_gridded.png
+	filename /home/pagarambois/Documents/Distant/smash/doc/source/_static/forward_simple_flowchart.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename forward_composition_flowchart.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename Inversion_process_flowchart.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename /home/pagarambois/Documents/Distant/smash/doc/source/_static/flowchart_forward_gridded.png
 
 \end_inset
 

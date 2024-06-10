@@ -17,6 +17,7 @@ In `smash`, :math:`\forall x \in\Omega\;,\;\forall t \in]0 .. T]`, a forward mod
     :width: 800
     
     Schematic view of a gridded model :math:`\mathcal{M}`: input data, model components, simulated quantites.
+    
 
 .. _math_num_documentation.forward_structure.snow_module:
 
