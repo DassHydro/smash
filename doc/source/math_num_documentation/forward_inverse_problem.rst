@@ -41,8 +41,6 @@ with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\bolds
     
     Flowchart of the forward modeling problem: input data, forward hydrological model :math:`\mathcal{M}`, simulated quantites.
 
-
-
 .. dropdown:: Sizes of model variables
     :animate: fade-in-slide-down
 
