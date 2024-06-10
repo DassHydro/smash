@@ -100,6 +100,6 @@ with :math:`\alpha_2` in :math:`mm` per time unit.
 
 .. note::
 
-    If :math:`\alpha_2 = 0`, we return to the ``gr-4`` writting of the transfer.
-    
+    If :math:`\alpha_2 = 0`, we return to the ``gr-4/gr-5`` writting of the transfer.
+    If :math:`\alpha_2 = \alpha_1 = 0`, it is equivalent to ``gr-5`` structure.
     
