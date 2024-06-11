@@ -43,6 +43,13 @@ def test_char_array():
         descriptor_name = 42
         setup.descriptor_name = descriptor_name
 
+    with pytest.raises(ValueError, match="exceeds the maximum limit"):
+        descriptor_name = (
+            "Miiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+            "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiickey"
+        )
+        setup.descriptor_name = descriptor_name
+
 
 def test_index_array():
     setup = SetupDT(0)
