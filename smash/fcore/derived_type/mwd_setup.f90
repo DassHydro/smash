@@ -125,7 +125,7 @@ module mwd_setup
         logical :: read_descriptor = .false.
         character(lchar) :: descriptor_format = "..." !$F90W char
         character(2*lchar) :: descriptor_directory = "..." !$F90W char
-        character(20), allocatable, dimension(:) :: descriptor_name !$F90W char-array
+        character(lchar), allocatable, dimension(:) :: descriptor_name !$F90W char-array
 
         ! Post processed variables
         character(lchar) :: structure = "..." !$F90W char
