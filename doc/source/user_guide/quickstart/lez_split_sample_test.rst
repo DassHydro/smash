@@ -46,20 +46,14 @@ Now a folder called ``Lez-dataset`` should be accessible and contain the followi
 - ``descriptor``
     A directory containing physiographic descriptors in GeoTiff format.
 
-We can open a Python interface in the **conda environment**. The current working directory will be assumed to be the directory where 
+We can open a Python interface. The current working directory will be assumed to be the directory where
 the ``Lez-dataset`` is located.
-
-Activate the environment:
-
-.. code-block:: shell
-
-    conda activate smash
 
 Open a Python interface:
 
 .. code-block:: shell
 
-    (smash) python3
+    python3
 
 .. ipython:: python
     :suppress:
