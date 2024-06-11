@@ -72,13 +72,24 @@ def f90wrap_setter_char_array(func):
             if value.size == 1:
                 item = list(value.item().encode("ascii"))
                 litem = len(item)
+                # length of char greater than char limit in Fortran
+                if litem > shape[0]:
+                    raise ValueError(
+                        f"the length of '{value.item()}' ({litem}) exceeds the maximum limit ({shape[0]})"
+                    )
                 for idx in np.ndindex(shape[1:]):
                     slc = (slice(litem), *idx)
                     arr[slc] = item
             else:
                 for idx in np.ndindex(shape[1:]):
                     item = list(value[idx].encode("ascii"))
-                    slc = (slice(len(item)), *idx)
+                    litem = len(item)
+                    # length of char greater than char limit in Fortran
+                    if litem > shape[0]:
+                        raise ValueError(
+                            f"the length of '{value[idx]}' ({litem}) exceeds the maximum limit ({shape[0]})"
+                        )
+                    slc = (slice(litem), *idx)
                     arr[slc] = item
 
         if array_handle in self._arrays:
