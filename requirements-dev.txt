@@ -1,4 +1,17 @@
--r requirements.txt
+# required dependencies 
+meson
+meson-python
+ninja
+numpy
+f90wrap<0.2.14  # temporary upper bound until v0.2.15 is released
+versioneer[toml]
+rasterio
+pandas
+h5py
+tqdm
+scipy
+pyyaml
+terminaltables
 
 # documentation
 sphinx
@@ -8,11 +21,12 @@ ipython
 sphinxcontrib-bibtex
 sphinx-design
 sphinx-autosummary-accessors
+matplotlib
 
 # test
 pytest
 pytest-cov
 
 # format
-black
+ruff
 fprettify

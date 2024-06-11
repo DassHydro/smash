@@ -307,6 +307,8 @@ https://img.shields.io/travis/com/python-versioneer/python-versioneer.svg
 # pylint:disable=too-few-public-methods,redefined-outer-name,consider-using-with
 # pylint:disable=attribute-defined-outside-init,too-many-arguments
 
+# ruff: noqa
+
 import configparser
 import errno
 import json
@@ -479,9 +481,7 @@ def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False, env=
     return stdout, process.returncode
 
 
-LONG_VERSION_PY[
-    "git"
-] = r'''
+LONG_VERSION_PY["git"] = r'''
 # This file helps to compute a version number in source trees obtained from
 # git-archive tarball (such as those provided by githubs download-from-tag
 # feature). Distribution tarballs (built by setup.py sdist) and build
@@ -1443,10 +1443,7 @@ def versions_from_parentdir(parentdir_prefix, root, verbose):
         root = os.path.dirname(root)  # up a level
 
     if verbose:
-        print(
-            "Tried directories %s but none started with prefix %s"
-            % (str(rootdirs), parentdir_prefix)
-        )
+        print("Tried directories %s but none started with prefix %s" % (str(rootdirs), parentdir_prefix))
     raise NotThisMethod("rootdir doesn't start with parentdir_prefix")
 
 
@@ -1474,14 +1471,10 @@ def versions_from_file(filename):
         with open(filename) as f:
             contents = f.read()
     except OSError:
-        raise NotThisMethod("unable to read _version.py")
-    mo = re.search(
-        r"version_json = '''\n(.*)'''  # END VERSION_JSON", contents, re.M | re.S
-    )
+        raise NotThisMethod("unable to read _version.py") from None
+    mo = re.search(r"version_json = '''\n(.*)'''  # END VERSION_JSON", contents, re.M | re.S)
     if not mo:
-        mo = re.search(
-            r"version_json = '''\r\n(.*)'''  # END VERSION_JSON", contents, re.M | re.S
-        )
+        mo = re.search(r"version_json = '''\r\n(.*)'''  # END VERSION_JSON", contents, re.M | re.S)
     if not mo:
         raise NotThisMethod("no version_json in _version.py")
     return json.loads(mo.group(1))
@@ -1771,9 +1764,7 @@ def get_versions(verbose=False):
     handlers = HANDLERS.get(cfg.VCS)
     assert handlers, "unrecognized VCS '%s'" % cfg.VCS
     verbose = verbose or cfg.verbose
-    assert (
-        cfg.versionfile_source is not None
-    ), "please set versioneer.versionfile_source"
+    assert cfg.versionfile_source is not None, "please set versioneer.versionfile_source"
     assert cfg.tag_prefix is not None, "please set versioneer.tag_prefix"
 
     versionfile_abs = os.path.join(root, cfg.versionfile_source)
@@ -2064,10 +2055,7 @@ def get_cmdclass(cmdclass=None):
             # and POSIX-style paths)
             from setuptools import unicode_utils
 
-            normalized = [
-                unicode_utils.filesys_decode(f).replace(os.sep, "/")
-                for f in self.filelist.files
-            ]
+            normalized = [unicode_utils.filesys_decode(f).replace(os.sep, "/") for f in self.filelist.files]
 
             manifest_filename = os.path.join(self.egg_info, "SOURCES.txt")
             with open(manifest_filename, "w") as fobj:
@@ -2099,9 +2087,7 @@ def get_cmdclass(cmdclass=None):
             # updated value
             target_versionfile = os.path.join(base_dir, cfg.versionfile_source)
             print("UPDATING %s" % target_versionfile)
-            write_to_version_file(
-                target_versionfile, self._versioneer_generated_versions
-            )
+            write_to_version_file(target_versionfile, self._versioneer_generated_versions)
 
     cmds["sdist"] = cmd_sdist
 

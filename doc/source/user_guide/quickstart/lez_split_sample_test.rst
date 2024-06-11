@@ -65,7 +65,7 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d Lez")
+    os.system("python3 generate_dataset.py -d Lez")
 
 Imports
 -------
@@ -137,7 +137,7 @@ For the ``mesh``, there is no need to generate two different ``meshes`` dictiona
         code=list(gauge_attributes["code"]),
     )
 
-And quickly see that the generated ``mesh`` is correct
+And quickly verify that the generated ``mesh`` is correct
 
 .. ipython:: python
 
@@ -179,13 +179,13 @@ Optimization
 First, we will optimize both models for each period to generate two sets of optimized rainfall-runoff parameters.
 So far, to optimize, we have called the method associated with the `smash.Model` object `Model.optimize <smash.Model.optimize>`. This method
 will modify the associated object in place (i.e. the values of the rainfall-runoff parameters after calling this function are modified). Here, we
-want to optimize the model but still keep this model object to run the validation afterwards. To do this, instead of calling the method
+want to optimize the model but still keep this model object to run the validation afterwards. To do this, instead of calling the
 `Model.optimize <smash.Model.optimize>` method, we can call the `smash.optimize` function, which is identical but takes a
 `smash.Model` object as input and returns a copy of it. This method allows you to optimize a `smash.Model` object and store the results in 
 another object without modifying the initial one.
 
-Similar to the **Cance** tutorial, we will perform a simple spatially uniform optimization (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`) of the rainfall-runoff parameters by minimizing the
-Nash-Sutcliffe efficiency on the most downstream gauge.
+Similar to the **Cance** tutorial, we will perform a simple spatially uniform optimization (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`) of the rainfall-runoff parameters
+by minimizing the cost function equal to one minus the Nash-Sutcliffe efficiency on the most downstream gauge.
 
 .. To speed up documentation generation
 .. ipython:: python
@@ -357,6 +357,11 @@ calibration performances and the other for the validation performances.
     perf_cal # Calibration performances
 
     perf_val # Validation performances
+
+.. TODO: Add a conclusion (or change case ...) on this split sample test parameters are wildly different... I suspect it's due to
+.. the state initialisation (Qobs is quite high at the beginning of p2). Not a big deal in the context of this doc,
+.. but it could be mentioned either here or maybe better as a conclusion of this split-sample exercise, to demonstrate.
+.. its utility and explain why the validation metrics are quite bad.
 
 .. ipython:: python
     :suppress:

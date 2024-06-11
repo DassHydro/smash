@@ -5,8 +5,9 @@ Cance - First Simulation
 ========================
 
 This first tutorial with `smash` will be carried out on a French catchment, **the Cance at Sarras**, a right bank tributary 
-of the Rhône river. This catchment was chosen for this first tutorial because of its reasonable size, 380 km² hence fast computations at a 
-spatial scale of 1km², and because it is well modeled with a low complexity approach. This tutorial aims to 
+of the Rhône river. This catchment was chosen for this first tutorial because its moderate size (380 km²)
+enables fast computations at a spatial scale of 1km², and because it is well modeled with a low complexity
+approach. This tutorial aims to
 
 - provide an overview of the input data required for modelling with `smash`, 
 
@@ -40,7 +41,7 @@ Now a folder called ``Cance-dataset`` should be accessible and contain the follo
 - ``France_flwdir.tif``
     A GeoTiff file containing the flow direction data,
 - ``gauge_attributes.csv``
-    A csv file containing the gauge attributes (gauge coordinates, drained area and code),
+    A csv file containing the gauge attributes (gauge coordinates, drainage area and code),
 - ``prcp``
     A directory containing precipitation data in GeoTiff format with the following directory structure: ``%Y/%m/%d`` 
     (``2014/09/15``),
@@ -64,9 +65,9 @@ Gauge attributes
 ****************
 
 To create a mesh containing information from the stations in addition to the flow direction file, gauge attributes are mandatory. The gauge 
-attributes correspond to the spatial coordinates, the drained area and the code of each gauge. The spatial coordinates must be in the same unit
-and projection as the flow direction file (**meter** and **Lambert 93** respectively in our case), the drained area in **square meter** (or **square kilometer** but it will need
-to be converted after) and the gauge code, any code that can subsequently be used to identify the station. The ``gauge_attributes.csv`` file has been
+attributes correspond to the spatial coordinates, the drainage area and the code of each gauge. The spatial coordinates must be in the same unit
+and projection as the flow direction file (**meter** and **Lambert 93** respectively in our case), the drainage area in **square meter** (or **square kilometer** but it will need
+to be converted later). The gauge code can be any code that can be used to identify the station. The ``gauge_attributes.csv`` file has been
 filled in to provide this information for the 3 gauging stations of the Cance catchment.
 
 .. note::
@@ -87,27 +88,28 @@ speed up access when reading those (ex. ``%Y/%m/%d``, ``2014/09/15``).
 .. note::
 
     As you may have seen when opening any precipitation file, the data has already been cropped over the catchment area. This has been done 
-    simply to reduce the size of the files. It is possible to work with files whose extension is different from the catchment area. 
+    simply to reduce the size of the files. It is possible to work with files whose spatial extent is different from the catchment area.
     `smash` will automatically crop to the correct area when the file is read.
 
 Potential evapotranspiration
 ****************************
 
 Potential evapotranspiration data is mandatory. The way in which potential evapotranspiration data is processed is identical to the 
-precipitation. One difference to note is that instead of working with potential evapotranspiration file per time step, it is possible to 
+precipitation. One difference to note is that instead of working with one potential evapotranspiration file per time step, it is possible to
 work with daily interannual data, which therefore requires a file per day whose name contains a date in the following format ``%m%d``. 
 Here, we provided daily interannual potential evapotranspiration data.
 
 Observed discharge
 ******************
 
-Observed discharge is optional in case of simulation but mandatory in case of optimization. `smash` expects a single-column csv file for each gauge
+Observed discharge is optional in case of simulation but mandatory in case of model calibration. `smash` expects a single-column csv file for each gauge
 whose name contains the gauge code provided in the ``gauge_attributes.csv`` file. The header of the column is the first time step of the time series,
 the data is the observed discharge in **cubic meter per second** and any negative value in the series will be interpreted as no-data.
 
 .. note::
 
-    It is not necessary to provide an exact observed discharge series for each simulation time step. It is possible to provide a chronicle on a larger time window over which `smash` will only read the lines corresponding to dates after the starting date provided in the header.
+    It is not necessary to restrict the observed discharge series to the simulation period. It is possible to provide a time series covering a larger time window over which `smash`
+    will only read the lines corresponding to dates after the starting date provided in the header.
 
 Now that a brief tour of the necessary data has been done, we can open a Python interface in the **conda environment**. The current working directory 
 will be assumed to be the directory where the ``Cance-dataset`` is located.
@@ -128,7 +130,7 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d Cance")
+    os.system("python3 generate_dataset.py -d Cance")
 
 Imports
 -------
@@ -141,6 +143,14 @@ We will first import everything we need in this tutorial: `smash` of course, the
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
+
+.. hint::
+
+    The visualization library `matplotlib <https://matplotlib.org/>`__ is not installed by default but can be installed with pip as follows:
+    
+    .. code-block:: none
+
+        pip install matplotlib
 
 Model creation
 --------------
@@ -183,11 +193,24 @@ To get into more details, this ``setup`` is composed of:
 - ``dt``
     The simulation time step in **second**,
 
+.. note::
+    The convention of `smash` is that ``start_time`` is the date used to initialize the model's states. All 
+    the modeled state-flux variables (i.e. discharge, states, internal fluxes) will be computed over the
+    period ``start_time + 1dt`` and ``end_time``
+
 - ``hydrological_module``
     The hydrological module, to be chosen from [``gr4``, ``gr5``, ``grd``, ``loieau``, ``vic3l``],
 
+    .. hint::
+
+        See the :ref:`Hydrological Module <math_num_documentation.forward_structure.hydrological_module>` section
+
 - ``routing_module``
     The routing module, to be chosen from [``lag0``, ``lr``, ``kw``],
+
+    .. hint::
+
+        See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>` section
 
 - ``read_qobs``
     Whether or not to read observed discharges files,
@@ -199,7 +222,7 @@ To get into more details, this ``setup`` is composed of:
     Whether or not to read precipitation files,
 
 - ``prcp_conversion_factor``
-    The precipitation conversion factor (the precipitation value in data, for example in :math:`1/1O mm/h`, will be **multiplied** by the conversion factor to reach precipitation in :math:`mm/h` as needed by the hydrological modules),
+    The precipitation conversion factor (the precipitation value in data, for example in :math:`1/10 mm`, will be **multiplied** by the conversion factor to reach precipitation in :math:`mm` as needed by the hydrological modules),
 
 - ``prcp_directory``
     The path to the precipitation files,
@@ -208,7 +231,7 @@ To get into more details, this ``setup`` is composed of:
     Whether or not to read potential evapotranspiration files,
 
 - ``pet_conversion_factor``
-    The potential evapotranspiration conversion factor (the potential evapotranspiration value from data will be **multiplied** by the conversion factor to get :math:`mm/h` as needed by the hydrological modules),
+    The potential evapotranspiration conversion factor (the potential evapotranspiration value from data will be **multiplied** by the conversion factor to get :math:`mm` as needed by the hydrological modules),
 
 - ``daily_interannual_pet``
     Whether or not to read potential evapotranspiration files as daily interannual value desaggregated to the corresponding time step ``dt``,
@@ -216,7 +239,7 @@ To get into more details, this ``setup`` is composed of:
 - ``pet_directory``
     The path to the potential evapotranspiration files,
 
-In summary the present ``setup`` you defined above corresponds to :
+In summary the current ``setup`` you defined above corresponds to :
 
 - a simulation time window between ``2014-09-15 00:00`` and ``2014-11-14 00:00`` at an hourly time step. 
 
@@ -357,13 +380,13 @@ To get into more details, this ``mesh`` is composed of:
 
 - ``ng``, ``gauge_pos``, ``code``, ``area``, ``area_dln``
     All the variables related to the gauges. The number of gauges, ``ng``, the gauges position in terms of rows and columns, ``gauge_pos``, the gauges code, ``code``, 
-    the "real" drained area, ``area`` and the delineated drained area, ``area_dln``.
+    the "real" drainage area, ``area`` and the delineated drainage area, ``area_dln``.
 
     .. ipython:: python
 
         mesh["ng"], mesh["gauge_pos"], mesh["code"], mesh["area"], mesh["area_dln"]
 
-An important step after generating the ``mesh`` is to check that the stations have been correctly placed on the flow direction map. To do this, we can try to visualize on which cell each station is located and whether the delineated drained area is close to the "real" drained area entered.
+An important step after generating the ``mesh`` is to check that the stations have been correctly placed on the flow direction map. To do this, we can try to visualize on which cell each station is located and whether the delineated drainage area is close to the "real" drainage area entered.
 
 .. ipython:: python
 
@@ -379,14 +402,16 @@ An important step after generating the ``mesh`` is to check that the stations ha
 
     (mesh["area"] - mesh["area_dln"]) / mesh["area"] * 100 # Relative error in %
 
-For this ``mesh``, we have a negative relative error on the simulated drainage area that varies from -0.3% for the most downstrea gauge to -10% for the most upstream one (small drained that is as expectable more sensitive to the relatively coarse mesh resolution).
+For this ``mesh``, we have a negative relative error on the simulated drainage area that varies from -0.3% for the most downstream gauge to -10% for the most upstream one
+(which can be explained by the fact that small upstream catchments are more sensitive to the relatively coarse ``mesh`` resolution).
 
 .. TODO FC link to automatic meshing
 
 Save setup and mesh
 *******************
 
-Before constructing the `smash.Model` object. We can save (serialize) the ``setup`` and the ``mesh`` to avoid having to do it every time you want to run a simulation on the same case, with the two following functions, `smash.io.save_setup` and `smash.io.save_mesh`. It will save the ``setup`` in `YAML <https://yaml.org/>`__ format and the `mesh` in `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format.
+Before constructing the `smash.Model` object, we can save (serialize) the ``setup`` and the ``mesh`` to avoid having to do it every time you want to run a simulation on the same case,
+with the two following functions, `smash.io.save_setup` and `smash.io.save_mesh`. It will save the ``setup`` in `YAML <https://yaml.org/>`__ format and the ``mesh`` in `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format.
 
 .. ipython:: python
 
@@ -538,7 +563,7 @@ Rainfall-runoff initial states
 ******************************
 
 `Model.rr_initial_states <smash.Model.rr_initial_states>` contains all the rainfall-runoff initial states. This attribute is very similar 
-to the rainfall-runoff parameters, both in its construction and in the variables that make it up.
+to the rainfall-runoff parameters, both in its construction and in the variables it contains.
 
 .. ipython:: python
 
@@ -562,7 +587,7 @@ Rainfall-runoff final states
 
     model.setup.nrrs, model.rr_final_states.keys
 
-Rainfall-runoff final states only have getters and are by default filled in with -99 as long as no simulation has been performed.
+Rainfall-runoff final states only have getters and are by default filled in with -99 until a simulation has been performed.
 
 .. ipython:: python
 
@@ -652,25 +677,29 @@ And visualize again the simulated discharge compared to the observed discharge, 
     plt.title(f"Observed and simulated discharge at gauge {code}");
 
 Of course, the hydrological model optimization problem is a complex one and there are many strategies that can be employed depending on the modeling goals and data available. Here, for a first tutorial, we have run a simple optimization with the function's
-default parameters (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`). The end of this section will be dedicated to a brief explanation of what was in the optimization performed.
+default parameters (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`). The end of this section will be dedicated to a brief explanation of the information associated with the optimization performed.
 
 First, several information were displayed on the screen during optimization
 
 .. code-block:: text
 
-    At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-    At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
-    At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
-    At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
-    At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
-    At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
+    At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
+    At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
+    At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
+    At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
+    At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
+    At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
+    At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
+    At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 These lines show the different iterations of the optimization with information on the number of iterations, the number of cumulative evaluations ``nfg`` 
 (number of foward runs performed within each iteration of the optimization algorithm), the value of the cost function to minimize ``J`` and the value of the adaptive descent step ``ddx`` of this heuristic search algorihtm. 
-So, to summarize, the optimization algorithm has converged after 5 iterations by reaching the descent step tolerance criterion of 0.01. This optimization required to perform 152 forward run evaluations and leads to a relatively accurate fit with a final cost function value on the order of 0.04.
+So, to summarize, the optimization algorithm has converged after 7 iterations by reaching the descent step tolerance criterion of 0.01. This optimization required to perform 216 forward run evaluations and leads to a final cost function value on the order of 0.04.
 
-Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is the Nash-Sutcliffe efficiency ``nse`` and the optimized parameters are the set of rainfall-runoff parameters (``cp``, ``ct``, ``kexc`` and ``llr``). In the present configuration spatially uniform parameters were optimized, i.e. a spatially uniform map for each parameter. We can visualize the optimized rainfall-runoff parameters.
+Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is one minus the Nash-Sutcliffe efficiency ``nse`` (:math:`1 - \text{NSE}`)
+and the optimized parameters are the set of rainfall-runoff parameters (``cp``, ``ct``, ``kexc`` and ``llr``). In the current configuration spatially
+uniform parameters were optimized, i.e. a spatially uniform map for each parameter. We can visualize the optimized rainfall-runoff parameters.
 
 .. ipython:: python
 

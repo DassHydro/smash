@@ -3,7 +3,9 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - compute_mean_forcing
+!%      - get_mean_gauge_atmos_data
+!%      - compute_mean_atmos
+!%      - compute_prcp_partitioning
 
 module mw_atmos_statistic
 
@@ -11,6 +13,7 @@ module mw_atmos_statistic
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
+    use mwd_atmos_manipulation, only: get_atmos_data_time_step, set_atmos_data_time_step
     use mwd_sparse_matrix_manipulation, only: sparse_matrix_to_matrix, matrix_to_sparse_matrix
     use mw_mask, only: mask_upstream_cells
 
@@ -18,6 +21,44 @@ module mw_atmos_statistic
 
 contains
 
+    subroutine get_mean_gauge_atmos_data(mesh, mask_gauge, mask_atmos, mat_atmos, mean_gauge_atmos)
+
+        implicit none
+
+        type(MeshDT), intent(in) :: mesh
+        logical, dimension(mesh%nrow, mesh%ncol), intent(in) :: mask_gauge
+        logical, dimension(mesh%nrow, mesh%ncol), intent(in) :: mask_atmos
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: mat_atmos
+        real(sp), intent(inout) :: mean_gauge_atmos
+
+        integer :: row, col, n_gauge_atmos
+
+        mean_gauge_atmos = 0._sp
+        n_gauge_atmos = 0
+
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (.not. mask_gauge(row, col) .or. .not. mask_atmos(row, col)) cycle
+
+                mean_gauge_atmos = mean_gauge_atmos + mat_atmos(row, col)
+                n_gauge_atmos = n_gauge_atmos + 1
+
+            end do
+        end do
+
+        if (n_gauge_atmos .gt. 0) then
+            mean_gauge_atmos = mean_gauge_atmos/n_gauge_atmos
+
+        else
+            mean_gauge_atmos = -99._sp
+
+        end if
+
+    end subroutine get_mean_gauge_atmos_data
+
+    ! TODO: All the atmospheric data variables are hard-coded. This subroutine might need to be rewritten if
+    ! the total number of atmospheric data increase.
     subroutine compute_mean_atmos(setup, mesh, input_data)
 
         implicit none
@@ -26,10 +67,12 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(inout) :: input_data
 
+        integer :: i, t
         logical, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: mask_gauge
-        logical, dimension(mesh%nrow, mesh%ncol) :: mask_prcp, mask_pet, mask_snow, mask_temp
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix_prcp, matrix_pet, matrix_snow, matrix_temp
-        integer :: i, j, n_prcp, n_pet, n_snow, n_temp
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: mat_prcp, mat_pet
+        logical, dimension(mesh%nrow, mesh%ncol) :: mask_prcp, mask_pet
+        real(sp), dimension(:, :), allocatable :: mat_snow, mat_temp
+        logical, dimension(:, :), allocatable :: mask_snow, mask_temp
 
         mask_gauge = .false.
 
@@ -40,56 +83,42 @@ contains
 
         end do
 
-        do i = 1, setup%ntime_step
+        !% Only allocate snow and temp variables if a snow module has been choosen
+        if (setup%snow_module_present) then
+            allocate (mat_snow(mesh%nrow, mesh%ncol), mat_temp(mesh%nrow, mesh%ncol))
+            allocate (mask_snow(mesh%nrow, mesh%ncol), mask_temp(mesh%nrow, mesh%ncol))
+        end if
 
-            if (setup%sparse_storage) then
+        do t = 1, setup%ntime_step
 
-                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(i), matrix_prcp)
-                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(i), matrix_pet)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "pet", mat_pet)
 
-                if (setup%snow_module_present) then
-
-                    call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_snow(i), matrix_snow)
-                    call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_temp(i), matrix_temp)
-
-                end if
-
-            else
-
-                matrix_prcp = input_data%atmos_data%prcp(:, :, i)
-                matrix_pet = input_data%atmos_data%pet(:, :, i)
-
-                if (setup%snow_module_present) then
-
-                    matrix_snow = input_data%atmos_data%snow(:, :, i)
-                    matrix_temp = input_data%atmos_data%temp(:, :, i)
-
-                end if
-
+            if (setup%snow_module_present) then
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "snow", mat_snow)
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "temp", mat_temp)
             end if
 
-            do j = 1, mesh%ng
+            mask_prcp = (mat_prcp .ge. 0._sp)
+            mask_pet = (mat_pet .ge. 0._sp)
 
-                mask_prcp = (matrix_prcp .ge. 0._sp .and. mask_gauge(:, :, j))
-                n_prcp = count(mask_prcp)
-                mask_pet = (matrix_pet .ge. 0._sp .and. mask_gauge(:, :, j))
-                n_pet = count(mask_pet)
+            if (setup%snow_module_present) then
+                mask_snow = (mat_snow .ge. 0._sp)
+                mask_temp = (mat_temp .gt. -99._sp)
+            end if
 
-                ! Will be -99 if n is equal to 0
-                if (n_prcp .gt. 0) input_data%atmos_data%mean_prcp(j, i) = sum(matrix_prcp, mask=mask_prcp)/n_prcp
-                if (n_pet .gt. 0) input_data%atmos_data%mean_pet(j, i) = sum(matrix_pet, mask=mask_pet)/n_pet
+            do i = 1, mesh%ng
+
+                call get_mean_gauge_atmos_data(mesh, mask_gauge(:, :, i), mask_prcp, mat_prcp, &
+                & input_data%atmos_data%mean_prcp(i, t))
+                call get_mean_gauge_atmos_data(mesh, mask_gauge(:, :, i), mask_pet, mat_pet, &
+                & input_data%atmos_data%mean_pet(i, t))
 
                 if (setup%snow_module_present) then
-
-                    mask_snow = (matrix_snow .ge. 0._sp .and. mask_gauge(:, :, j))
-                    n_snow = count(mask_snow)
-                    mask_temp = (matrix_temp .gt. -99._sp .and. mask_gauge(:, :, j))
-                    n_temp = count(mask_temp)
-
-                    ! Will be -99 if n is equal to 0
-                    if (n_snow .gt. 0) input_data%atmos_data%mean_snow(j, i) = sum(matrix_snow, mask=mask_snow)/n_snow
-                    if (n_temp .gt. 0) input_data%atmos_data%mean_temp(j, i) = sum(matrix_temp, mask=mask_temp)/n_temp
-
+                    call get_mean_gauge_atmos_data(mesh, mask_gauge(:, :, i), mask_snow, mat_snow, &
+                    & input_data%atmos_data%mean_snow(i, t))
+                    call get_mean_gauge_atmos_data(mesh, mask_gauge(:, :, i), mask_temp, mat_temp, &
+                    & input_data%atmos_data%mean_temp(i, t))
                 end if
 
             end do
@@ -105,33 +134,21 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(inout) :: input_data
 
-        integer :: i
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix_prcp, matrix_snow, matrix_temp, ratio
+        integer :: t
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: mat_prcp, mat_snow, mat_temp, ratio
 
-        do i = 1, setup%ntime_step
+        do t = 1, setup%ntime_step
 
-            if (setup%sparse_storage) then
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "snow", mat_snow)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "temp", mat_temp)
 
-                ! Do not check for snow module because this subroutine should be only called when a snow module
-                ! has been selected
-                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(i), matrix_prcp)
-                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_snow(i), matrix_snow)
-                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_temp(i), matrix_temp)
-
-            else
-
-                matrix_prcp = input_data%atmos_data%prcp(:, :, i)
-                matrix_snow = input_data%atmos_data%snow(:, :, i)
-                matrix_temp = input_data%atmos_data%temp(:, :, i)
-
-            end if
-
-            where (matrix_snow .ge. 0._sp) matrix_prcp = matrix_prcp + matrix_snow
+            where (mat_snow .ge. 0._sp) mat_prcp = mat_prcp + mat_snow
 
             ! If there is no temperature data, precipitation is assumed to be only liquid
-            where (matrix_temp .gt. -99._sp)
+            where (mat_temp .gt. -99._sp)
 
-                ratio = 1._sp - 1._sp/(1._sp + exp(10._sp/4._sp*matrix_temp - 1._sp))
+                ratio = 1._sp - 1._sp/(1._sp + exp(10._sp/4._sp*mat_temp - 1._sp))
 
             else where
 
@@ -139,28 +156,19 @@ contains
 
             end where
 
-            where (matrix_prcp .ge. 0._sp)
+            where (mat_prcp .ge. 0._sp)
 
-                matrix_snow = (1._sp - ratio)*matrix_prcp
-                matrix_prcp = matrix_prcp - matrix_snow
+                mat_snow = (1._sp - ratio)*mat_prcp
+                mat_prcp = mat_prcp - mat_snow
 
             else where
 
-                matrix_snow = -99._sp
+                mat_snow = -99._sp
 
             end where
 
-            if (setup%sparse_storage) then
-
-                call matrix_to_sparse_matrix(mesh, matrix_prcp, 0._sp, input_data%atmos_data%sparse_prcp(i))
-                call matrix_to_sparse_matrix(mesh, matrix_snow, 0._sp, input_data%atmos_data%sparse_snow(i))
-
-            else
-
-                input_data%atmos_data%prcp(:, :, i) = matrix_prcp
-                input_data%atmos_data%snow(:, :, i) = matrix_snow
-
-            end if
+            call set_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call set_atmos_data_time_step(setup, mesh, input_data, t, "snow", mat_snow)
 
         end do
 

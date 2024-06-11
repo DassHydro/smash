@@ -10,11 +10,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import inspect
 import os
+import pathlib
 import sys
 import warnings
-import inspect
-import pathlib
 
 import smash
 
@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath("./_ext"))
 # -- Project information -----------------------------------------------------
 
 project = "smash"
-copyright = "2022-2023, INRAE"
+copyright = "2022-2024, INRAE"
 author = "INRAE"
 
 # The full version, including alpha/beta/rc tags

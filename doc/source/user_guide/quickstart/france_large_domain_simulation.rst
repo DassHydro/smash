@@ -61,7 +61,7 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d France")
+    os.system("python3 generate_dataset.py -d France")
 
 Imports
 -------
@@ -103,7 +103,7 @@ simulation period is different.
 Model mesh creation
 *******************
 
-For the ``mesh``, we only need the flow direction file and the mainland France bouding box ``bbox`` to pass to the `smash.factory.generate_mesh`
+For the ``mesh``, we only need the flow direction file and the mainland France bounding box ``bbox`` to pass to the `smash.factory.generate_mesh`
 function. A bouding box in `smash` is a list of 4 values (``xmin``, ``xmax``, ``ymin``, ``ymax``), each of which corresponds respectively to 
 the x minimum value, the x maximum value, the y mimimum value and the y maximum value. The values must be in the same unit and projection as the 
 flow direction.
@@ -178,7 +178,7 @@ returns a `smash.ForwardRun` object storing these variables.
     fwd_run.q_domain.shape
 
 The returned object `smash.ForwardRun` contains two variables ``q_domain`` and ``time_step``. With ``q_domain`` a `numpy.ndarray` of shape 
-*(nrow, ncol, ntime_step)* storting the simulated discharge and ``time_step`` a `pandas.DatetimeIndex` storing the saved time steps.
+*(nrow, ncol, ntime_step)* storing the simulated discharge and ``time_step`` a `pandas.DatetimeIndex` storing the saved time steps.
 We can view the simulated discharge for one time step, for example the last one.
 
 .. ipython:: python

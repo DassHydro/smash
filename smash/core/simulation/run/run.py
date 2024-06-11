@@ -1,36 +1,36 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from typing import TYPE_CHECKING
+
+import numpy as np
+
 from smash._constant import (
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
 )
-
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
-
 from smash.core.simulation._doc import (
     _forward_run_doc_appender,
-    _smash_forward_run_doc_substitution,
     _multiple_forward_run_doc_appender,
+    _smash_forward_run_doc_substitution,
 )
-
 from smash.core.simulation.run._standardize import (
     _standardize_multiple_forward_run_args,
 )
-
 from smash.fcore._mw_forward import (
     forward_run as wrap_forward_run,
+)
+from smash.fcore._mw_forward import (
     multiple_forward_run as wrap_multiple_forward_run,
 )
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_returns import ReturnsDT
 
-import numpy as np
-from copy import deepcopy
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from typing import Any
+
     from numpy.typing import NDArray
+
     from smash.core.model.model import Model
     from smash.factory.samples.samples import Samples
 
@@ -66,11 +66,7 @@ class MultipleForwardRun:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -89,7 +85,8 @@ class ForwardRun:
         A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
-        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
+        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
+        **time_step**.
 
     cost : `float`
         Cost value.
@@ -99,7 +96,8 @@ class ForwardRun:
 
     Notes
     -----
-    The object's available attributes depend on what is requested by the user in **return_options** during a call to `smash.forward_run`.
+    The object's available attributes depend on what is requested by the user in **return_options** during a
+    call to `smash.forward_run`.
 
     See Also
     --------
@@ -118,11 +116,7 @@ class ForwardRun:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -191,7 +185,7 @@ def _forward_run(
     for key in return_options["keys"]:
         try:
             value = getattr(wrap_returns, key)
-        except:
+        except Exception:
             continue
         if hasattr(value, "copy"):
             value = value.copy()
@@ -200,7 +194,7 @@ def _forward_run(
     ret = {**fret, **pyret}
     if ret:
         # % Add time_step to the object
-        if any([k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()]):
+        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()
         return ForwardRun(ret)
 
@@ -252,15 +246,11 @@ def _multiple_forward_run(
         if name in model._parameters.rr_parameters.keys:
             samples_kind[i] = 0
             # % Adding 1 because Fortran uses one based indexing
-            samples_ind[i] = (
-                np.argwhere(model._parameters.rr_parameters.keys == name).item() + 1
-            )
+            samples_ind[i] = np.argwhere(model._parameters.rr_parameters.keys == name).item() + 1
         elif name in model._parameters.rr_initial_states.keys:
             samples_kind[i] = 1
             # % Adding 1 because Fortran uses one based indexing
-            samples_ind[i] = (
-                np.argwhere(model._parameters.rr_initial_states.keys == name).item() + 1
-            )
+            samples_ind[i] = np.argwhere(model._parameters.rr_initial_states.keys == name).item() + 1
         # % Should be unreachable
         else:
             pass

@@ -32,7 +32,7 @@
 !%          ``code``                 Gauge code
 !%          ``area``                 Drained area at gauge position                                [m2]
 !%          ``area_dln``             Drained area at gauge position delineated                     [m2]
-!%          ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice (k)
+!%          ``rowcol_to_ind_ac``     Matrix linking (row, col) couple to active cell indice (k)
 !%          ``local_active_cell``    Mask of local active cells
 !%
 !%      Subroutine
@@ -48,7 +48,7 @@ module mwd_mesh
 
     implicit none
 
-    type :: MeshDT
+    type MeshDT
 
         real(sp) :: xres
         real(sp) :: yres
@@ -81,7 +81,7 @@ module mwd_mesh
         real(sp), dimension(:), allocatable :: area
         real(sp), dimension(:), allocatable :: area_dln
 
-        integer, dimension(:, :), allocatable :: rowcol_to_ind_sparse
+        integer, dimension(:, :), allocatable :: rowcol_to_ind_ac !$F90W index-array
         integer, dimension(:, :), allocatable :: local_active_cell
 
     end type MeshDT
@@ -149,12 +149,8 @@ contains
         allocate (this%area_dln(this%ng))
         this%area_dln = -99._sp
 
-        if (setup%sparse_storage) then
-
-            allocate (this%rowcol_to_ind_sparse(this%nrow, this%ncol))
-            this%rowcol_to_ind_sparse = -99
-
-        end if
+        allocate (this%rowcol_to_ind_ac(this%nrow, this%ncol))
+        this%rowcol_to_ind_ac = -99
 
         allocate (this%local_active_cell(this%nrow, this%ncol))
         this%local_active_cell = -99

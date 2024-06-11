@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import smash
-from smash._constant import MAPPING
+import os
 
 import numpy as np
 import pytest
-import os
+
+import smash
 
 
 def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
@@ -16,10 +16,10 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
     problem = {
         "num_vars": 3,
         "names": ["cp", "kexc", "hp"],
-        "bounds": [(1, 500), (-50, 50), (0, 1)],
+        "bounds": [(20, 1000), (-20, 5), (0.2, 0.8)],
     }
 
-    sample = smash.factory.generate_samples(problem, n=20, random_state=11)
+    sample = smash.factory.generate_samples(problem, n=30, random_state=11)
 
     multisets = {}
 
@@ -60,9 +60,7 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
         # Remove multi-linear temporarily (solver precision issue)
         for lc_key, lc_value in ret.lcurve_multiset.items():
             if key != "mopt_ml":
-                res[f"multiset_estimate.{key}.lcurve_multiset.{lc_key}"] = np.array(
-                    lc_value, ndmin=1
-                )
+                res[f"multiset_estimate.{key}.lcurve_multiset.{lc_key}"] = np.array(lc_value, ndmin=1)
 
     return res
 
@@ -72,6 +70,4 @@ def test_multiset_estimate():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(
-            value, pytest.baseline[key][:], atol=1e-03, equal_nan=True
-        ), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key

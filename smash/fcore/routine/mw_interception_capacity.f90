@@ -14,6 +14,7 @@ module mw_interception_capacity
     use mwd_sparse_matrix_manipulation, only: sparse_matrix_to_matrix
     use md_gr_operator, only: gr_interception
     use m_array_creation, only: arange
+    use mwd_atmos_manipulation, only: get_atmos_data_time_step
 
     implicit none
 
@@ -31,11 +32,11 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: ci
 
         real(sp), dimension(mesh%nrow, mesh%ncol, nday) :: daily_prcp, daily_pet
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix_prcp, matrix_pet, h, daily_cumulated, sub_daily_cumulated
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: mat_prcp, mat_pet, h, daily_cumulated, sub_daily_cumulated
         real(sp), dimension(:), allocatable :: cmax
         real(sp), dimension(:, :, :), allocatable :: diff
         real(sp) :: stt, stp, step, pn, en, ei
-        integer :: i, j, ind, row, col, n
+        integer :: t, i, ind, row, col, n
 
         !% =========================================================================================================== %!
         !%   Daily aggregation of precipitation and evapotranspiration
@@ -44,39 +45,28 @@ contains
         daily_prcp = 0._sp
         daily_pet = 0._sp
 
-        do i = 1, setup%ntime_step
+        do t = 1, setup%ntime_step
 
-            if (setup%sparse_storage) then
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "pet", mat_pet)
 
-                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(i), matrix_prcp)
-                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(i), matrix_pet)
+            ind = day_index(t)
 
-            else
-
-                matrix_prcp = input_data%atmos_data%prcp(:, :, i)
-                matrix_pet = input_data%atmos_data%pet(:, :, i)
-
-            end if
-
-            ind = day_index(i)
-
-            daily_prcp(:, :, ind) = daily_prcp(:, :, ind) + matrix_prcp
-            daily_pet(:, :, ind) = daily_pet(:, :, ind) + matrix_pet
+            where (mat_prcp .ge. 0._sp) daily_prcp(:, :, ind) = daily_prcp(:, :, ind) + mat_prcp
+            where (mat_pet .ge. 0._sp) daily_pet(:, :, ind) = daily_pet(:, :, ind) + mat_pet
 
         end do
 
         daily_cumulated = 0._sp
 
-        do i = 1, nday
+        do t = 1, nday
 
             do col = 1, mesh%ncol
-
                 do row = 1, mesh%nrow
 
-                    daily_cumulated(row, col) = daily_cumulated(row, col) + min(daily_prcp(row, col, i), daily_pet(row, col, i))
+                    daily_cumulated(row, col) = daily_cumulated(row, col) + min(daily_prcp(row, col, t), daily_pet(row, col, t))
 
                 end do
-
             end do
 
         end do
@@ -99,31 +89,21 @@ contains
             h = 0._sp
             sub_daily_cumulated = 0._sp
 
-            do j = 1, setup%ntime_step
+            do t = 1, setup%ntime_step
 
-                if (setup%sparse_storage) then
-
-                    call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(j), matrix_prcp)
-                    call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(j), matrix_pet)
-
-                else
-
-                    matrix_prcp = input_data%atmos_data%prcp(:, :, j)
-                    matrix_pet = input_data%atmos_data%pet(:, :, j)
-
-                end if
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "pet", mat_pet)
 
                 do col = 1, mesh%ncol
-
                     do row = 1, mesh%nrow
 
                         if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                        if (matrix_prcp(row, col) .ge. 0._sp .and. matrix_pet(row, col) .ge. 0._sp) then
+                        if (mat_prcp(row, col) .ge. 0._sp .and. mat_pet(row, col) .ge. 0._sp) then
 
-                            call gr_interception(matrix_prcp(row, col), matrix_pet(row, col), cmax(i), &
+                            call gr_interception(mat_prcp(row, col), mat_pet(row, col), cmax(i), &
                             & h(row, col), pn, en)
-                            ei = matrix_pet(row, col) - en
+                            ei = mat_pet(row, col) - en
 
                         else
 
@@ -134,7 +114,6 @@ contains
                         sub_daily_cumulated(row, col) = sub_daily_cumulated(row, col) + ei
 
                     end do
-
                 end do
 
             end do
@@ -144,7 +123,6 @@ contains
         end do
 
         do col = 1, mesh%ncol
-
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
@@ -155,7 +133,6 @@ contains
                 ci(row, col) = cmax(ind)
 
             end do
-
         end do
 
     end subroutine adjust_interception_capacity

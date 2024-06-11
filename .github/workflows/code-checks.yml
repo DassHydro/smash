@@ -1,0 +1,48 @@
+# This workflow will check code (tapenade compare and ruff check)
+name: Code Checks
+
+on:
+
+    push:
+        branches:
+        - main
+
+    pull_request:
+        branches:
+        - main
+        - maintenance/**
+        
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+        
+jobs:
+    ubuntu:
+        name: Code checks ubuntu-latest
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: "3.11"
+
+        - name: Install dependencies
+          run: |
+            sudo apt-get update
+            sudo apt-get install build-essential openjdk-17-jdk
+            python -m venv test
+            . test/bin/activate
+            python -m pip install --upgrade pip
+            pip install ruff
+
+        - name: Tapenade Compare
+          run: |
+            make tap-cmp
+
+        - name: Ruff Check
+          run: |
+            . test/bin/activate
+            make check

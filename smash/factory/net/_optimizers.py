@@ -4,7 +4,6 @@ import numpy as np
 
 
 class SGD:
-
     """
     Compile the neural network with Stochastic Gradient Descent (SGD) optimizer.
 
@@ -17,9 +16,7 @@ class SGD:
         The momentum used to smooth the gradient updates.
     """
 
-    def __init__(
-        self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options
-    ):
+    def __init__(self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options):
         self.learning_rate = learning_rate
 
         self.momentum = momentum
@@ -36,7 +33,6 @@ class SGD:
 
 
 class Adam:
-
     """
     Compile the neural network with Adaptive Moment Estimation (Adam) optimizer.
 
@@ -88,7 +84,6 @@ class Adam:
 
 
 class Adagrad:
-
     """
     Compile the neural network with Adaptive Gradient (Adagrad) optimizer.
 
@@ -118,7 +113,6 @@ class Adagrad:
 
 
 class RMSprop:
-
     """
     Compile the neural network with Root Mean Square Propagation (RMSprop) optimizer.
 
@@ -151,5 +145,6 @@ class RMSprop:
 
         self.Eg = self.rho * self.Eg + (1 - self.rho) * np.power(grad_wrt_w, 2)
 
-        # Divide the learning rate for a weight by a running average of the magnitudes of recent gradients for that weight
+        # Divide the learning rate for a weight by a running average of the magnitudes of recent gradients for
+        # that weight
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.Eg + self.eps)

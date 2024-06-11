@@ -1,4 +1,5 @@
 from setuptools import setup
+
 import versioneer
 
 # Use setup.py to only enable versioneer else use pyproject.toml

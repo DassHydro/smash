@@ -1,25 +1,25 @@
 from __future__ import annotations
 
-from smash._constant import DATASET_NAME
-
-from smash.io.mesh import read_mesh
-from smash.io.setup import read_setup
-
 import os
 
+from smash._constant import DATASET_NAME
+from smash.io.mesh import read_mesh
+from smash.io.setup import read_setup
 
 __all__ = ["load_dataset"]
 
 DATASET_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-# TODO: Maybe remove the dataset from the GitHub repository and fetch the data anywhere else (cloud, zenodo, etc)
+# TODO: Maybe remove the dataset from the GitHub repository and fetch the data anywhere else (cloud, zenodo,
+# etc)
 # It requires internet connexion
 def load_dataset(name: str):
     """
     Load dataset.
 
-    A function allowing user to load different kinds of data or pre-filled files for a first use of the `smash` package.
+    A function allowing user to load different kinds of data or pre-filled files for a first use of the
+    `smash` package.
 
     Parameters
     ----------
@@ -27,9 +27,12 @@ def load_dataset(name: str):
         The dataset name. Should be one of
 
         - ``'flwdir'`` : The absolute path to a 1km² France flow directions in `smash` convention.
-        - ``'cance'`` : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment at ``hourly`` timestep.
-        - ``'lez'`` : Setup and mesh dictionaries used to initialize the Model object on the Lez catchment at ``daily`` timestep.
-        - ``'france'`` : Setup and mesh dictionaries used to initialize the Model object on the France at ``hourly`` timestep.
+        - ``'cance'`` : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment
+          at ``hourly`` time step.
+        - ``'lez'`` : Setup and mesh dictionaries used to initialize the Model object on the Lez catchment at
+          ``daily`` time step.
+        - ``'france'`` : Setup and mesh dictionaries used to initialize the Model object on the France at
+          ``hourly`` time step.
 
     Returns
     -------
@@ -100,21 +103,15 @@ def load_dataset(name: str):
     elif name.lower() in ["cance", "lez", "france"]:
         cptl_name = name.capitalize()
 
-        setup = read_setup(
-            os.path.join(DATASET_PATH, cptl_name, f"setup_{cptl_name}.yaml")
-        )
-        mesh = read_mesh(
-            os.path.join(DATASET_PATH, cptl_name, f"mesh_{cptl_name}.hdf5")
-        )
+        setup = read_setup(os.path.join(DATASET_PATH, cptl_name, f"setup_{cptl_name}.yaml"))
+        mesh = read_mesh(os.path.join(DATASET_PATH, cptl_name, f"mesh_{cptl_name}.hdf5"))
 
         setup.update(
             {
                 "qobs_directory": os.path.join(DATASET_PATH, cptl_name, "qobs"),
                 "prcp_directory": os.path.join(DATASET_PATH, cptl_name, "prcp"),
                 "pet_directory": os.path.join(DATASET_PATH, cptl_name, "pet"),
-                "descriptor_directory": os.path.join(
-                    DATASET_PATH, cptl_name, "descriptor"
-                ),
+                "descriptor_directory": os.path.join(DATASET_PATH, cptl_name, "descriptor"),
             }
         )
 

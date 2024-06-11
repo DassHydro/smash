@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from smash.factory.samples._standardize import _standardize_generate_samples_args
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from scipy.stats import truncnorm
 
-from typing import TYPE_CHECKING
+from smash.factory.samples._standardize import _standardize_generate_samples_args
 
 if TYPE_CHECKING:
-    from typing import Any
     from collections.abc import Iterator
+    from typing import Any
+
     from smash.util._typing import Numeric
 
 
@@ -18,7 +19,6 @@ __all__ = ["Samples", "generate_samples"]
 
 
 class Samples:
-
     """
     Represents the generated samples result.
 
@@ -52,11 +52,7 @@ class Samples:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -83,7 +79,7 @@ class Samples:
         Examples
         --------
         >>> from smash.factory import generate_samples
-        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1, 200], [1, 500]]}
 
         Generate samples
 
@@ -114,23 +110,17 @@ class Samples:
         """
 
         if end < start:
-            raise ValueError(
-                f"start argument {start} must be lower than end argument {end}"
-            )
+            raise ValueError(f"start argument {start} must be lower than end argument {end}")
 
         if start < 0:
             raise ValueError(f"start argument {start} must be greater or equal to 0")
 
         if end > self.n_sample:
-            raise ValueError(
-                f"end argument {end} must be lower or equal to the sample size {self.n_sample}"
-            )
+            raise ValueError(f"end argument {end} must be lower or equal to the sample size {self.n_sample}")
 
         slc_n = end - start
 
-        slc_names = [key for key in self._problem["names"]] + [
-            "_dst_" + key for key in self._problem["names"]
-        ]
+        slc_names = list(self._problem["names"]) + ["_dst_" + key for key in self._problem["names"]]
 
         slc_dict = {key: getattr(self, key)[start:end] for key in slc_names}
 
@@ -151,8 +141,8 @@ class Samples:
         by : `int`, default 1
             The size of the sample slice.
             If **by** is not a multiple of the sample size :math:`n` the last slice iteration size will
-            be updated to the maximum range. It results in :math:`k=\\lfloor{\\frac{n}{by}}\\rfloor` iterations of size :math:`by`
-            and one last iteration of size :math:`n - k \\times by`.
+            be updated to the maximum range. It results in :math:`k=\\lfloor{\\frac{n}{by}}\\rfloor`
+            iterations of size :math:`by` and one last iteration of size :math:`n - k \\times by`.
 
         Yields
         ------
@@ -166,7 +156,7 @@ class Samples:
         Examples
         --------
         >>> from smash.factory import generate_samples
-        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1, 200], [1, 500]]}
 
         Generate samples
 
@@ -201,9 +191,7 @@ class Samples:
         """
 
         if by > self.n_sample:
-            raise ValueError(
-                f"by argument {by} must be lower or equal to the sample size {self.n_sample}"
-            )
+            raise ValueError(f"by argument {by} must be lower or equal to the sample size {self.n_sample}")
 
         ind_start = 0
         ind_end = by
@@ -222,7 +210,8 @@ class Samples:
         Parameters
         ----------
         axis : `int`, default 0
-            The axis along which the generated samples of each rainfall-runoff parameter and/or initial state will be joined.
+            The axis along which the generated samples of each rainfall-runoff parameter and/or initial state
+            will be joined.
 
         Returns
         -------
@@ -232,7 +221,7 @@ class Samples:
         Examples
         --------
         >>> from smash.factory import generate_samples
-        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1, 200], [1, 500]]}
 
         Generate samples
 
@@ -262,7 +251,7 @@ class Samples:
         Examples
         --------
         >>> from smash.factory import generate_samples
-        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1, 200], [1, 500]]}
 
         Generate samples
 
@@ -318,14 +307,16 @@ def generate_samples(
             If not given, generates parameters sets with a random seed.
 
     mean : `dict[str, float]` or None, default None
-        If the samples are generated using a Gaussian distribution (i.e. ``'normal'`` or ``'gaussian'`` in **generator**),
-        **mean** is used to define the mean of the distribution for each variable.
-        It is a dictionary where keys are the name of the rainfall-runoff parameters and/or initial states defined in the **problem** argument.
-        In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in **problem**.
-        None value inside the dictionary will be filled in with the center of the rainfall-runoff parameter and/or initial state bounds.
+        If the samples are generated using a Gaussian distribution (i.e. ``'normal'`` or ``'gaussian'`` in
+        **generator**), **mean** is used to define the mean of the distribution for each variable.
+        It is a dictionary where keys are the name of the rainfall-runoff parameters and/or initial states
+        defined in the **problem** argument. In this case, the truncated normal distribution may be used with
+        respect to the boundary conditions defined in **problem**. None value inside the dictionary will be
+        filled in with the center of the rainfall-runoff parameter and/or initial state bounds.
 
         .. note::
-            If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the variable bounds.
+            If not given and Gaussian distribution is used, the mean of the distribution will be set to the
+            center of the variable bounds.
 
     coef_std : `float` or None, default None
         A coefficient related to the standard deviation in case of Gaussian generator:
@@ -375,9 +366,7 @@ def generate_samples(
     2  1651.164853  566.051802   4.765685  747.020334
     """
 
-    args = _standardize_generate_samples_args(
-        problem, generator, n, random_state, mean, coef_std
-    )
+    args = _standardize_generate_samples_args(problem, generator, n, random_state, mean, coef_std)
 
     return _generate_samples(*args)
 
@@ -413,9 +402,7 @@ def _generate_samples(
         elif generator in ["normal", "gaussian"]:
             sd = (upp - low) / coef_std
 
-            trunc_normal = truncnorm(
-                (low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd
-            )
+            trunc_normal = truncnorm((low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd)
 
             ret_dict[p] = trunc_normal.rvs(size=n)
 

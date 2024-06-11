@@ -6,7 +6,45 @@
 smash 1.0.0 Release Notes
 =========================
 
-The smash 1.0.0 release brings major updates aimed at simplifying the user experience while continuing the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are: 
+The smash 1.0.0 release brings major updates aimed at simplifying the user experience while continuing the 
+ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+- ``PyPI installation``
+    `smash` is now available on `PyPI <https://pypi.org/>`__ with the following distribution name
+    ``hydro-smash``.
+
+- ``CPU parallel computation``
+    CPU parallel computation in simulation and optimization. This has been made possible using the 
+    `OpenMP <https://www.openmp.org/>`__ library, whose most of the directives are handled by Tapenade to
+    generate a parallel adjoint code.
+
+- ``Memory management``
+    The memory management has been improved in two critical sections:
+
+    - Atmospheric data storage
+        The memory management of atmospheric data has been improved by using sparse matrices to store
+        precipitation, potential evapotranspiration and snow data.
+
+    - Storage of variables during the adjoint code forward sweep
+        The time-stepping loop fills up the memory space during the forward sweep which can cause the code
+        to crash. To reduce the memory peak, checkpoints have been added during the time-stepping loop.
+
+- ``lat-lon meshing``
+    It is now possible to work with spatial data whose unit is in degree.
+
+- ``bayesian estimation``
+    A bayesian estimation module has been added to perform parameter estimation and uncertainty quantification
+
+    .. hint::
+        See the :ref:`math_num_documentation.bayesian_estimation` section.
+
+- ``modular structure``
+    The structure of the model has been modularised so that the snow, hydrological and routing modules can now
+    be selected independently.
+
+- ``API redesign``
+    The API has been redesigned. The essence remains the same, but there have been a lot of changes to the
+    names of methods and arguments and the way variables are passed to functions.
 
 ------------
 Contributors
@@ -14,26 +52,717 @@ Contributors
 
 This release was made possible thanks to the contributions of:
 
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+- Benjamin Renard (`<https://github.com/benRenard>`__)
+- Thomas de Fournas (`<https://github.com/ThomasdeFournas>`__)
+- Apolline El Baz (`<https://github.com/asjeb>`__)
+- Pierre-André Garambois (`<https://github.com/pag13>`__)
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+
 ---------------
 Compatibilities
 ---------------
 
-A new package wheel has been added to the list of dependencies.
+- The `smash` package is now available on `PyPI <https://pypi.org/>`__ and can be installed as follows:
+  
+  .. code-block:: none
 
-The SALib package has been removed from the list of dependencies.
+    pip install hydro-smash
+
+- The `gdal <https://gdal.org/api/python_bindings.html>`__ package has been replaced by
+  `rasterio <https://rasterio.readthedocs.io/en/stable/>`__. This change has been made purely to improve
+  the distribution of `smash`. Despite the better performance in terms of raster reading time, gdal does
+  not provide a binary wheel directly, unlike rasterio
+  (see `discussion <https://github.com/OSGeo/gdal/issues/3060>`__).
+
+- The `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__ plugin has been added to the list of
+  dependencies to perform test coverage.
+
+- The `black <https://black.readthedocs.io/en/stable/>`__ package has been removed from the list of
+  dependencies and replaced by the `ruff <https://docs.astral.sh/ruff/>`__ package. 
+
+- The `SALib <https://salib.readthedocs.io/en/latest/>`__ package has been removed from the list of
+  dependencies. The sensitivity analysis can still be performed but external to `smash`.
 
 ------------
 Deprecations
 ------------
 
+Signatures sensitivity
+**********************
+
+The method to perform sensitivity analysis on hydrological signatures is no longer available. Sensitivity
+analysis is not specific to `smash` and can be considered as `smash` post-processing. This is why we have
+decided to withdraw the direct use of sensitivity analysis tools in `smash`, without preventing independent
+post-processing.
+
+Nelder-Mead optimizer
+*********************
+
+One of the optimizers available for spatially uniform parameter optimization was the ``Nelder-Mead``
+optimizer. Seeing no particular advantage in using this optimizer rather than the ``step-by-step`` optimizer,
+it was decided to withdraw it.
+
+kge2 efficiency metric
+**********************
+
+This efficiency metric has been removed as it is not used and is of no interest compared to the ``kge``
+efficiency metric.
+
 ------------
 Improvements
 ------------
+
+Atmospheric data sparse storage
+*******************************
+
+The memory management of atmospheric data has been improved by using sparse matrices to store precipitation,
+potential evapotranspiration and snow data. The previous sparse storage method consisted of simply passing 
+from a 2D matrix storage of size (``nrow``, ``ncol``) to a 1D vector of active cells of size (``nac``) where
+:math:`\text{nac} \leq \text{nrow} \times \text{ncol}`. In this version, this method has been improved by 
+adding management of redundant values in the input data. We know for precipitation, potential
+evapotranspiration and snow that most of the arrays are filled with 0. If more than 50% of the array is filled
+with 0, then it's worth saving only the indices and values of cells whose value is greater than 0. This method
+drastically reduces the amount of memory used by not storing arrays where it is not raining or arrays of
+potential evapotranspiration in the middle of the night.
+
+Adjoint code time-stepping checkpoints
+**************************************
+
+We use checkpoint to reduce the maximum memory usage of the adjoint model.
+Without checkpoints, the maximum memory required is equal to :math:`K \times T`, where
+:math:`K \in \left[0, \inf \right[` is the memory used at each time step and :math:`T \in \left[1, \inf \right[`
+the total number of time steps. With checkpoints, the maximum memory required is equal to
+:math:`K \times C + K \times \frac{T}{C}`, where :math:`C \in \left[1, T \right]` is the number of checkpoints.
+Finding out what value of :math:`C` minimizes it, :math:`C` must be equal to the square root of the number of
+time steps :math:`T`. 
+:math:`K \times C + K \times \frac{T}{C}` becomes :math:`2K \sqrt{T}`. Therefore, the memory gain is
+equivalent to :math:`M = 1 - \frac{2}{\sqrt{T}}`
+
+Modular structure
+*****************
+
+In the previous version, the model structure was defined by modifying the structure option in setup. 
+The possible choices were ``gr-a``, ``gr-b``, ``gr-c`` and ``gr-d`` and described both the ``hydrological``
+module and the ``routing`` module. Now, the structure is defined via 3 modules, ``snow`` module containing
+``zero`` and ``ssn``, ``hydrological`` module containing ``gr4``, ``gr5``, ``grd``, ``loieau`` and ``vic3l``
+and ``routing`` module containing ``lag0``, ``lr`` and ``kw``. The combination of the 3, forms a structure.
+Below is the table of equivalence between the two versions:
+
+.. list-table:: Equivalence between v0.5 and v1.0
+    :widths: 25 25
+    :header-rows: 1
+
+    * - v0.5
+      - v1.0
+    * - ``gr-a``
+      - No equivalence
+    * - ``gr-b``
+      - No equivalence
+    * - ``gr-c``
+      - No equivalence
+    * - ``gr-d``
+      - ``zero`` - ``grd`` - ``lr``
+
+Mesh generation
+***************
+
+The mesh generation has been improved to be equally effective at delineating a catchment regardless of the
+domain size of the input flow direction file. In the previous version, it was necessary to crop the flow
+direction file over a region to speed up calculations. Now, before delineating a catchment, the flow direction
+file is clipped by taking as its maximum extension the number of cells required to delineate a hypothetically
+rectangular catchment one cell wide. In this way, it is possible to create a mesh of a French catchment using
+worldwide flow direction.
+
+Reading of atmospheric and physiograhic data
+********************************************
+
+The reading of geo-referenced data (i.e. precipitation, snow, descriptor, etc) has been improved to manage:
+
+- ``Resolution missmatch``
+    Nearest-Neighbour resample algorithm is used to match the resolution of the data and the resolution of the
+    mesh.
+
+- ``Overlap missmatch``
+    The reading window is correctly shifted to overlap the data and the mesh on the nearest overlapping cell.
+
+- ``Out Of Bound``
+    In the previous version, when the mesh extent was larger than the data extent a not a very informative
+    error was returned. It is now possible to read data whose extent partially include the mesh extent. The
+    corresponding out of bound extent will be filled in with no data.
+
+A warning is returned if one of the 3 cases below is encountered when reading the data.
+
+Mean atmospheric data
+*********************
+
+Computing the spatial averages of atmospheric data for each catchment took a considerable amount of time,
+particularly on large domains with a lot of catchments. It still take some times but has been reduced by more
+than half. The spatial averages of atmospheric data are optional and are only required for precipitation when
+optimizing with signatures. Therefore, we added a new option in the setup, ``compute_mean_atmos`` which by
+default is set to True, but can be set to False to disable the computation of the spatial averages of
+atmospheric data.
+
+Hydrograph segmentation and signatures-based optimization
+*********************************************************
+
+The baseflow separation method used in the hydrograph segmentation algorithm has been rewritten in Fortran 
+to improve the efficiency of signature calculation, especially for signature-based optimization. 
+The multi-criteria optimization method is now applicable for all studied event-based signatures.
+
+Model attributes
+****************
+
+As the API has been redesigned, the attributes of the Model object have changed, below is the equivalence
+between the two versions:
+
+.. list-table:: Equivalence between v0.5 and v1.0
+    :widths: 25 25
+    :header-rows: 1
+
+    * - v0.5
+      - v1.0
+    * - ``Model.setup``
+      - ``Model.setup``
+    * - ``Model.mesh``
+      - ``Model.mesh``
+    * - ``Model.input_data``
+      - ``Model.response_data``, ``Model.physio_data``, ``Model.atmos_data``
+    * - ``Model.parameters``
+      - ``Model.rr_parameters``
+    * - ``Model.states``
+      - ``Model.rr_initial_states``
+    * - ``Model.output``
+      - ``Model.response``, ``Model.rr_final_states``
+
+Only two attributes have not been changed, ``setup`` and ``mesh``. For the rest, either they have
+been split into several attributes (``input_data`` and ``ouput``) or the structure of the attribute itself has
+been modified (``parameters`` and ``states``). Below some equivalences for each modified attributes on how to
+access variables.
+
+.. list-table:: Equivalence between v0.5 and v1.0 for Model.input_data
+    :widths: 25 25
+    :header-rows: 1
+
+    * - v0.5
+      - v1.0
+    * - ``Model.input_data.qobs``
+      - ``Model.response_data.q``
+    * - ``Model.input_data.prcp``
+      - ``Model.atmos_data.prcp``
+    * - ``Model.input_data.mean_prcp``
+      - ``Model.atmos_data.mean_prcp``
+    * - ``Model.input_data.descriptor``
+      - ``Model.physio_data.descriptor``
+
+.. list-table:: Equivalence between v0.5 and v1.0 for Model.parameters
+    :widths: 25 25
+    :header-rows: 1
+
+    * - v0.5
+      - v1.0
+    * - ``Model.parameters.cp``
+      - ``Model.get_rr_parameters("cp")``
+
+.. list-table:: Equivalence between v0.5 and v1.0 for Model.states
+    :widths: 25 25
+    :header-rows: 1
+
+    * - v0.5
+      - v1.0
+    * - ``Model.states.hp``
+      - ``Model.get_rr_initial_states("hp")``
+
+.. list-table:: Equivalence between v0.5 and v1.0 for Model.output
+    :widths: 25 25
+    :header-rows: 1
+
+    * - v0.5
+      - v1.0
+    * - ``Model.output.qsim``
+      - ``Model.response.q``
+    * - ``Model.output.fstates``
+      - ``Model.rr_final_states``
+    * - ``Model.output.fstates.hp``
+      - ``Model.get_rr_final_states("hp")``
 
 ------------
 New Features
 ------------
 
+CPU parallel computation
+************************
+
+It is now possible to run parallel simulations within a single Model object. This has been made possible using
+the `OpenMP <https://www.openmp.org/>`__ library, whose most of the directives are handled by Tapenade to
+generate a parallel adjoint code. To activate this option, simply pass a number of CPUs greater than 1 to the
+``common_options`` argument of the various simulation methods (``forward_run``, ``optimize``, 
+``bayesian_optimize``, etc.).
+
+.. code-block:: python
+
+    >>> model.forward_run() # Sequential run
+    >>> model.forward_run(common_options={"ncpu": 5}) # Parallel run on 5 CPUs
+
+
+Lat-Lon meshing
+***************
+
+It is now possible to work with spatial data whose unit is in degree. A mesh can be produced from flow
+direction whose unit is the degree, so that atmospheric data can be read on the same projection.
+
+Bayesian estimation
+*******************
+
+A bayesian estimation module has been added to perform parameter estimation and uncertainty quantification.
+
+.. hint::
+    See the :ref:`math_num_documentation.bayesian_estimation` section and `smash.Model.bayesian_optimize`
+    API reference.
+
+This bayesian estimation method can be invoked as follows:
+
+.. code-block:: python
+
+    >>> model.bayesian_optimize()
+
+Strutural error mu and sigma can be accessed as follows once the bayesian estimation has been performed:
+
+.. code-block:: python
+
+    >>> model.get_serr_mu()
+    >>> model.get_serr_sigma()
+
+New snow module
+***************
+
+A new snow module has been introduced:
+
+- ``ssn``
+    This snow module is a simple degree-day snow module.
+
+.. hint::
+    See the :ref:`Snow Module <math_num_documentation.forward_structure.snow_module>` section.
+
+This snow module can be selected using the ``snow_module`` setup option:
+
+.. code-block:: yaml
+
+    snow_module: "ssn"
+
+Precipitation partitioning
+**************************
+
+Since a snow module has been introduced, a partitioning of the total precipitation into liquid and solid
+precipitation has been implemented. The partitioning method is derived from a classical parametric S-shaped
+curve :cite:p:`garavaglia2017impact`.
+
+The precipitation partitioning can be selected using the ``prcp_partitioning`` setup option:
+
+.. code-block:: yaml
+
+    prcp_partitioning: True
+
+New hydrological modules
+************************
+
+4 new hydrological modules have been introduced:
+
+- ``gr4``
+    This hydrological module is derived from the GR4 model :cite:p:`perrin2003improvement`.
+
+- ``gr5``
+    This hydrological module is derived from the GR5 model :cite:p:`LeMoine_2008`.
+
+- ``loieau``
+    This hydrological module is derived from the GR model :cite:p:`Folton_2020`.
+
+- ``vic3l``
+    This hydrological module is derived from the VIC model :cite:p:`liang1994simple`.
+
+.. hint::
+    See the :ref:`Hydrological Module <math_num_documentation.forward_structure.hydrological_module>` section.
+
+These hydrological modules can be selected using the ``hydrological_module`` setup option.
+
+.. code-block:: yaml
+
+    hydrological_module: "gr5"
+    hydrological_module: "loieau"
+    hydrological_module: "vic3l"
+
+New routing modules
+*******************
+
+2 new routing modules have been introduced:
+
+- ``lag0``
+    This routing module is a simple aggregation of upstream discharge to downstream following the drainage
+    plan
+
+- ``kw``
+    This routing module is based on a conceptual 1D kinematic wave model that is numerically solved with a
+    linearized implicit numerical scheme :cite:p:`ChowAppliedhydrology`. This is applicable given the drainage
+    plan :math:`\mathcal{D}_{\Omega}\left(x\right)` that enables reducing the routing problem to 1D. 
+
+.. hint::
+    See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>` section.
+
+These routing modules can be selected using the ``routing_module`` setup option.
+
+.. code-block:: yaml
+
+    routing_module: "lag0"
+    routing_module: "kw"
+
+New efficiency metrics
+**********************
+
+4 new efficiency metrics have been introduced:
+
+- ``NNSE``
+    The Normalized Nash-Sutcliffe Efficiency
+
+- ``MAE``
+    The Mean Absolute Error
+
+- ``MAPE``
+    The Mean Absolute Percentage Error
+
+- ``MSE``
+    The Mean Squared Error
+
+.. hint::
+        See the :ref:`math_num_documentation.efficiency_error_metric` section.
+
+These efficiency metrics can be selected using the ``cost_options`` argument in a simulation method.
+
+.. code-block:: python
+
+    >>> model.forward_run(cost_options={"jobs_cmpt": "mape"})
+    >>> model.optimize(cost_options={"jobs_cmpt": "nnse"})
+
+or in the `smash.metrics` method
+
+.. code-block:: python
+
+    >>> smash.metrics(model, "mse")
+
+Efficiency metric discharge transformation
+******************************************
+
+It is now possible to apply transformations to the discharge to calculate the efficiency metrics. 
+Two transformations are available:
+
+- ``sqrt``
+    Square root transformation
+
+- ``inv``
+    Multiplicative inverse transformation
+
+This can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(cost_options={"jobs_cmpt": ["kge", "kge"], 
+    ...                              "jobs_cmpt_tfm": ["keep", "inv"]})
+
+Return optional variables
+*************************
+
+It is now possible to return certain optional variables directly from the simulation function call. 
+Each function has its own possible optional variables to return. It can be used as follows:
+
+.. code-block:: python
+
+    >>> ret = model.optimize(return_options={"q_domain": True, "iter_cost": True, "cost": True})
+    >>> ret
+    cost: <class 'float'>
+    iter_cost: <class 'numpy.ndarray'>
+    q_domain: <class 'numpy.ndarray'>
+    time_step: <class 'pandas.core.indexes.datetimes.DatetimeIndex'>
+    >>> ret.cost
+    0.09739679098129272
+    >>> ret.iter_cost
+    [0.64318967 0.09739679]
+    >>> ret.q_domain
+    [[[-9.9000000e+01 -9.9000000e+01 -9.9000000e+01 ... -9.9000000e+01
+       -9.9000000e+01 -9.9000000e+01]
+    ...
+      [-9.9000000e+01 -9.9000000e+01 -9.9000000e+01 ... -9.9000000e+01
+       -9.9000000e+01 -9.9000000e+01]]]
+    >>> ret.q_domain.shape  # shape (nrow, ncol, ntime_step)
+    (28, 28, 1440)
+
+Two variables can be returned at certain time steps only, ``q_domain`` and ``rr_states`` through the
+``time_step`` option, by default all the time steps are returned.
+
+.. code-block:: python
+
+    >>> ret = model.optimize(return_options={"q_domain": True, "rr_states": True})
+    >>> ret.q_domain.shape  # shape (nrow, ncol, ntime_step)
+    (28, 28, 1440)
+    >>> len(ret.rr_states)
+    1440
+
+    >>> ret = model.optimize(return_options={"q_domain": True, "rr_states": True, 
+    ...                                      "time_step": model.setup.end_time})
+    >>> ret.q_domain.shape  # shape (nrow, ncol, ntime_step)
+    (28, 28, 1)
+    >>> len(ret.rr_states)
+    1
+
+Multi-linear/polynomial descriptors
+***********************************
+
+It is now possible, only for ``multi-linear`` and ``multi-polynomial`` mappings, to choose the descriptors to
+be linked to the optimized parameters. In the previous version, all the descriptors where choosen for all
+optimized parameters. It can be specified as follows:
+
+.. code-block:: python
+
+    >>> model.optimize("multi-linear", 
+    ...                optimize_options={"descriptor": dict(cp=["slope", "dd"], ct=["slope"], 
+    ...                                                     kexc=["slope", "dd"], llr=["dd"])})
+
+New early stopping feature for ANN-based regionalization
+********************************************************
+
+A new feature for ANN-based regionalization method to stop training when the loss function does not decrease 
+below the current optimal value for ``early_stopping`` consecutive epochs. It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(mapping="ann", 
+    ...                optimize_options={"termination_crit": dict(early_stopping=10)})
+    </> Optimize
+        At epoch      1    J =  1.150821    |proj g| =  0.002341
+        At epoch      2    J =  1.142061    |proj g| =  0.002610
+        ...
+        At epoch     26    J =  0.103324    |proj g| =  0.005455
+        At epoch     27    J =  0.089769    |proj g| =  0.016618
+        At epoch     28    J =  0.104150    |proj g| =  0.019718
+        ...
+        At epoch     36    J =  0.185123    |proj g| =  0.011936
+        At epoch     37    J =  0.179911    |proj g| =  0.011819
+        Training:  92%|██████████████████████████▊  | 37/40 [00:30<00:02,  1.23it/s]
+
+
+New multiple optimize method
+****************************
+
+A new simulation method has been introduced, ``smash.Model.multiple_optimize``. In a similar way to
+``smash.Model.multiple_forward_run``, it is now possible to run multiple optimization from different
+starting points in parallel. The output of this method can be passed to the ``smash.Model.multiset_estimate``
+method. It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {
+           'num_vars': 4,
+           'names': ['cp', 'ct', 'kexc', 'llr'],
+           'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
+    }
+    >>> sr = generate_samples(problem, n=3, random_state=11)
+    >>> mopt = smash.multiple_optimize(
+        model,
+        samples=sr,
+        optimize_options={"termination_crit": {"maxiter": 2}}
+    )
+    >>> mest = smash.multiset_estimate(model, multiset=mopt)
+
+
+New metric method
+*****************
+
+A new method to compute efficiency metric or error from a `smash.Model` object been introduced. It can
+be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize()
+    >>> ret = smash.metrics(model, "kge")
+    >>> ret
+    array([0.96001273, 0.86749017, 0.81862521])
+
+New default optimize options method
+***********************************
+
+New methods, `smash.default_optimize_options` and `smash.default_bayesian_optimize_options` have been added to
+retrieve what default options will be used with a certain ``mapping`` and ``optimizer``. These methods will
+return a dictionary containing default value that can be modified afterwards by the user. It can be used as
+follows:
+
+.. code-block:: python
+
+    >>> opt_u = smash.default_optimize_options(model, mapping="uniform")
+    >>> opt_u
+    {
+        'parameters': ['cp', 'ct', 'kexc', 'llr'],
+        'bounds': {
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'kexc': (-50, 50),
+            'llr': (1e-06, 1000.0)
+        },
+        'control_tfm': 'sbs',
+        'termination_crit': {'maxiter': 50},
+    }
+    >>> opt_u["termination_crit"] = 100
+    >>> opt_u
+    {
+        'parameters': ['cp', 'ct', 'kexc', 'llr'],
+        'bounds': {
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'kexc': (-50, 50),
+            'llr': (1e-06, 1000.0)
+        },
+        'control_tfm': 'sbs',
+        'termination_crit': {'maxiter': 100},
+    }
+
+    >>> model.optimize(mapping="uniform", optimize_options=opt_u)
+
+New optimize control information method
+***************************************
+
+New methods, `smash.optimize_control_info` and `smash.bayesian_optimize_control_info` have been added to
+retrieve control vector information from a certain ``mapping``, ``optimizer``, ``optimize_options`` and
+``cost_options``. These methods will return a dictionary containing control vector information such as,
+initial value, name of each element, bounds, kind of bounds, etc.. These methods can be used to check that the
+control vector created for a given optimization configuration is correct. In addition, in the case of
+bayesian estimation, the names of each element in the control vector can be retrieved in this way in order to
+impose prior distribution on the control vector.
+
+.. code-block:: python
+
+    >>> control_info = smash.optimize_control_info(model)
+    >>> control_info
+    {
+        'l': array([-13.815511 , -13.815511 ,  -4.6052704, -13.815511 ], dtype=float32),
+        'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06], dtype=float32),
+        'n': 4,
+        'name': array(['cp0', 'ct0', 'kexc0', 'llr0'], dtype='<U5'),
+        'nbd': array([2, 2, 2, 2], dtype=int32),
+        'nbk': array([4, 0, 0, 0], dtype=int32),
+        'u': array([6.9077554, 6.9077554, 4.6052704, 6.9077554], dtype=float32),
+        'u_bkg': array([1000., 1000.,   50., 1000.], dtype=float32),
+        'x': array([5.2983174, 6.214608 , 0.       , 1.609438 ], dtype=float32),
+        'x_bkg': array([200., 500.,   0.,   5.], dtype=float32),
+    }
+
+New package architecture
+************************
+
+Two sub-modules have been created ``io`` and ``factory``. The ``io`` sub-module contains all the In/Out
+methods (i.e., `smash.io.read_setup`, `smash.io.save_model`, etc.). The ``factory`` sub-module contains all
+the methods that are used to work around the `smash.Model` object but not dependent on it (i.e.,
+`smash.factory.load_dataset`, `smash.factory.generate_mesh`, etc.).
+
+New precipitation indice
+************************
+
+The vertical gap ``VG`` :cite:p:`emmanuel_2015` has been added to the list of precipitation indices.
+
+New setup options
+*****************
+
+New options have been added to the setup:
+
+- ``prcp_access``, ``pet_access``, ``snow_access`` and ``temp_access``
+    This options (one per atmospheric data type) can be used to specify how are stored the atmospheric
+    data files (i.e., the directories architecture).
+
+    .. hint::
+        See the :ref:`user_guide.others.input_data_convention` convention.
+
+    It can be specified as follows:
+
+    .. code-block:: yaml
+
+        prcp_acces: "%Y/%m/%d"  # files stored by YYYY/MM/DD
+        prcp_acces: "%Y/%m"  # files stored by YYYY/MM
+
+- ``adjust_interception``
+    When constructing a `smash.Model` object with an ``hydrological_module`` set to ``gr4`` or ``gr5`` at
+    sub-daily time step, the maximum capacity of the interception reservoir is automatically adjusted. This
+    can be deactivated (to take another value of this, for example) by setting ``False`` to the
+    ``adjust_interception`` option.
+
+    .. code-block:: yaml
+
+        adjust_interception: False  # deactivate
+
+- ``compute_mean_atmos``
+    When constructing a `smash.Model` object the spatial averages of atmospheric data are computed. This
+    can be deactivated (to take another value of this, for example) by setting ``False`` to the
+    ``compute_mean_atmos`` option.
+
+    .. code-block:: yaml
+
+        compute_mean_atmos: False  # deactivate
+
+- ``read_snow``, ``snow_directory``, ``snow_conversion_factor``, ``read_temp``, ``temp_directory``
+    With the addition of the snow module, new options for reading snow and temperature data have been added to
+    the setup. They are used in a similar way to the precipitation and potential evapotranspiration data.
+
 -----
 Fixes
 -----
+
+No observed discharge available between end_warmup and end_time
+***************************************************************
+
+Solves a problem when the user chooses to optimize the model by taking stations where no observed discharge
+data is available over the calibration period between ``end_warmup`` and ``end_time``.
+
+Error message when no input files were found
+********************************************
+
+The error message has been improved to make it easier to read if a lot of files are missing.
+
+
+Missing descriptor or spatially uniform descriptor
+**************************************************
+
+Fix the error message when a descriptor file is missing and add an error if the physiograhic descriptor
+is spatially uniform.
+
+Model object save and read method with sparse storage
+*****************************************************
+
+The `smash.Model` object was not correctly saved and therefore read when it was constructed with the
+``sparse_storage`` option. ``FortranDerivedTypeArray`` were not currently handled.
+
+Error in projected gradient computation with ANN mapping
+********************************************************
+
+There was an error in the computation of the projected gradient when using ANN mapping. The returned projected 
+gradients were computed only based on :math:`\nabla_\boldsymbol{\rho} \boldsymbol{\theta}`, while the correct term is 
+:math:`\nabla_\boldsymbol{\rho} J = \nabla_\boldsymbol{\theta} J . \nabla_\boldsymbol{\rho} \boldsymbol{\theta}`.
+
+Optimization of initial states with ANN mapping
+***********************************************
+
+There was a typing error leading to a bug when optimizing the initial states using ANN mapping.
+
+Final states not computed when using ANN mapping
+************************************************
+
+The final states were not computed when using ANN mapping for optimization. 
+This issue has been fixed by adding a forward run when the optimization process with ANN has been finished.
+
+Error when computing min and max of physiograhic descriptor
+***********************************************************
+
+There was an error when computing the min and max of a physiograhic descriptor if there is no data (i.e., 
+sea in the domain). No data from tif file are converted to -99 which leads to a wrong minimal value.
+
+Interception reservoir capacity calculation
+*******************************************
+
+Missing values were not properly taken into account in the calculation of the interception reservoir. Missing
+values in Fortran for precipitation and potential evapotranspiration are stored as -99, resulting in
+erroneous values. This was fixed simply by not incorporating these values into the calculation.

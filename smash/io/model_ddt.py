@@ -1,19 +1,20 @@
 from __future__ import annotations
 
+import errno
+import os
+from typing import TYPE_CHECKING
+
+import h5py
+
 from smash._constant import MODEL_DDT_IO_ATTR_KEYS
 from smash.io._error import ReadHDF5MethodError
 from smash.io.handler._hdf5_handler import _dump_dict, _load_hdf5_to_dict
 
-import h5py
-import errno
-import os
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
-    from smash.util._typing import FilePath
     from typing import Any
+
     from smash.core.model.model import Model
+    from smash.util._typing import FilePath
 
 __all__ = ["save_model_ddt", "read_model_ddt"]
 
@@ -25,14 +26,18 @@ def save_model_ddt(model: Model, path: FilePath):
     This method is considerably lighter than `smash.io.save_model` method that saves the entire Model object.
     However, it is not capable of reconstructing the Model object from the saved data file.
 
-    By default, the following data are stored into the `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file:
+    By default, the following data are stored into the `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__
+    file:
 
     - ``snow_module``, ``hydrological_module``, ``routing_module``, ``serr_mu_mapping``,
-      ``serr_sigma_mapping``, ``start_time``, ``end_time``, ``dt``, ``descriptor_name`` from `Model.setup <smash.Model.setup>`
-    - ``xres``, ``yres``, ``xmin``, ``ymax``, ``dx``, ``dy``, ``active_cell``, ``gauge_pos``, ``code``, ``area`` from `Model.mesh <smash.Model.mesh>`
+      ``serr_sigma_mapping``, ``start_time``, ``end_time``, ``dt``, ``descriptor_name`` from
+      `Model.setup <smash.Model.setup>`
+    - ``xres``, ``yres``, ``xmin``, ``ymax``, ``dx``, ``dy``, ``active_cell``, ``gauge_pos``, ``code``,
+      ``area`` from `Model.mesh <smash.Model.mesh>`
     - ``q`` from `Model.response_data <smash.Model.response_data>`
     - ``descriptor`` from `Model.physio_data <smash.Model.physio_data>`
-    - ``mean_prcp``, ``mean_pet``, ``mean_snow``, ``mean_temp`` from `Model.atmos_data <smash.Model.atmos_data>` (``mean_snow`` and ``mean_temp``
+    - ``mean_prcp``, ``mean_pet``, ``mean_snow``, ``mean_temp`` from
+      `Model.atmos_data <smash.Model.atmos_data>` (``mean_snow`` and ``mean_temp``
       are only stored if a snow module has been selected)
     - ``keys``, ``values`` from `Model.rr_parameters <smash.Model.rr_parameters>`
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
@@ -74,7 +79,7 @@ def save_model_ddt(model: Model, path: FilePath):
         for attr, keys in MODEL_DDT_IO_ATTR_KEYS.items():
             try:
                 model_ddt[attr] = {k: getattr(getattr(model, attr), k) for k in keys}
-            except:
+            except Exception:
                 continue
         _dump_dict("model_ddt", model_ddt, h5)
         h5.attrs["_save_func"] = "save_model_ddt"
@@ -84,8 +89,10 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
     """
     Read some derived data types of the Model object from HDF5.
 
-    This method does not reconstruct the Model object because certain information has not been saved from the `smash.io.save_model_ddt` method
-    in order to have light memory backup. This method returns a dictionary whose organisation is similar to the Model object.
+    This method does not reconstruct the Model object because certain information has not been saved from the
+    `smash.io.save_model_ddt` method
+    in order to have light memory backup. This method returns a dictionary whose organisation is similar to
+    the Model object.
 
     Parameters
     ----------
@@ -151,7 +158,8 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
 
         else:
             raise ReadHDF5MethodError(
-                f"Unable to read '{path}' with 'read_model_ddt' method. The file may not have been created with 'save_model_ddt' method."
+                f"Unable to read '{path}' with 'read_model_ddt' method. The file may not have been created "
+                f"with 'save_model_ddt' method."
             )
 
     return model_ddt

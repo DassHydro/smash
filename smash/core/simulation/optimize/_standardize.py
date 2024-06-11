@@ -1,22 +1,21 @@
 from __future__ import annotations
 
-from smash.core.simulation._standardize import (
-    _standardize_simulation_samples,
-    _standardize_simulation_mapping,
-    _standardize_simulation_optimizer,
-    _standardize_simulation_optimize_options,
-    _standardize_simulation_cost_options,
-    _standardize_simulation_common_options,
-    _standardize_simulation_return_options,
-    _standardize_simulation_parameters_feasibility,
-    _standardize_simulation_optimize_options_finalize,
-    _standardize_simulation_cost_options_finalize,
-    _standardize_simulation_return_options_finalize,
-)
+from typing import TYPE_CHECKING
 
 from smash._constant import MAPPING
-
-from typing import TYPE_CHECKING
+from smash.core.simulation._standardize import (
+    _standardize_simulation_common_options,
+    _standardize_simulation_cost_options,
+    _standardize_simulation_cost_options_finalize,
+    _standardize_simulation_mapping,
+    _standardize_simulation_optimize_options,
+    _standardize_simulation_optimize_options_finalize,
+    _standardize_simulation_optimizer,
+    _standardize_simulation_parameters_feasibility,
+    _standardize_simulation_return_options,
+    _standardize_simulation_return_options_finalize,
+    _standardize_simulation_samples,
+)
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
@@ -30,9 +29,7 @@ def _standardize_multiple_optimize_mapping(mapping: str) -> str:
 
     if isinstance(mapping, str):
         if mapping.lower() not in avail_mapping:
-            raise ValueError(
-                f"Invalid mapping '{mapping}' for multiple optimize. Choices: {avail_mapping}"
-            )
+            raise ValueError(f"Invalid mapping '{mapping}' for multiple optimize. Choices: {avail_mapping}")
     else:
         raise TypeError("mapping argument must be a str")
 
@@ -45,9 +42,7 @@ def _standardize_bayesian_optimize_mapping(mapping: str) -> str:
 
     if isinstance(mapping, str):
         if mapping.lower() not in avail_mapping:
-            raise ValueError(
-                f"Invalid mapping '{mapping}' for bayesian optimize. Choices: {avail_mapping}"
-            )
+            raise ValueError(f"Invalid mapping '{mapping}' for bayesian optimize. Choices: {avail_mapping}")
     else:
         raise TypeError("mapping argument must be a str")
 
@@ -76,9 +71,7 @@ def _standardize_optimize_args(
     )
 
     # % Finalize optimize options
-    _standardize_simulation_optimize_options_finalize(
-        model, mapping, optimizer, optimize_options
-    )
+    _standardize_simulation_optimize_options_finalize(model, mapping, optimizer, optimize_options)
 
     cost_options = _standardize_simulation_cost_options(model, func_name, cost_options)
 
@@ -87,9 +80,7 @@ def _standardize_optimize_args(
 
     common_options = _standardize_simulation_common_options(common_options)
 
-    return_options = _standardize_simulation_return_options(
-        model, func_name, return_options
-    )
+    return_options = _standardize_simulation_return_options(model, func_name, return_options)
 
     # % Finalize return_options
     _standardize_simulation_return_options_finalize(model, return_options)
@@ -128,9 +119,7 @@ def _standardize_multiple_optimize_args(
     )
 
     # % Finalize optimize options
-    _standardize_simulation_optimize_options_finalize(
-        model, mapping, optimizer, optimize_options
-    )
+    _standardize_simulation_optimize_options_finalize(model, mapping, optimizer, optimize_options)
 
     cost_options = _standardize_simulation_cost_options(model, func_name, cost_options)
 
@@ -174,14 +163,10 @@ def _standardize_bayesian_optimize_args(
 
     common_options = _standardize_simulation_common_options(common_options)
 
-    return_options = _standardize_simulation_return_options(
-        model, func_name, return_options
-    )
+    return_options = _standardize_simulation_return_options(model, func_name, return_options)
 
     # % Finalize optimize options
-    _standardize_simulation_optimize_options_finalize(
-        model, mapping, optimizer, optimize_options
-    )
+    _standardize_simulation_optimize_options_finalize(model, mapping, optimizer, optimize_options)
 
     # % Finalize cost_options
     _standardize_simulation_cost_options_finalize(model, func_name, cost_options)

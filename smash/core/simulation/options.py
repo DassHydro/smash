@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from smash.core.simulation._standardize import (
-    _standardize_simulation_optimize_options,
-    _standardize_default_optimize_options_args,
-    _standardize_default_bayesian_optimize_options_args,
-)
-
 from typing import TYPE_CHECKING
+
+from smash.core.simulation._standardize import (
+    _standardize_default_bayesian_optimize_options_args,
+    _standardize_default_optimize_options_args,
+    _standardize_simulation_optimize_options,
+)
 
 if TYPE_CHECKING:
     from typing import Any
+
     from smash.core.model.model import Model
 
 __all__ = ["default_optimize_options", "default_bayesian_optimize_options"]
@@ -44,7 +45,8 @@ def default_optimize_options(
         Name of optimizer. Should be one of
 
         - ``'sbs'`` (``'uniform'`` **mapping** only)
-        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+          **mapping** only)
         - ``'sgd'`` (``'ann'`` **mapping** only)
         - ``'adam'`` (``'ann'`` **mapping** only)
         - ``'adagrad'`` (``'ann'`` **mapping** only)
@@ -54,7 +56,8 @@ def default_optimize_options(
             If not given, a default optimizer will be set depending on the optimization mapping:
 
             - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+              ``'lbfgsb'``
             - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
 
         .. hint::
@@ -63,8 +66,9 @@ def default_optimize_options(
     Returns
     -------
     optimize_options : `dict[str, Any]`
-        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys returned depend on the chosen **mapping** and **optimizer**.
-        This dictionary can be directly pass to the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
+        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
+        returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly pass to
+        the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
 
     See Also
     --------
@@ -92,17 +96,20 @@ def default_optimize_options(
         'termination_crit': {'maxiter': 50},
     }
 
-    Directly pass this dictionary to the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
+    Directly pass this dictionary to the **optimize_options** argument of the optimize method
+    `smash.optimize` (or `Model.optimize`).
     It's equivalent to set **optimize_options** to None (which is the default value)
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-        At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
-        At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
-        At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
-        At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
-        At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
+        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
+        At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
+        At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
+        At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
+        At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
+        At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
+        At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
+        At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
         CONVERGENCE: DDX < 0.01
 
     Customize the optimize options dictionary by removing ``'kexc'`` from the optimized parameters
@@ -124,15 +131,18 @@ def default_optimize_options(
     Run the optimize method
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
-    ValueError: Unknown or non optimized parameter 'kexc' in bounds optimize_options. Choices: ['cp', 'ct', 'llr']
+    ValueError: Unknown or non optimized parameter 'kexc' in bounds optimize_options.
+    Choices: ['cp', 'ct', 'llr']
 
-    An error is raised because we define ``bounds`` to a non optimized parameter ``kexc``. Remove also ``kexc`` from bounds
+    An error is raised because we define ``bounds`` to a non optimized parameter ``kexc``. Remove also
+    ``kexc`` from bounds
 
     >>> opt_u["bounds"].pop("kexc")
     (-50, 50)
 
     .. note::
-        The built-in dictionary method `pop <https://docs.python.org/3/library/stdtypes.html#dict.pop>`__ returns the value associated to the removed key
+        The built-in dictionary method `pop <https://docs.python.org/3/library/stdtypes.html#dict.pop>`__
+        returns the value associated to the removed key
 
     >>> opt_u
     {
@@ -150,20 +160,16 @@ def default_optimize_options(
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-        At iterate      1    nfg =    17    J =      0.111053    ddx = 0.64
-        At iterate      2    nfg =    33    J =      0.081869    ddx = 0.32
-        At iterate      3    nfg =    49    J =      0.048932    ddx = 0.16
-        At iterate      4    nfg =    65    J =      0.048322    ddx = 0.04
-        At iterate      5    nfg =    85    J =      0.046548    ddx = 0.02
-        At iterate      6    nfg =   105    J =      0.046372    ddx = 0.01
-        At iterate      7    nfg =   123    J =      0.046184    ddx = 0.01
-        At iterate      8    nfg =   142    J =      0.046049    ddx = 0.01
-        At iterate      9    nfg =   161    J =      0.045862    ddx = 0.01
-        At iterate     10    nfg =   180    J =      0.045674    ddx = 0.01
-        At iterate     11    nfg =   200    J =      0.045624    ddx = 0.01
-        At iterate     12    nfg =   219    J =      0.045537    ddx = 0.00
-        CONVERGENCE: DDX < 0.01
+        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
+        At iterate      1    nfg =    17    J =      0.128863    ddx = 0.64
+        At iterate      2    nfg =    32    J =      0.069483    ddx = 0.32
+        At iterate      3    nfg =    49    J =      0.045072    ddx = 0.16
+        At iterate      4    nfg =    65    J =      0.044047    ddx = 0.08
+        At iterate      5    nfg =    84    J =      0.043528    ddx = 0.04
+        At iterate      6    nfg =   102    J =      0.042690    ddx = 0.02
+        At iterate      7    nfg =   122    J =      0.042665    ddx = 0.01
+        At iterate      8    nfg =   140    J =      0.042606    ddx = 0.00
+        CONVERGENCE: DDX < 0.0
 
     Get the default optimization options for a different mapping
 
@@ -204,25 +210,23 @@ def default_optimize_options(
     >>> opt_ann["random_state"] = 11
     >>> model.optimize(mapping="ann", optimize_options=opt_ann)
     </> Optimize
-        At epoch      1    J =  1.150821    |proj g| =  0.002341
-        At epoch      2    J =  1.142061    |proj g| =  0.002610
+        At epoch      1    J =  1.208756    |proj g| =  0.001343
+        At epoch      2    J =  1.204409    |proj g| =  0.001567
         ...
-        At epoch     26    J =  0.103324    |proj g| =  0.005455
-        At epoch     27    J =  0.089769    |proj g| =  0.016618
-        At epoch     28    J =  0.104150    |proj g| =  0.019718
+        At epoch     25    J =  0.099455    |proj g| =  0.009175
+        At epoch     26    J =  0.078379    |proj g| =  0.013312
+        At epoch     27    J =  0.080410    |proj g| =  0.022210
         ...
-        At epoch     36    J =  0.185123    |proj g| =  0.011936
-        At epoch     37    J =  0.179911    |proj g| =  0.011819
-        Training:  92%|██████████████████████████▊  | 37/40 [00:30<00:02,  1.23it/s]
+        At epoch     35    J =  0.176823    |proj g| =  0.015846
+        At epoch     36    J =  0.172950    |proj g| =  0.015864
+        Training:  90%|████████████████▌     | 36/40 [00:21<00:02,  1.65it/s]
 
-    The training process was terminated after 37 epochs, where the loss did not decrease below the minimal value at epoch 27 for 10 consecutive epochs.
-    The optimal parameters are thus recorded at epoch 27
+    The training process was terminated after 36 epochs, where the loss did not decrease below the minimal
+    value at epoch 26 for 10 consecutive epochs. The optimal parameters are thus recorded at epoch 26
     """
     mapping, optimizer = _standardize_default_optimize_options_args(mapping, optimizer)
 
-    return _standardize_simulation_optimize_options(
-        model, "optimize", mapping, optimizer, None
-    )
+    return _standardize_simulation_optimize_options(model, "optimize", mapping, optimizer, None)
 
 
 def default_bayesian_optimize_options(
@@ -253,13 +257,15 @@ def default_bayesian_optimize_options(
         Name of optimizer. Should be one of
 
         - ``'sbs'`` (``'uniform'`` **mapping** only)
-        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+          **mapping** only)
 
         .. note::
             If not given, a default optimizer will be set depending on the optimization mapping:
 
             - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+              ``'lbfgsb'``
 
         .. hint::
             See the :ref:`math_num_documentation.optimization_algorithm` section
@@ -267,8 +273,10 @@ def default_bayesian_optimize_options(
     Returns
     -------
     optimize_options : `dict[str, Any]`
-        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys returned depend on the chosen **mapping** and **optimizer**.
-        This dictionary can be directly pass to the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
+        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
+        returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly pass to
+        the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or
+        `Model.bayesian_optimize`).
 
     Examples
     --------
@@ -294,20 +302,19 @@ def default_bayesian_optimize_options(
         'termination_crit': {'maxiter': 50},
     }
 
-    Directly pass this dictionary to the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
+    Directly pass this dictionary to the **optimize_options** argument of the optimize method
+    `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
     It's equivalent to set **optimize_options** to None (which is the default value)
 
     >>> model_u = smash.bayesian_optimize(model, mapping="uniform", optimize_options=opt_u)
     </> Bayesian Optimize
-        At iterate      0    nfg =     1    J =     26.510803    ddx = 0.64
-        At iterate      1    nfg =    68    J =      2.536702    ddx = 0.64
-        At iterate      2    nfg =   136    J =      2.402311    ddx = 0.16
-        At iterate      3    nfg =   202    J =      2.329653    ddx = 0.16
-        At iterate      4    nfg =   270    J =      2.277469    ddx = 0.04
-        At iterate      5    nfg =   343    J =      2.271495    ddx = 0.02
-        At iterate      6    nfg =   416    J =      2.270596    ddx = 0.01
-        At iterate      7    nfg =   488    J =      2.269927    ddx = 0.01
-        At iterate      8    nfg =   561    J =      2.269505    ddx = 0.01
+        At iterate      0    nfg =     1    J =     77.049133    ddx = 0.64
+        At iterate      1    nfg =    68    J =      2.584603    ddx = 0.64
+        At iterate      2    nfg =   135    J =      2.324317    ddx = 0.32
+        At iterate      3    nfg =   202    J =      2.304130    ddx = 0.08
+        At iterate      4    nfg =   269    J =      2.262191    ddx = 0.08
+        At iterate      5    nfg =   343    J =      2.260251    ddx = 0.01
+        At iterate      6    nfg =   416    J =      2.258220    ddx = 0.00
         CONVERGENCE: DDX < 0.01
 
     Get the default bayesian optimization options for a different mapping
@@ -340,28 +347,24 @@ def default_bayesian_optimize_options(
     >>> opt_ml["bounds"]["sg0"] = (1e-3, 100)
     >>> opt_ml["descriptor"]["cp"] = "slope"
     >>> opt_ml["termination_crit"]["maxiter"] = 10
-    >>> model.optimize(mapping="multi-linear", optimize_options=opt_ml)
+    >>> model.bayesian_optimize(mapping="multi-linear", optimize_options=opt_ml)
     </> Bayesian Optimize
-        At iterate      0    nfg =     1    J =     26.510801    |proj g| =     51.156681
-        At iterate      1    nfg =     2    J =      4.539526    |proj g| =      2.556828
-        At iterate      2    nfg =     4    J =      4.361516    |proj g| =      2.209623
-        At iterate      3    nfg =     5    J =      4.102887    |proj g| =      1.631524
-        At iterate      4    nfg =     6    J =      3.968790    |proj g| =      1.408150
-        At iterate      5    nfg =     7    J =      3.944855    |proj g| =      1.280883
-        At iterate      6    nfg =     8    J =      3.926999    |proj g| =      1.158015
-        At iterate      7    nfg =     9    J =      3.909628    |proj g| =      1.107825
-        At iterate      8    nfg =    10    J =      3.800612    |proj g| =      0.996645
-        At iterate      9    nfg =    11    J =      3.663789    |proj g| =      0.984840
-        At iterate     10    nfg =    12    J =      3.505583    |proj g| =      0.504640
+        At iterate      0    nfg =     1    J =     77.049095    |proj g| =    147.958771
+        At iterate      1    nfg =     2    J =      6.694370    |proj g| =      4.301311
+        At iterate      2    nfg =     3    J =      6.527157    |proj g| =      3.754591
+        At iterate      3    nfg =     4    J =      5.088758    |proj g| =      2.261085
+        At iterate      4    nfg =     5    J =      4.736641    |proj g| =      1.637916
+        At iterate      5    nfg =     6    J =      4.421250    |proj g| =      1.300914
+        At iterate      6    nfg =     7    J =      4.284939    |proj g| =      1.345769
+        At iterate      7    nfg =     8    J =      4.196455    |proj g| =      1.179024
+        At iterate      8    nfg =     9    J =      4.139528    |proj g| =      1.159659
+        At iterate      9    nfg =    10    J =      4.099973    |proj g| =      1.042880
+        At iterate     10    nfg =    11    J =      4.027408    |proj g| =      1.142047
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
 
     The optimization process was terminated after 10 iterations, the maximal value we defined.
     """
 
-    mapping, optimizer = _standardize_default_bayesian_optimize_options_args(
-        mapping, optimizer
-    )
+    mapping, optimizer = _standardize_default_bayesian_optimize_options_args(mapping, optimizer)
 
-    return _standardize_simulation_optimize_options(
-        model, "bayesian_optimize", mapping, optimizer, None
-    )
+    return _standardize_simulation_optimize_options(model, "bayesian_optimize", mapping, optimizer, None)
