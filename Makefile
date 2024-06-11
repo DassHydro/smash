@@ -41,7 +41,7 @@ test-coverage:
 
 #% Generate baseline for test with args (see argparser in gen_baseline.py)
 test-baseline:
-	cd smash/tests ; python3 gen_baseline.py
+	cd smash/tests ; python3 generate_baseline.py
 
 #% Format Python files with ruff and Fortran files with fprettify
 format:
