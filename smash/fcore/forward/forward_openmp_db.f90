@@ -17140,6 +17140,10 @@ CONTAINS
     DO t=start_time_step,end_time_step
       rr_parameters_inc = 0
       rr_states_inc = 0
+! % Roll discharge buffer. Depending on the routing module, it is sometimes necessary to store
+! % more than one discharge time step. Instead of storing all the time steps, we allocate an array
+! % whose depth is equal to the depth of the time dependency, and then at each time step, we
+! % overwrite the oldest time step by rolling the array.
       CALL ROLL_DISCHARGE_D(checkpoint_variable%ac_qtz, &
 &                     checkpoint_variable_d%ac_qtz)
       CALL ROLL_DISCHARGE_D(checkpoint_variable%ac_qz, &
@@ -17483,6 +17487,10 @@ CONTAINS
       rr_parameters_inc = 0
       CALL PUSHINTEGER4(rr_states_inc)
       rr_states_inc = 0
+! % Roll discharge buffer. Depending on the routing module, it is sometimes necessary to store
+! % more than one discharge time step. Instead of storing all the time steps, we allocate an array
+! % whose depth is equal to the depth of the time dependency, and then at each time step, we
+! % overwrite the oldest time step by rolling the array.
       CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qtz, SIZE(&
 &                   checkpoint_variable%ac_qtz, 1)*SIZE(&
 &                   checkpoint_variable%ac_qtz, 2))
@@ -18083,6 +18091,10 @@ CONTAINS
     DO t=start_time_step,end_time_step
       rr_parameters_inc = 0
       rr_states_inc = 0
+! % Roll discharge buffer. Depending on the routing module, it is sometimes necessary to store
+! % more than one discharge time step. Instead of storing all the time steps, we allocate an array
+! % whose depth is equal to the depth of the time dependency, and then at each time step, we
+! % overwrite the oldest time step by rolling the array.
       CALL ROLL_DISCHARGE(checkpoint_variable%ac_qtz)
       CALL ROLL_DISCHARGE(checkpoint_variable%ac_qz)
 ! Snow module
@@ -18324,7 +18336,7 @@ CONTAINS
     INTRINSIC INT
     REAL(sp) :: arg1
     REAL(sp) :: result1
-! % We use checkpoint to reduce the maximum memory usage of the adjoint model.
+! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
 ! % memory used at each time step and T in [1, +inf] the total number of time steps.
 ! % With checkpoints, the maximum memory required is equal to (K * C) + (K * T/C), where C in [1, T]
@@ -18413,7 +18425,7 @@ CONTAINS
     INTRINSIC INT
     REAL(sp) :: arg1
     REAL(sp) :: result1
-! % We use checkpoint to reduce the maximum memory usage of the adjoint model.
+! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
 ! % memory used at each time step and T in [1, +inf] the total number of time steps.
 ! % With checkpoints, the maximum memory required is equal to (K * C) + (K * T/C), where C in [1, T]
@@ -18544,7 +18556,7 @@ CONTAINS
     INTRINSIC INT
     REAL(sp) :: arg1
     REAL(sp) :: result1
-! % We use checkpoint to reduce the maximum memory usage of the adjoint model.
+! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
 ! % memory used at each time step and T in [1, +inf] the total number of time steps.
 ! % With checkpoints, the maximum memory required is equal to (K * C) + (K * T/C), where C in [1, T]

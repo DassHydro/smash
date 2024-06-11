@@ -15,6 +15,10 @@ import pandas as pd
 import smash
 from smash._constant import STRUCTURE
 
+sys.path.insert(0, "")
+# Change current directory to smash/smash
+os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+
 
 def parser():
     parser = argparse.ArgumentParser()
@@ -56,9 +60,9 @@ def adjust_module_names(module_names: list[str]) -> list[str]:
 
     pattern = re.compile("|".join(rep.keys()))
 
-    ret = ["smash.tests." + pattern.sub(lambda m: rep[re.escape(m.group(0))], name) for name in module_names]
+    ret = [pattern.sub(lambda m: rep[re.escape(m.group(0))], name) for name in module_names]
 
-    ret.remove("smash.tests.test_define_global_vars")
+    ret.remove("tests.test_define_global_vars")
 
     return ret
 
@@ -128,9 +132,9 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
     df["TEST NAME" + (max_len_name - 8) * " "] = test_name
     df["STATUS"] = status
 
-    df.to_csv("diff_baseline.csv", sep="|", index=False)
+    df.to_csv("tests/diff_baseline.csv", sep="|", index=False)
 
-    os.system('echo "$(git show --no-patch)\n\n$(cat diff_baseline.csv)" > diff_baseline.csv')
+    os.system('echo "$(git show --no-patch)\n\n$(cat tests/diff_baseline.csv)" > tests/diff_baseline.csv')
 
 
 if __name__ == "__main__":
@@ -152,6 +156,9 @@ if __name__ == "__main__":
 
     model = smash.Model(setup, mesh)
 
+    # Do not need to read prcp and pet again
+    setup["read_prcp"] = False
+    setup["read_pet"] = False
     model_structure = []
 
     for structure in STRUCTURE:
@@ -160,19 +167,23 @@ if __name__ == "__main__":
             setup["hydrological_module"],
             setup["routing_module"],
         ) = structure.split("-")
-        model_structure.append(smash.Model(setup, mesh))
+        wmodel = smash.Model(setup, mesh)
+        wmodel.atmos_data.prcp = model.atmos_data.prcp
+        wmodel.atmos_data.pet = model.atmos_data.pet
+        if "ci" in wmodel.rr_parameters.keys:
+            wmodel.set_rr_parameters("ci", model.get_rr_parameters("ci"))
+        model_structure.append(wmodel)
 
-    # % Enable stdout
+    # # % Enable stdout
     sys.stdout = sys.__stdout__
-
-    module_names = sorted(glob.glob("**/test_*.py", recursive=True))
+    module_names = sorted(glob.glob("tests/**/test_*.py", recursive=True))
 
     module_names = adjust_module_names(module_names)
 
-    if os.path.exists("new_baseline.hdf5"):
-        os.remove("new_baseline.hdf5")
+    if os.path.exists("tests/new_baseline.hdf5"):
+        os.remove("tests/new_baseline.hdf5")
 
-    with h5py.File("new_baseline.hdf5", "w") as f:
+    with h5py.File("tests/new_baseline.hdf5", "w") as f:
         for mn in module_names:
             print(mn, end=" ")
             module = importlib.import_module(mn)
@@ -201,8 +212,8 @@ if __name__ == "__main__":
                 print(".", end="", flush=True)
             print("")
 
-    baseline = h5py.File("baseline.hdf5")
-    new_baseline = h5py.File("new_baseline.hdf5")
+    baseline = h5py.File("tests/baseline.hdf5")
+    new_baseline = h5py.File("tests/new_baseline.hdf5")
 
     compare_baseline(baseline, new_baseline)
 
