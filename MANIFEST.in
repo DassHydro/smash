@@ -1,4 +1,0 @@
-include smash/fcore/*.so
-include smash/factory/mesh/*.so
-include smash/tests/baseline.hdf5
-recursive-include smash/factory/dataset *

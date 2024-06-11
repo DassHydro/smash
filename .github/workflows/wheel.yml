@@ -1,0 +1,55 @@
+# This is partially adopted from scipy.
+# See: https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml
+# License: 3-clause BSD, https://github.com/scipy/scipy/blob/main/LICENSE.txt
+
+name: Wheels
+
+# Controls when the action will run.
+on:
+
+    push:
+        branches:
+        - main
+
+    pull_request:
+        branches:
+        - main
+        - maintenance/**
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Build wheel ${{ matrix.python-version }}-${{ matrix.buildplat[1] }} ${{ matrix.buildplat[2] }}
+    runs-on: ${{ matrix.buildplat[0] }}
+    strategy:
+      matrix:
+        buildplat:
+        - [ubuntu-latest, manylinux, x86_64]
+        # Use windows-2019 otherwise there is undefined reference to _setjmpex. This is linked to f90wrap
+        # and f90wrap_abort with FortranDerivedTypeArray
+        - [windows-2019, win, AMD64]
+
+        python-version: ['cp39', 'cp310', 'cp311']
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.17.0
+        env:
+          CIBW_BUILD: ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}*
+          CIBW_ARCHS: ${{ matrix.buildplat[2] }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: ./wheelhouse/*.whl
+          name: ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}

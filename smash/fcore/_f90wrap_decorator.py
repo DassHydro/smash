@@ -17,11 +17,25 @@ def f90wrap_getter_char(func):
     return wrapper
 
 
+#! setter is identical
+def f90wrap_setter_char(func):
+    @functools.wraps(func)
+    def wrapper(self, value):
+        func(self, value)
+
+    return wrapper
+
+
 def f90wrap_getter_char_array(func):
     @functools.wraps(func)
     def wrapper(self):
         value = func(self)
-        return np.array(value.tobytes(order="F").decode().split())
+        shape = value.shape
+        arr = np.empty(shape=shape[1:], dtype=f"U{shape[0]}")
+        for idx in np.ndindex(shape[1:]):
+            slc = (slice(shape[0]), *idx)
+            arr[idx] = value[slc].tobytes(order="F").decode().strip()
+        return arr
 
     return wrapper
 
@@ -39,23 +53,44 @@ def f90wrap_setter_char_array(func):
 
         shape = tuple(s for i, s in enumerate(array_shape) if i < array_ndim)
 
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, (str, list, tuple)):
             value = np.array(value)
 
         elif isinstance(value, np.ndarray):
             value = value.astype("U")
 
         else:
-            raise TypeError(f"{func_name} attribute must be list-like object, not {type(value)}")
+            raise TypeError(f"{func_name} attribute must be str or ListLike object, not {type(value)}")
 
-        if value.size != shape[1]:
-            raise ValueError(f"could not broadcast input array from shape {value.shape} into {(shape[1],)}")
+        if value.shape != shape[1:] and value.size != 1:
+            raise ValueError(f"could not broadcast input array from shape {value.shape} into {shape[1:]}")
 
         else:
-            arr = np.zeros(shape, dtype="uint8") + np.uint8(32)
+            arr = np.empty(shape, dtype=np.uint8)
+            arr.fill(np.uint8(32))
 
-            for i, el in enumerate(value):
-                arr[0 : len(el), i] = [ord(char) for char in el]
+            if value.size == 1:
+                item = list(value.item().encode("ascii"))
+                litem = len(item)
+                # length of char greater than char limit in Fortran
+                if litem > shape[0]:
+                    raise ValueError(
+                        f"the length of '{value.item()}' ({litem}) exceeds the maximum limit ({shape[0]})"
+                    )
+                for idx in np.ndindex(shape[1:]):
+                    slc = (slice(litem), *idx)
+                    arr[slc] = item
+            else:
+                for idx in np.ndindex(shape[1:]):
+                    item = list(value[idx].encode("ascii"))
+                    litem = len(item)
+                    # length of char greater than char limit in Fortran
+                    if litem > shape[0]:
+                        raise ValueError(
+                            f"the length of '{value[idx]}' ({litem}) exceeds the maximum limit ({shape[0]})"
+                        )
+                    slc = (slice(litem), *idx)
+                    arr[slc] = item
 
         if array_handle in self._arrays:
             ptr = self._arrays[array_handle]
@@ -86,6 +121,10 @@ def f90wrap_setter_index(func):
     return wrapper
 
 
+def f90wrap_getter_index_array(func):
+    return f90wrap_getter_index(func)
+
+
 #! setter completly rewrite (func is not called)
 def f90wrap_setter_index_array(func):
     @functools.wraps(func)
@@ -108,7 +147,3 @@ def f90wrap_setter_index_array(func):
         ptr[...] = arr
 
     return wrapper
-
-
-def f90wrap_getter_index_array(func):
-    return f90wrap_getter_index(func)

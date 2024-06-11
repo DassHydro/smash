@@ -111,26 +111,20 @@ the data is the observed discharge in **cubic meter per second** and any negativ
     It is not necessary to restrict the observed discharge series to the simulation period. It is possible to provide a time series covering a larger time window over which `smash`
     will only read the lines corresponding to dates after the starting date provided in the header.
 
-Now that a brief tour of the necessary data has been done, we can open a Python interface in the **conda environment**. The current working directory 
+Now that a brief tour of the necessary data has been done, we can open a Python interface. The current working directory
 will be assumed to be the directory where the ``Cance-dataset`` is located.
-
-Activate the environment:
-
-.. code-block:: shell
-
-    conda activate smash
 
 Open a Python interface:
 
 .. code-block:: shell
 
-    (smash) python3
+    python3
 
 .. ipython:: python
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d Cance")
+    os.system("python3 generate_dataset.py -d Cance")
 
 Imports
 -------
@@ -143,6 +137,14 @@ We will first import everything we need in this tutorial: `smash` of course, the
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
+
+.. hint::
+
+    The visualization library `matplotlib <https://matplotlib.org/>`__ is not installed by default but can be installed with pip as follows:
+    
+    .. code-block:: none
+
+        pip install matplotlib
 
 Model creation
 --------------

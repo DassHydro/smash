@@ -5,14 +5,15 @@ dependencies:
     - python=3.11
     - pip
 
-    # compile
-    - make
-    - gcc
-    - gfortran
-
     # required dependencies
-    - numpy>=1.13
-    - f90wrap
+    - compilers
+    - openjdk
+    - meson
+    - meson-python
+    - ninja
+    - numpy
+    - f90wrap<0.2.14  # temporary upper bound until v0.2.15 is released
+    - versioneer[toml]
     - rasterio
     - pandas
     - h5py
@@ -20,7 +21,6 @@ dependencies:
     - scipy
     - pyyaml
     - terminaltables
-    - matplotlib  # (optional: only used for plotting and visualization)
 
     # documentation
     - sphinx
@@ -30,6 +30,7 @@ dependencies:
     - sphinxcontrib-bibtex
     - sphinx-design
     - sphinx-autosummary-accessors
+    - matplotlib
 
     # test
     - pytest

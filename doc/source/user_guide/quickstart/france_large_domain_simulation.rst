@@ -42,26 +42,20 @@ Now a folder called ``France-dataset`` should be accessible and contain the foll
 In this dataset, there are no gauge attributes or observed discharge, we are only interested in performing a forward run on a domain without 
 optimization beforehand.
 
-We can open a Python interface in the **conda environment**. The current working directory will be assumed to be the directory where 
+We can open a Python interface. The current working directory will be assumed to be the directory where
 the ``France-dataset`` is located.
-
-Activate the environment:
-
-.. code-block:: shell
-
-    conda activate smash
 
 Open a Python interface:
 
 .. code-block:: shell
 
-    (smash) python3
+    python3
 
 .. ipython:: python
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d France")
+    os.system("python3 generate_dataset.py -d France")
 
 Imports
 -------

@@ -22,6 +22,7 @@ parts/
 sdist/
 var/
 wheels/
+wheelhouse/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -60,9 +61,9 @@ f90wrap*.f90
 **/fcore/_m*.py
 
 # Tapenade files
-tapenade/*.msg*
-tapenade/*.f90*
-tapenade/*~
+# Tapenade files
+tapenade/*_db.*
+*_db.msg*
 
 # Temporary files
 tmp*
@@ -71,3 +72,4 @@ tmp*
 # Documentation files
 doc/source/api_reference/**/smash
 doc/*-dataset
+doc/*~
