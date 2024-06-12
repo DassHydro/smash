@@ -95,7 +95,7 @@ contains
         inv_cp = 1._sp / cp
         pr = 0._sp
         gam = 1._sp - exp(-pn * alpha1)
-        lambda = sqrt(1 - gam)
+        lambda = sqrt(1._sp - gam)
         inv_lambda = 1._sp / lambda
         
         ps = cp * inv_lambda * tanh(lambda * pn * inv_cp) * (1._sp - (lambda * hp) ** 2) &
