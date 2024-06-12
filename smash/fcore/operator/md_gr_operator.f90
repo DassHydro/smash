@@ -337,7 +337,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_ce, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_he, ac_qt) &
-        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd, qre)
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow

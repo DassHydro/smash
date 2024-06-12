@@ -13471,9 +13471,9 @@ CONTAINS
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(ac_prcp_d, &
 !$OMP&ac_ci_d, ac_cp_d, ac_ct_d, ac_ce_d, ac_kexc_d, ac_aexc_d, ac_hi_d&
 !$OMP&, ac_hp_d, ac_ht_d, ac_he_d, ac_qt_d), PRIVATE(row, col, k, pn, en&
-!$OMP&, pr, perc, l, prr, prd, qr, qd, qre), PRIVATE(pn_d, en_d, pr_d, &
-!$OMP&perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(&
-!$OMP&                                       static)
+!$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qre), PRIVATE(pn_d, en_d, &
+!$OMP&pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d), PRIVATE(temp)&
+!$OMP&, SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -13574,8 +13574,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_ce, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row, col, k, &
-!$OMP&pn, en, pr, perc, l, prr, prd, qr, qd, qre), PRIVATE(chunk_start, &
-!$OMP&chunk_end)
+!$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre), PRIVATE(&
+!$OMP&chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -13623,6 +13623,7 @@ CONTAINS
     END DO
     CALL PUSHREAL4(pn)
     CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(pre)
     CALL PUSHREAL4(en)
 !$OMP END PARALLEL
     ac_prcp_b = 0.0_4
@@ -13631,10 +13632,11 @@ CONTAINS
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(ac_prcp_b, &
 !$OMP&ac_ci_b, ac_cp_b, ac_ct_b, ac_ce_b, ac_kexc_b, ac_aexc_b, ac_hi_b&
 !$OMP&, ac_hp_b, ac_ht_b, ac_he_b, ac_qt_b), PRIVATE(row, col, k, pn, en&
-!$OMP&, pr, perc, l, prr, prd, qr, qd, qre), PRIVATE(pn_b, en_b, pr_b, &
-!$OMP&perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end&
-!$OMP&, chunk_start), PRIVATE(temp_b)
+!$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qre), PRIVATE(pn_b, en_b, &
+!$OMP&pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b), PRIVATE(&
+!$OMP&branch, chunk_end, chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
+    CALL POPREAL4(pre)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
     pn_b = 0.0_4
@@ -13643,6 +13645,7 @@ CONTAINS
     perc_b = 0.0_4
     l_b = 0.0_4
     prr_b = 0.0_4
+    pre_b = 0.0_4
     prd_b = 0.0_4
     qr_b = 0.0_4
     qd_b = 0.0_4
@@ -13729,7 +13732,7 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_ce, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row, col, k, &
-!$OMP&pn, en, pr, perc, l, prr, prd, qr, qd, qre), SCHEDULE(static)
+!$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
