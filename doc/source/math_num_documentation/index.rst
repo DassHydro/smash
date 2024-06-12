@@ -39,4 +39,3 @@ This documentation details the conceptual basis and mathematical basis of the fo
     cost_function
     optimization_algorithm
     bayesian_estimation
-    hortonian_production

@@ -325,6 +325,7 @@ Production
 
 Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4.production>`
 
+.. _math_num_documentation.forward_structure.hydrological_module.gr5.exchange:
 
 Exchange
 ''''''''
@@ -339,6 +340,151 @@ Transfer
 ''''''''
 
 Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4.transfer>`
+
+
+gr5-ri (Génie Rural 5 - Rainfall Intensity)
+*******************************************
+
+This hydrological module is derived from the model presented in :cite:p:`Astagneau_2022`.
+
+It can be expressed as follows:
+
+.. math::
+
+    q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
+
+with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
+:math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
+:math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
+:math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
+:math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
+:math:`\alpha_1` tunes the rainfall intensity coefficient of the prodution rate.
+:math:`\alpha_2` weights the net rainfall flux on transfert.
+
+.. note::
+
+    Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+    
+    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+    - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+    - Parameters, :math:`\{c_i, c_p, c_t, k_{exc}, a_{exc}, \alpha_1, \alpha_2\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
+
+The function :math:`f` is resolved numerically as follows:
+
+Interception
+''''''''''''
+
+Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4.interception>`
+
+Production
+''''''''''
+
+In the standart case, the instantaneous production rate is the ratio between the state and the capacity of the reservoir :
+:math:`\eta = \left( \frac{h_p}{c_p} \right)^2`. The integration of the complementary of :math:`\eta` the rainfall infiltration :math:`p_s`.
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray}
+
+        &p_s = \int_{t-\Delta t}^{t} (1 - \eta) dt \\
+    
+    \end{eqnarray}
+    
+We assume the reservoir receive a rainfall of :math:`p_n` at time :math:`t`, then
+
+.. math::
+    :nowrap:
+    
+    \begin{eqnarray}
+
+        &p_s = & c_p \tanh\left(\frac{p_n}{c_p}\right) \frac{1 - \left( \frac{h_p}{c_p} \right)^2}{1 + \frac{h_p}{c_p} \tanh\left( \frac{p_n}{c_p} \right)} \\
+        
+    \end{eqnarray}
+
+
+In the case of fast events with a low permeability, :cite:p:`Astagneau_2022` suggests a modification of the rate : 
+:math:`\eta = \left( 1 - \gamma \right) \left( \frac{h_p}{c_p} \right)^2 + \gamma` with the rainfall intensity coefficient :math:`\gamma = 1 - \exp(-p_n \times \alpha_1)`
+and :math:`\alpha_1` in :math:`mm` per time unit.
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray}
+
+    &p_s& &=& &\int_{t-\Delta t}^{t} (1 - \eta) dt\\
+
+    && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \left(\frac{h_p}{c_p} \right)^2 \right) dt - \int_{t-\Delta t}^{t} \gamma dt\\
+    
+    && &=& &\left[ \frac{ c_p }{ \sqrt{1-\gamma} } \tanh \left( \frac{\sqrt{1-\gamma} \  h_p}{c_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
+    
+    \end{eqnarray}
+
+
+We denote :math:`\lambda := \sqrt{1 - \gamma}`, then
+
+.. math::
+    :nowrap:
+    
+    \begin{eqnarray}
+
+    \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) - \tanh\left( \lambda \frac{h_p}{c_p} \right) &=& 
+    \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+    &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \lambda \frac{h_p}{c_p} \right) + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \lambda \frac{h_p}{c_p} \right) \tanh \left( \lambda \frac{p_n}{c_p} \right) } \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+    &\sim& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \lambda \frac{h_p}{c_p} + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right) }  \lambda \frac{h_p}{c_p} \right) \\
+    &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)}
+    \end{eqnarray}
+    
+Thus
+
+.. math::
+    :nowrap:
+    
+    \begin{eqnarray}
+
+    p_s &=& \frac{c_p}{\lambda} \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)} - \gamma \Delta t
+    \end{eqnarray}
+
+
+.. note::
+
+    Note that if :math:`\alpha_1 = 0`, we return to the general writting of the instantaneous production rate.
+    
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4.production>`.
+
+
+Exchange
+''''''''
+
+Same as ``gr5`` exchange, see :ref:`GR5 Exchange <math_num_documentation.forward_structure.hydrological_module.gr5.exchange>`.
+
+    
+Transfer
+''''''''
+
+The second hypothesis consist in changing the partitioning coefficient to get a faster routing module. 
+:cite:p:`Astagneau_2022` suggests to split :math:`p_r` into two branch by the :math:`Q_9` coefficient defined as follow:
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray}
+
+        &p_{rr}& =& (1 - Q_9)(p_r + p_{erc}) + l_{exc}\\
+        &p_{rd}& =& Q_9(p_r + p_{erc}) \\
+        &Q_9& =& 0.9 \tanh(\alpha_2 p_n)^2 + 0.1
+        
+    \end{eqnarray}
+
+with :math:`\alpha_2` in :math:`mm` per time unit.
+
+
+.. note::
+
+    If :math:`\alpha_2 = 0`, we return to the ``gr-4/gr-5`` writting of the transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4.transfer>`.
+    If :math:`\alpha_2 = \alpha_1 = 0`, it is equivalent to ``gr-5`` structure.
+    
 
 grd (Génie Rural Distribué)
 ***************************
