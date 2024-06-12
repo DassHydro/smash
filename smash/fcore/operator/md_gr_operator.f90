@@ -10,6 +10,7 @@
 !%      - gr_transfer
 !%      - gr4_time_step
 !%      - gr5_time_step
+!%      - gr6_time_step
 !%      - grd_time_step
 !%      - loieau_time_step
 
@@ -134,6 +135,28 @@ contains
 
     end subroutine gr_transfer
 
+    subroutine exponential_transfer(he, pre, ce, qre)
+
+        implicit none
+
+        real(sp), intent(in) :: pre, ce
+        real(sp), intent(inout) :: he
+        real(sp), intent(out) :: qre
+        real(sp) :: he_star, AR
+        
+        he_star = he + pre
+        AR = he_star / ce
+        if (AR .lt. -7._sp) then
+            qre = ce * exp(AR)
+        elseif (AR .gt. 7._sp) then
+            qre = he_star + ce / exp(AR)
+        else
+            qre = ce * log(exp(AR) + 1._sp)
+        end if
+        he = he_star - qre
+
+    end subroutine exponential_transfer
+    
     subroutine gr4_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -283,6 +306,84 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine gr5_time_step
+
+    subroutine gr6_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_ce, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_ce, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht, ac_he
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
+        real(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_ce, ac_kexc, ac_aexc, ac_hi, &
+        !$OMP& ac_hp, ac_ht, ac_he, ac_qt) &
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
+
+                    call gr_production(pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
+
+                    call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                prr = 0.9_sp * (pr + perc) + l
+                pre = 0.4_sp * 0.9_sp * (pr + perc) + l
+                prd = 0.1_sp * (pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+                
+                call exponential_transfer(ac_he(k), pre, ac_ce(k), qre)
+                
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+    end subroutine gr6_time_step
 
     subroutine grd_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
     & ac_ht, ac_qt)
