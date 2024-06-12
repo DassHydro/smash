@@ -94,7 +94,7 @@ contains
         
         inv_cp = 1._sp / cp
         pr = 0._sp
-        gam = 1 - exp(-pn * alpha1)
+        gam = 1._sp - exp(-pn * alpha1)
         lambda = sqrt(1 - gam)
         inv_lambda = 1._sp / lambda
         
