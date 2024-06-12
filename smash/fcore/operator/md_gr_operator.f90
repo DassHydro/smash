@@ -386,8 +386,8 @@ contains
                 
                 Q9 = 0.9_sp * tanh(alpha2 * pn) ** 2 + 0.1 
                 
-                prr = (1 - Q9) * (pr + perc) + l
-                prd = Q9 * (pr + perc)
+                prr = (1._sp - split) * (pr + perc) + l
+                prd = split * (pr + perc)
             
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
