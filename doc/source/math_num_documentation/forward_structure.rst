@@ -406,7 +406,7 @@ We assume the reservoir receive a rainfall of :math:`p_n` at time :math:`t`, the
 
 In the case of fast events with a low permeability, :cite:p:`Astagneau_2022` suggests a modification of the rate : 
 :math:`\eta = \left( 1 - \gamma \right) \left( \frac{h_p}{c_p} \right)^2 + \gamma` with the rainfall intensity coefficient :math:`\gamma = 1 - \exp(-p_n \times \alpha_1)`
-and :math:`\alpha_1` in :math:`mm` per time unit.
+and :math:`\alpha_1` in time unit per :math:`mm`.
 
 .. math::
     :nowrap:
@@ -477,7 +477,7 @@ The second hypothesis consist in changing the partitioning coefficient to get a 
         
     \end{eqnarray}
 
-with :math:`\alpha_2` in :math:`mm` per time unit.
+with :math:`\alpha_2` in time unit per :math:`mm`.
 
 
 .. note::
