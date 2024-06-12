@@ -343,7 +343,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k
-        real(sp) :: beta, alpha1, alpha2, pn, en, pr, perc, l, prr, prd, qr, qd, Q9
+        real(sp) :: beta, alpha1, alpha2, pn, en, pr, perc, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -359,7 +359,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, alpha1, alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_qt) &
-        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd, Q9)
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd, split)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -384,7 +384,7 @@ contains
 
                 end if
                 
-                Q9 = 0.9_sp * tanh(alpha2 * pn) ** 2 + 0.1 
+                split = 0.9_sp * tanh(alpha2 * pn) ** 2 + 0.1 
                 
                 prr = (1._sp - split) * (pr + perc) + l
                 prd = split * (pr + perc)
