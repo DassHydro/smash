@@ -12281,14 +12281,14 @@ CONTAINS
     hp = hp_imd - perc*inv_cp
   END SUBROUTINE GR_PRODUCTION
 
-!  Differentiation of hortonian_production in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
+!  Differentiation of gr_ri_production in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hp perc pr
-!   with respect to varying inputs: hp en cp pn
-  SUBROUTINE HORTONIAN_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, &
-&   alpha1, hp, hp_d, pr, pr_d, perc, perc_d, dt)
+!   with respect to varying inputs: alpha1 hp en cp pn
+  SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, &
+&   alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d
+    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, alpha1_d
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
@@ -12318,10 +12318,10 @@ CONTAINS
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
-    gam_d = EXP(-(alpha1*pn))*alpha1*pn_d
-    gam = 1 - EXP(-(pn*alpha1))
-    temp = SQRT(-gam + 1)
-    IF (1 - gam .EQ. 0.0) THEN
+    gam_d = EXP(-(pn*alpha1))*(alpha1*pn_d+pn*alpha1_d)
+    gam = 1._sp - EXP(-(pn*alpha1))
+    temp = SQRT(-gam + 1._sp)
+    IF (1._sp - gam .EQ. 0.0) THEN
       lambda_d = 0.0_4
     ELSE
       lambda_d = -(gam_d/(2.0*temp))
@@ -12369,16 +12369,16 @@ CONTAINS
     perc = hp_imd*cp*(1._sp-pwr1)
     hp_d = hp_imd_d - inv_cp*perc_d - perc*inv_cp_d
     hp = hp_imd - perc*inv_cp
-  END SUBROUTINE HORTONIAN_PRODUCTION_D
+  END SUBROUTINE GR_RI_PRODUCTION_D
 
-!  Differentiation of hortonian_production in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
-!   gradient     of useful results: hp cp pn perc pr
-!   with respect to varying inputs: hp en cp pn
-  SUBROUTINE HORTONIAN_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, &
-&   alpha1, hp, hp_b, pr, pr_b, perc, perc_b, dt)
+!  Differentiation of gr_ri_production in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
+!   gradient     of useful results: alpha1 hp cp pn perc pr
+!   with respect to varying inputs: alpha1 hp en cp pn
+  SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, &
+&   alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
-    REAL(sp) :: pn_b, en_b, cp_b
+    REAL(sp) :: pn_b, en_b, cp_b, alpha1_b
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
@@ -12400,22 +12400,22 @@ CONTAINS
     REAL(sp) :: pwr1
     REAL(sp) :: pwr1_b
     REAL(sp) :: temp
-    REAL(sp) :: temp0
     REAL(sp) :: temp_b
+    REAL(sp) :: temp0
+    REAL(sp) :: temp_b0
     REAL(sp) :: temp1
     REAL(sp) :: temp2
     REAL(sp) :: temp3
-    REAL(sp) :: temp_b0
-    REAL(sp) :: temp4
     REAL(sp) :: temp_b1
+    REAL(sp) :: temp4
     REAL(sp) :: temp_b2
     REAL(sp) :: temp_b3
     REAL(sp) :: temp_b4
     REAL(sp) :: temp_b5
     INTEGER :: branch
     inv_cp = 1._sp/cp
-    gam = 1 - EXP(-(pn*alpha1))
-    lambda = SQRT(1 - gam)
+    gam = 1._sp - EXP(-(pn*alpha1))
+    lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
     arg1 = lambda*pn*inv_cp
     arg2 = lambda*pn*inv_cp
@@ -12460,18 +12460,18 @@ CONTAINS
     temp3 = (-hp+1._sp)*temp4 + 1._sp
     temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
-    temp_b0 = es_b/temp3
-    temp_b = (2._sp-hp)*temp1*temp_b0
-    temp_b4 = -(temp0*temp1*temp_b0/temp3)
+    temp_b1 = es_b/temp3
+    temp_b0 = (2._sp-hp)*temp1*temp_b1
+    temp_b4 = -(temp0*temp1*temp_b1/temp3)
 !$OMP ATOMIC update
-    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b0 - temp4*&
+    hp_b = hp_b + hp_imd_b + cp*temp_b0 - hp*cp*temp1*temp_b1 - temp4*&
 &     temp_b4
     ps_b = inv_cp*hp_imd_b
-    temp_b3 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b0
+    temp_b = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b1
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b4
-    en_b = inv_cp*temp_b5 + inv_cp*temp_b3
+    en_b = inv_cp*temp_b5 + inv_cp*temp_b
 !$OMP ATOMIC update
-    cp_b = cp_b + hp*temp_b
+    cp_b = cp_b + hp*temp_b0
     arg1 = lambda*pn*inv_cp
     arg2 = lambda*pn*inv_cp
     inv_lambda = 1._sp/lambda
@@ -12480,32 +12480,35 @@ CONTAINS
     temp1 = -(lambda*hp*(lambda*hp)) + 1._sp
     temp2 = cp*inv_lambda*temp1
     temp3 = TANH(arg1)
-    temp_b = ps_b/temp0
-    arg1_b = (1.0-TANH(arg1)**2)*temp2*temp_b
-    temp_b0 = temp3*temp_b
-    temp_b2 = -(temp3*temp2*temp_b/temp0)
-    arg2_b = (1.0-TANH(arg2)**2)*lambda*hp*temp_b2
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b3 + &
+    temp_b0 = ps_b/temp0
+    arg1_b = (1.0-TANH(arg1)**2)*temp2*temp_b0
+    temp_b1 = temp3*temp_b0
+    temp_b3 = -(temp3*temp2*temp_b0/temp0)
+    arg2_b = (1.0-TANH(arg2)**2)*lambda*hp*temp_b3
+    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b + &
 &     lambda*pn*arg2_b + lambda*pn*arg1_b
 !$OMP ATOMIC update
-    cp_b = cp_b + inv_lambda*temp1*temp_b0 - inv_cp_b/cp**2
-    inv_lambda_b = cp*temp1*temp_b0
-    temp_b1 = -(2*lambda*hp*cp*inv_lambda*temp_b0)
-    lambda_b = hp*temp*temp_b2 + hp*temp_b1 + pn*inv_cp*arg2_b + pn*&
+    cp_b = cp_b + inv_lambda*temp1*temp_b1 - inv_cp_b/cp**2
+    inv_lambda_b = cp*temp1*temp_b1
+    temp_b2 = -(2*lambda*hp*cp*inv_lambda*temp_b1)
+    lambda_b = hp*temp*temp_b3 + hp*temp_b2 + pn*inv_cp*arg2_b + pn*&
 &     inv_cp*arg1_b - inv_lambda_b/lambda**2
-    IF (1 - gam .EQ. 0.0) THEN
+    IF (1._sp - gam .EQ. 0.0) THEN
       gam_b = -(dt*ps_b)
     ELSE
-      gam_b = -(dt*ps_b) - lambda_b/(2.0*SQRT(1-gam))
+      gam_b = -(dt*ps_b) - lambda_b/(2.0*SQRT(1._sp-gam))
     END IF
 !$OMP ATOMIC update
-    hp_b = hp_b + lambda*temp*temp_b2 + lambda*temp_b1
-    pn_b = pn_b + lambda*inv_cp*arg2_b + lambda*inv_cp*arg1_b + alpha1*&
-&     EXP(-(alpha1*pn))*gam_b
-  END SUBROUTINE HORTONIAN_PRODUCTION_B
+    hp_b = hp_b + lambda*temp*temp_b3 + lambda*temp_b2
+    temp_b = -(EXP(-(pn*alpha1))*gam_b)
+    pn_b = pn_b + lambda*inv_cp*arg2_b + lambda*inv_cp*arg1_b - alpha1*&
+&     temp_b
+!$OMP ATOMIC update
+    alpha1_b = alpha1_b - pn*temp_b
+  END SUBROUTINE GR_RI_PRODUCTION_B
 
-  SUBROUTINE HORTONIAN_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc&
-&   , dt)
+  SUBROUTINE GR_RI_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc, dt&
+& )
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: dt
@@ -12522,8 +12525,8 @@ CONTAINS
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
-    gam = 1 - EXP(-(pn*alpha1))
-    lambda = SQRT(1 - gam)
+    gam = 1._sp - EXP(-(pn*alpha1))
+    lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
     arg1 = lambda*pn*inv_cp
     arg2 = lambda*pn*inv_cp
@@ -12537,7 +12540,7 @@ CONTAINS
     pwr1 = pwx1**(-0.25_sp)
     perc = hp_imd*cp*(1._sp-pwr1)
     hp = hp_imd - perc*inv_cp
-  END SUBROUTINE HORTONIAN_PRODUCTION
+  END SUBROUTINE GR_RI_PRODUCTION
 
 !  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: l
@@ -13557,14 +13560,15 @@ CONTAINS
     END DO
   END SUBROUTINE GR5_TIME_STEP
 
-!  Differentiation of gr5_hortonian_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
+!  Differentiation of gr5_ri_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
-!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
-!                ac_hi ac_hp ac_ht ac_mlt ac_aexc
-  SUBROUTINE GR5_HORTONIAN_TIME_STEP_D(setup, mesh, input_data, options&
-&   , time_step, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct&
-&   , ac_ct_d, ac_kexc, ac_kexc_d, ac_aexc, ac_aexc_d, ac_hi, ac_hi_d, &
-&   ac_hp, ac_hp_d, ac_ht, ac_ht_d, ac_qt, ac_qt_d)
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_alpha1
+!                ac_alpha2 ac_qt ac_hi ac_hp ac_ht ac_mlt ac_aexc
+  SUBROUTINE GR5_RI_TIME_STEP_D(setup, mesh, input_data, options, &
+&   time_step, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, &
+&   ac_ct_d, ac_alpha1, ac_alpha1_d, ac_alpha2, ac_alpha2_d, ac_kexc, &
+&   ac_kexc_d, ac_aexc, ac_aexc_d, ac_hi, ac_hi_d, ac_hp, ac_hp_d, ac_ht&
+&   , ac_ht_d, ac_qt, ac_qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -13577,6 +13581,9 @@ CONTAINS
 &   ac_kexc, ac_aexc
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci_d, ac_cp_d, &
 &   ac_ct_d, ac_kexc_d, ac_aexc_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_alpha1, ac_alpha2
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_alpha1_d, &
+&   ac_alpha2_d
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_d, ac_hp_d, &
 &   ac_ht_d
@@ -13585,10 +13592,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k
-    REAL(sp) :: beta, alpha1, alpha2, pn, en, pr, perc, l, prr, prd, qr&
-&   , qd, q9
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
-&   , q9_d
+&   , split_d
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -13600,16 +13606,15 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    alpha1 = 0.0001_sp
-    alpha2 = 0.01_sp
     pn_d = 0.0_4
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, alpha1, alpha2, ac_ct, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, &
-!$OMP&ac_ci_d, ac_cp_d, ac_ct_d, ac_kexc_d, ac_aexc_d, ac_hi_d, ac_hp_d&
-!$OMP&, ac_ht_d, ac_qt_d), PRIVATE(row, col, k, pn, en, pr, perc, l, prr&
-!$OMP&, prd, qr, qd, q9), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, &
-!$OMP&prd_d, qr_d, qd_d, q9_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&ac_ci_d, ac_cp_d, ac_alpha1_d, ac_alpha2_d, ac_ct_d, ac_kexc_d, &
+!$OMP&ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(row, col, &
+!$OMP&k, pn, en, pr, perc, l, prr, prd, qr, qd, split), PRIVATE(pn_d, &
+!$OMP&en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d, split_d), &
+!$OMP&PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -13619,10 +13624,10 @@ CONTAINS
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL HORTONIAN_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
-&                                 ac_cp_d(k), beta, alpha1, ac_hp(k), &
-&                                 ac_hp_d(k), pr, pr_d, perc, perc_d, &
-&                                 setup%dt)
+            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
+&                             ac_cp_d(k), beta, ac_alpha1(k), &
+&                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
+&                             pr_d, perc, perc_d, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), &
 &                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
 &                                  ac_ht_d(k), l, l_d)
@@ -13634,13 +13639,13 @@ CONTAINS
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
-          q9_d = 0.9_sp*2*TANH(alpha2*pn)*(1.0-TANH(alpha2*pn)**2)*&
-&           alpha2*pn_d
-          q9 = 0.9_sp*TANH(alpha2*pn)**2 + 0.1
-          prr_d = (1-q9)*(pr_d+perc_d) - (pr+perc)*q9_d + l_d
-          prr = (1-q9)*(pr+perc) + l
-          prd_d = (pr+perc)*q9_d + q9*(pr_d+perc_d)
-          prd = q9*(pr+perc)
+          split_d = 0.9_sp*2*TANH(ac_alpha2(k)*pn)*(1.0-TANH(ac_alpha2(k&
+&           )*pn)**2)*(pn*ac_alpha2_d(k)+ac_alpha2(k)*pn_d)
+          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1
+          prr_d = (1._sp-split)*(pr_d+perc_d) - (pr+perc)*split_d + l_d
+          prr = (1._sp-split)*(pr+perc) + l
+          prd_d = (pr+perc)*split_d + split*(pr_d+perc_d)
+          prd = split*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
           IF (0._sp .LT. prd + l) THEN
@@ -13659,17 +13664,18 @@ CONTAINS
         END IF
       END DO
     END DO
-  END SUBROUTINE GR5_HORTONIAN_TIME_STEP_D
+  END SUBROUTINE GR5_RI_TIME_STEP_D
 
-!  Differentiation of gr5_hortonian_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
-!   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
-!                ac_hi ac_hp ac_ht ac_mlt ac_aexc
-!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
-!                ac_hi ac_hp ac_ht ac_mlt ac_aexc
-  SUBROUTINE GR5_HORTONIAN_TIME_STEP_B(setup, mesh, input_data, options&
-&   , time_step, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct&
-&   , ac_ct_b, ac_kexc, ac_kexc_b, ac_aexc, ac_aexc_b, ac_hi, ac_hi_b, &
-&   ac_hp, ac_hp_b, ac_ht, ac_ht_b, ac_qt, ac_qt_b)
+!  Differentiation of gr5_ri_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
+!   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_alpha1
+!                ac_alpha2 ac_qt ac_hi ac_hp ac_ht ac_mlt ac_aexc
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_alpha1
+!                ac_alpha2 ac_qt ac_hi ac_hp ac_ht ac_mlt ac_aexc
+  SUBROUTINE GR5_RI_TIME_STEP_B(setup, mesh, input_data, options, &
+&   time_step, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, &
+&   ac_ct_b, ac_alpha1, ac_alpha1_b, ac_alpha2, ac_alpha2_b, ac_kexc, &
+&   ac_kexc_b, ac_aexc, ac_aexc_b, ac_hi, ac_hi_b, ac_hp, ac_hp_b, ac_ht&
+&   , ac_ht_b, ac_qt, ac_qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -13682,6 +13688,8 @@ CONTAINS
 &   ac_kexc, ac_aexc
     REAL(sp), DIMENSION(mesh%nac) :: ac_ci_b, ac_cp_b, ac_ct_b, &
 &   ac_kexc_b, ac_aexc_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_alpha1, ac_alpha2
+    REAL(sp), DIMENSION(mesh%nac) :: ac_alpha1_b, ac_alpha2_b
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_b, ac_hp_b, &
 &   ac_ht_b
@@ -13690,12 +13698,12 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
-    REAL(sp) :: beta, alpha1, alpha2, pn, en, pr, perc, l, prr, prd, qr&
-&   , qd, q9
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
-&   , q9_b
+&   , split_b
     INTRINSIC TANH
     INTRINSIC MAX
+    REAL(sp) :: temp_b
     INTEGER :: branch
     INTEGER :: chunk_start
     INTEGER :: chunk_end
@@ -13706,13 +13714,11 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    alpha1 = 0.0001_sp
-    alpha2 = 0.01_sp
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, alpha1, alpha2, ac_ct, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k&
-!$OMP&, pn, en, pr, perc, l, prr, prd, qr, qd, q9), PRIVATE(chunk_start&
-!$OMP&, chunk_end)
+!$OMP&, pn, en, pr, perc, l, prr, prd, qr, qd, split), PRIVATE(&
+!$OMP&chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -13730,8 +13736,8 @@ CONTAINS
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL HORTONIAN_PRODUCTION(pn, en, ac_cp(k), beta, alpha1, &
-&                               ac_hp(k), pr, perc, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
+&                           ac_hp(k), pr, perc, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
             CALL PUSHCONTROL1B(1)
@@ -13743,11 +13749,11 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
-          CALL PUSHREAL4(q9)
-          q9 = 0.9_sp*TANH(alpha2*pn)**2 + 0.1
+          CALL PUSHREAL4(split)
+          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1
           CALL PUSHREAL4(prr)
-          prr = (1-q9)*(pr+perc) + l
-          prd = q9*(pr+perc)
+          prr = (1._sp-split)*(pr+perc) + l
+          prd = split*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -13764,20 +13770,21 @@ CONTAINS
     CALL PUSHREAL4(perc)
     CALL PUSHREAL4(pn)
     CALL PUSHREAL4(prr)
-    CALL PUSHREAL4(q9)
+    CALL PUSHREAL4(split)
     CALL PUSHREAL4(en)
 !$OMP END PARALLEL
     ac_prcp_b = 0.0_4
     pn_b = 0.0_4
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, alpha1, alpha2, ac_ct, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, &
-!$OMP&ac_ci_b, ac_cp_b, ac_ct_b, ac_kexc_b, ac_aexc_b, ac_hi_b, ac_hp_b&
-!$OMP&, ac_ht_b, ac_qt_b), PRIVATE(row, col, k, pn, en, pr, perc, l, prr&
-!$OMP&, prd, qr, qd, q9), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, &
-!$OMP&prd_b, qr_b, qd_b, q9_b), PRIVATE(branch, chunk_end, chunk_start)
+!$OMP&ac_ci_b, ac_cp_b, ac_alpha1_b, ac_alpha2_b, ac_ct_b, ac_kexc_b, &
+!$OMP&ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(row, col, &
+!$OMP&k, pn, en, pr, perc, l, prr, prd, qr, qd, split), PRIVATE(pn_b, &
+!$OMP&en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b, split_b), &
+!$OMP&PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
-    CALL POPREAL4(q9)
+    CALL POPREAL4(split)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
     CALL POPREAL4(perc)
@@ -13791,7 +13798,7 @@ CONTAINS
     prd_b = 0.0_4
     qr_b = 0.0_4
     qd_b = 0.0_4
-    q9_b = 0.0_4
+    split_b = 0.0_4
     pn_b = 0.0_4
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_end,chunk_start,-1
@@ -13815,14 +13822,17 @@ CONTAINS
           CALL POPREAL4(ac_ht(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
 &                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
-          q9_b = (pr+perc)*prd_b - (pr+perc)*prr_b
-          pr_b = q9*prd_b + (1-q9)*prr_b
-          perc_b = q9*prd_b + (1-q9)*prr_b
+          split_b = (pr+perc)*prd_b - (pr+perc)*prr_b
+          pr_b = split*prd_b + (1._sp-split)*prr_b
+          perc_b = split*prd_b + (1._sp-split)*prr_b
           CALL POPREAL4(prr)
           l_b = l_b + prr_b
-          CALL POPREAL4(q9)
-          pn_b = pn_b + alpha2*(1.0-TANH(alpha2*pn)**2)*2*TANH(alpha2*pn&
-&           )*0.9_sp*q9_b
+          CALL POPREAL4(split)
+          temp_b = (1.0-TANH(ac_alpha2(k)*pn)**2)*2*TANH(ac_alpha2(k)*pn&
+&           )*0.9_sp*split_b
+!$OMP     ATOMIC update
+          ac_alpha2_b(k) = ac_alpha2_b(k) + pn*temp_b
+          pn_b = pn_b + ac_alpha2(k)*temp_b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(perc)
@@ -13834,10 +13844,10 @@ CONTAINS
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL HORTONIAN_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
-&                                 ac_cp_b(k), beta, alpha1, ac_hp(k), &
-&                                 ac_hp_b(k), pr, pr_b, perc, perc_b, &
-&                                 setup%dt)
+            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
+&                             ac_cp_b(k), beta, ac_alpha1(k), &
+&                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
+&                             pr_b, perc, perc_b, setup%dt)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -13851,11 +13861,11 @@ CONTAINS
     END DO
 !$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
-  END SUBROUTINE GR5_HORTONIAN_TIME_STEP_B
+  END SUBROUTINE GR5_RI_TIME_STEP_B
 
-  SUBROUTINE GR5_HORTONIAN_TIME_STEP(setup, mesh, input_data, options, &
-&   time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, ac_hi, &
-&   ac_hp, ac_ht, ac_qt)
+  SUBROUTINE GR5_RI_TIME_STEP(setup, mesh, input_data, options, &
+&   time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_alpha1, ac_alpha2, &
+&   ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -13865,12 +13875,12 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
 &   ac_kexc, ac_aexc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_alpha1, ac_alpha2
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
-    REAL(sp) :: beta, alpha1, alpha2, pn, en, pr, perc, l, prr, prd, qr&
-&   , qd, q9
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -13880,12 +13890,10 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    alpha1 = 0.0001_sp
-    alpha2 = 0.01_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, alpha1, alpha2, ac_ct, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k&
-!$OMP&, pn, en, pr, perc, l, prr, prd, qr, qd, q9), SCHEDULE(static)
+!$OMP&, pn, en, pr, perc, l, prr, prd, qr, qd, split), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -13894,8 +13902,8 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL HORTONIAN_PRODUCTION(pn, en, ac_cp(k), beta, alpha1, &
-&                               ac_hp(k), pr, perc, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
+&                           ac_hp(k), pr, perc, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
           ELSE
@@ -13903,9 +13911,9 @@ CONTAINS
             perc = 0._sp
             l = 0._sp
           END IF
-          q9 = 0.9_sp*TANH(alpha2*pn)**2 + 0.1
-          prr = (1-q9)*(pr+perc) + l
-          prd = q9*(pr+perc)
+          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1
+          prr = (1._sp-split)*(pr+perc) + l
+          prd = split*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           IF (0._sp .LT. prd + l) THEN
@@ -13920,7 +13928,7 @@ CONTAINS
         END IF
       END DO
     END DO
-  END SUBROUTINE GR5_HORTONIAN_TIME_STEP
+  END SUBROUTINE GR5_RI_TIME_STEP
 
 !  Differentiation of grd_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hp ac_ht
@@ -17890,7 +17898,7 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         rr_parameters_inc = rr_parameters_inc + 5
         rr_states_inc = rr_states_inc + 3
-      CASE ('hortonian') 
+      CASE ('gr5_ri') 
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1)
@@ -17904,45 +17912,47 @@ CONTAINS
 ! % ci
 ! % cp
 ! % ct
+! % alpha1
+! % alpha2
 ! % kexc
 ! % aexc
 ! % hi
 ! % hp
 ! % ht
-        CALL GR5_HORTONIAN_TIME_STEP_D(setup, mesh, input_data, options&
-&                                , t, checkpoint_variable%ac_mlt, &
-&                                checkpoint_variable_d%ac_mlt, &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+1), &
-&                                checkpoint_variable_d%ac_rr_parameters(&
-&                                :, rr_parameters_inc+1), &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+2), &
-&                                checkpoint_variable_d%ac_rr_parameters(&
-&                                :, rr_parameters_inc+2), &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+3), &
-&                                checkpoint_variable_d%ac_rr_parameters(&
-&                                :, rr_parameters_inc+3), &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+4), &
-&                                checkpoint_variable_d%ac_rr_parameters(&
-&                                :, rr_parameters_inc+4), &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+5), &
-&                                checkpoint_variable_d%ac_rr_parameters(&
-&                                :, rr_parameters_inc+5), h1, h1_d, h2, &
-&                                h2_d, h3, h3_d, checkpoint_variable%&
-&                                ac_qtz(:, setup%nqz), &
-&                                checkpoint_variable_d%ac_qtz(:, setup%&
-&                                nqz))
+        CALL GR5_RI_TIME_STEP_D(setup, mesh, input_data, options, t, &
+&                         checkpoint_variable%ac_mlt, &
+&                         checkpoint_variable_d%ac_mlt, &
+&                         checkpoint_variable%ac_rr_parameters(:, &
+&                         rr_parameters_inc+1), checkpoint_variable_d%&
+&                         ac_rr_parameters(:, rr_parameters_inc+1), &
+&                         checkpoint_variable%ac_rr_parameters(:, &
+&                         rr_parameters_inc+2), checkpoint_variable_d%&
+&                         ac_rr_parameters(:, rr_parameters_inc+2), &
+&                         checkpoint_variable%ac_rr_parameters(:, &
+&                         rr_parameters_inc+3), checkpoint_variable_d%&
+&                         ac_rr_parameters(:, rr_parameters_inc+3), &
+&                         checkpoint_variable%ac_rr_parameters(:, &
+&                         rr_parameters_inc+4), checkpoint_variable_d%&
+&                         ac_rr_parameters(:, rr_parameters_inc+4), &
+&                         checkpoint_variable%ac_rr_parameters(:, &
+&                         rr_parameters_inc+5), checkpoint_variable_d%&
+&                         ac_rr_parameters(:, rr_parameters_inc+5), &
+&                         checkpoint_variable%ac_rr_parameters(:, &
+&                         rr_parameters_inc+6), checkpoint_variable_d%&
+&                         ac_rr_parameters(:, rr_parameters_inc+6), &
+&                         checkpoint_variable%ac_rr_parameters(:, &
+&                         rr_parameters_inc+7), checkpoint_variable_d%&
+&                         ac_rr_parameters(:, rr_parameters_inc+7), h1, &
+&                         h1_d, h2, h2_d, h3, h3_d, checkpoint_variable%&
+&                         ac_qtz(:, setup%nqz), checkpoint_variable_d%&
+&                         ac_qtz(:, setup%nqz))
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3) = h3_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
-        rr_parameters_inc = rr_parameters_inc + 5
+        rr_parameters_inc = rr_parameters_inc + 7
         rr_states_inc = rr_states_inc + 3
       CASE ('grd') 
 ! 'grd' module
@@ -18282,7 +18292,7 @@ CONTAINS
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 3
         CALL PUSHCONTROL3B(2)
-      CASE ('hortonian') 
+      CASE ('gr5_ri') 
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
@@ -18293,6 +18303,8 @@ CONTAINS
 ! % ci
 ! % cp
 ! % ct
+! % alpha1
+! % alpha2
 ! % kexc
 ! % aexc
 ! % hi
@@ -18303,23 +18315,24 @@ CONTAINS
         CALL PUSHREAL4ARRAY(h3, mesh%nac)
         CALL PUSHREAL4ARRAY(h2, mesh%nac)
         CALL PUSHREAL4ARRAY(h1, mesh%nac)
-        CALL GR5_HORTONIAN_TIME_STEP(setup, mesh, input_data, options, t&
-&                              , checkpoint_variable%ac_mlt, &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+1), checkpoint_variable&
-&                              %ac_rr_parameters(:, rr_parameters_inc+2)&
-&                              , checkpoint_variable%ac_rr_parameters(:&
-&                              , rr_parameters_inc+3), &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+4), checkpoint_variable&
-&                              %ac_rr_parameters(:, rr_parameters_inc+5)&
-&                              , h1, h2, h3, checkpoint_variable%ac_qtz(&
-&                              :, setup%nqz))
+        CALL GR5_RI_TIME_STEP(setup, mesh, input_data, options, t, &
+&                       checkpoint_variable%ac_mlt, checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+1), &
+&                       checkpoint_variable%ac_rr_parameters(:, &
+&                       rr_parameters_inc+2), checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+3), &
+&                       checkpoint_variable%ac_rr_parameters(:, &
+&                       rr_parameters_inc+4), checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+5), &
+&                       checkpoint_variable%ac_rr_parameters(:, &
+&                       rr_parameters_inc+6), checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+7), h1, h2&
+&                       , h3, checkpoint_variable%ac_qtz(:, setup%nqz))
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         CALL PUSHINTEGER4(rr_parameters_inc)
-        rr_parameters_inc = rr_parameters_inc + 5
+        rr_parameters_inc = rr_parameters_inc + 7
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 3
         CALL PUSHCONTROL3B(3)
@@ -18656,33 +18669,33 @@ CONTAINS
           CALL POPREAL4ARRAY(h3, mesh%nac)
           CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
 &                      SIZE(checkpoint_variable%ac_qtz, 1))
-          CALL GR5_HORTONIAN_TIME_STEP_B(setup, mesh, input_data, &
-&                                  options, t, checkpoint_variable%&
-&                                  ac_mlt, checkpoint_variable_b%ac_mlt&
-&                                  , checkpoint_variable%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +1), checkpoint_variable_b%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +1), checkpoint_variable%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +2), checkpoint_variable_b%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +2), checkpoint_variable%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +3), checkpoint_variable_b%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +3), checkpoint_variable%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +4), checkpoint_variable_b%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +4), checkpoint_variable%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +5), checkpoint_variable_b%&
-&                                  ac_rr_parameters(:, rr_parameters_inc&
-&                                  +5), h1, h1_b, h2, h2_b, h3, h3_b, &
-&                                  checkpoint_variable%ac_qtz(:, setup%&
-&                                  nqz), checkpoint_variable_b%ac_qtz(:&
-&                                  , setup%nqz))
+          CALL GR5_RI_TIME_STEP_B(setup, mesh, input_data, options, t, &
+&                           checkpoint_variable%ac_mlt, &
+&                           checkpoint_variable_b%ac_mlt, &
+&                           checkpoint_variable%ac_rr_parameters(:, &
+&                           rr_parameters_inc+1), checkpoint_variable_b%&
+&                           ac_rr_parameters(:, rr_parameters_inc+1), &
+&                           checkpoint_variable%ac_rr_parameters(:, &
+&                           rr_parameters_inc+2), checkpoint_variable_b%&
+&                           ac_rr_parameters(:, rr_parameters_inc+2), &
+&                           checkpoint_variable%ac_rr_parameters(:, &
+&                           rr_parameters_inc+3), checkpoint_variable_b%&
+&                           ac_rr_parameters(:, rr_parameters_inc+3), &
+&                           checkpoint_variable%ac_rr_parameters(:, &
+&                           rr_parameters_inc+4), checkpoint_variable_b%&
+&                           ac_rr_parameters(:, rr_parameters_inc+4), &
+&                           checkpoint_variable%ac_rr_parameters(:, &
+&                           rr_parameters_inc+5), checkpoint_variable_b%&
+&                           ac_rr_parameters(:, rr_parameters_inc+5), &
+&                           checkpoint_variable%ac_rr_parameters(:, &
+&                           rr_parameters_inc+6), checkpoint_variable_b%&
+&                           ac_rr_parameters(:, rr_parameters_inc+6), &
+&                           checkpoint_variable%ac_rr_parameters(:, &
+&                           rr_parameters_inc+7), checkpoint_variable_b%&
+&                           ac_rr_parameters(:, rr_parameters_inc+7), h1&
+&                           , h1_b, h2, h2_b, h3, h3_b, &
+&                           checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                           checkpoint_variable_b%ac_qtz(:, setup%nqz))
           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
 &           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
 &           h3_b
@@ -18958,7 +18971,7 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         rr_parameters_inc = rr_parameters_inc + 5
         rr_states_inc = rr_states_inc + 3
-      CASE ('hortonian') 
+      CASE ('gr5_ri') 
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
@@ -18969,27 +18982,30 @@ CONTAINS
 ! % ci
 ! % cp
 ! % ct
+! % alpha1
+! % alpha2
 ! % kexc
 ! % aexc
 ! % hi
 ! % hp
 ! % ht
-        CALL GR5_HORTONIAN_TIME_STEP(setup, mesh, input_data, options, t&
-&                              , checkpoint_variable%ac_mlt, &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+1), checkpoint_variable&
-&                              %ac_rr_parameters(:, rr_parameters_inc+2)&
-&                              , checkpoint_variable%ac_rr_parameters(:&
-&                              , rr_parameters_inc+3), &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+4), checkpoint_variable&
-&                              %ac_rr_parameters(:, rr_parameters_inc+5)&
-&                              , h1, h2, h3, checkpoint_variable%ac_qtz(&
-&                              :, setup%nqz))
+        CALL GR5_RI_TIME_STEP(setup, mesh, input_data, options, t, &
+&                       checkpoint_variable%ac_mlt, checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+1), &
+&                       checkpoint_variable%ac_rr_parameters(:, &
+&                       rr_parameters_inc+2), checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+3), &
+&                       checkpoint_variable%ac_rr_parameters(:, &
+&                       rr_parameters_inc+4), checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+5), &
+&                       checkpoint_variable%ac_rr_parameters(:, &
+&                       rr_parameters_inc+6), checkpoint_variable%&
+&                       ac_rr_parameters(:, rr_parameters_inc+7), h1, h2&
+&                       , h3, checkpoint_variable%ac_qtz(:, setup%nqz))
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
-        rr_parameters_inc = rr_parameters_inc + 5
+        rr_parameters_inc = rr_parameters_inc + 7
         rr_states_inc = rr_states_inc + 3
       CASE ('grd') 
 ! 'grd' module

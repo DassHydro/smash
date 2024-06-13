@@ -46,7 +46,7 @@ def test_module_name():
     assert SNOW_MODULE == ["zero", "ssn"]
 
     # % Check hydrological module
-    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "hortonian", "grd", "loieau", "vic3l"]
+    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "gr5_ri", "grd", "loieau", "vic3l"]
 
     # % Check routing module
     assert ROUTING_MODULE == ["lag0", "lr", "kw"]
@@ -69,7 +69,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
-        ["ci", "cp", "ct", "kexc", "aexc"],  # % hortonian
+        ["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"],  # % gr5_ri
         ["cp", "ct"],  # % grd
         ["ca", "cc", "kb"],  # % loieau
         ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -79,7 +79,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == [
         ["hi", "hp", "ht"],  # % gr4
         ["hi", "hp", "ht"],  # % gr5
-        ["hi", "hp", "ht"],  # % hortonian
+        ["hi", "hp", "ht"],  # % gr5_ri
         ["hp", "ht"],  # % grd
         ["ha", "hc"],  # % loieau
         ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
@@ -101,6 +101,8 @@ def test_parameters():
         "ci",  # % (gr4, gr5)
         "cp",  # % (gr4, gr5, grd)
         "ct",  # % (gr4, gr5, grd)
+        "alpha1", # % (gr4_ri, gr5_ri)
+        "alpha2", # % (gr4_ri, gr5_ri)
         "kexc",  # % (gr4, gr5)
         "aexc",  # % gr5
         "ca",  # % loieau
@@ -183,6 +185,8 @@ def test_feasible_domain():
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
+        (-np.inf, np.inf), # % alpha1
+        (-np.inf, np.inf), # % alpha2
         (-np.inf, np.inf),  # % kexc
         (0, 1),  # % aexc
         (0, np.inf),  # % ca
@@ -238,6 +242,8 @@ def test_default_parameters():
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
+        1e-4, # % alpha1
+        1e-2, # % alpha2
         0,  # % kexc
         0.1,  # % aexc
         200,  # % ca
@@ -293,6 +299,8 @@ def test_default_bounds_parameters():
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
+        (0., 1.), # % alpha1
+        (0., 1.), # % alpha2
         (-50, 50),  # % kexc
         (1e-6, 0.999999),  # % aexc
         (1e-6, 1e3),  # % ca

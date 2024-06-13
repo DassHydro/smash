@@ -1,8 +1,8 @@
-commit 13c1ccdea7f8a27831d2c6b30526a2993245f26d
+commit f8925fb7f25a0082beddab1c2a33a0efd4efa580
 Author: Apolline Elbaz <aelbaz@localhost.localdomain>
-Date:   Mon Jun 10 12:44:47 2024 +0200
+Date:   Wed Jun 12 16:45:50 2024 +0200
 
-    manage the hortonian variables with openmp
+    unit correction
 
 TEST NAME                                                    |STATUS
 bbox_mesh.active_cell                                        |NON MODIFIED
@@ -80,6 +80,28 @@ forward_run.zero-gr5-lr.rr_states.hlr                        |NON MODIFIED
 forward_run.zero-gr5-lr.rr_states.hp                         |NON MODIFIED
 forward_run.zero-gr5-lr.rr_states.ht                         |NON MODIFIED
 forward_run.zero-gr5-lr.sim_q                                |NON MODIFIED
+forward_run.zero-gr5_ri-kw.cost                              |ADDED
+forward_run.zero-gr5_ri-kw.jobs                              |ADDED
+forward_run.zero-gr5_ri-kw.q_domain                          |ADDED
+forward_run.zero-gr5_ri-kw.rr_states.hi                      |ADDED
+forward_run.zero-gr5_ri-kw.rr_states.hp                      |ADDED
+forward_run.zero-gr5_ri-kw.rr_states.ht                      |ADDED
+forward_run.zero-gr5_ri-kw.sim_q                             |ADDED
+forward_run.zero-gr5_ri-lag0.cost                            |ADDED
+forward_run.zero-gr5_ri-lag0.jobs                            |ADDED
+forward_run.zero-gr5_ri-lag0.q_domain                        |ADDED
+forward_run.zero-gr5_ri-lag0.rr_states.hi                    |ADDED
+forward_run.zero-gr5_ri-lag0.rr_states.hp                    |ADDED
+forward_run.zero-gr5_ri-lag0.rr_states.ht                    |ADDED
+forward_run.zero-gr5_ri-lag0.sim_q                           |ADDED
+forward_run.zero-gr5_ri-lr.cost                              |ADDED
+forward_run.zero-gr5_ri-lr.jobs                              |ADDED
+forward_run.zero-gr5_ri-lr.q_domain                          |ADDED
+forward_run.zero-gr5_ri-lr.rr_states.hi                      |ADDED
+forward_run.zero-gr5_ri-lr.rr_states.hlr                     |ADDED
+forward_run.zero-gr5_ri-lr.rr_states.hp                      |ADDED
+forward_run.zero-gr5_ri-lr.rr_states.ht                      |ADDED
+forward_run.zero-gr5_ri-lr.sim_q                             |ADDED
 forward_run.zero-grd-kw.cost                                 |NON MODIFIED
 forward_run.zero-grd-kw.jobs                                 |NON MODIFIED
 forward_run.zero-grd-kw.q_domain                             |NON MODIFIED
@@ -99,28 +121,28 @@ forward_run.zero-grd-lr.rr_states.hlr                        |NON MODIFIED
 forward_run.zero-grd-lr.rr_states.hp                         |NON MODIFIED
 forward_run.zero-grd-lr.rr_states.ht                         |NON MODIFIED
 forward_run.zero-grd-lr.sim_q                                |NON MODIFIED
-forward_run.zero-hortonian-kw.cost                           |ADDED
-forward_run.zero-hortonian-kw.jobs                           |ADDED
-forward_run.zero-hortonian-kw.q_domain                       |ADDED
-forward_run.zero-hortonian-kw.rr_states.hi                   |ADDED
-forward_run.zero-hortonian-kw.rr_states.hp                   |ADDED
-forward_run.zero-hortonian-kw.rr_states.ht                   |ADDED
-forward_run.zero-hortonian-kw.sim_q                          |ADDED
-forward_run.zero-hortonian-lag0.cost                         |ADDED
-forward_run.zero-hortonian-lag0.jobs                         |ADDED
-forward_run.zero-hortonian-lag0.q_domain                     |ADDED
-forward_run.zero-hortonian-lag0.rr_states.hi                 |ADDED
-forward_run.zero-hortonian-lag0.rr_states.hp                 |ADDED
-forward_run.zero-hortonian-lag0.rr_states.ht                 |ADDED
-forward_run.zero-hortonian-lag0.sim_q                        |ADDED
-forward_run.zero-hortonian-lr.cost                           |ADDED
-forward_run.zero-hortonian-lr.jobs                           |ADDED
-forward_run.zero-hortonian-lr.q_domain                       |ADDED
-forward_run.zero-hortonian-lr.rr_states.hi                   |ADDED
-forward_run.zero-hortonian-lr.rr_states.hlr                  |ADDED
-forward_run.zero-hortonian-lr.rr_states.hp                   |ADDED
-forward_run.zero-hortonian-lr.rr_states.ht                   |ADDED
-forward_run.zero-hortonian-lr.sim_q                          |ADDED
+forward_run.zero-hortonian-kw.cost                           |DELETED
+forward_run.zero-hortonian-kw.jobs                           |DELETED
+forward_run.zero-hortonian-kw.q_domain                       |DELETED
+forward_run.zero-hortonian-kw.rr_states.hi                   |DELETED
+forward_run.zero-hortonian-kw.rr_states.hp                   |DELETED
+forward_run.zero-hortonian-kw.rr_states.ht                   |DELETED
+forward_run.zero-hortonian-kw.sim_q                          |DELETED
+forward_run.zero-hortonian-lag0.cost                         |DELETED
+forward_run.zero-hortonian-lag0.jobs                         |DELETED
+forward_run.zero-hortonian-lag0.q_domain                     |DELETED
+forward_run.zero-hortonian-lag0.rr_states.hi                 |DELETED
+forward_run.zero-hortonian-lag0.rr_states.hp                 |DELETED
+forward_run.zero-hortonian-lag0.rr_states.ht                 |DELETED
+forward_run.zero-hortonian-lag0.sim_q                        |DELETED
+forward_run.zero-hortonian-lr.cost                           |DELETED
+forward_run.zero-hortonian-lr.jobs                           |DELETED
+forward_run.zero-hortonian-lr.q_domain                       |DELETED
+forward_run.zero-hortonian-lr.rr_states.hi                   |DELETED
+forward_run.zero-hortonian-lr.rr_states.hlr                  |DELETED
+forward_run.zero-hortonian-lr.rr_states.hp                   |DELETED
+forward_run.zero-hortonian-lr.rr_states.ht                   |DELETED
+forward_run.zero-hortonian-lr.sim_q                          |DELETED
 forward_run.zero-loieau-kw.cost                              |NON MODIFIED
 forward_run.zero-loieau-kw.jobs                              |NON MODIFIED
 forward_run.zero-loieau-kw.q_domain                          |NON MODIFIED
@@ -219,7 +241,7 @@ model_ddt_io.rr_initial_states.keys                          |NON MODIFIED
 model_ddt_io.rr_initial_states.values                        |NON MODIFIED
 model_ddt_io.rr_parameters.keys                              |NON MODIFIED
 model_ddt_io.rr_parameters.values                            |NON MODIFIED
-model_ddt_io.serr_mu_parameters.keys                         |MODIFIED
+model_ddt_io.serr_mu_parameters.keys                         |NON MODIFIED
 model_ddt_io.serr_mu_parameters.values                       |NON MODIFIED
 model_ddt_io.serr_sigma_parameters.keys                      |NON MODIFIED
 model_ddt_io.serr_sigma_parameters.values                    |NON MODIFIED
@@ -343,6 +365,45 @@ optimize.zero-gr5-lr.multi-polynomial.sim_q                  |NON MODIFIED
 optimize.zero-gr5-lr.uniform.control_vector                  |NON MODIFIED
 optimize.zero-gr5-lr.uniform.iter_cost                       |NON MODIFIED
 optimize.zero-gr5-lr.uniform.sim_q                           |NON MODIFIED
+optimize.zero-gr5_ri-kw.ann.sim_q                            |ADDED
+optimize.zero-gr5_ri-kw.distributed.control_vector           |ADDED
+optimize.zero-gr5_ri-kw.distributed.iter_cost                |ADDED
+optimize.zero-gr5_ri-kw.distributed.sim_q                    |ADDED
+optimize.zero-gr5_ri-kw.multi-linear.control_vector          |ADDED
+optimize.zero-gr5_ri-kw.multi-linear.iter_cost               |ADDED
+optimize.zero-gr5_ri-kw.multi-linear.sim_q                   |ADDED
+optimize.zero-gr5_ri-kw.multi-polynomial.control_vector      |ADDED
+optimize.zero-gr5_ri-kw.multi-polynomial.iter_cost           |ADDED
+optimize.zero-gr5_ri-kw.multi-polynomial.sim_q               |ADDED
+optimize.zero-gr5_ri-kw.uniform.control_vector               |ADDED
+optimize.zero-gr5_ri-kw.uniform.iter_cost                    |ADDED
+optimize.zero-gr5_ri-kw.uniform.sim_q                        |ADDED
+optimize.zero-gr5_ri-lag0.ann.sim_q                          |ADDED
+optimize.zero-gr5_ri-lag0.distributed.control_vector         |ADDED
+optimize.zero-gr5_ri-lag0.distributed.iter_cost              |ADDED
+optimize.zero-gr5_ri-lag0.distributed.sim_q                  |ADDED
+optimize.zero-gr5_ri-lag0.multi-linear.control_vector        |ADDED
+optimize.zero-gr5_ri-lag0.multi-linear.iter_cost             |ADDED
+optimize.zero-gr5_ri-lag0.multi-linear.sim_q                 |ADDED
+optimize.zero-gr5_ri-lag0.multi-polynomial.control_vector    |ADDED
+optimize.zero-gr5_ri-lag0.multi-polynomial.iter_cost         |ADDED
+optimize.zero-gr5_ri-lag0.multi-polynomial.sim_q             |ADDED
+optimize.zero-gr5_ri-lag0.uniform.control_vector             |ADDED
+optimize.zero-gr5_ri-lag0.uniform.iter_cost                  |ADDED
+optimize.zero-gr5_ri-lag0.uniform.sim_q                      |ADDED
+optimize.zero-gr5_ri-lr.ann.sim_q                            |ADDED
+optimize.zero-gr5_ri-lr.distributed.control_vector           |ADDED
+optimize.zero-gr5_ri-lr.distributed.iter_cost                |ADDED
+optimize.zero-gr5_ri-lr.distributed.sim_q                    |ADDED
+optimize.zero-gr5_ri-lr.multi-linear.control_vector          |ADDED
+optimize.zero-gr5_ri-lr.multi-linear.iter_cost               |ADDED
+optimize.zero-gr5_ri-lr.multi-linear.sim_q                   |ADDED
+optimize.zero-gr5_ri-lr.multi-polynomial.control_vector      |ADDED
+optimize.zero-gr5_ri-lr.multi-polynomial.iter_cost           |ADDED
+optimize.zero-gr5_ri-lr.multi-polynomial.sim_q               |ADDED
+optimize.zero-gr5_ri-lr.uniform.control_vector               |ADDED
+optimize.zero-gr5_ri-lr.uniform.iter_cost                    |ADDED
+optimize.zero-gr5_ri-lr.uniform.sim_q                        |ADDED
 optimize.zero-grd-kw.ann.sim_q                               |NON MODIFIED
 optimize.zero-grd-kw.distributed.control_vector              |NON MODIFIED
 optimize.zero-grd-kw.distributed.iter_cost                   |NON MODIFIED
@@ -382,45 +443,45 @@ optimize.zero-grd-lr.multi-polynomial.sim_q                  |NON MODIFIED
 optimize.zero-grd-lr.uniform.control_vector                  |NON MODIFIED
 optimize.zero-grd-lr.uniform.iter_cost                       |NON MODIFIED
 optimize.zero-grd-lr.uniform.sim_q                           |NON MODIFIED
-optimize.zero-hortonian-kw.ann.sim_q                         |ADDED
-optimize.zero-hortonian-kw.distributed.control_vector        |ADDED
-optimize.zero-hortonian-kw.distributed.iter_cost             |ADDED
-optimize.zero-hortonian-kw.distributed.sim_q                 |ADDED
-optimize.zero-hortonian-kw.multi-linear.control_vector       |ADDED
-optimize.zero-hortonian-kw.multi-linear.iter_cost            |ADDED
-optimize.zero-hortonian-kw.multi-linear.sim_q                |ADDED
-optimize.zero-hortonian-kw.multi-polynomial.control_vector   |ADDED
-optimize.zero-hortonian-kw.multi-polynomial.iter_cost        |ADDED
-optimize.zero-hortonian-kw.multi-polynomial.sim_q            |ADDED
-optimize.zero-hortonian-kw.uniform.control_vector            |ADDED
-optimize.zero-hortonian-kw.uniform.iter_cost                 |ADDED
-optimize.zero-hortonian-kw.uniform.sim_q                     |ADDED
-optimize.zero-hortonian-lag0.ann.sim_q                       |ADDED
-optimize.zero-hortonian-lag0.distributed.control_vector      |ADDED
-optimize.zero-hortonian-lag0.distributed.iter_cost           |ADDED
-optimize.zero-hortonian-lag0.distributed.sim_q               |ADDED
-optimize.zero-hortonian-lag0.multi-linear.control_vector     |ADDED
-optimize.zero-hortonian-lag0.multi-linear.iter_cost          |ADDED
-optimize.zero-hortonian-lag0.multi-linear.sim_q              |ADDED
-optimize.zero-hortonian-lag0.multi-polynomial.control_vector |ADDED
-optimize.zero-hortonian-lag0.multi-polynomial.iter_cost      |ADDED
-optimize.zero-hortonian-lag0.multi-polynomial.sim_q          |ADDED
-optimize.zero-hortonian-lag0.uniform.control_vector          |ADDED
-optimize.zero-hortonian-lag0.uniform.iter_cost               |ADDED
-optimize.zero-hortonian-lag0.uniform.sim_q                   |ADDED
-optimize.zero-hortonian-lr.ann.sim_q                         |ADDED
-optimize.zero-hortonian-lr.distributed.control_vector        |ADDED
-optimize.zero-hortonian-lr.distributed.iter_cost             |ADDED
-optimize.zero-hortonian-lr.distributed.sim_q                 |ADDED
-optimize.zero-hortonian-lr.multi-linear.control_vector       |ADDED
-optimize.zero-hortonian-lr.multi-linear.iter_cost            |ADDED
-optimize.zero-hortonian-lr.multi-linear.sim_q                |ADDED
-optimize.zero-hortonian-lr.multi-polynomial.control_vector   |ADDED
-optimize.zero-hortonian-lr.multi-polynomial.iter_cost        |ADDED
-optimize.zero-hortonian-lr.multi-polynomial.sim_q            |ADDED
-optimize.zero-hortonian-lr.uniform.control_vector            |ADDED
-optimize.zero-hortonian-lr.uniform.iter_cost                 |ADDED
-optimize.zero-hortonian-lr.uniform.sim_q                     |ADDED
+optimize.zero-hortonian-kw.ann.sim_q                         |DELETED
+optimize.zero-hortonian-kw.distributed.control_vector        |DELETED
+optimize.zero-hortonian-kw.distributed.iter_cost             |DELETED
+optimize.zero-hortonian-kw.distributed.sim_q                 |DELETED
+optimize.zero-hortonian-kw.multi-linear.control_vector       |DELETED
+optimize.zero-hortonian-kw.multi-linear.iter_cost            |DELETED
+optimize.zero-hortonian-kw.multi-linear.sim_q                |DELETED
+optimize.zero-hortonian-kw.multi-polynomial.control_vector   |DELETED
+optimize.zero-hortonian-kw.multi-polynomial.iter_cost        |DELETED
+optimize.zero-hortonian-kw.multi-polynomial.sim_q            |DELETED
+optimize.zero-hortonian-kw.uniform.control_vector            |DELETED
+optimize.zero-hortonian-kw.uniform.iter_cost                 |DELETED
+optimize.zero-hortonian-kw.uniform.sim_q                     |DELETED
+optimize.zero-hortonian-lag0.ann.sim_q                       |DELETED
+optimize.zero-hortonian-lag0.distributed.control_vector      |DELETED
+optimize.zero-hortonian-lag0.distributed.iter_cost           |DELETED
+optimize.zero-hortonian-lag0.distributed.sim_q               |DELETED
+optimize.zero-hortonian-lag0.multi-linear.control_vector     |DELETED
+optimize.zero-hortonian-lag0.multi-linear.iter_cost          |DELETED
+optimize.zero-hortonian-lag0.multi-linear.sim_q              |DELETED
+optimize.zero-hortonian-lag0.multi-polynomial.control_vector |DELETED
+optimize.zero-hortonian-lag0.multi-polynomial.iter_cost      |DELETED
+optimize.zero-hortonian-lag0.multi-polynomial.sim_q          |DELETED
+optimize.zero-hortonian-lag0.uniform.control_vector          |DELETED
+optimize.zero-hortonian-lag0.uniform.iter_cost               |DELETED
+optimize.zero-hortonian-lag0.uniform.sim_q                   |DELETED
+optimize.zero-hortonian-lr.ann.sim_q                         |DELETED
+optimize.zero-hortonian-lr.distributed.control_vector        |DELETED
+optimize.zero-hortonian-lr.distributed.iter_cost             |DELETED
+optimize.zero-hortonian-lr.distributed.sim_q                 |DELETED
+optimize.zero-hortonian-lr.multi-linear.control_vector       |DELETED
+optimize.zero-hortonian-lr.multi-linear.iter_cost            |DELETED
+optimize.zero-hortonian-lr.multi-linear.sim_q                |DELETED
+optimize.zero-hortonian-lr.multi-polynomial.control_vector   |DELETED
+optimize.zero-hortonian-lr.multi-polynomial.iter_cost        |DELETED
+optimize.zero-hortonian-lr.multi-polynomial.sim_q            |DELETED
+optimize.zero-hortonian-lr.uniform.control_vector            |DELETED
+optimize.zero-hortonian-lr.uniform.iter_cost                 |DELETED
+optimize.zero-hortonian-lr.uniform.sim_q                     |DELETED
 optimize.zero-loieau-kw.ann.sim_q                            |NON MODIFIED
 optimize.zero-loieau-kw.distributed.control_vector           |NON MODIFIED
 optimize.zero-loieau-kw.distributed.iter_cost                |NON MODIFIED

@@ -80,7 +80,7 @@ contains
     end subroutine gr_production
     
     
-    subroutine hortonian_production(pn, en, cp, beta, alpha1, hp, pr, perc, dt)
+    subroutine gr_ri_production(pn, en, cp, beta, alpha1, hp, pr, perc, dt)
 
         implicit none
 
@@ -116,7 +116,7 @@ contains
 
         hp = hp_imd - perc*inv_cp
 
-    end subroutine hortonian_production
+    end subroutine gr_ri_production
 
 
     subroutine gr_exchange(kexc, ht, l)
@@ -326,8 +326,8 @@ contains
 
 
 
-    subroutine gr5_hortonian_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
-    & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
+    subroutine gr5_ri_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_alpha1, ac_alpha2, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
 
@@ -338,12 +338,13 @@ contains
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(in) :: ac_alpha1, ac_alpha2
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k
-        real(sp) :: beta, alpha1, alpha2, pn, en, pr, perc, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -353,13 +354,12 @@ contains
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
         
-        alpha1 = 0.0001_sp
-        alpha2 = 0.01_sp
-        
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, alpha1, alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, &
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_qt) &
         !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -372,7 +372,7 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call hortonian_production(pn, en, ac_cp(k), beta, alpha1, ac_hp(k), pr, perc, setup%dt)
+                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
 
                     call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
@@ -384,7 +384,7 @@ contains
 
                 end if
                 
-                split = 0.9_sp * tanh(alpha2 * pn) ** 2 + 0.1 
+                split = 0.9_sp * tanh(ac_alpha2(k) * pn) ** 2 + 0.1 
                 
                 prr = (1._sp - split) * (pr + perc) + l
                 prd = split * (pr + perc)
@@ -400,9 +400,10 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
-    end subroutine gr5_hortonian_time_step
+#endif
+    end subroutine gr5_ri_time_step
     
     
 
