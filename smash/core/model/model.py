@@ -119,6 +119,7 @@ class Model:
 
             - ``'gr4'``
             - ``'gr5'``
+            - ``'gr5_ri'``
             - ``'grd'``
             - ``'loieau'``
             - ``'vic3l'``
