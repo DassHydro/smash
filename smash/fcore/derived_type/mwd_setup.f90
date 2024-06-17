@@ -94,30 +94,30 @@ module mwd_setup
         logical :: compute_mean_atmos = .true.
 
         logical :: read_qobs = .false.
-        character(lchar) :: qobs_directory = "..." !$F90W char
+        character(2*lchar) :: qobs_directory = "..." !$F90W char
 
         logical :: read_prcp = .false.
         character(lchar) :: prcp_format = "..." !$F90W char
         real(sp) :: prcp_conversion_factor = 1._sp
-        character(lchar) :: prcp_directory = "..." !$F90W char
+        character(2*lchar) :: prcp_directory = "..." !$F90W char
         character(lchar) :: prcp_access = "..." !$F90W char
 
         logical :: read_pet = .false.
         character(lchar) :: pet_format = "..." !$F90W char
         real(sp) :: pet_conversion_factor = 1._sp
-        character(lchar) :: pet_directory = "..." !$F90W char
+        character(2*lchar) :: pet_directory = "..." !$F90W char
         character(lchar) :: pet_access = "..." !$F90W char
         logical :: daily_interannual_pet = .false.
 
         logical :: read_snow = .false.
         character(lchar) :: snow_format = "..." !$F90W char
         real(sp) :: snow_conversion_factor = 1._sp
-        character(lchar) :: snow_directory = "..." !$F90W char
+        character(2*lchar) :: snow_directory = "..." !$F90W char
         character(lchar) :: snow_access = "..." !$F90W char
 
         logical :: read_temp = .false.
         character(lchar) :: temp_format = "..." !$F90W char
-        character(lchar) :: temp_directory = "..." !$F90W char
+        character(2*lchar) :: temp_directory = "..." !$F90W char
         character(lchar) :: temp_access = "..." !$F90W char
 
         logical :: prcp_partitioning = .false.
@@ -126,8 +126,8 @@ module mwd_setup
 
         logical :: read_descriptor = .false.
         character(lchar) :: descriptor_format = "..." !$F90W char
-        character(lchar) :: descriptor_directory = "..." !$F90W char
-        character(20), allocatable, dimension(:) :: descriptor_name !$F90W char-array
+        character(2*lchar) :: descriptor_directory = "..." !$F90W char
+        character(lchar), allocatable, dimension(:) :: descriptor_name !$F90W char-array
 
         ! Post processed variables
         character(lchar) :: structure = "..." !$F90W char
