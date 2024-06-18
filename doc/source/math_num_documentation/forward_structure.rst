@@ -4,25 +4,31 @@
 Forward Structure
 =================
 
-This section explains the `smash` forward modeling paradigm. It details the various models structures available, composed of **differentiable hydrological-hydraulic operators**.
+In `smash` a forward/direct spatially distributed model is obtained by chaining **differentiable hydrological-hydraulic operators** via simulated fluxes:
 
-In `smash`, :math:`\forall x \in\Omega\;,\;\forall t \in]0 .. T]`, a forward model structure :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`) is a combination of 3 models:
+- (optional) a descriptors-to-parameters mapping :math:`\phi` either for parameters imposing spatial constrain and/or regional mapping between physical descriptor and model conceptual parameters, see :ref:`mapping section <math_num_documentation.mapping>`.
+- (optional) a ``snow`` operator :math:`\mathcal{M}_{snw}` generating a melt flux :math:`m_{lt}` which is then summed with the precipitation flux to feed the ``hydrological`` operator :math:`\mathcal{M}_{rr}`.
+- A ``hydrological`` production operator :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t` which feeds the routing operator. 
+- A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating propagation of discharge :math:`Q)`.
 
-- The ``snow`` model :math:`\mathcal{M}_{snw}` generating a melt flux :math:`m_{lt}(x,t)` which is then summed with the precipitation flux to feed the ``hydrological`` model :math:`\mathcal{M}_{rr}`.
-- The ``hydrological`` production module :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t(x,t)` which feeds the routing model. 
-- The ``routing`` model :math:`\mathcal{M}_{hy}` that simulates the routing of discharge :math:`Q(x,t)`.
+The operators chaining principle  is presented in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem.chaining>` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>` ) and the chaining fluxes are explicitated in the diagram below. The forward model obtained reads :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` .
 
-.. figure:: ../_static/flowchart_forward_gridded.png
+This section describes the various operators available in `smash` with mathematical/numerical expression, **input data** :math:`\left[\boldsymbol{I},\boldsymbol{D}\right](x,t)`, **tunable conceptual parameters** :math:`\boldsymbol{\theta}(x,t)` and simulated **state and fluxes** :math:`\boldsymbol{U}(x,t)=\left[Q,\boldsymbol{h},\boldsymbol{q}\right](x,t)`.
+
+These operators are written below for a given pixel :math:`x` of the 2D spatial domain :math:`\Omega` and for a time :math:`t` in the simulation window :math:`\left]0,T\right]`.
+
+
+.. figure:: ../_static/forward_flowchart_GMDv1.png
     :align: center
     :width: 800
     
-    Schematic view of a gridded model :math:`\mathcal{M}`: input data, model components, simulated quantites.
+    Diagram of input data, hydrological-hydraulic operators, simulated quantities of a forward model :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`); recall the  composition principle is explained in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem>`.
     
 
 .. _math_num_documentation.forward_structure.snow_module:
 
-Snow module :math:`\mathcal{M}_{snw}`
--------------------------------------
+Snow operator :math:`\mathcal{M}_{snw}`
+---------------------------------------
 
 .. image:: ../_static/snow_module.svg
     :align: center
@@ -31,7 +37,7 @@ Snow module :math:`\mathcal{M}_{snw}`
 zero
 ****
 
-This snow module simply means that there is no snow module.
+This snow operator simply means that there is no snow operator.
 
 .. math::
     
@@ -42,7 +48,7 @@ with :math:`m_{lt}` the melt flux.
 ssn (Simple Snow)
 *****************
 
-This snow module is a simple degree-day snow module. It can be expressed as follows:
+This snow operator is a simple degree-day snow operator. It can be expressed as follows:
 
 .. math::
 
@@ -92,8 +98,10 @@ The function :math:`f` is resolved numerically as follows:
 
 .. _math_num_documentation.forward_structure.hydrological_module:
 
-Hydrological module :math:`\mathcal{M}_{rr}`
---------------------------------------------
+Hydrological operator :math:`\mathcal{M}_{rr}`
+----------------------------------------------
+
+Hydrological processes can be described at pixel scale in `smash` with one of the availabe hydrological operators adapted from state-of-the-art lumped models.
 
 .. image:: ../_static/hydrological_module.svg
     :align: center
@@ -102,7 +110,7 @@ Hydrological module :math:`\mathcal{M}_{rr}`
 gr4 (Génie Rural 4)
 *******************
 
-This hydrological module is derived from the GR4 model :cite:p:`perrin2003improvement`.
+This hydrological operator is derived from the GR4 model :cite:p:`perrin2003improvement`.
 
 .. hint::
 
@@ -111,7 +119,17 @@ This hydrological module is derived from the GR4 model :cite:p:`perrin2003improv
     - `Brief history of GR models <https://webgr.inrae.fr/models/a-brief-history/>`__
     - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
     - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
+    
+    
+.. figure:: ../_static/gr_flowchart.png
+    :align: center
+    :width: 400
+    
+    Diagram of the gr4 like hydrological operator
 
+    
+    
+    
 It can be expressed as follows:
 
 .. math::
@@ -119,7 +137,7 @@ It can be expressed as follows:
     q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, k_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
 
 with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-:math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
+:math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
 :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
 :math:`k_{exc}` the exchange coefficient, :math:`h_i` the state of the interception reservoir, :math:`h_p` the state of the production reservoir
 and :math:`h_t` the state of the transfer reservoir.
@@ -282,7 +300,7 @@ Transfer
 gr5 (Génie Rural 5)
 *******************
 
-This hydrological module is derived from the GR5 model :cite:p:`LeMoine_2008`.
+This hydrological operator is derived from the GR5 model :cite:p:`LeMoine_2008`. It consists in a gr4 like model stucture (see diagram above)  with a modified exchange flux with two parameters to account for seasonal variaitons.
 
 .. hint::
 
@@ -299,7 +317,7 @@ It can be expressed as follows:
     q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
 
 with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-:math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
+:math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
 :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
 :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
 :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir.
@@ -343,7 +361,7 @@ Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward
 grd (Génie Rural Distribué)
 ***************************
 
-This hydrological module is derived from the GR model :cite:p:`jay2019potential`.
+This hydrological operator is derived from the GR model :cite:p:`jay2019potential`.
 
 It can be expressed as follows:
 
@@ -352,7 +370,7 @@ It can be expressed as follows:
     q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_p, c_t\right](x), \left[h_p, h_t\right](x, t)\right)
 
 with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-:math:`m_{lt}` the melt flux from the snow module, :math:`c_p` the maximum capacity of the production reservoir, 
+:math:`m_{lt}` the melt flux from the snow operator, :math:`c_p` the maximum capacity of the production reservoir, 
 :math:`c_t` the maximum capacity of the transfer reservoir, :math:`h_p` the state of the production reservoir and
 :math:`h_t` the state of the transfer reservoir.
 
@@ -431,7 +449,7 @@ Transfer
 loieau (LoiEau)
 ***************
 
-This hydrological module is derived from the GR model :cite:p:`Folton_2020`.
+This hydrological operator is derived from the GR model :cite:p:`Folton_2020`.
 
 .. hint::
 
@@ -446,7 +464,7 @@ It can be expressed as follows:
     q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_a, c_c, k_b\right](x), \left[h_a, h_c\right](x, t)\right)
 
 with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-:math:`m_{lt}` the melt flux from the snow module, :math:`c_a` the maximum capacity of the production reservoir, 
+:math:`m_{lt}` the melt flux from the snow operator, :math:`c_a` the maximum capacity of the production reservoir, 
 :math:`c_c` the maximum capacity of the transfer reservoir, :math:`k_b` the transfer coefficient, 
 :math:`h_a` the state of the production reservoir and :math:`h_c` the state of the transfer reservoir.
 
@@ -528,7 +546,7 @@ Transfer
 vic3l (Variable Infiltration Curve 3 Layers)
 ********************************************
 
-This hydrological module is derived from the VIC model :cite:p:`liang1994simple`.
+This hydrological operator is derived from the VIC model :cite:p:`liang1994simple`.
 
 .. hint::
 
@@ -545,7 +563,7 @@ It can be expressed as follows:
     q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[b, c_{usl}, c_{msl}, c_{bsl}, k_s, p_{bc}, d_{sm}, d_s, w_s\right](x), \left[h_{cl}, h_{usl}, h_{msl}, h_{bsl}\right](x, t)\right)
 
 with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-:math:`m_{lt}` the melt flux from the snow module, :math:`b` the variable infiltration curve parameter,
+:math:`m_{lt}` the melt flux from the snow operator, :math:`b` the variable infiltration curve parameter,
 :math:`c_{usl}` the maximum capacity of the upper soil layer, :math:`c_{msl}` the maximum capacity of the medium soil layer,
 :math:`c_{bsl}` the maximum capacity of the bottom soil layer, :math:`k_s` the saturated hydraulic conductivity,
 :math:`p_{bc}` the Brooks and Corey exponent, :math:`d_{sm}` the maximum velocity of baseflow, 
@@ -791,10 +809,10 @@ Baseflow
 
 .. _math_num_documentation.forward_structure.routing_module:
 
-Routing module :math:`\mathcal{M}_{hy}`
----------------------------------------
+Routing operator :math:`\mathcal{M}_{hy}`
+-----------------------------------------
 
-The following routing operators are grid based and adapted to perform on the same grid than the snow and production modules. 
+The following routing operators are grid based and adapted to perform on the same grid than the snow and production operators. 
 They take as input a 8 direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained by terrain elevation processing. 
 
 For all the following models, the 2D flow routing problem over the spatial domain :math:`\Omega` reduces to a 1D problem by using the 
@@ -809,7 +827,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 lag0 (Instantaneous Routing)
 ****************************
 
-This routing module is a simple aggregation of upstream discharge to downstream following the drainage plan. It can be expressed as follows:
+This routing operator is a simple aggregation of upstream discharge to downstream following the drainage plan. It can be expressed as follows:
 
 .. math::
 
@@ -864,7 +882,7 @@ with :math:`\alpha` a conversion factor from :math:`mm.\Delta t^{-1}` to :math:`
 lr (Linear Reservoir)
 *********************
 
-This routing module is using a linear reservoir to rout upstream discharge to downstream following the drainage plan. It can be expressed as follows:
+This routing operator is using a linear reservoir to rout upstream discharge to downstream following the drainage plan. It can be expressed as follows:
 
 .. math::
 
@@ -925,7 +943,7 @@ with :math:`\alpha` a conversion factor from from :math:`mm.\Delta t^{-1}` to :m
 kw (Kinematic Wave) 
 *******************
 
-This routing module is based on a conceptual 1D kinematic wave model that is numerically solved with a linearized implicit numerical scheme :cite:p:`ChowAppliedhydrology`. This is applicable given the drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` that enables reducing the routing problem to 1D. 
+This routing operator is based on a conceptual 1D kinematic wave model that is numerically solved with a linearized implicit numerical scheme :cite:p:`ChowAppliedhydrology`. This is applicable given the drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` that enables reducing the routing problem to 1D. 
 
 The kinematic wave model is a simplification of 1D Saint-Venant hydraulic model. First the mass equation writes:
 

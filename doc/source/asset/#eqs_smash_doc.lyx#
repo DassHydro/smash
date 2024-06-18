@@ -489,7 +489,7 @@ J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
 
 \begin_layout Standard
 \begin_inset Graphics
-	filename ../_static/forward_simple_flowchart.png
+	filename ../../../../../Research/2024/smash/doc/source/_static/forward_simple_flowchart.png
 
 \end_inset
 
@@ -497,6 +497,12 @@ J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
 \end_layout
 
 \begin_layout Standard
+\begin_inset Graphics
+	filename ../../../../../Research/2024/smash/doc/source/_static/forward_composition_flowchart.png
+
+\end_inset
+
+
 \begin_inset Graphics
 	filename ../_static/forward_composition_flowchart.png
 
@@ -539,7 +545,7 @@ J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
 
 \begin_layout Standard
 \begin_inset Graphics
-	filename ../_static/flowchart_forward_gridded.png
+	filename ../../../../../Research/2024/smash/doc/source/_static/flowchart_forward_gridded.png
 
 \end_inset
 
