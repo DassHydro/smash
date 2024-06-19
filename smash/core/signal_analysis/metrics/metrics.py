@@ -52,7 +52,8 @@ def metrics(
         defined in `Model.setup`.
 
         .. note::
-            If not given, the start of evaluation period will be defined as the start time in `Model.setup`.
+            If not given, the start of evaluation period will be defined as
+            the start time in `Model.setup`.
 
     end_eval : `str`, `pandas.Timestamp` or None, default None
         The end of the evaluation period.
@@ -61,12 +62,14 @@ def metrics(
         defined in `Model.setup`.
 
         .. note::
-            If not given, the end of evaluation period will be defined as the end time in `Model.setup`.
+            If not given, the end of evaluation period will be defined as
+            the end time in `Model.setup`.
 
     Returns
     -------
     metrics : `numpy.ndarray`
-        An array of shape *(m, n)* representing the computed metrics for *m* catchments and *n* evaluation criteria.
+        An array of shape *(m, n)* representing the computed metrics for *m* catchments
+        and *n* evaluation criteria.
 
     Examples
     --------
