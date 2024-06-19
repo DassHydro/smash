@@ -551,8 +551,31 @@ Model structures :
 \end_layout
 
 \begin_layout Standard
+gr4-5
+\end_layout
+
+\begin_layout Standard
 \begin_inset Graphics
 	filename ../_static/gr_flowchart.png
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename ../_static/gr_flowchart.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+grd
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ../_static/grd_flowchart.png
 
 \end_inset
 

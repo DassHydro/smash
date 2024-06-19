@@ -361,7 +361,13 @@ Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward
 grd (Génie Rural Distribué)
 ***************************
 
-This hydrological operator is derived from the GR model :cite:p:`jay2019potential`.
+This hydrological operator is derived from the GR models and is a simplified strucutre used in :cite:p:`jay2019potential`.
+
+.. figure:: ../_static/grd_flowchart.png
+    :align: center
+    :width: 400
+    
+    Diagram of the grd operator, a simplified GR like operator
 
 It can be expressed as follows:
 
