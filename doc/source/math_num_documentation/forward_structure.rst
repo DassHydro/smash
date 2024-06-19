@@ -18,7 +18,7 @@ This section describes the various operators available in `smash` with mathemati
 These operators are written below for a given pixel :math:`x` of the 2D spatial domain :math:`\Omega` and for a time :math:`t` in the simulation window :math:`\left]0,T\right]`.
 
 
-.. figure:: ../_static/forward_flowchart_GMDv1.png
+.. figure:: ../_static/forward_flowchart_detail_input_params_states_fluxes.png
     :align: center
     :width: 800
     
