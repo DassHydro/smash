@@ -46,8 +46,8 @@ def metrics(
         - '``lgrm'``: Logarithmic
 
     start_eval : `str`, `pandas.Timestamp` or None, default None
-        The start of the evaluation period. 
-        The value can be a string that can be interpreted as `pandas.Timestamp`. 
+        The start of the evaluation period.
+        The value can be a string that can be interpreted as `pandas.Timestamp`.
         The **start_eval** date value must be between the start time and the end time
         defined in `Model.setup`.
 
@@ -55,8 +55,8 @@ def metrics(
             If not given, the start of evaluation period will be defined as the start time in `Model.setup`.
 
     end_eval : `str`, `pandas.Timestamp` or None, default None
-        The end of the evaluation period. 
-        The value can be a string that can be interpreted as `pandas.Timestamp`. 
+        The end of the evaluation period.
+        The value can be a string that can be interpreted as `pandas.Timestamp`.
         The **end_eval** date value must be between the start time and the end time
         defined in `Model.setup`.
 
