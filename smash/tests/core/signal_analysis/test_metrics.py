@@ -14,8 +14,10 @@ def generic_metrics(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
 
     instance.response.q = qs
 
-    for metric in METRICS:
-        res[f"metrics.{metric}"] = smash.metrics(instance, metric=metric)
+    metrics = smash.metrics(instance, criteria=METRICS)
+
+    for i, m in enumerate(METRICS):
+        res[f"metrics.{m}"] = metrics[:, i]
 
     return res
 

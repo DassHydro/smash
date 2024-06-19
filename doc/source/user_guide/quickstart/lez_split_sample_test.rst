@@ -332,21 +332,15 @@ calibration performances and the other for the validation performances.
 
 .. ipython:: python
 
-    metrics = ["nse", "kge"]
-    perf_cal = pd.DataFrame(index=["p1", "p2"], columns=metrics)
+    criteria = ["nse", "kge"]
+    perf_cal = pd.DataFrame(index=["p1", "p2"], columns=criteria)
     perf_val = perf_cal.copy()
 
-    for m in metrics:
-        perf_cal.loc["p1", m] = np.round(smash.metrics(model_p1_opt, metric=m)[0], 2)
-    
-    for m in metrics:
-        perf_cal.loc["p2", m] = np.round(smash.metrics(model_p2_opt, metric=m)[0], 2)
-    
-    for m in metrics:
-        perf_val.loc["p1", m] = np.round(smash.metrics(model_p1, metric=m)[0], 2)
-    
-    for m in metrics:
-        perf_val.loc["p2", m] = np.round(smash.metrics(model_p2, metric=m)[0], 2)
+    perf_cal.loc["p1"] = np.round(smash.metrics(model_p1_opt, criteria)[0, :], 2)
+    perf_cal.loc["p2"] = np.round(smash.metrics(model_p2_opt, criteria)[0, :], 2)
+
+    perf_val.loc["p1"] = np.round(smash.metrics(model_p1, criteria)[0, :], 2)
+    perf_val.loc["p2"] = np.round(smash.metrics(model_p2, criteria)[0, :], 2)
 
     perf_cal # Calibration performances
 
