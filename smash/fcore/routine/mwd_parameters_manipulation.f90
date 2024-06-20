@@ -740,15 +740,18 @@ contains
 
     end subroutine serr_sigma_parameters_get_control_size
 
-    subroutine nn_parameters_get_control_size(setup, n)
+    subroutine nn_parameters_get_control_size(setup, options, n)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
+        type(OptionsDT), intent(in) :: options
         integer, intent(inout) :: n
 
-        n = setup%neurons(2)*(setup%neurons(1) + 1) + &
-        & setup%neurons(3)*(setup%neurons(2) + 1)
+        n = options%optimize%nn_parameters(1)*setup%neurons(2)*setup%neurons(1) &
+        & + options%optimize%nn_parameters(2)*setup%neurons(2) &
+        & + options%optimize%nn_parameters(3)*setup%neurons(3)*setup%neurons(2) &
+        & + options%optimize%nn_parameters(4)*setup%neurons(3)
 
     end subroutine nn_parameters_get_control_size
 
@@ -789,7 +792,7 @@ contains
         call serr_mu_parameters_get_control_size(options, nbk(3))
         call serr_sigma_parameters_get_control_size(options, nbk(4))
 
-        call nn_parameters_get_control_size(setup, nbk(5))
+        call nn_parameters_get_control_size(setup, options, nbk(5))
 
     end subroutine get_control_sizes
 
@@ -1225,11 +1228,12 @@ contains
 
     end subroutine serr_sigma_parameters_fill_control
 
-    subroutine nn_parameters_fill_control(setup, parameters)
+    subroutine nn_parameters_fill_control(setup, options, parameters)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
+        type(OptionsDT), intent(in) :: options
         type(ParametersDT), intent(inout) :: parameters
 
         character(lchar) :: name
@@ -1237,53 +1241,61 @@ contains
 
         j = sum(parameters%control%nbk(1:4))
 
-        do k = 1, setup%neurons(1)
+        if (options%optimize%nn_parameters(1) .eq. 1) then
+            do k = 1, setup%neurons(1)
 
-            do l = 1, setup%neurons(2)
+                do l = 1, setup%neurons(2)
+
+                    j = j + 1
+                    parameters%control%x(j) = parameters%nn_parameters%weight_1(l, k)
+                    parameters%control%nbd(j) = 0
+                    write (name, '(a,i0,a,i0)') "weight_1", l, "-", k
+                    parameters%control%name(j) = name
+
+                end do
+
+            end do
+        end if
+
+        if (options%optimize%nn_parameters(3) .eq. 1) then
+            do k = 1, setup%neurons(2)
+
+                do l = 1, setup%neurons(3)
+
+                    j = j + 1
+                    parameters%control%x(j) = parameters%nn_parameters%weight_2(l, k)
+                    parameters%control%nbd(j) = 0
+                    write (name, '(a,i0,a,i0)') "weight_2", l, "-", k
+                    parameters%control%name(j) = name
+
+                end do
+
+            end do
+        end if
+
+        if (options%optimize%nn_parameters(2) .eq. 1) then
+            do k = 1, setup%neurons(2)
 
                 j = j + 1
-                parameters%control%x(j) = parameters%nn_parameters%weight_1(l, k)
+                parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
                 parameters%control%nbd(j) = 0
-                write (name, '(a,i0,a,i0)') "weight_1", l, "-", k
+                write (name, '(a,i0)') "bias_1", k
                 parameters%control%name(j) = name
 
             end do
+        end if
 
-        end do
-
-        do k = 1, setup%neurons(2)
-
-            do l = 1, setup%neurons(3)
+        if (options%optimize%nn_parameters(4) .eq. 1) then
+            do k = 1, setup%neurons(3)
 
                 j = j + 1
-                parameters%control%x(j) = parameters%nn_parameters%weight_2(l, k)
+                parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
                 parameters%control%nbd(j) = 0
-                write (name, '(a,i0,a,i0)') "weight_2", l, "-", k
+                write (name, '(a,i0)') "bias_2", k
                 parameters%control%name(j) = name
 
             end do
-
-        end do
-
-        do k = 1, setup%neurons(2)
-
-            j = j + 1
-            parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
-            parameters%control%nbd(j) = 0
-            write (name, '(a,i0)') "bias_1", k
-            parameters%control%name(j) = name
-
-        end do
-
-        do k = 1, setup%neurons(3)
-
-            j = j + 1
-            parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
-            parameters%control%nbd(j) = 0
-            write (name, '(a,i0)') "bias_2", k
-            parameters%control%name(j) = name
-
-        end do
+        end if
 
     end subroutine nn_parameters_fill_control
 
@@ -1325,7 +1337,7 @@ contains
         call serr_mu_parameters_fill_control(setup, mesh, parameters, options)
         call serr_sigma_parameters_fill_control(setup, mesh, parameters, options)
 
-        call nn_parameters_fill_control(setup, parameters)
+        call nn_parameters_fill_control(setup, options, parameters)
 
         ! Store background
         parameters%control%x_bkg = parameters%control%x
@@ -1728,52 +1740,61 @@ contains
 
     end subroutine serr_sigma_parameters_fill_parameters
 
-    subroutine nn_parameters_fill_parameters(setup, parameters)
+    subroutine nn_parameters_fill_parameters(setup, options, parameters)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
+        type(OptionsDT), intent(in) :: options
         type(ParametersDT), intent(inout) :: parameters
 
         integer :: j, k, l
 
         j = sum(parameters%control%nbk(1:4))
 
-        do k = 1, setup%neurons(1)
+        if (options%optimize%nn_parameters(1) .eq. 1) then
+            do k = 1, setup%neurons(1)
 
-            do l = 1, setup%neurons(2)
+                do l = 1, setup%neurons(2)
 
-                j = j + 1
-                parameters%nn_parameters%weight_1(l, k) = parameters%control%x(j)
+                    j = j + 1
+                    parameters%nn_parameters%weight_1(l, k) = parameters%control%x(j)
 
-            end do
-
-        end do
-
-        do k = 1, setup%neurons(2)
-
-            do l = 1, setup%neurons(3)
-
-                j = j + 1
-                parameters%nn_parameters%weight_2(l, k) = parameters%control%x(j)
+                end do
 
             end do
+        end if
 
-        end do
+        if (options%optimize%nn_parameters(3) .eq. 1) then
+            do k = 1, setup%neurons(2)
 
-        do k = 1, setup%neurons(2)
+                do l = 1, setup%neurons(3)
 
-            j = j + 1
-            parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+                    j = j + 1
+                    parameters%nn_parameters%weight_2(l, k) = parameters%control%x(j)
 
-        end do
+                end do
 
-        do k = 1, setup%neurons(3)
+            end do
+        end if
 
-            j = j + 1
-            parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
+        if (options%optimize%nn_parameters(2) .eq. 1) then
+            do k = 1, setup%neurons(2)
 
-        end do
+                j = j + 1
+                parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+
+            end do
+        end if
+
+        if (options%optimize%nn_parameters(4) .eq. 1) then
+            do k = 1, setup%neurons(3)
+
+                j = j + 1
+                parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
+
+            end do
+        end if
 
     end subroutine nn_parameters_fill_parameters
 
@@ -1815,7 +1836,7 @@ contains
         call serr_mu_parameters_fill_parameters(setup, mesh, parameters, options)
         call serr_sigma_parameters_fill_parameters(setup, mesh, parameters, options)
 
-        call nn_parameters_fill_parameters(setup, parameters)
+        call nn_parameters_fill_parameters(setup, options, parameters)
 
     end subroutine fill_parameters
 

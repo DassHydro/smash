@@ -6387,12 +6387,15 @@ CONTAINS
     n = SUM(options%optimize%serr_sigma_parameters)*options%cost%nog
   END SUBROUTINE SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE
 
-  SUBROUTINE NN_PARAMETERS_GET_CONTROL_SIZE(setup, n)
+  SUBROUTINE NN_PARAMETERS_GET_CONTROL_SIZE(setup, options, n)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER, INTENT(INOUT) :: n
-    n = setup%neurons(2)*(setup%neurons(1)+1) + setup%neurons(3)*(setup%&
-&     neurons(2)+1)
+    n = options%optimize%nn_parameters(1)*setup%neurons(2)*setup%neurons&
+&     (1) + options%optimize%nn_parameters(2)*setup%neurons(2) + options&
+&     %optimize%nn_parameters(3)*setup%neurons(3)*setup%neurons(2) + &
+&     options%optimize%nn_parameters(4)*setup%neurons(3)
   END SUBROUTINE NN_PARAMETERS_GET_CONTROL_SIZE
 
   SUBROUTINE GET_CONTROL_SIZES(setup, mesh, options, nbk)
@@ -6425,7 +6428,7 @@ CONTAINS
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, nbk(3))
     CALL SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE(options, nbk(4))
-    CALL NN_PARAMETERS_GET_CONTROL_SIZE(setup, nbk(5))
+    CALL NN_PARAMETERS_GET_CONTROL_SIZE(setup, options, nbk(5))
   END SUBROUTINE GET_CONTROL_SIZES
 
   SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
@@ -6795,48 +6798,57 @@ CONTAINS
     END DO
   END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_CONTROL
 
-  SUBROUTINE NN_PARAMETERS_FILL_CONTROL(setup, parameters)
+  SUBROUTINE NN_PARAMETERS_FILL_CONTROL(setup, options, parameters)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     CHARACTER(len=lchar) :: name
     INTEGER :: j, k, l
     INTRINSIC SUM
     j = SUM(parameters%control%nbk(1:4))
-    DO k=1,setup%neurons(1)
-      DO l=1,setup%neurons(2)
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          j = j + 1
+          parameters%control%x(j) = parameters%nn_parameters%weight_1(l&
+&           , k)
+          parameters%control%nbd(j) = 0
+          WRITE(name, '(a,i0,a,i0)') 'weight_1', l, '-', k
+          parameters%control%name(j) = name
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          j = j + 1
+          parameters%control%x(j) = parameters%nn_parameters%weight_2(l&
+&           , k)
+          parameters%control%nbd(j) = 0
+          WRITE(name, '(a,i0,a,i0)') 'weight_2', l, '-', k
+          parameters%control%name(j) = name
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
         j = j + 1
-        parameters%control%x(j) = parameters%nn_parameters%weight_1(l, k&
-&         )
+        parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
         parameters%control%nbd(j) = 0
-        WRITE(name, '(a,i0,a,i0)') 'weight_1', l, '-', k
+        WRITE(name, '(a,i0)') 'bias_1', k
         parameters%control%name(j) = name
       END DO
-    END DO
-    DO k=1,setup%neurons(2)
-      DO l=1,setup%neurons(3)
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
         j = j + 1
-        parameters%control%x(j) = parameters%nn_parameters%weight_2(l, k&
-&         )
+        parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
         parameters%control%nbd(j) = 0
-        WRITE(name, '(a,i0,a,i0)') 'weight_2', l, '-', k
+        WRITE(name, '(a,i0)') 'bias_2', k
         parameters%control%name(j) = name
       END DO
-    END DO
-    DO k=1,setup%neurons(2)
-      j = j + 1
-      parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
-      parameters%control%nbd(j) = 0
-      WRITE(name, '(a,i0)') 'bias_1', k
-      parameters%control%name(j) = name
-    END DO
-    DO k=1,setup%neurons(3)
-      j = j + 1
-      parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
-      parameters%control%nbd(j) = 0
-      WRITE(name, '(a,i0)') 'bias_2', k
-      parameters%control%name(j) = name
-    END DO
+    END IF
   END SUBROUTINE NN_PARAMETERS_FILL_CONTROL
 
   SUBROUTINE FILL_CONTROL(setup, mesh, input_data, parameters, options)
@@ -6874,7 +6886,7 @@ CONTAINS
 &                                  options)
     CALL SERR_SIGMA_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
 &                                     options)
-    CALL NN_PARAMETERS_FILL_CONTROL(setup, parameters)
+    CALL NN_PARAMETERS_FILL_CONTROL(setup, options, parameters)
 ! Store background
     parameters%control%x_bkg = parameters%control%x
     parameters%control%l_bkg = parameters%control%l
@@ -8219,47 +8231,64 @@ CONTAINS
 !   Plus diff mem management of: parameters.control.x:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in
-  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_D(setup, parameters, &
-&   parameters_d)
+  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_D(setup, options, parameters&
+&   , parameters_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     INTEGER :: j, k, l
     INTRINSIC SUM
     j = SUM(parameters%control%nbk(1:4))
-    parameters_d%nn_parameters%weight_1 = 0.0_4
-    DO k=1,setup%neurons(1)
-      DO l=1,setup%neurons(2)
-        j = j + 1
-        parameters_d%nn_parameters%weight_1(l, k) = parameters_d%control&
-&         %x(j)
-        parameters%nn_parameters%weight_1(l, k) = parameters%control%x(j&
-&         )
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      parameters_d%nn_parameters%weight_1 = 0.0_4
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          j = j + 1
+          parameters_d%nn_parameters%weight_1(l, k) = parameters_d%&
+&           control%x(j)
+          parameters%nn_parameters%weight_1(l, k) = parameters%control%x&
+&           (j)
+        END DO
       END DO
-    END DO
-    parameters_d%nn_parameters%weight_2 = 0.0_4
-    DO k=1,setup%neurons(2)
-      DO l=1,setup%neurons(3)
-        j = j + 1
-        parameters_d%nn_parameters%weight_2(l, k) = parameters_d%control&
-&         %x(j)
-        parameters%nn_parameters%weight_2(l, k) = parameters%control%x(j&
-&         )
+    ELSE
+      parameters_d%nn_parameters%weight_1 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      parameters_d%nn_parameters%weight_2 = 0.0_4
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          j = j + 1
+          parameters_d%nn_parameters%weight_2(l, k) = parameters_d%&
+&           control%x(j)
+          parameters%nn_parameters%weight_2(l, k) = parameters%control%x&
+&           (j)
+        END DO
       END DO
-    END DO
-    parameters_d%nn_parameters%bias_1 = 0.0_4
-    DO k=1,setup%neurons(2)
-      j = j + 1
-      parameters_d%nn_parameters%bias_1(k) = parameters_d%control%x(j)
-      parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
-    END DO
-    parameters_d%nn_parameters%bias_2 = 0.0_4
-    DO k=1,setup%neurons(3)
-      j = j + 1
-      parameters_d%nn_parameters%bias_2(k) = parameters_d%control%x(j)
-      parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
-    END DO
+    ELSE
+      parameters_d%nn_parameters%weight_2 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      parameters_d%nn_parameters%bias_1 = 0.0_4
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters_d%nn_parameters%bias_1(k) = parameters_d%control%x(j)
+        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+      END DO
+    ELSE
+      parameters_d%nn_parameters%bias_1 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      parameters_d%nn_parameters%bias_2 = 0.0_4
+      DO k=1,setup%neurons(3)
+        j = j + 1
+        parameters_d%nn_parameters%bias_2(k) = parameters_d%control%x(j)
+        parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
+      END DO
+    ELSE
+      parameters_d%nn_parameters%bias_2 = 0.0_4
+    END IF
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_D
 
 !  Differentiation of nn_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
@@ -8270,94 +8299,131 @@ CONTAINS
 !   Plus diff mem management of: parameters.control.x:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in
-  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_B(setup, parameters, &
-&   parameters_b)
+  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_B(setup, options, parameters&
+&   , parameters_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
     INTEGER :: j, k, l
     INTRINSIC SUM
+    INTEGER :: branch
     j = SUM(parameters%control%nbk(1:4))
-    DO k=1,setup%neurons(1)
-      DO l=1,setup%neurons(2)
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          CALL PUSHINTEGER4(j)
+          j = j + 1
+        END DO
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          CALL PUSHINTEGER4(j)
+          j = j + 1
+        END DO
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
         CALL PUSHINTEGER4(j)
         j = j + 1
       END DO
-    END DO
-    DO k=1,setup%neurons(2)
-      DO l=1,setup%neurons(3)
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
         CALL PUSHINTEGER4(j)
         j = j + 1
       END DO
-    END DO
-    DO k=1,setup%neurons(2)
-      CALL PUSHINTEGER4(j)
-      j = j + 1
-    END DO
-    DO k=1,setup%neurons(3)
-      CALL PUSHINTEGER4(j)
-      j = j + 1
-    END DO
-    DO k=setup%neurons(3),1,-1
-      parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&       parameters_b%nn_parameters%bias_2(k)
-      parameters_b%nn_parameters%bias_2(k) = 0.0_4
-      CALL POPINTEGER4(j)
-    END DO
-    DO k=setup%neurons(2),1,-1
-      parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&       parameters_b%nn_parameters%bias_1(k)
-      parameters_b%nn_parameters%bias_1(k) = 0.0_4
-      CALL POPINTEGER4(j)
-    END DO
-    DO k=setup%neurons(2),1,-1
-      DO l=setup%neurons(3),1,-1
+      DO k=setup%neurons(3),1,-1
         parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&         parameters_b%nn_parameters%weight_2(l, k)
-        parameters_b%nn_parameters%weight_2(l, k) = 0.0_4
+&         parameters_b%nn_parameters%bias_2(k)
+        parameters_b%nn_parameters%bias_2(k) = 0.0_4
         CALL POPINTEGER4(j)
       END DO
-    END DO
-    DO k=setup%neurons(1),1,-1
-      DO l=setup%neurons(2),1,-1
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(2),1,-1
         parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&         parameters_b%nn_parameters%weight_1(l, k)
-        parameters_b%nn_parameters%weight_1(l, k) = 0.0_4
+&         parameters_b%nn_parameters%bias_1(k)
+        parameters_b%nn_parameters%bias_1(k) = 0.0_4
         CALL POPINTEGER4(j)
       END DO
-    END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(2),1,-1
+        DO l=setup%neurons(3),1,-1
+          parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&           parameters_b%nn_parameters%weight_2(l, k)
+          parameters_b%nn_parameters%weight_2(l, k) = 0.0_4
+          CALL POPINTEGER4(j)
+        END DO
+      END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(1),1,-1
+        DO l=setup%neurons(2),1,-1
+          parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&           parameters_b%nn_parameters%weight_1(l, k)
+          parameters_b%nn_parameters%weight_1(l, k) = 0.0_4
+          CALL POPINTEGER4(j)
+        END DO
+      END DO
+    END IF
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_B
 
-  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS(setup, parameters)
+  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS(setup, options, parameters)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     INTEGER :: j, k, l
     INTRINSIC SUM
     j = SUM(parameters%control%nbk(1:4))
-    DO k=1,setup%neurons(1)
-      DO l=1,setup%neurons(2)
-        j = j + 1
-        parameters%nn_parameters%weight_1(l, k) = parameters%control%x(j&
-&         )
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          j = j + 1
+          parameters%nn_parameters%weight_1(l, k) = parameters%control%x&
+&           (j)
+        END DO
       END DO
-    END DO
-    DO k=1,setup%neurons(2)
-      DO l=1,setup%neurons(3)
-        j = j + 1
-        parameters%nn_parameters%weight_2(l, k) = parameters%control%x(j&
-&         )
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          j = j + 1
+          parameters%nn_parameters%weight_2(l, k) = parameters%control%x&
+&           (j)
+        END DO
       END DO
-    END DO
-    DO k=1,setup%neurons(2)
-      j = j + 1
-      parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
-    END DO
-    DO k=1,setup%neurons(3)
-      j = j + 1
-      parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
-    END DO
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
+        j = j + 1
+        parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
+      END DO
+    END IF
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
@@ -8426,8 +8492,8 @@ CONTAINS
 &                                       parameters_d, options)
     CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters&
 &                                          , parameters_d, options)
-    CALL NN_PARAMETERS_FILL_PARAMETERS_D(setup, parameters, parameters_d&
-&                                 )
+    CALL NN_PARAMETERS_FILL_PARAMETERS_D(setup, options, parameters, &
+&                                  parameters_d)
   END SUBROUTINE FILL_PARAMETERS_D
 
 !  Differentiation of fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
@@ -8533,7 +8599,7 @@ CONTAINS
 &                 nn_parameters%weight_2, 2))
     CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters&
 &                 %nn_parameters%bias_2, 1))
-    CALL NN_PARAMETERS_FILL_PARAMETERS(setup, parameters)
+    CALL NN_PARAMETERS_FILL_PARAMETERS(setup, options, parameters)
     CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters%&
 &                nn_parameters%bias_2, 1))
     CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
@@ -8544,8 +8610,8 @@ CONTAINS
     CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
 &                parameters%nn_parameters%weight_1, 1)*SIZE(parameters%&
 &                nn_parameters%weight_1, 2))
-    CALL NN_PARAMETERS_FILL_PARAMETERS_B(setup, parameters, parameters_b&
-&                                 )
+    CALL NN_PARAMETERS_FILL_PARAMETERS_B(setup, options, parameters, &
+&                                  parameters_b)
     CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters&
 &                                          , parameters_b, options)
     CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters, &
@@ -8666,7 +8732,7 @@ CONTAINS
 &                                     options)
     CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
 &                                        options)
-    CALL NN_PARAMETERS_FILL_PARAMETERS(setup, parameters)
+    CALL NN_PARAMETERS_FILL_PARAMETERS(setup, options, parameters)
   END SUBROUTINE FILL_PARAMETERS
 
   SUBROUTINE PARAMETERS_TO_CONTROL(setup, mesh, input_data, parameters, &

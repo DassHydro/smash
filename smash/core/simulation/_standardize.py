@@ -30,6 +30,7 @@ from smash._constant import (
     OPTIMIZABLE_RR_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
+    OPTIMIZABLE_NN_PARAMETERS,
     PY_OPTIMIZER,
     PY_OPTIMIZER_CLASS,
     REGIONAL_MAPPING,
@@ -121,6 +122,8 @@ def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
 def _standardize_simulation_optimize_options_parameters(
     model: Model, func_name: str, parameters: str | ListLike | None, **kwargs
 ) -> np.ndarray:
+    is_hybrid_structure = sum(model.setup.neurons) > 0
+
     is_bayesian = "bayesian" in func_name
 
     available_rr_parameters = [
@@ -141,6 +144,9 @@ def _standardize_simulation_optimize_options_parameters(
     ]
     available_parameters = available_rr_parameters + available_rr_initial_states
 
+    if is_hybrid_structure:
+        available_parameters.extend(OPTIMIZABLE_NN_PARAMETERS)
+
     if is_bayesian:
         available_parameters.extend(available_serr_mu_parameters + available_serr_sigma_parameters)
 
@@ -150,6 +156,11 @@ def _standardize_simulation_optimize_options_parameters(
                 available_rr_parameters + available_serr_mu_parameters + available_serr_sigma_parameters,
                 ndmin=1,
             )
+        elif (
+            is_hybrid_structure
+        ):  # hybrid structure is currently not working with bayes optim. TODO for later versions
+            parameters = np.array(available_rr_parameters + OPTIMIZABLE_NN_PARAMETERS, ndmin=1)
+
         else:
             parameters = np.array(available_rr_parameters, ndmin=1)
 
@@ -180,13 +191,15 @@ def _standardize_simulation_optimize_options_parameters(
 def _standardize_simulation_optimize_options_bounds(
     model: Model, parameters: np.ndarray, bounds: dict | None, **kwargs
 ) -> dict:
+    bounded_parameters = [p for p in parameters if p not in OPTIMIZABLE_NN_PARAMETERS]
+
     if bounds is None:
         bounds = {}
 
     else:
         if isinstance(bounds, dict):
             for key, value in bounds.items():
-                if key in parameters:
+                if key in bounded_parameters:
                     if isinstance(value, (list, tuple, np.ndarray)) and len(value) == 2:
                         if value[0] >= value[1]:
                             raise ValueError(
@@ -202,8 +215,8 @@ def _standardize_simulation_optimize_options_bounds(
                         )
                 else:
                     raise ValueError(
-                        f"Unknown or non optimized parameter '{key}' in bounds optimize_options. "
-                        f"Choices: {parameters}"
+                        f"Unknown, non optimized, or unbounded parameter '{key}' in bounds optimize_options. "
+                        f"Choices: {bounded_parameters}"
                     )
         else:
             TypeError("bounds optimize_options must be a dictionary")
@@ -216,7 +229,7 @@ def _standardize_simulation_optimize_options_bounds(
     )
 
     for key, value in parameters_bounds.items():
-        if key in parameters:
+        if key in bounded_parameters:
             bounds.setdefault(key, value)
 
     # % Check that bounds are inside feasible domain and that bounds include parameter domain
@@ -251,7 +264,7 @@ def _standardize_simulation_optimize_options_bounds(
                 f"included in the feasible domain ]{low}, {upp}[ in bounds optimize_options"
             )
 
-    bounds = {key: bounds[key] for key in parameters}
+    bounds = {key: bounds[key] for key in bounded_parameters}
 
     return bounds
 
@@ -1179,6 +1192,13 @@ def _standardize_simulation_optimize_options_finalize(
                 for j, desc in enumerate(model.setup.descriptor_name):
                     if desc in optimize_options["descriptor"][key]:
                         optimize_options["rr_initial_states_descriptor"][j, i] = 1
+
+    # % nn parameters
+    optimize_options["nn_parameters"] = np.zeros(shape=len(OPTIMIZABLE_NN_PARAMETERS), dtype=np.int32)
+
+    for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS):
+        if key in optimize_options["parameters"]:
+            optimize_options["nn_parameters"][i] = 1
 
     # % serr mu parameters
     optimize_options["serr_mu_parameters"] = np.zeros(shape=model.setup.nsep_mu, dtype=np.int32)

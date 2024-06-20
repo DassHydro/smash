@@ -25,6 +25,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         - `Model.rr_parameters`
         - `Model.rr_initial_states`
+        %(parameters_nn_parameters)s
         %(parameters_serr_mu_parameters)s
         %(parameters_serr_sigma_parameters)s
 
@@ -36,8 +37,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If not given, all parameters in `Model.rr_parameters`%(parameters_note_serr_parameters)s will be
-            optimized.
+            If not given, all parameters in `Model.rr_parameters`%(parameters_note_nn_parameters)s
+            %(parameters_note_serr_parameters)s will be optimized.
         """,
     ),
     "bounds": (
@@ -1331,9 +1332,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
-        vector (``sum(nbk) = n``).
+        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`, 
+        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
         An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
@@ -1507,9 +1508,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
-        vector (``sum(nbk) = n``).
+        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
+        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
         An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
@@ -1667,6 +1668,8 @@ _smash_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
     "`smash`.",
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1679,6 +1682,8 @@ _smash_optimize_doc_substitution = DocSubstitution(
 _model_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1712,6 +1717,8 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     "`smash`.",
     default_optimize_options_func="default_bayesian_optimize_options "
     "<smash.default_bayesian_optimize_options>",
+    parameters_nn_parameters="",
+    parameters_note_nn_parameters="",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
@@ -1726,6 +1733,8 @@ _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_bayesian_optimize_options "
     "<smash.default_bayesian_optimize_options>",
+    parameters_nn_parameters="",
+    parameters_note_nn_parameters="",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
@@ -1742,6 +1751,8 @@ _multiple_forward_run_doc_appender = DocAppender(_multiple_forward_run_doc, inde
 _multiple_optimize_doc_appender = DocAppender(_multiple_optimize_doc, indents=0)
 _smash_multiple_optimize_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1752,6 +1763,8 @@ _smash_multiple_optimize_doc_substitution = DocSubstitution(
 _optimize_control_info_doc_appender = DocAppender(_optimize_control_info_doc, indents=0)
 _smash_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1762,6 +1775,8 @@ _bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_co
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_bayesian_optimize_options "
     "<smash.default_bayesian_optimize_options>",
+    parameters_nn_parameters="",
+    parameters_note_nn_parameters="",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",

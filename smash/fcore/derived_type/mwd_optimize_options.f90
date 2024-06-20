@@ -56,6 +56,8 @@ module mwd_optimize_options
         real(sp), dimension(:), allocatable :: u_rr_parameters
         integer, dimension(:, :), allocatable :: rr_parameters_descriptor
 
+        integer, dimension(:), allocatable :: nn_parameters
+
         integer, dimension(:), allocatable :: rr_initial_states
         real(sp), dimension(:), allocatable :: l_rr_initial_states
         real(sp), dimension(:), allocatable :: u_rr_initial_states
@@ -95,6 +97,9 @@ contains
 
         allocate (this%rr_parameters_descriptor(setup%nd, setup%nrrp))
         this%rr_parameters_descriptor = -99
+
+        allocate (this%nn_parameters(4))
+        this%nn_parameters = -99
 
         allocate (this%rr_initial_states(setup%nrrs))
         this%rr_initial_states = -99

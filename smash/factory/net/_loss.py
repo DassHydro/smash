@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from smash._constant import OPTIMIZABLE_NN_PARAMETERS
+
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,
@@ -43,10 +45,13 @@ def _hcost_prime(
 
             instance.rr_parameters.values[..., ind] = y[..., i]
 
-        else:
+        elif name in instance.rr_initial_states.keys:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
             instance.rr_initial_states.values[..., ind] = y[..., i]
+
+        else:  # nn_parameters excluded from descriptors-to-parameters mapping
+            pass
 
     # % Run adjoint model
     wrap_parameters_to_control(
@@ -85,10 +90,13 @@ def _hcost_prime(
 
             grad_reg.append(parameters_b.rr_parameters.values[..., ind])
 
-        else:
+        elif name in instance.rr_initial_states.keys:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
             grad_reg.append(parameters_b.rr_initial_states.values[..., ind])
+
+        else:  # nn_parameters excluded from descriptors-to-parameters mapping
+            pass
 
     if return_3d_grad:
         grad_reg = np.transpose(grad_reg, (1, 2, 0))
@@ -96,12 +104,7 @@ def _hcost_prime(
         grad_reg = np.reshape(grad_reg, (len(grad_reg), -1)).T
 
     # % Get the gradient of parameterization NN if used
-    grad_par = [
-        parameters_b.nn_parameters.weight_1.copy(),
-        parameters_b.nn_parameters.bias_1.copy(),
-        parameters_b.nn_parameters.weight_2.copy(),
-        parameters_b.nn_parameters.bias_2.copy(),
-    ]
+    grad_par = [getattr(parameters_b.nn_parameters, key).copy() for key in OPTIMIZABLE_NN_PARAMETERS]
 
     return grad_reg, grad_par
 

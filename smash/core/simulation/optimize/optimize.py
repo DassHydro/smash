@@ -649,10 +649,13 @@ def _ann_optimize(
 
             model.rr_parameters.values[..., ind] = y[..., i]
 
-        else:
+        elif name in model.rr_initial_states.keys:
             ind = np.argwhere(model.rr_initial_states.keys == name).item()
 
             model.rr_initial_states.values[..., ind] = y[..., i]
+
+        else:  # nn_parameters excluded from descriptors-to-parameters mapping
+            pass
 
     # % Forward run for updating final states
     wrap_forward_run(

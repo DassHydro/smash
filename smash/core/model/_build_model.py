@@ -10,6 +10,7 @@ from f90wrap.runtime import FortranDerivedType
 from smash._constant import (
     DEFAULT_RR_INITIAL_STATES,
     DEFAULT_RR_PARAMETERS,
+    OPTIMIZABLE_NN_PARAMETERS,
     DEFAULT_SERR_MU_PARAMETERS,
     DEFAULT_SERR_SIGMA_PARAMETERS,
     SERR_MU_MAPPING_PARAMETERS,
@@ -178,13 +179,11 @@ def _build_parameters(
         value = DEFAULT_SERR_SIGMA_PARAMETERS[key]
         parameters.serr_sigma_parameters.values[..., i] = value
 
-    # % Initalize weights and biases of ANN if neural ode state-space structure is used
+    # % Initalize weights and biases of ANN if hybrid model structure is used
     if sum(setup.neurons) > 0:
-        # zero init
-        parameters.nn_parameters.weight_1 = 0
-        parameters.nn_parameters.bias_1 = 0
-        parameters.nn_parameters.weight_2 = 0
-        parameters.nn_parameters.bias_2 = 0
+        for key in OPTIMIZABLE_NN_PARAMETERS:
+            # zero init
+            setattr(parameters.nn_parameters, key, 0)
 
 
 def _build_output(

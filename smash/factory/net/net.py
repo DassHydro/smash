@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS
+from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS, OPTIMIZABLE_NN_PARAMETERS
 
 from smash.factory.net._layers import Activation, Dense, Conv2D, Dropout, Flatten, Scale
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
@@ -519,8 +519,7 @@ class Net(object):
         func = eval(PY_OPTIMIZER_CLASS[ind])
 
         n_layers = 2 if sum(instance.setup.neurons) > 0 else 0
-        opt_weight = [func(**{"learning_rate": learning_rate}) for _ in range(n_layers)]
-        opt_bias = copy.deepcopy(opt_weight)
+        opt_nn_parameters = [func(**{"learning_rate": learning_rate}) for _ in range(2 * n_layers)]
 
         # % Train model
         for epo in tqdm(range(epochs), desc="    Training"):
@@ -560,21 +559,15 @@ class Net(object):
 
             # backpropagation and weights update
             if epo < epochs - 1:
-                if opt_weight:  # update weights of the parameterization NN if used
-                    instance.nn_parameters.weight_1 = opt_weight[0].update(
-                        instance.nn_parameters.weight_1, nn_parameters_b[0]
-                    )
-                    instance.nn_parameters.weight_2 = opt_weight[1].update(
-                        instance.nn_parameters.weight_2, nn_parameters_b[2]
-                    )
-
-                if opt_bias:  # update biases of the parameterization NN if used
-                    instance.nn_parameters.bias_1 = opt_bias[0].update(
-                        instance.nn_parameters.bias_1, nn_parameters_b[1]
-                    )
-                    instance.nn_parameters.bias_2 = opt_bias[1].update(
-                        instance.nn_parameters.bias_2, nn_parameters_b[3]
-                    )
+                for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS):
+                    if key in parameters:  # update trainable parameters of the parameterization NN if used
+                        setattr(
+                            instance.nn_parameters,
+                            key,
+                            opt_nn_parameters[i].update(
+                                getattr(instance.nn_parameters, key), nn_parameters_b[i]
+                            ),
+                        )
 
                 # backpropagation and update weights of the regionalization NN
                 loss_grad = self._backward_pass(init_loss_grad, inplace=True)
