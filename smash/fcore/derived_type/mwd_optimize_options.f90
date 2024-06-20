@@ -14,9 +14,9 @@
 !%          ``optimizer``                     Optimizer name
 !%          ``control_tfm``                   Type of transformation applied to control
 !%          ``rr_parameters``                 RR parameters to optimize
-!%          ``nn_parameters``                 NN parameters to optimize
 !%          ``l_rr_parameters``               RR parameters lower bound
 !%          ``u_rr_parameters``               RR parameters upper bound
+!%          ``nn_parameters``                 NN parameters to optimize
 !%          ``rr_parameters_descriptor``      RR parameters descriptor to use
 !%          ``rr_initial_states``             RR initial states to optimize
 !%          ``l_rr_initial_states``           RR initial states lower bound
