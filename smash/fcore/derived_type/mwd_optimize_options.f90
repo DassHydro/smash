@@ -14,6 +14,7 @@
 !%          ``optimizer``                     Optimizer name
 !%          ``control_tfm``                   Type of transformation applied to control
 !%          ``rr_parameters``                 RR parameters to optimize
+!%          ``nn_parameters``                 NN parameters to optimize
 !%          ``l_rr_parameters``               RR parameters lower bound
 !%          ``u_rr_parameters``               RR parameters upper bound
 !%          ``rr_parameters_descriptor``      RR parameters descriptor to use
@@ -98,6 +99,7 @@ contains
         allocate (this%rr_parameters_descriptor(setup%nd, setup%nrrp))
         this%rr_parameters_descriptor = -99
 
+        !% contain 4 matrices/vectors: weight_1, bias_1, weight_2, bias_2
         allocate (this%nn_parameters(4))
         this%nn_parameters = -99
 
