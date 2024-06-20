@@ -73,3 +73,4 @@ tmp*
 doc/source/api_reference/**/smash
 doc/*-dataset
 doc/*~
+doc/**/*#
