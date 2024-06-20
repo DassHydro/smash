@@ -1257,6 +1257,18 @@ contains
             end do
         end if
 
+        if (options%optimize%nn_parameters(2) .eq. 1) then
+            do k = 1, setup%neurons(2)
+
+                j = j + 1
+                parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
+                parameters%control%nbd(j) = 0
+                write (name, '(a,i0)') "bias_1", k
+                parameters%control%name(j) = name
+
+            end do
+        end if
+
         if (options%optimize%nn_parameters(3) .eq. 1) then
             do k = 1, setup%neurons(2)
 
@@ -1269,18 +1281,6 @@ contains
                     parameters%control%name(j) = name
 
                 end do
-
-            end do
-        end if
-
-        if (options%optimize%nn_parameters(2) .eq. 1) then
-            do k = 1, setup%neurons(2)
-
-                j = j + 1
-                parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
-                parameters%control%nbd(j) = 0
-                write (name, '(a,i0)') "bias_1", k
-                parameters%control%name(j) = name
 
             end do
         end if
@@ -1765,6 +1765,15 @@ contains
             end do
         end if
 
+        if (options%optimize%nn_parameters(2) .eq. 1) then
+            do k = 1, setup%neurons(2)
+
+                j = j + 1
+                parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+
+            end do
+        end if
+
         if (options%optimize%nn_parameters(3) .eq. 1) then
             do k = 1, setup%neurons(2)
 
@@ -1774,15 +1783,6 @@ contains
                     parameters%nn_parameters%weight_2(l, k) = parameters%control%x(j)
 
                 end do
-
-            end do
-        end if
-
-        if (options%optimize%nn_parameters(2) .eq. 1) then
-            do k = 1, setup%neurons(2)
-
-                j = j + 1
-                parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
 
             end do
         end if

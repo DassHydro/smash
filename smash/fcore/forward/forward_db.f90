@@ -6819,6 +6819,15 @@ CONTAINS
         END DO
       END DO
     END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
+        parameters%control%nbd(j) = 0
+        WRITE(name, '(a,i0)') 'bias_1', k
+        parameters%control%name(j) = name
+      END DO
+    END IF
     IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
       DO k=1,setup%neurons(2)
         DO l=1,setup%neurons(3)
@@ -6829,15 +6838,6 @@ CONTAINS
           WRITE(name, '(a,i0,a,i0)') 'weight_2', l, '-', k
           parameters%control%name(j) = name
         END DO
-      END DO
-    END IF
-    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
-      DO k=1,setup%neurons(2)
-        j = j + 1
-        parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
-        parameters%control%nbd(j) = 0
-        WRITE(name, '(a,i0)') 'bias_1', k
-        parameters%control%name(j) = name
       END DO
     END IF
     IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
@@ -8253,6 +8253,16 @@ CONTAINS
     ELSE
       parameters_d%nn_parameters%weight_1 = 0.0_4
     END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      parameters_d%nn_parameters%bias_1 = 0.0_4
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters_d%nn_parameters%bias_1(k) = parameters_d%control%x(j)
+        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+      END DO
+    ELSE
+      parameters_d%nn_parameters%bias_1 = 0.0_4
+    END IF
     IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
       parameters_d%nn_parameters%weight_2 = 0.0_4
       DO k=1,setup%neurons(2)
@@ -8266,16 +8276,6 @@ CONTAINS
       END DO
     ELSE
       parameters_d%nn_parameters%weight_2 = 0.0_4
-    END IF
-    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
-      parameters_d%nn_parameters%bias_1 = 0.0_4
-      DO k=1,setup%neurons(2)
-        j = j + 1
-        parameters_d%nn_parameters%bias_1(k) = parameters_d%control%x(j)
-        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
-      END DO
-    ELSE
-      parameters_d%nn_parameters%bias_1 = 0.0_4
     END IF
     IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
       parameters_d%nn_parameters%bias_2 = 0.0_4
@@ -8319,21 +8319,21 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
     IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
       DO k=1,setup%neurons(2)
         DO l=1,setup%neurons(3)
           CALL PUSHINTEGER4(j)
           j = j + 1
         END DO
-      END DO
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
-      DO k=1,setup%neurons(2)
-        CALL PUSHINTEGER4(j)
-        j = j + 1
       END DO
       CALL PUSHCONTROL1B(0)
     ELSE
@@ -8354,21 +8354,21 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       DO k=setup%neurons(2),1,-1
-        parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&         parameters_b%nn_parameters%bias_1(k)
-        parameters_b%nn_parameters%bias_1(k) = 0.0_4
-        CALL POPINTEGER4(j)
-      END DO
-    END IF
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      DO k=setup%neurons(2),1,-1
         DO l=setup%neurons(3),1,-1
           parameters_b%control%x(j) = parameters_b%control%x(j) + &
 &           parameters_b%nn_parameters%weight_2(l, k)
           parameters_b%nn_parameters%weight_2(l, k) = 0.0_4
           CALL POPINTEGER4(j)
         END DO
+      END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(2),1,-1
+        parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&         parameters_b%nn_parameters%bias_1(k)
+        parameters_b%nn_parameters%bias_1(k) = 0.0_4
+        CALL POPINTEGER4(j)
       END DO
     END IF
     CALL POPCONTROL1B(branch)
@@ -8401,6 +8401,12 @@ CONTAINS
         END DO
       END DO
     END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+      END DO
+    END IF
     IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
       DO k=1,setup%neurons(2)
         DO l=1,setup%neurons(3)
@@ -8408,12 +8414,6 @@ CONTAINS
           parameters%nn_parameters%weight_2(l, k) = parameters%control%x&
 &           (j)
         END DO
-      END DO
-    END IF
-    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
-      DO k=1,setup%neurons(2)
-        j = j + 1
-        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
       END DO
     END IF
     IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
