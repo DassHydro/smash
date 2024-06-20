@@ -202,11 +202,11 @@ As well as performances at upstream gauges
 
 .. ipython:: python
     
-    criteria = ["nse", "kge"]
+    metrics = ["nse", "kge"]
 
-    scores = np.round(smash.metrics(model_mp, criteria)[1:, :], 2)
+    scores = np.round(smash.evaluation(model_mp, metrics)[1:, :], 2)
 
-    upstream_perf = pd.DataFrame(data=scores, index=model.mesh.code[1:], columns=criteria)
+    upstream_perf = pd.DataFrame(data=scores, index=model.mesh.code[1:], columns=metrics)
     upstream_perf
 
 .. note::
@@ -300,11 +300,11 @@ Finally, we can visualize parameters and performances
 
 .. ipython:: python
     
-    criteria = ["nse", "kge"]
+    metrics = ["nse", "kge"]
 
-    scores = np.round(smash.metrics(model_ann, criteria)[1:, :], 2)
+    scores = np.round(smash.evaluation(model_ann, metrics)[1:, :], 2)
 
-    upstream_perf = pd.DataFrame(data=scores, index=model.mesh.code[1:], columns=criteria)
+    upstream_perf = pd.DataFrame(data=scores, index=model.mesh.code[1:], columns=metrics)
     upstream_perf
 
 .. ipython:: python

@@ -7,14 +7,14 @@ import smash
 from smash._constant import METRICS
 
 
-def generic_metrics(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
+def generic_evaluation(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
     res = {}
 
     instance = model.copy()
 
     instance.response.q = qs
 
-    metrics = smash.metrics(instance, criteria=METRICS)
+    metrics = smash.evaluation(instance, metric=METRICS)
 
     for i, m in enumerate(METRICS):
         res[f"metrics.{m}"] = metrics[:, i]
@@ -22,8 +22,8 @@ def generic_metrics(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
     return res
 
 
-def test_metrics():
-    res = generic_metrics(pytest.model, pytest.simulated_discharges["sim_q"][:])
+def test_evaluation():
+    res = generic_evaluation(pytest.model, pytest.simulated_discharges["sim_q"][:])
 
     for key, value in res.items():
         # % Check hydrograph segmentation res

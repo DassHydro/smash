@@ -12,30 +12,30 @@ if TYPE_CHECKING:
     from smash.util._typing import ListLike
 
 
-def _standardize_metrics_criteria(criteria: str | ListLike[str]) -> list:
-    if isinstance(criteria, str):
-        if criteria.lower() not in METRICS:
-            raise ValueError(f"Unknown evaluation metric {criteria}. Choices: {METRICS}")
+def _standardize_evaluation_metric(metric: str | ListLike[str]) -> list:
+    if isinstance(metric, str):
+        if metric.lower() not in METRICS:
+            raise ValueError(f"Unknown evaluation metric {metric}. Choices: {METRICS}")
 
-        criteria = [criteria.lower()]
+        metric = [metric.lower()]
 
-    elif isinstance(criteria, list):
-        for crit in criteria:
-            if isinstance(crit, str):
-                if crit.lower() not in METRICS:
-                    raise ValueError(f"Unknown evaluation metric {crit}. Choices: {METRICS}")
+    elif isinstance(metric, list):
+        for mtc in metric:
+            if isinstance(mtc, str):
+                if mtc.lower() not in METRICS:
+                    raise ValueError(f"Unknown evaluation metric {mtc}. Choices: {METRICS}")
             else:
-                raise TypeError("criteria must be str or a list of str")
+                raise TypeError(f"metric '{mtc}' must be str or a list of str")
 
-        criteria = [c.lower() for c in criteria]
+        metric = [c.lower() for c in metric]
 
     else:
-        raise TypeError("criteria must be str or a list of str")
+        raise TypeError("metric must be str or a list of str")
 
-    return criteria
+    return metric
 
 
-def _standardize_metrics_start_end_eval(eval: str | pd.Timestamp | None, kind: str, setup: SetupDT) -> int:
+def _standardize_evaluation_start_end_eval(eval: str | pd.Timestamp | None, kind: str, setup: SetupDT) -> int:
     st = pd.Timestamp(setup.start_time)
     et = pd.Timestamp(setup.end_time)
 
@@ -44,8 +44,9 @@ def _standardize_metrics_start_end_eval(eval: str | pd.Timestamp | None, kind: s
             eval = pd.Timestamp(st)
         elif kind == "end":
             eval = pd.Timestamp(et)
-        else:  # Should be unreachable
-            ...
+        # % Should be unreachable
+        else:
+            pass
 
     else:
         if isinstance(eval, str):
@@ -71,14 +72,14 @@ def _standardize_metrics_start_end_eval(eval: str | pd.Timestamp | None, kind: s
     return eval
 
 
-def _standardize_metrics_args(
-    criteria: str | ListLike[str],
+def _standardize_evaluation_args(
+    metric: str | ListLike[str],
     start_eval: str | pd.Timestamp | None,
     end_eval: str | pd.Timestamp | None,
     setup: SetupDT,
 ) -> AnyTuple:
-    criteria = _standardize_metrics_criteria(criteria)
-    start_eval = _standardize_metrics_start_end_eval(start_eval, "start", setup)
-    end_eval = _standardize_metrics_start_end_eval(end_eval, "end", setup)
+    metric = _standardize_evaluation_metric(metric)
+    start_eval = _standardize_evaluation_start_end_eval(start_eval, "start", setup)
+    end_eval = _standardize_evaluation_start_end_eval(end_eval, "end", setup)
 
-    return (criteria, start_eval, end_eval)
+    return (metric, start_eval, end_eval)

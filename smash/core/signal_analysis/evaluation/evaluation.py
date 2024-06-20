@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import smash.fcore._mwd_metrics as wrap_module_metrics
-from smash.core.signal_analysis.metrics._standardize import _standardize_metrics_args
+from smash.core.signal_analysis.evaluation._standardize import _standardize_evaluation_args
 
 if TYPE_CHECKING:
     from smash.util._typing import ListLike
@@ -15,26 +15,25 @@ if TYPE_CHECKING:
     from smash.core.model.model import Model
 
 
-__all__ = ["metrics"]
+__all__ = ["evaluation"]
 
 
-def metrics(
+def evaluation(
     model: Model,
-    criteria: str | ListLike[str] = "nse",
+    metric: str | ListLike[str] = "nse",
     start_eval: str | Timestamp | None = None,
     end_eval: str | Timestamp | None = None,
 ):
     """
-    Compute the efficiency/error metrics of Model based on observed and simulated discharges
-    for each gauge in a multi-catchment hydrological model evaluation.
+    Evaluate the Model efficiency/error based on observed and simulated discharges.
 
     Parameters
     ----------
     model : `Model <smash.Model>`
         Primary data structure of the hydrological model `smash`.
 
-    criteria : `str` or `list[str]`, default 'nse'
-        The efficiency or error criteria. Should be one of
+    metric : `str` or `list[str]`, default 'nse'
+        The efficiency or error metric. Should be one of
 
         - '``nse'``: Nash-Sutcliffe Efficiency
         - '``nnse'``: Normalized Nash-Sutcliffe Efficiency
@@ -68,8 +67,8 @@ def metrics(
     Returns
     -------
     metrics : `numpy.ndarray`
-        An array of shape *(m, n)* representing the computed metrics for *m* catchments
-        and *n* evaluation criteria.
+        An array of shape *(ng, nm)* representing the computed metrics for *ng* gauges
+        and *nm* evaluation metric.
 
     Examples
     --------
@@ -93,7 +92,7 @@ def metrics(
 
     Compute multiple evaluation metrics for all catchments
 
-    >>> smash.metrics(model, criteria=["mae", "mse", "nse", "kge"])
+    >>> smash.evaluation(model, metric=["mae", "mse", "nse", "kge"])
     array([[ 3.16965151, 44.78328323,  0.96327233,  0.94752783],
            [ 1.07771611,  4.38410997,  0.90453297,  0.84582865],
            [ 0.33045691,  0.50611502,  0.84956211,  0.8045246 ]])
@@ -106,16 +105,16 @@ def metrics(
 
     Compute the Nash-Sutcliffe Efficiency for the entire period and for the specified evaluation period
 
-    >>> smash.metrics(model, criteria="nse")
+    >>> smash.evaluation(model, metric="nse")
     array([[0.96327233],
            [0.90453297],
            [0.84956211]])
-    >>> smash.metrics(model, criteria="nse", start_eval=start_eval, end_eval=end_eval)
+    >>> smash.evaluation(model, metric="nse", start_eval=start_eval, end_eval=end_eval)
     array([[0.9404493 ],
            [0.86493075],
            [0.76471144]])
     """
-    criteria, start_eval, end_eval = _standardize_metrics_args(criteria, start_eval, end_eval, model.setup)
+    metric, start_eval, end_eval = _standardize_evaluation_args(metric, start_eval, end_eval, model.setup)
 
     obs = model.response_data.q[..., start_eval:end_eval]
 
@@ -123,11 +122,11 @@ def metrics(
 
     ng = obs.shape[0]
 
-    nm = len(criteria)
+    nm = len(metric)
 
     evaluation_metric = np.zeros((ng, nm))
     for j in range(nm):
-        evaluation_metric_func = getattr(wrap_module_metrics, criteria[j])
+        evaluation_metric_func = getattr(wrap_module_metrics, metric[j])
         for i in range(ng):
             evaluation_metric[i, j] = evaluation_metric_func(obs[i], sim[i])
 
