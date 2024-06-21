@@ -325,7 +325,7 @@ and visualize hydrographs
 Model performances
 ------------------
 
-Finally, we can look at calibration and validation performances using certain metrics. Using the function `smash.metrics`,
+Finally, we can look at calibration and validation performances using certain metrics. Using the function `smash.evaluation`,
 you can compute one metric of your choice (among those available) for all the gauges that make up the ``mesh``. Here, we are interested 
 in the ``nse`` (the calibration metric) and the ``kge`` for the downstream gauge only. We will create two `pandas.DataFrame`, one for the 
 calibration performances and the other for the validation performances.
@@ -336,17 +336,11 @@ calibration performances and the other for the validation performances.
     perf_cal = pd.DataFrame(index=["p1", "p2"], columns=metrics)
     perf_val = perf_cal.copy()
 
-    for m in metrics:
-        perf_cal.loc["p1", m] = np.round(smash.metrics(model_p1_opt, metric=m)[0], 2)
-    
-    for m in metrics:
-        perf_cal.loc["p2", m] = np.round(smash.metrics(model_p2_opt, metric=m)[0], 2)
-    
-    for m in metrics:
-        perf_val.loc["p1", m] = np.round(smash.metrics(model_p1, metric=m)[0], 2)
-    
-    for m in metrics:
-        perf_val.loc["p2", m] = np.round(smash.metrics(model_p2, metric=m)[0], 2)
+    perf_cal.loc["p1"] = np.round(smash.evaluation(model_p1_opt, metrics)[0, :], 2)
+    perf_cal.loc["p2"] = np.round(smash.evaluation(model_p2_opt, metrics)[0, :], 2)
+
+    perf_val.loc["p1"] = np.round(smash.evaluation(model_p1, metrics)[0, :], 2)
+    perf_val.loc["p2"] = np.round(smash.evaluation(model_p2, metrics)[0, :], 2)
 
     perf_cal # Calibration performances
 

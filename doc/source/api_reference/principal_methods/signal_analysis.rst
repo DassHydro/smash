@@ -32,4 +32,4 @@ Evaluation Metrics
 .. autosummary::
       :toctree: smash/
 
-      metrics
+      evaluation
