@@ -8,11 +8,10 @@ import smash.fcore._mwd_metrics as wrap_module_metrics
 from smash.core.signal_analysis.evaluation._standardize import _standardize_evaluation_args
 
 if TYPE_CHECKING:
-    from smash.util._typing import ListLike
-
     from pandas import Timestamp
 
     from smash.core.model.model import Model
+    from smash.util._typing import ListLike
 
 
 __all__ = ["evaluation"]

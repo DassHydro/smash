@@ -8,8 +8,7 @@ from smash._constant import METRICS
 
 if TYPE_CHECKING:
     from smash.fcore._mwd_setup import SetupDT
-    from smash.util._typing import AnyTuple
-    from smash.util._typing import ListLike
+    from smash.util._typing import AnyTuple, ListLike
 
 
 def _standardize_evaluation_metric(metric: str | ListLike[str]) -> list:
@@ -20,17 +19,19 @@ def _standardize_evaluation_metric(metric: str | ListLike[str]) -> list:
         metric = [metric.lower()]
 
     elif isinstance(metric, list):
-        for mtc in metric:
+        for i, mtc in enumerate(metric):
             if isinstance(mtc, str):
                 if mtc.lower() not in METRICS:
-                    raise ValueError(f"Unknown evaluation metric {mtc}. Choices: {METRICS}")
+                    raise ValueError(
+                        f"Unknown evaluation metric {mtc} at index {i} in metric. Choices: {METRICS}"
+                    )
             else:
-                raise TypeError(f"metric '{mtc}' must be str or a list of str")
+                raise TypeError("List of evaluation metrics must contain only str")
 
         metric = [c.lower() for c in metric]
 
     else:
-        raise TypeError("metric must be str or a list of str")
+        raise TypeError("Evaluation metric must be str or a list of str")
 
     return metric
 
@@ -40,13 +41,7 @@ def _standardize_evaluation_start_end_eval(eval: str | pd.Timestamp | None, kind
     et = pd.Timestamp(setup.end_time)
 
     if eval is None:
-        if kind == "start":
-            eval = pd.Timestamp(st)
-        elif kind == "end":
-            eval = pd.Timestamp(et)
-        # % Should be unreachable
-        else:
-            pass
+        eval = pd.Timestamp(getattr(setup, f"{kind}_time"))
 
     else:
         if isinstance(eval, str):
@@ -60,7 +55,7 @@ def _standardize_evaluation_start_end_eval(eval: str | pd.Timestamp | None, kind
             pass
 
         else:
-            raise TypeError("{kind}_eval argument must be str or pandas.Timestamp object")
+            raise TypeError(f"{kind}_eval argument must be str or pandas.Timestamp object")
 
         if (eval - st).total_seconds() < 0 or (et - eval).total_seconds() < 0:
             raise ValueError(

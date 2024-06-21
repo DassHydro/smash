@@ -17,7 +17,7 @@ def generic_evaluation(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
     metrics = smash.evaluation(instance, metric=METRICS)
 
     for i, m in enumerate(METRICS):
-        res[f"metrics.{m}"] = metrics[:, i]
+        res[f"evaluation.{m}"] = metrics[:, i]
 
     return res
 
