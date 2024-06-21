@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS, OPTIMIZABLE_NN_PARAMETERS
-
-from smash.factory.net._layers import Activation, Dense, Conv2D, Dropout, Flatten, Scale
+from smash._constant import OPTIMIZABLE_NN_PARAMETERS, PY_OPTIMIZER, PY_OPTIMIZER_CLASS
+from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
 
 # Used inside eval statement
 from smash.factory.net._optimizers import SGD, Adagrad, Adam, RMSprop  # noqa: F401
 from smash.factory.net._standardize import (
-    _standardize_add_dense_args,
     _standardize_add_conv2d_args,
-    _standardize_add_scale_args,
+    _standardize_add_dense_args,
     _standardize_add_dropout_args,
+    _standardize_add_scale_args,
     _standardize_set_trainable_args,
 )
 
@@ -188,12 +187,12 @@ class Net(object):
             - ``'softplus'`` : Softplus
 
         kernel_initializer : str, default 'glorot_uniform'
-            Kernel initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``, ``'he_uniform'``, ``'normal'``,
-            ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Kernel initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
 
         bias_initializer : str, default 'zeros'
-            Bias initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``, ``'he_uniform'``, ``'normal'``,
-            ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Bias initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
 
         Examples
         --------
@@ -222,7 +221,7 @@ class Net(object):
         self.layers.append(Dense(neurons, input_shape, kernel_initializer, bias_initializer))
 
         # Add activation layer if specified
-        if not activation is None:
+        if activation is not None:
             layer = Activation(activation)
             layer._set_input_shape(shape=self.layers[-1].output_shape())
 
@@ -265,12 +264,12 @@ class Net(object):
             - ``'softplus'`` : Softplus
 
         kernel_initializer : str, default 'glorot_uniform'
-            Kernel initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``, ``'he_uniform'``, ``'normal'``,
-            ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Kernel initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
 
         bias_initializer : str, default 'zeros'
-            Bias initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``, ``'he_uniform'``, ``'normal'``,
-            ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Bias initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
 
         Examples
         --------
@@ -306,7 +305,7 @@ class Net(object):
         self.layers.append(Conv2D(filters, filter_shape, input_shape, kernel_initializer, bias_initializer))
 
         # Add activation layer if specified
-        if not activation is None:
+        if activation is not None:
             layer = Activation(activation)
             layer._set_input_shape(shape=self.layers[-1].output_shape())
 
@@ -375,7 +374,8 @@ class Net(object):
 
     def add_dropout(self, drop_rate: float):
         """
-        Add a dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
+        Add a dropout layer that randomly sets the output of the previous layer to zero
+        with a specified probability.
 
         Parameters
         ----------
@@ -519,7 +519,7 @@ class Net(object):
         func = eval(PY_OPTIMIZER_CLASS[ind])
 
         n_layers = 2 if sum(instance.setup.neurons) > 0 else 0
-        opt_nn_parameters = [func(**{"learning_rate": learning_rate}) for _ in range(2 * n_layers)]
+        opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * n_layers)]
 
         # % Train model
         for epo in tqdm(range(epochs), desc="    Training"):

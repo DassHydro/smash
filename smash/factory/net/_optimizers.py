@@ -141,7 +141,8 @@ class RMSprop:
 
         self.eg = self.rho * self.eg + (1 - self.rho) * np.power(grad_wrt_w, 2)
 
-        # Divide the learning rate for a weight by a running average of the magnitudes of recent gradients for that weight
+        # Divide the learning rate for a weight by a running average of
+        # the magnitudes of recent gradients for that weight
         w_updt = self.learning_rate * grad_wrt_w / np.sqrt(self.eg + self.eps)
 
         return w - w_updt

@@ -25,36 +25,18 @@ from smash._constant import (
     SNOW_MODULE,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
-    SERR_MU_MAPPING_PARAMETERS,
-    SERR_SIGMA_MAPPING_PARAMETERS,
-    FEASIBLE_RR_PARAMETERS,
-    FEASIBLE_RR_INITIAL_STATES,
-    FEASIBLE_SERR_MU_PARAMETERS,
-    FEASIBLE_SERR_SIGMA_PARAMETERS,
 )
-
-import pandas as pd
-import numpy as np
-import os
-import warnings
-import datetime
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
     from smash.core.model.model import Model
-    from smash.util._typing import AnyTuple, ListLike, Numeric, Any
-
-from smash.factory.samples._standardize import (
-    _standardize_generate_samples_random_state,
-)
-
-from smash.factory.samples._standardize import (
-    _standardize_generate_samples_random_state,
-)
+    from smash.util._typing import Any, AnyTuple, ListLike, Numeric
 
 from smash.factory.net._standardize import _standardize_initializer
+from smash.factory.samples._standardize import (
+    _standardize_generate_samples_random_state,
+)
 
 
 def _standardize_model_setup_bool(key: str, value: bool) -> bool:
@@ -735,7 +717,8 @@ def _standardize_set_nn_parameters_weight_value(
 
         if len(value) != len(weights):
             raise ValueError(
-                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(weights)}"
+                f"Inconsistent size between value argument and the layers of the network: "
+                f"{len(value)} != {len(weights)}"
             )
 
         else:
@@ -745,7 +728,8 @@ def _standardize_set_nn_parameters_weight_value(
                 elif isinstance(arr, np.ndarray):
                     if arr.shape != weights[i].shape:
                         raise ValueError(
-                            f"Inconsistent size between the expected weight to set to the current one: {arr.shape} != {weights[i].shape}"
+                            f"Inconsistent size between the expected weight to set "
+                            f"to the current one: {arr.shape} != {weights[i].shape}"
                         )
                 else:
                     raise TypeError("Each element of value argument must be a Numpy array")
@@ -767,7 +751,8 @@ def _standardize_set_nn_parameters_bias_value(
 
         if len(value) != len(biases):
             raise ValueError(
-                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(biases)}"
+                f"Inconsistent size between value argument and "
+                f"the layers of the network: {len(value)} != {len(biases)}"
             )
 
         else:
@@ -777,7 +762,8 @@ def _standardize_set_nn_parameters_bias_value(
                 elif isinstance(arr, np.ndarray):
                     if arr.shape != biases[i].shape:
                         raise ValueError(
-                            f"Inconsistent size between the expected bias to set to the current one: {arr.shape} != {biases[i].shape}"
+                            f"Inconsistent size between the expected bias to set "
+                            f"to the current one: {arr.shape} != {biases[i].shape}"
                         )
                 else:
                     raise TypeError("Each element of value argument must be a Numpy array")

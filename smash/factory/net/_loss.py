@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from smash._constant import OPTIMIZABLE_NN_PARAMETERS
-
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,

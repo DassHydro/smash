@@ -41,8 +41,8 @@ def save_model_ddt(model: Model, path: FilePath):
       are only stored if a snow module has been selected)
     - ``keys``, ``values`` from `Model.rr_parameters <smash.Model.rr_parameters>`
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
-    - ``weight_1``, ``bias_1``, ``weight_2``, ``bias_2`` from `Model.nn_parameters <smash.Model.nn_parameters>`
-      (depending on the hydrological module)
+    - ``weight_1``, ``bias_1``, ``weight_2``, ``bias_2`` from
+      `Model.nn_parameters <smash.Model.nn_parameters>` (depending on the hydrological module)
     - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
     - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
     - ``q`` from `Model.response <smash.Model.response>`

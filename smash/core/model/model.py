@@ -29,12 +29,12 @@ from smash.core.model._standardize import (
     _standardize_get_serr_mu_parameters_args,
     _standardize_get_serr_sigma_parameters_args,
     _standardize_model_args,
+    _standardize_set_nn_parameters_bias_args,
+    _standardize_set_nn_parameters_weight_args,
     _standardize_set_rr_initial_states_args,
     _standardize_set_rr_parameters_args,
     _standardize_set_serr_mu_parameters_args,
     _standardize_set_serr_sigma_parameters_args,
-    _standardize_set_nn_parameters_weight_args,
-    _standardize_set_nn_parameters_bias_args,
 )
 from smash.core.simulation._doc import (
     _bayesian_optimize_doc_appender,
@@ -86,6 +86,7 @@ if TYPE_CHECKING:
     )
     from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun
     from smash.fcore._mwd_atmos_data import Atmos_DataDT
+    from smash.fcore._mwd_nn_parameters import NN_ParametersDT
     from smash.fcore._mwd_physio_data import Physio_DataDT
     from smash.fcore._mwd_response import ResponseDT
     from smash.fcore._mwd_response_data import Response_DataDT
@@ -93,7 +94,6 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_rr_states import RR_StatesDT
     from smash.fcore._mwd_serr_mu_parameters import SErr_Mu_ParametersDT
     from smash.fcore._mwd_serr_sigma_parameters import SErr_Sigma_ParametersDT
-    from smash.fcore._mwd_nn_parameters import NN_ParametersDT
     from smash.fcore._mwd_u_response_data import U_Response_DataDT
     from smash.util._typing import ListLike, Numeric
 
@@ -146,7 +146,8 @@ class Model:
                 section
 
         hidden_neuron : `int`, default 16
-            Number of neurons in the hidden layer of the parameterization neural network used to correct internal fluxes, if used (depending on **hydrological_module**).
+            Number of neurons in the hidden layer of the parameterization neural network
+            used to correct internal fluxes, if used (depending on **hydrological_module**).
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of the mapping used for :math:`\\mu`, the mean of structural errors. Should be one of:
@@ -1115,7 +1116,8 @@ class Model:
     @property
     def nn_parameters(self) -> NN_ParametersDT:
         """
-        The weight and bias of the parameterization neural network used to correct internal fluxes.
+        The weight and bias of the parameterization neural network.
+        The neural network is used in hybrid model structures to correct internal fluxes.
 
         See Also
         --------
@@ -2351,7 +2353,7 @@ class Model:
 
         See Also
         --------
-        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.set_nn_parameters_weight : Set the values of the weight in the parameterization neural network.
         """
 
@@ -2368,7 +2370,7 @@ class Model:
 
         See Also
         --------
-        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.set_nn_parameters_bias : Set the values of the bias in the parameterization neural network.
         """
 
@@ -2390,7 +2392,7 @@ class Model:
 
         See Also
         --------
-        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.get_nn_parameters_weight : Get the weight of the parameterization neural network.
         """
 
@@ -2428,7 +2430,7 @@ class Model:
 
         See Also
         --------
-        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.get_nn_parameters_bias : Get the bias of the parameterization neural network.
         """
 

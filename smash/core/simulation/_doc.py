@@ -1333,7 +1333,7 @@ control_info : `dict[str, Any]`
 
     - nbk : `numpy.ndarray`
         An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`, 
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
         `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
@@ -1668,7 +1668,8 @@ _smash_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
     "`smash`.",
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
     parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1682,7 +1683,8 @@ _smash_optimize_doc_substitution = DocSubstitution(
 _model_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
     parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1751,7 +1753,8 @@ _multiple_forward_run_doc_appender = DocAppender(_multiple_forward_run_doc, inde
 _multiple_optimize_doc_appender = DocAppender(_multiple_optimize_doc, indents=0)
 _smash_multiple_optimize_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
     parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1763,7 +1766,8 @@ _smash_multiple_optimize_doc_substitution = DocSubstitution(
 _optimize_control_info_doc_appender = DocAppender(_optimize_control_info_doc, indents=0)
 _smash_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
     parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",

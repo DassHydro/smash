@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 from smash._constant import MAPPING
@@ -17,16 +18,10 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_samples,
 )
 
-from smash._constant import MAPPING
-
-import warnings
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from smash.core.model.model import Model
-    from smash.fcore._mwd_setup import SetupDT
     from smash.factory.samples.samples import Samples
+    from smash.fcore._mwd_setup import SetupDT
     from smash.util._typing import AnyTuple
 
 
@@ -61,7 +56,9 @@ def _standardize_optimize_optimizer(mapping: str, optimizer: str, setup: SetupDT
 
     if sum(setup.neurons) > 0 and optimizer == "sbs":
         warnings.warn(
-            f"The SBS optimizer is not suitable for the {setup.hydrological_module} module. You may want to use another optimizer"
+            f"The SBS optimizer is not suitable for the {setup.hydrological_module} module. "
+            "You may want to use another optimizer",
+            stacklevel=2,
         )
 
     return optimizer
@@ -169,7 +166,8 @@ def _standardize_bayesian_optimize_args(
 
     if "mlp" in model.setup.hydrological_module:
         raise ValueError(
-            f"Bayesian optimization method is currently not working with the hybrid model structure '{model.setup.hydrological_module}'"
+            f"Bayesian optimization method is currently not working with the hybrid model structure "
+            f"'{model.setup.hydrological_module}'"
         )
 
     # % In case model.set_rr_parameters or model.set_rr_initial_states were not used

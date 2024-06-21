@@ -26,11 +26,11 @@ from smash._constant import (
     MAPPING,
     MAPPING_OPTIMIZER,
     METRICS,
+    OPTIMIZABLE_NN_PARAMETERS,
     OPTIMIZABLE_RR_INITIAL_STATES,
     OPTIMIZABLE_RR_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
-    OPTIMIZABLE_NN_PARAMETERS,
     PY_OPTIMIZER,
     PY_OPTIMIZER_CLASS,
     REGIONAL_MAPPING,
@@ -359,8 +359,8 @@ def _standardize_simulation_optimize_options_net(
 
         if ips[-1] != nd:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of input layer ({ips[-1]}) and "
-                f"the number of descriptors ({nd}): {ips[-1]} != {nd}"
+                f"net optimize_options: Inconsistent value between the number of input layer ({ips[-1]}) "
+                f"and the number of descriptors ({nd}): {ips[-1]} != {nd}"
             )
 
         # % check output shape
@@ -368,8 +368,8 @@ def _standardize_simulation_optimize_options_net(
 
         if ios[-1] != ncv:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of output layer ({ios[-1]}) and "
-                f"the number of parameters ({ncv}): {ios[-1]} != {ncv}"
+                f"net optimize_options: Inconsistent value between the number of output layer ({ios[-1]}) "
+                f"and the number of parameters ({ncv}): {ios[-1]} != {ncv}"
             )
 
         # % check bounds constraints

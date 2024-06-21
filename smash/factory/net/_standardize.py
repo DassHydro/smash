@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from smash._constant import ACTIVATION_FUNCTION_CLASS, ACTIVATION_FUNCTION, WB_INITIALIZER
+from smash._constant import ACTIVATION_FUNCTION, ACTIVATION_FUNCTION_CLASS, WB_INITIALIZER
 
 if TYPE_CHECKING:
-    from smash.util._typing import AnyTuple, Numeric, ListLike
     from smash.factory.net.net import Net
+    from smash.util._typing import AnyTuple, ListLike, Numeric
 
 
 def _standardize_add_dense_args(
@@ -51,7 +51,8 @@ def _standardize_add_scale_args(net: Net, bounds: ListLike) -> np.ndarray:
     if isinstance(bounds, (tuple, list, np.ndarray)):
         if len(bounds) != net.layers[-1].output_shape()[-1]:
             raise ValueError(
-                f"Inconsistent size between bounds argument and the last dimension of the output in previous layer: {len(bounds)} != {net.layers[-1].output_shape()[-1]}"
+                f"Inconsistent size between bounds argument and the last dimension of the output "
+                f"in previous layer: {len(bounds)} != {net.layers[-1].output_shape()[-1]}"
             )
 
         for value in bounds:
@@ -63,7 +64,8 @@ def _standardize_add_scale_args(net: Net, bounds: ListLike) -> np.ndarray:
 
             else:
                 raise TypeError(
-                    f"Each element in bounds argument must be of ListLike type (List, Tuple, np.ndarray) of size 2"
+                    "Each element in bounds argument must be of ListLike type "
+                    "(List, Tuple, np.ndarray) of size 2"
                 )
 
     else:
@@ -81,17 +83,15 @@ def _standardize_add_dropout_args(drop_rate: Numeric) -> float:
 
 def _standardize_set_trainable_args(net: Net, trainable: tuple | list) -> list:
     if isinstance(trainable, (tuple, list)):
-        try:
-            trainable = [bool(t) for t in trainable]
-        except:
-            raise TypeError("Unvalid element(s) found in the list of trainable argument")
+        trainable = [bool(t) for t in trainable]
 
     else:
         raise TypeError("trainable argument must be a list of boolean values")
 
     if len(trainable) != len(net.layers):
         raise ValueError(
-            f"Inconsistent size between trainable argument and the number of layers: {len(trainable)} != {len(net.layers)}"
+            f"Inconsistent size between trainable argument and the number of layers: "
+            f"{len(trainable)} != {len(net.layers)}"
         )
 
     return trainable
@@ -105,7 +105,7 @@ def _standardize_add_conv2d_filter_shape(filter_shape: Numeric | tuple | list) -
         filter_shape = tuple(filter_shape)
 
         if len(filter_shape) > 2:
-            raise ValueError(f"filter_shape must be of size 2")
+            raise ValueError("filter_shape must be of size 2")
 
     else:
         TypeError("filter_shape must be an integer or a tuple")
