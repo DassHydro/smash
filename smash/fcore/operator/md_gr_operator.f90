@@ -161,7 +161,7 @@ contains
 
         es = (hp*cp)*(2._sp - hp)*tanh(en/cp)/(1._sp + (1._sp - hp)*tanh(en/cp))
 
-        hp_imd = hp + (f_q(1)*ps - f_q(2)*es)/cp
+        hp_imd = hp + ((1._sp + f_q(1)/2._sp)*ps - (1._sp + f_q(2)/2._sp)*es)/cp
 
         if (pn .gt. 0) then
 
@@ -178,7 +178,7 @@ contains
         nm1 = n - 1._sp
         d1pnm1 = 1._sp/nm1
 
-        fk = f_q(4)*kexc*(ht**3.5_sp)
+        fk = (1._sp + f_q(4)/2._sp)*kexc*(ht**3.5_sp)
 
         if (prcp .lt. 0._sp) then
 
@@ -186,7 +186,7 @@ contains
 
         else
 
-            pr_imd = (1._sp - 0.1_sp*f_q(3))*(pr + perc) + fk
+            pr_imd = (0.9_sp*(1._sp - f_q(3)**2))*(pr + perc) + fk
 
         end if
 
@@ -194,7 +194,7 @@ contains
 
         ht = (((ht_imd*ct)**(-nm1) + ct**(-nm1))**(-d1pnm1))/ct
 
-        qd = 0.1_sp*f_q(3)*(pr + perc)
+        qd = (0.1_sp + 0.9_sp*f_q(3)**2)*(pr + perc)
 
         q = (ht_imd - ht)*ct + max(0._sp, qd + fk)
 
@@ -270,7 +270,7 @@ contains
 
         implicit none
 
-        real(sp), dimension(4), intent(in) :: f_q  ! fixed NN output size
+        real(sp), dimension(5), intent(in) :: f_q  ! fixed NN output size
         real(sp), intent(in) :: pn, en, cp, ct, kexc
         real(sp), intent(inout) :: hp, ht, q
 
@@ -283,20 +283,28 @@ contains
 
         !do i = 1, n_subtimesteps
 
-        fhp = f_q(1)*pn*(1._sp - hp**2) - f_q(2)*en*hp*(2._sp - hp)
+        fhp = (1._sp + f_q(1)/2._sp)*pn*(1._sp - hp**2) &
+        & - (1._sp + f_q(2)/2._sp)*en*hp*(2._sp - hp)
+
         hp = hp + dt*fhp/cp
+
         if (hp .le. 0._sp) hp = 1.e-6_sp
         if (hp .ge. 1._sp) hp = 1._sp - 1.e-6_sp
 
-        fht = 0.9_sp*f_q(1)*pn*hp**2 - f_q(3)*ct*ht**5 + &
-        & f_q(4)*kexc*ht**3.5_sp
+        fht = (0.9_sp*(1._sp - f_q(3)**2))*(1._sp + f_q(1)/2._sp)*pn*hp**2 &
+        & + (1._sp + f_q(4)/2._sp)*kexc*ht**3.5_sp &
+        & - (1._sp + f_q(5)/2._sp)*ct*ht**5
+
         ht = ht + dt*fht/ct
+
         if (ht .le. 0._sp) ht = 1.e-6_sp
         if (ht .ge. 1._sp) ht = 1._sp - 1.e-6_sp
 
         !end do
 
-        q = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
+        q = (1._sp + f_q(5)/2._sp)*ct*ht**5 &
+        & + (0.1_sp + 0.9_sp*f_q(3)**2)*(1._sp + f_q(1)/2._sp)*pn*hp**2 &
+        & + (1._sp + f_q(4)/2._sp)*kexc*ht**3.5_sp
 
     end subroutine gr_production_transfer_mlp_ode
 
@@ -577,7 +585,7 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(4) :: input_layer  ! fixed NN input size
-        real(sp), dimension(4, mesh%nac) :: output_layer  ! fixed NN output size
+        real(sp), dimension(5, mesh%nac) :: output_layer  ! fixed NN output size
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k
 

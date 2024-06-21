@@ -452,9 +452,12 @@ def _standardize_model_setup_finalize(setup: dict):
 
     setup["snow_module_present"] = setup["snow_module"] != "zero"
 
-    if "mlp" in setup["hydrological_module"]:
-        # % fixed NN input size = 4 and fixed NN output size 4, if used
+    if setup["hydrological_module"] == "gr4_mlp_alg":
+        # % fixed NN input size = 4 and fixed NN output size 4
         setup["neurons"] = np.array([4, setup["hidden_neuron"], 4], dtype=np.int32)
+    elif setup["hydrological_module"] == "gr4_mlp_ode":
+        # % fixed NN input size = 4 and fixed NN output size 5
+        setup["neurons"] = np.array([4, setup["hidden_neuron"], 5], dtype=np.int32)
     else:
         setup["neurons"] = np.zeros(3, dtype=np.int32)
 

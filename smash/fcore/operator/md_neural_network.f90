@@ -39,8 +39,7 @@ contains
 
         call dot_product_2d_1d(weight_2, inter_layer, output_layer)
         do i = 1, size(output_layer)
-            output_layer(i) = output_layer(i) + bias_2(i)
-            output_layer(i) = 2._sp/(1._sp + exp(-output_layer(i))) ! Softmax*2
+            output_layer(i) = tanh(output_layer(i) + bias_2(i)) ! TanH
         end do
 
     end subroutine forward_mlp
