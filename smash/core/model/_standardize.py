@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 def _standardize_model_setup_bool(key: str, value: bool) -> bool:
-    if not (isinstance(value, bool | int)):
+    if not (isinstance(value, (bool, int))):
         raise TypeError(f"{key} model setup must be a boolean")
     elif isinstance(value, int):
         if value == 0:
