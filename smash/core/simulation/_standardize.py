@@ -1110,11 +1110,12 @@ def _standardize_simulation_parameters_feasibility(model: Model):
         low, upp = FEASIBLE_RR_INITIAL_STATES[key]
         low_arr = np.min(arr)
         upp_arr = np.max(arr)
-
-        if low_arr <= low or upp_arr >= upp:
+        
+        
+        if (low_arr <= low) or (upp_arr > upp):
             raise ValueError(
                 f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain "
-                f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
+                f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}]"
             )
 
     for key in model.serr_mu_parameters.keys:

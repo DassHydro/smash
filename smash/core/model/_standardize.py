@@ -563,11 +563,11 @@ def _standardize_rr_states_value(
             f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape "
             f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
-
-    if low_arr <= low or upp_arr >= upp:
+    
+    if (low_arr <= low) or (upp_arr > upp):
         raise ValueError(
             f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{low_arr}, {upp_arr}] is "
-            f"not included in the feasible domain ]{low}, {upp}["
+            f"not included in the feasible domain ]{low}, {upp}]"
         )
 
     return value
