@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "meson-python",
-    "numpy",
+    "numpy<2",
     "f90wrap<0.2.14",  # temporary upper bound until v0.2.15 is released
     "versioneer[toml]"
 ]
@@ -18,7 +18,7 @@ authors = [
 license = {text = "GPL-3.0"}
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
+    "numpy<2",
     "f90wrap",
     "rasterio",
     "pandas",
