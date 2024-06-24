@@ -93,6 +93,11 @@ contains
                     call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qz(:, setup%nqz), &
                     & returns%q_domain(:, :, time_step_returns))
                 end if
+                !% Return routage grid
+                if (returns%qt_flag) then
+                    call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    & returns%qt(:, :, time_step_returns))
+                end if
 
             end if
         end if
@@ -178,6 +183,7 @@ contains
                     mesh, &
                     input_data, &
                     options, &
+                    returns, &
                     t, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
@@ -209,6 +215,7 @@ contains
                     mesh, &
                     input_data, &
                     options, &
+                    returns, &
                     t, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
@@ -240,6 +247,7 @@ contains
                     mesh, &
                     input_data, &
                     options, &
+                    returns, &
                     t, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % cp
@@ -266,6 +274,7 @@ contains
                     mesh, &
                     input_data, &
                     options, &
+                    returns, &
                     t, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ca
@@ -295,6 +304,7 @@ contains
                     mesh, &
                     input_data, &
                     options, &
+                    returns, &
                     t, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % b

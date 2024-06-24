@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "meson-python",
-    "numpy",
+    "numpy<1.26.4",
     "f90wrap<0.2.14",  # temporary upper bound until v0.2.15 is released
     "versioneer[toml]"
 ]

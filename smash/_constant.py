@@ -145,6 +145,19 @@ STRUCTURE_ADJUST_CI = dict(
     )
 )
 
+STRUCTURE_INTERNAL_FLUXES = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        [
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr4
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr5
+            ["ei", "pn", "en", "pr", "perc", "prr", "qr"],  # % grd
+            ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd"],  # % loieau
+            ["pn", "en", "qr", "qb"],  # % vic3l
+        ],
+    )
+)
+
 ## PARAMETERS NAME ###
 ######################
 
@@ -827,6 +840,8 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
         "rr_states": False,
         "q_domain": False,
+        "qt":False,
+        "internal_fluxes": False,
         "cost": False,
         "jobs": False,
     },

@@ -56,6 +56,7 @@
 !%          ``nsep_mu``                Number of structural error parameters for mu
 !%          ``nsep_sigma``             Number of structural error parameters for sigma
 !%          ``nqz``                    Size of the temporal buffer for discharge grids
+!%          ``n_internal_fluxes``      Number of internal fluxes
 !%
 !%      Subroutine
 !%      ----------
@@ -138,6 +139,7 @@ module mwd_setup
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
         integer :: nqz = -99
+        integer :: n_internal_fluxes = -99
 
     end type SetupDT
 

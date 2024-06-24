@@ -5,6 +5,7 @@ module md_vic3l_operator
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
+    use mwd_returns !% only: ReturnDT
     use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
 
     implicit none
@@ -166,7 +167,7 @@ contains
 
     end subroutine vic3l_baseflow
 
-    subroutine vic3l_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_b, ac_cusl, ac_cmsl, &
+    subroutine vic3l_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_b, ac_cusl, ac_cmsl, &
     & ac_cbsl, ac_ks, ac_pbc, ac_dsm, ac_ds, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt)
 
         implicit none
@@ -175,6 +176,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, &
@@ -229,6 +231,15 @@ contains
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    returns%internal_fluxes(row, col, time_step, 1) = pn
+                    returns%internal_fluxes(row, col, time_step, 2) = en
+                    returns%internal_fluxes(row, col, time_step, 3) = qr
+                    returns%internal_fluxes(row, col, time_step, 4) = qb
+                end if
+                !$AD end-exclude
             end do
         end do
 #ifdef _OPENMP
