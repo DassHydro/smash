@@ -129,7 +129,7 @@ contains
 
         hu = hu - d/cu
         hl = hl + d/cl
-
+        
     end subroutine vic3l_drainage_2l
 
     subroutine vic3l_drainage(cusl, cmsl, cbsl, ks, pbc, husl, hmsl, hbsl)
@@ -185,8 +185,8 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
-        integer :: row, col, k
-        real(sp) :: pn, en, qr, qb
+        integer :: row, col, k, time_step_returns
+        real(sp) :: pn, en, qr, qb, d, wumsl
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -234,10 +234,17 @@ contains
                 !$AD start-exclude
                 !internal fluxes
                 if (returns%internal_fluxes_flag) then
-                    returns%internal_fluxes(row, col, time_step, 1) = pn
-                    returns%internal_fluxes(row, col, time_step, 2) = en
-                    returns%internal_fluxes(row, col, time_step, 3) = qr
-                    returns%internal_fluxes(row, col, time_step, 4) = qb
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+
+                            returns%internal_fluxes(row, col, time_step_returns, 1) = pn
+                            returns%internal_fluxes(row, col, time_step_returns, 2) = en
+                            returns%internal_fluxes(row, col, time_step_returns, 3) = qr
+                            returns%internal_fluxes(row, col, time_step_returns, 4) = qb
+
+                        end if
+                    end if 
                 end if
                 !$AD end-exclude
             end do
