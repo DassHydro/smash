@@ -29,6 +29,13 @@ def get_rr_states_from_structure(structure: str) -> list[str]:
     return rr_states
 
 
+def get_rr_internal_fluxes(structure: str) -> list(str):
+    rr_internal_fluxes = []
+    [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
+    print(rr_internal_fluxes)
+    return rr_internal_fluxes
+
+
 ### MODULE ###
 ##############
 
@@ -39,6 +46,7 @@ HYDROLOGICAL_MODULE = ["gr4", "gr5", "grd", "loieau", "vic3l"]
 ROUTING_MODULE = ["lag0", "lr", "kw"]
 
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
+
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_PARAMETERS = dict(
@@ -115,6 +123,44 @@ ROUTING_MODULE_NQZ = dict(
     zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
 )
 
+
+
+# % Following SNOW_MODULE order
+SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
+    zip(
+        SNOW_MODULE,
+        [
+            [],  # % zero
+            ["mlt"],  # % ssn
+        ],
+    )
+)
+
+# % Following HYDROLOGICAL_MODULE order
+HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        [
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr4
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr5
+            ["ei", "pn", "en", "pr", "perc", "prr", "qr"],  # % grd
+            ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd"],  # % loieau
+            ["pn", "en", "qr", "qb"],  # % vic3l
+        ],
+    )
+)
+
+# % Following ROUTING_MODULE order
+ROUTING_MODULE_RR_INTERNAL_FLUXES = dict(
+    zip(ROUTING_MODULE, [["qup"], ["qup"], ["qim1j"]])  # % lag0  # % lr  # % kw
+)
+
+MODULE_RR_INTERNAL_FLUXES = dict(
+    **SNOW_MODULE_RR_INTERNAL_FLUXES,
+    **HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
+    **ROUTING_MODULE_RR_INTERNAL_FLUXES,
+)
+
 ### STRUCTURE ###
 #################
 
@@ -145,16 +191,11 @@ STRUCTURE_ADJUST_CI = dict(
     )
 )
 
-STRUCTURE_INTERNAL_FLUXES = dict(
+# % Following STRUCTURE order
+STRUCTURE_RR_INTERNAL_FLUXES = dict(
     zip(
-        HYDROLOGICAL_MODULE,
-        [
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr4
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr5
-            ["ei", "pn", "en", "pr", "perc", "prr", "qr"],  # % grd
-            ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd"],  # % loieau
-            ["pn", "en", "qr", "qb"],  # % vic3l
-        ],
+        STRUCTURE,
+        [get_rr_internal_fluxes(s) for s in STRUCTURE],
     )
 )
 

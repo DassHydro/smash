@@ -155,6 +155,7 @@ contains
                     mesh, &
                     input_data, &
                     options, &
+                    returns, &
                     t, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % kmlt
                     h1, & ! % hs
@@ -342,6 +343,8 @@ contains
                     setup, &
                     mesh, &
                     options, &
+                    returns, &
+                    t, &
                     checkpoint_variable%ac_qtz, &
                     checkpoint_variable%ac_qz)
 
@@ -355,6 +358,8 @@ contains
                     setup, &
                     mesh, &
                     options, &
+                    returns, &
+                    t, &
                     checkpoint_variable%ac_qtz, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % llr
                     h1, & ! % hlr
@@ -372,6 +377,8 @@ contains
                     setup, &
                     mesh, &
                     options, &
+                    returns, &
+                    t, &
                     checkpoint_variable%ac_qtz, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % akw
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % bkw
