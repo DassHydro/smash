@@ -2653,6 +2653,7 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: qt_flag=.false.
       REAL(sp), DIMENSION(:, :, :, :), ALLOCATABLE :: internal_fluxes
       LOGICAL :: internal_fluxes_flag=.false.
+      INTEGER :: n_snow_internal_fluxes=0
   END TYPE RETURNSDT
 
 CONTAINS

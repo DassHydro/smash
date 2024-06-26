@@ -173,11 +173,7 @@ contains
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
                                 
-                                if (setup%snow_module_present) then 
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes - 1) = qup
-                                else
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
-                                end if
+                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
                                 
                             end if
                         end if
@@ -209,11 +205,7 @@ contains
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
                                 
-                                if (setup%snow_module_present) then 
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes - 1) = qup
-                                else
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
-                                end if 
+                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
                                 
                             end if
                         end if
@@ -278,11 +270,7 @@ contains
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
                                 
-                                if (setup%snow_module_present) then 
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes - 1) = qup
-                                else
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
-                                end if 
+                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
                                 
                             end if
                         end if
@@ -315,11 +303,7 @@ contains
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
                                 
-                                if (setup%snow_module_present) then 
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes - 1) = qup
-                                else
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
-                                end if 
+                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
 
                             end if
                         end if
@@ -387,11 +371,7 @@ contains
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
                                 
-                                if (setup%snow_module_present) then 
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes - 1) = qim1j
-                                else
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qim1j
-                                end if 
+                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qim1j
                                 
                             end if
                         end if
@@ -428,11 +408,7 @@ contains
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
                                 
-                                if (setup%snow_module_present) then 
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes - 1) = qim1j
-                                else
-                                    returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qim1j
-                                end if 
+                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qim1j
                                 
                             end if
                         end if
