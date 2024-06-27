@@ -29,6 +29,7 @@ contains
 
         hcl = hcl + (prcp - ec - pn)/ccl
 
+        ! % Avoid under and overflow
         hcl = min(0.999999_sp, hcl)
         hcl = max(1e-6_sp, hcl)
 
@@ -104,6 +105,12 @@ contains
 
         husl = husl + ifl_usl/cusl
         hmsl = hmsl + ifl_msl/cmsl
+
+        ! % Avoid under and overflow
+        husl = min(0.999999_sp, husl)
+        husl = max(1e-6_sp, husl)
+        hmsl = min(0.999999_sp, hmsl)
+        hmsl = max(1e-6_sp, hmsl)
 
         qr = pn - (ifl_usl + ifl_msl)
 
