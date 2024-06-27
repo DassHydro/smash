@@ -7,6 +7,7 @@ import numpy as np
 
 from smash._constant import (
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
+    STRUCTURE_RR_INTERNAL_FLUXES,
 )
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (
@@ -25,6 +26,10 @@ from smash.fcore._mw_forward import (
 )
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_returns import ReturnsDT
+
+from smash.core.internal_fluxes.internal_fluxes_manipulation import (
+    transform_internal_fluxes_to_dict
+)
 
 if TYPE_CHECKING:
     from typing import Any
@@ -196,7 +201,16 @@ def _forward_run(
         fret[key] = value
 
     ret = {**fret, **pyret}
-    if ret:
+    
+    if ret: 
+        
+        if "internal_fluxes" in ret:      
+            ret["internal_fluxes"] = transform_internal_fluxes_to_dict(
+                ret["internal_fluxes"], 
+                STRUCTURE_RR_INTERNAL_FLUXES, 
+                model.setup.structure
+            )
+        
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()
