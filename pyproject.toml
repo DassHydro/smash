@@ -6,7 +6,7 @@ requires = [
     # against 2.x yields wheels that are also compatible with numpy 1.x at
     # runtime.
     "numpy>=2.0.0",
-    "f90wrap",
+    "f90wrap>=0.2.15",
     "versioneer[toml]"
 ]
 build-backend = "mesonpy"
@@ -23,7 +23,7 @@ license = {text = "GPL-3.0"}
 requires-python = ">=3.9"
 dependencies = [
     "numpy",
-    "f90wrap",
+    "f90wrap>=0.2.15",
     "rasterio",
     "pandas",
     "h5py",
