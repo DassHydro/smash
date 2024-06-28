@@ -35,7 +35,7 @@ It will create a Conda environment called ``smash-dev`` that can be activated as
 
     conda activate smash-dev
 
-Once ``smash-dev`` is created, it is recomended to update pip and your Conda environment
+Once ``smash-dev`` is created, it is recommended to update pip and your Conda environment
 to ensure you have the latest package versions and to prevent any conflicts:
 
 .. code-block:: none
