@@ -161,7 +161,7 @@ contains
 
         es = (hp*cp)*(2._sp - hp)*tanh(en/cp)/(1._sp + (1._sp - hp)*tanh(en/cp))
 
-        hp_imd = hp + ((1._sp + f_q(1)/2._sp)*ps - (1._sp + f_q(2)/2._sp)*es)/cp
+        hp_imd = hp + ((1._sp + f_q(1))*ps - (1._sp + f_q(2))*es)/cp
 
         if (pn .gt. 0) then
 
@@ -178,7 +178,7 @@ contains
         nm1 = n - 1._sp
         d1pnm1 = 1._sp/nm1
 
-        fk = (1._sp + f_q(4)/2._sp)*kexc*(ht**3.5_sp)
+        fk = (1._sp + f_q(4))*kexc*(ht**3.5_sp)
 
         if (prcp .lt. 0._sp) then
 
@@ -283,17 +283,17 @@ contains
 
         !do i = 1, n_subtimesteps
 
-        fhp = (1._sp + f_q(1)/2._sp)*pn*(1._sp - hp**2) &
-        & - (1._sp + f_q(2)/2._sp)*en*hp*(2._sp - hp)
+        fhp = (1._sp + f_q(1))*pn*(1._sp - hp**2) &
+        & - (1._sp + f_q(2))*en*hp*(2._sp - hp)
 
         hp = hp + dt*fhp/cp
 
         if (hp .le. 0._sp) hp = 1.e-6_sp
         if (hp .ge. 1._sp) hp = 1._sp - 1.e-6_sp
 
-        fht = (0.9_sp*(1._sp - f_q(3)**2))*(1._sp + f_q(1)/2._sp)*pn*hp**2 &
-        & + (1._sp + f_q(4)/2._sp)*kexc*ht**3.5_sp &
-        & - (1._sp + f_q(5)/2._sp)*ct*ht**5
+        fht = (0.9_sp*(1._sp - f_q(3)**2))*(1._sp + f_q(1))*pn*hp**2 &
+        & + (1._sp + f_q(4))*kexc*ht**3.5_sp &
+        & - (1._sp + f_q(5))*ct*ht**5
 
         ht = ht + dt*fht/ct
 
@@ -302,9 +302,9 @@ contains
 
         !end do
 
-        q = (1._sp + f_q(5)/2._sp)*ct*ht**5 &
-        & + (0.1_sp + 0.9_sp*f_q(3)**2)*(1._sp + f_q(1)/2._sp)*pn*hp**2 &
-        & + (1._sp + f_q(4)/2._sp)*kexc*ht**3.5_sp
+        q = (1._sp + f_q(5))*ct*ht**5 &
+        & + (0.1_sp + 0.9_sp*f_q(3)**2)*(1._sp + f_q(1))*pn*hp**2 &
+        & + (1._sp + f_q(4))*kexc*ht**3.5_sp
 
     end subroutine gr_production_transfer_mlp_ode
 

@@ -13592,12 +13592,10 @@ CONTAINS
 &     temp4)**2)*(en_d-temp4*cp_d)/cp-temp3*hp_d))/((1._sp-hp)*temp3+&
 &     1._sp)
     es = temp
-    temp4 = f_q(1)/2._sp + 1._sp
-    temp3 = f_q(2)/2._sp + 1._sp
-    temp2 = (temp4*ps-temp3*es)/cp
-    hp_imd_d = hp_d + (ps*f_q_d(1)/2._sp+temp4*ps_d-es*f_q_d(2)/2._sp-&
-&     temp3*es_d-temp2*cp_d)/cp
-    hp_imd = hp + temp2
+    temp4 = ((f_q(1)+1._sp)*ps-(f_q(2)+1._sp)*es)/cp
+    hp_imd_d = hp_d + (ps*f_q_d(1)+(f_q(1)+1._sp)*ps_d-es*f_q_d(2)-(f_q(&
+&     2)+1._sp)*es_d-temp4*cp_d)/cp
+    hp_imd = hp + temp4
     IF (pn .GT. 0) THEN
       pr_d = pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d
       pr = pn - (hp_imd-hp)*cp
@@ -13616,10 +13614,9 @@ CONTAINS
     nm1 = n - 1._sp
     d1pnm1 = 1._sp/nm1
     temp4 = ht**3.5_sp
-    temp3 = f_q(4)/2._sp + 1._sp
-    fk_d = temp4*(kexc*f_q_d(4)/2._sp+temp3*kexc_d) + temp3*kexc*3.5_sp*&
-&     ht**2.5*ht_d
-    fk = temp3*kexc*temp4
+    fk_d = temp4*(kexc*f_q_d(4)+(f_q(4)+1._sp)*kexc_d) + (f_q(4)+1._sp)*&
+&     kexc*3.5_sp*ht**2.5*ht_d
+    fk = (f_q(4)+1._sp)*kexc*temp4
     IF (prcp .LT. 0._sp) THEN
       pwx1_d = ct*ht_d + ht*ct_d
       pwx1 = ht*ct
@@ -13759,7 +13756,7 @@ CONTAINS
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn/cp)/(1._sp+hp*TANH(pn/cp))
     es = hp*cp*(2._sp-hp)*TANH(en/cp)/(1._sp+(1._sp-hp)*TANH(en/cp))
-    hp_imd = hp + ((1._sp+f_q(1)/2._sp)*ps-(1._sp+f_q(2)/2._sp)*es)/cp
+    hp_imd = hp + ((1._sp+f_q(1))*ps-(1._sp+f_q(2))*es)/cp
     IF (pn .GT. 0) THEN
       pr = pn - (hp_imd-hp)*cp
       CALL PUSHCONTROL1B(0)
@@ -13772,7 +13769,7 @@ CONTAINS
 !% Transfer
     nm1 = n - 1._sp
     d1pnm1 = 1._sp/nm1
-    fk = (1._sp+f_q(4)/2._sp)*kexc*ht**3.5_sp
+    fk = (1._sp+f_q(4))*kexc*ht**3.5_sp
     IF (prcp .LT. 0._sp) THEN
       pwx1 = ht*ct
       pwy1 = -nm1
@@ -13914,11 +13911,10 @@ CONTAINS
     perc_b = perc_b - hp_b/cp
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
-    temp4 = f_q(4)/2._sp + 1._sp
     temp_b4 = ht**3.5_sp*fk_b
-    ht_b = ht_b + 3.5_sp*ht**2.5*temp4*kexc*fk_b
-    f_q_b(4) = f_q_b(4) + kexc*temp_b4/2._sp
-    kexc_b = kexc_b + temp4*temp_b4
+    ht_b = ht_b + 3.5_sp*ht**2.5*(f_q(4)+1._sp)*kexc*fk_b
+    f_q_b(4) = f_q_b(4) + kexc*temp_b4
+    kexc_b = kexc_b + (f_q(4)+1._sp)*temp_b4
     hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
 &     4
     cp_b = cp_b + perc*hp_b/cp**2 + hp_imd*(1._sp-pwr1)*perc_b
@@ -13931,14 +13927,8 @@ CONTAINS
     ELSE
       hp_b = 0.0_4
     END IF
-    temp4 = f_q(1)/2._sp + 1._sp
-    temp3 = f_q(2)/2._sp + 1._sp
     temp_b4 = hp_imd_b/cp
-    f_q_b(1) = f_q_b(1) + ps*temp_b4/2._sp
-    ps_b = temp4*temp_b4
-    f_q_b(2) = f_q_b(2) - es*temp_b4/2._sp
-    es_b = -(temp3*temp_b4)
-    cp_b = cp_b - (temp4*ps-temp3*es)*temp_b4/cp
+    es_b = -((f_q(2)+1._sp)*temp_b4)
     temp4 = en/cp
     temp3 = TANH(temp4)
     temp2 = (-hp+1._sp)*temp3 + 1._sp
@@ -13949,10 +13939,14 @@ CONTAINS
     temp_b2 = (2._sp-hp)*temp0*temp_b
     temp_b1 = (1.0-TANH(temp1)**2)*temp5*temp_b/cp
     temp_b0 = -(temp5*temp0*temp_b/temp2)
-    hp_b = hp_b + hp_imd_b - hp*cp*temp0*temp_b - temp3*temp_b0
     temp_b3 = (1.0-TANH(temp4)**2)*(1._sp-hp)*temp_b0/cp
+    hp_b = hp_b + hp_imd_b - hp*cp*temp0*temp_b - temp3*temp_b0
+    f_q_b(1) = f_q_b(1) + ps*temp_b4
+    ps_b = (f_q(1)+1._sp)*temp_b4
+    f_q_b(2) = f_q_b(2) - es*temp_b4
+    cp_b = cp_b + hp*temp_b2 - ((f_q(1)+1._sp)*ps-(f_q(2)+1._sp)*es)*&
+&     temp_b4/cp - temp4*temp_b3 - temp1*temp_b1
     en_b = en_b + temp_b3 + temp_b1
-    cp_b = cp_b + hp*temp_b2 - temp4*temp_b3 - temp1*temp_b1
     temp = pn/cp
     temp0 = TANH(temp)
     temp1 = hp*temp0 + 1._sp
@@ -13993,7 +13987,7 @@ CONTAINS
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn/cp)/(1._sp+hp*TANH(pn/cp))
     es = hp*cp*(2._sp-hp)*TANH(en/cp)/(1._sp+(1._sp-hp)*TANH(en/cp))
-    hp_imd = hp + ((1._sp+f_q(1)/2._sp)*ps-(1._sp+f_q(2)/2._sp)*es)/cp
+    hp_imd = hp + ((1._sp+f_q(1))*ps-(1._sp+f_q(2))*es)/cp
     IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
@@ -14002,7 +13996,7 @@ CONTAINS
 !% Transfer
     nm1 = n - 1._sp
     d1pnm1 = 1._sp/nm1
-    fk = (1._sp+f_q(4)/2._sp)*kexc*ht**3.5_sp
+    fk = (1._sp+f_q(4))*kexc*ht**3.5_sp
     IF (prcp .LT. 0._sp) THEN
       pwx1 = ht*ct
       pwy1 = -nm1
@@ -14371,23 +14365,16 @@ CONTAINS
     REAL(sp) :: temp0
     REAL(sp) :: temp1
     REAL(sp) :: temp2
-    REAL(sp) :: temp3
-    REAL(sp) :: temp4
-    REAL(sp) :: temp5
-    REAL(sp) :: temp6
 ! integer :: i
 ! integer :: n_subtimesteps = 4
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
-    temp = pn*(-(hp*hp)+1._sp)
-    temp0 = f_q(1)/2._sp + 1._sp
-    temp1 = en*hp*(-hp+2._sp)
-    temp2 = f_q(2)/2._sp + 1._sp
-    fhp_d = temp*f_q_d(1)/2._sp + temp0*((1._sp-hp**2)*pn_d-pn*2*hp*hp_d&
-&     ) - temp1*f_q_d(2)/2._sp - temp2*((2._sp-hp)*(hp*en_d+en*hp_d)-en*&
-&     hp*hp_d)
-    fhp = temp0*temp - temp2*temp1
+    temp = (f_q(2)+1._sp)*(-hp+2._sp)
+    fhp_d = (1._sp-hp**2)*(pn*f_q_d(1)+(f_q(1)+1._sp)*pn_d) - (f_q(1)+&
+&     1._sp)*pn*2*hp*hp_d - en*hp*((2._sp-hp)*f_q_d(2)-(f_q(2)+1._sp)*&
+&     hp_d) - temp*(hp*en_d+en*hp_d)
+    fhp = (f_q(1)+1._sp)*pn*(1._sp-hp*hp) - temp*(en*hp)
     hp_d = hp_d + dt*(fhp_d-fhp*cp_d/cp)/cp
     hp = hp + dt*fhp/cp
     IF (hp .LE. 0._sp) THEN
@@ -14398,18 +14385,16 @@ CONTAINS
       hp = 1._sp - 1.e-6_sp
       hp_d = 0.0_4
     END IF
-    temp2 = pn*(hp*hp)
-    temp1 = f_q(1)/2._sp + 1._sp
-    temp0 = (-(f_q(3)*f_q(3))+1._sp)*temp1
-    temp = ht**3.5_sp
-    temp3 = f_q(4)/2._sp + 1._sp
-    temp4 = ht**5
-    temp5 = f_q(5)/2._sp + 1._sp
-    fht_d = 0.9_sp*(temp2*((1._sp-f_q(3)**2)*f_q_d(1)/2._sp-temp1*2*f_q(&
-&     3)*f_q_d(3))+temp0*(hp**2*pn_d+pn*2*hp*hp_d)) + temp*(kexc*f_q_d(4&
-&     )/2._sp+temp3*kexc_d) + (temp3*kexc*3.5_sp*ht**2.5-temp5*ct*5*ht**&
-&     4)*ht_d - temp4*(ct*f_q_d(5)/2._sp+temp5*ct_d)
-    fht = 0.9_sp*(temp0*temp2) + temp3*kexc*temp - temp5*ct*temp4
+    temp = (-(f_q(3)*f_q(3))+1._sp)*(hp*hp)
+    temp0 = ht**3.5_sp
+    temp1 = ht**5
+    fht_d = 0.9_sp*((f_q(1)+1._sp)*pn*((1._sp-f_q(3)**2)*2*hp*hp_d-hp**2&
+&     *2*f_q(3)*f_q_d(3))+temp*(pn*f_q_d(1)+(f_q(1)+1._sp)*pn_d)) + &
+&     temp0*(kexc*f_q_d(4)+(f_q(4)+1._sp)*kexc_d) + ((f_q(4)+1._sp)*kexc&
+&     *3.5_sp*ht**2.5-(f_q(5)+1._sp)*ct*5*ht**4)*ht_d - temp1*(ct*f_q_d(&
+&     5)+(f_q(5)+1._sp)*ct_d)
+    fht = 0.9_sp*(temp*((f_q(1)+1._sp)*pn)) + (f_q(4)+1._sp)*kexc*temp0 &
+&     - (f_q(5)+1._sp)*ct*temp1
     ht_d = ht_d + dt*(fht_d-fht*ct_d/ct)/ct
     ht = ht + dt*fht/ct
     IF (ht .LE. 0._sp) THEN
@@ -14421,19 +14406,16 @@ CONTAINS
       ht_d = 0.0_4
     END IF
 !end do
-    temp5 = ht**5
-    temp4 = f_q(5)/2._sp + 1._sp
-    temp3 = pn*(hp*hp)
-    temp2 = f_q(1)/2._sp + 1._sp
-    temp1 = temp2*temp3
-    temp0 = 0.9_sp*(f_q(3)*f_q(3)) + 0.1_sp
-    temp = ht**3.5_sp
-    temp6 = f_q(4)/2._sp + 1._sp
-    q_d = temp5*(ct*f_q_d(5)/2._sp+temp4*ct_d) + (temp4*ct*5*ht**4+temp6&
-&     *kexc*3.5_sp*ht**2.5)*ht_d + temp1*0.9_sp*2*f_q(3)*f_q_d(3) + &
-&     temp0*(temp3*f_q_d(1)/2._sp+temp2*(hp**2*pn_d+pn*2*hp*hp_d)) + &
-&     temp*(kexc*f_q_d(4)/2._sp+temp6*kexc_d)
-    q = temp4*ct*temp5 + temp0*temp1 + temp6*kexc*temp
+    temp1 = ht**5
+    temp0 = (f_q(1)+1._sp)*pn*(hp*hp)
+    temp = 0.9_sp*(f_q(3)*f_q(3)) + 0.1_sp
+    temp2 = ht**3.5_sp
+    q_d = temp1*(ct*f_q_d(5)+(f_q(5)+1._sp)*ct_d) + ((f_q(5)+1._sp)*ct*5&
+&     *ht**4+(f_q(4)+1._sp)*kexc*3.5_sp*ht**2.5)*ht_d + temp0*0.9_sp*2*&
+&     f_q(3)*f_q_d(3) + temp*(hp**2*(pn*f_q_d(1)+(f_q(1)+1._sp)*pn_d)+(&
+&     f_q(1)+1._sp)*pn*2*hp*hp_d) + temp2*(kexc*f_q_d(4)+(f_q(4)+1._sp)*&
+&     kexc_d)
+    q = (f_q(5)+1._sp)*ct*temp1 + temp*temp0 + (f_q(4)+1._sp)*kexc*temp2
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_D
 
 !  Differentiation of gr_production_transfer_mlp_ode in reverse (adjoint) mode (with options fixinterface noISIZE context):
@@ -14451,25 +14433,18 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
     REAL(sp) :: dt, fhp, fht
     REAL(sp) :: fhp_b, fht_b
-    REAL(sp) :: temp
     REAL(sp) :: temp_b
     REAL(sp) :: temp_b0
     REAL(sp) :: temp_b1
-    REAL(sp) :: temp0
     REAL(sp) :: temp_b2
-    REAL(sp) :: temp1
-    REAL(sp) :: temp2
-    REAL(sp) :: temp_b3
-    REAL(sp) :: temp3
-    REAL(sp) :: temp_b4
     INTEGER :: branch
 ! integer :: i
 ! integer :: n_subtimesteps = 4
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
-    fhp = (1._sp+f_q(1)/2._sp)*pn*(1._sp-hp**2) - (1._sp+f_q(2)/2._sp)*&
-&     en*hp*(2._sp-hp)
+    fhp = (1._sp+f_q(1))*pn*(1._sp-hp**2) - (1._sp+f_q(2))*en*hp*(2._sp-&
+&     hp)
     CALL PUSHREAL4(hp)
     hp = hp + dt*fhp/cp
     IF (hp .LE. 0._sp) THEN
@@ -14484,9 +14459,8 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
-    fht = 0.9_sp*(1._sp-f_q(3)**2)*(1._sp+f_q(1)/2._sp)*pn*hp**2 + (&
-&     1._sp+f_q(4)/2._sp)*kexc*ht**3.5_sp - (1._sp+f_q(5)/2._sp)*ct*ht**&
-&     5
+    fht = 0.9_sp*(1._sp-f_q(3)**2)*(1._sp+f_q(1))*pn*hp**2 + (1._sp+f_q(&
+&     4))*kexc*ht**3.5_sp - (1._sp+f_q(5))*ct*ht**5
     CALL PUSHREAL4(ht)
     ht = ht + dt*fht/ct
     IF (ht .LE. 0._sp) THEN
@@ -14501,61 +14475,60 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
-    temp2 = f_q(5)/2._sp + 1._sp
-    temp1 = pn*(hp*hp)
-    temp0 = f_q(1)/2._sp + 1._sp
-    temp = f_q(4)/2._sp + 1._sp
-    temp_b4 = ht**5*q_b
-    ht_b = ht_b + (5*ht**4*temp2*ct+3.5_sp*ht**2.5*temp*kexc)*q_b
-    f_q_b(3) = f_q_b(3) + 2*f_q(3)*0.9_sp*temp0*temp1*q_b
+    temp_b2 = ht**5*q_b
+    ht_b = ht_b + (5*ht**4*(f_q(5)+1._sp)*ct+3.5_sp*ht**2.5*(f_q(4)+&
+&     1._sp)*kexc)*q_b
+    f_q_b(3) = f_q_b(3) + 2*f_q(3)*0.9_sp*(f_q(1)+1._sp)*pn*hp**2*q_b
     temp_b1 = (0.9_sp*f_q(3)**2+0.1_sp)*q_b
-    temp_b0 = ht**3.5_sp*q_b
-    f_q_b(4) = f_q_b(4) + kexc*temp_b0/2._sp
-    kexc_b = kexc_b + temp*temp_b0
-    f_q_b(1) = f_q_b(1) + temp1*temp_b1/2._sp
-    pn_b = pn_b + hp**2*temp0*temp_b1
-    hp_b = hp_b + 2*hp*pn*temp0*temp_b1
-    f_q_b(5) = f_q_b(5) + ct*temp_b4/2._sp
-    ct_b = ct_b + temp2*temp_b4
+    temp_b = ht**3.5_sp*q_b
+    f_q_b(4) = f_q_b(4) + kexc*temp_b
+    kexc_b = kexc_b + (f_q(4)+1._sp)*temp_b
+    temp_b0 = hp**2*temp_b1
+    hp_b = hp_b + 2*hp*(f_q(1)+1._sp)*pn*temp_b1
+    f_q_b(1) = f_q_b(1) + pn*temp_b0
+    pn_b = pn_b + (f_q(1)+1._sp)*temp_b0
+    f_q_b(5) = f_q_b(5) + ct*temp_b2
+    ct_b = ct_b + (f_q(5)+1._sp)*temp_b2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) ht_b = 0.0_4
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) ht_b = 0.0_4
     dt = 1._sp
     CALL POPREAL4(ht)
-    temp_b4 = dt*ht_b/ct
-    fht_b = temp_b4
-    temp = f_q(1)/2._sp + 1._sp
-    temp1 = f_q(4)/2._sp + 1._sp
-    temp3 = f_q(5)/2._sp + 1._sp
-    temp_b0 = pn*hp**2*0.9_sp*fht_b
-    temp_b1 = (1._sp-f_q(3)**2)*temp*0.9_sp*fht_b
-    temp_b2 = ht**3.5_sp*fht_b
-    ht_b = ht_b + (3.5_sp*ht**2.5*temp1*kexc-5*ht**4*temp3*ct)*fht_b
-    temp_b3 = -(ht**5*fht_b)
-    ct_b = ct_b + temp3*temp_b3 - fht*temp_b4/ct
-    f_q_b(5) = f_q_b(5) + ct*temp_b3/2._sp
-    f_q_b(4) = f_q_b(4) + kexc*temp_b2/2._sp
-    kexc_b = kexc_b + temp1*temp_b2
-    pn_b = pn_b + hp**2*temp_b1
-    hp_b = hp_b + 2*hp*pn*temp_b1
-    f_q_b(3) = f_q_b(3) - 2*f_q(3)*temp*temp_b0
-    f_q_b(1) = f_q_b(1) + (1._sp-f_q(3)**2)*temp_b0/2._sp
+    temp_b2 = dt*ht_b/ct
+    fht_b = temp_b2
+    ct_b = ct_b - fht*temp_b2/ct
+    temp_b1 = (f_q(1)+1._sp)*pn*0.9_sp*fht_b
+    temp_b0 = (1._sp-f_q(3)**2)*hp**2*0.9_sp*fht_b
+    temp_b = ht**3.5_sp*fht_b
+    ht_b = ht_b + (3.5_sp*ht**2.5*(f_q(4)+1._sp)*kexc-5*ht**4*(f_q(5)+&
+&     1._sp)*ct)*fht_b
+    temp_b2 = -(ht**5*fht_b)
+    f_q_b(5) = f_q_b(5) + ct*temp_b2
+    ct_b = ct_b + (f_q(5)+1._sp)*temp_b2
+    f_q_b(4) = f_q_b(4) + kexc*temp_b
+    kexc_b = kexc_b + (f_q(4)+1._sp)*temp_b
+    f_q_b(1) = f_q_b(1) + pn*temp_b0
+    pn_b = pn_b + (f_q(1)+1._sp)*temp_b0
+    f_q_b(3) = f_q_b(3) - 2*f_q(3)*hp**2*temp_b1
+    hp_b = hp_b + 2*hp*(1._sp-f_q(3)**2)*temp_b1
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) hp_b = 0.0_4
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) hp_b = 0.0_4
     CALL POPREAL4(hp)
-    temp_b0 = dt*hp_b/cp
-    fhp_b = temp_b0
-    cp_b = cp_b - fhp*temp_b0/cp
-    f_q_b(1) = f_q_b(1) + pn*(1._sp-hp**2)*fhp_b/2._sp
-    temp_b = (f_q(1)/2._sp+1._sp)*fhp_b
-    f_q_b(2) = f_q_b(2) - en*hp*(2._sp-hp)*fhp_b/2._sp
-    temp_b0 = -((f_q(2)/2._sp+1._sp)*fhp_b)
-    en_b = en_b + hp*(2._sp-hp)*temp_b0
-    hp_b = hp_b + (en*(2._sp-hp)-en*hp)*temp_b0 - 2*hp*pn*temp_b
-    pn_b = pn_b + (1._sp-hp**2)*temp_b
+    temp_b1 = dt*hp_b/cp
+    fhp_b = temp_b1
+    cp_b = cp_b - fhp*temp_b1/cp
+    temp_b = (1._sp-hp**2)*fhp_b
+    temp_b0 = -(en*hp*fhp_b)
+    temp_b1 = -((f_q(2)+1._sp)*(2._sp-hp)*fhp_b)
+    hp_b = hp_b + en*temp_b1 - 2*hp*(f_q(1)+1._sp)*pn*fhp_b - (f_q(2)+&
+&     1._sp)*temp_b0
+    en_b = en_b + hp*temp_b1
+    f_q_b(2) = f_q_b(2) + (2._sp-hp)*temp_b0
+    f_q_b(1) = f_q_b(1) + pn*temp_b
+    pn_b = pn_b + (f_q(1)+1._sp)*temp_b
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B
 
   SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE(f_q, pn, en, cp, ct, kexc, &
@@ -14571,20 +14544,19 @@ CONTAINS
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
-    fhp = (1._sp+f_q(1)/2._sp)*pn*(1._sp-hp**2) - (1._sp+f_q(2)/2._sp)*&
-&     en*hp*(2._sp-hp)
+    fhp = (1._sp+f_q(1))*pn*(1._sp-hp**2) - (1._sp+f_q(2))*en*hp*(2._sp-&
+&     hp)
     hp = hp + dt*fhp/cp
     IF (hp .LE. 0._sp) hp = 1.e-6_sp
     IF (hp .GE. 1._sp) hp = 1._sp - 1.e-6_sp
-    fht = 0.9_sp*(1._sp-f_q(3)**2)*(1._sp+f_q(1)/2._sp)*pn*hp**2 + (&
-&     1._sp+f_q(4)/2._sp)*kexc*ht**3.5_sp - (1._sp+f_q(5)/2._sp)*ct*ht**&
-&     5
+    fht = 0.9_sp*(1._sp-f_q(3)**2)*(1._sp+f_q(1))*pn*hp**2 + (1._sp+f_q(&
+&     4))*kexc*ht**3.5_sp - (1._sp+f_q(5))*ct*ht**5
     ht = ht + dt*fht/ct
     IF (ht .LE. 0._sp) ht = 1.e-6_sp
     IF (ht .GE. 1._sp) ht = 1._sp - 1.e-6_sp
 !end do
-    q = (1._sp+f_q(5)/2._sp)*ct*ht**5 + (0.1_sp+0.9_sp*f_q(3)**2)*(1._sp&
-&     +f_q(1)/2._sp)*pn*hp**2 + (1._sp+f_q(4)/2._sp)*kexc*ht**3.5_sp
+    q = (1._sp+f_q(5))*ct*ht**5 + (0.1_sp+0.9_sp*f_q(3)**2)*(1._sp+f_q(1&
+&     ))*pn*hp**2 + (1._sp+f_q(4))*kexc*ht**3.5_sp
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE
 
 !  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
