@@ -102,7 +102,7 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
             # % If an error occurs during check (inconsistent shapes ...)
             try:
                 if f[key][:].size == 0:
-                    is_equal = True
+                    is_equal = new_f[key][:].size == 0
                 elif f[key][:].dtype == "object" or f[key][:].dtype.char == "S":
                     is_equal = np.array_equal(f[key][:], new_f[key][:])
                 else:

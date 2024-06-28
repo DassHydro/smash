@@ -228,15 +228,15 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
         },
     ]
 
-    for i, kwargs in enumerate(custom_sets):
-        optimizer = kwargs.get(
+    for i, inner_kwargs in enumerate(custom_sets):
+        optimizer = inner_kwargs.get(
             "optimizer",
-            "sbs" if kwargs.get("mapping", "uniform") == "uniform" else "...",
+            "sbs" if inner_kwargs.get("mapping", "uniform") == "uniform" else "...",
         )
         if sum(model.setup.neurons) > 0 and optimizer == "sbs":
             continue  # ignore SBS optimizer if the forward model uses NN
 
-        instance = smash.optimize(model, **kwargs)
+        instance = smash.optimize(model, **inner_kwargs)
 
         qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position

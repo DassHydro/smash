@@ -108,7 +108,7 @@ def _standardize_add_conv2d_filter_shape(filter_shape: Numeric | tuple | list) -
             raise ValueError("filter_shape must be of size 2")
 
     else:
-        TypeError("filter_shape must be an integer or a tuple")
+        raise TypeError("filter_shape must be an integer or a tuple")
 
     return filter_shape
 

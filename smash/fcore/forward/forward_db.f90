@@ -18595,6 +18595,7 @@ CONTAINS
     REAL(sp) :: cumsl_d, wumsl_d, humsl_d, iflm_d, ifl0_d, ifl_d, &
 &   ifl_usl_d, ifl_msl_d
     INTRINSIC MIN
+    INTRINSIC MAX
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_d
     REAL(sp) :: pwy1
@@ -18672,6 +18673,30 @@ CONTAINS
     husl = husl + ifl_usl/cusl
     hmsl_d = hmsl_d + (ifl_msl_d-ifl_msl*cmsl_d/cmsl)/cmsl
     hmsl = hmsl + ifl_msl/cmsl
+    IF (0.999999_sp .GT. husl) THEN
+      husl = husl
+    ELSE
+      husl = 0.999999_sp
+      husl_d = 0.0_4
+    END IF
+    IF (1e-6_sp .LT. husl) THEN
+      husl = husl
+    ELSE
+      husl = 1e-6_sp
+      husl_d = 0.0_4
+    END IF
+    IF (0.999999_sp .GT. hmsl) THEN
+      hmsl = hmsl
+    ELSE
+      hmsl = 0.999999_sp
+      hmsl_d = 0.0_4
+    END IF
+    IF (1e-6_sp .LT. hmsl) THEN
+      hmsl = hmsl
+    ELSE
+      hmsl = 1e-6_sp
+      hmsl_d = 0.0_4
+    END IF
     qr_d = pn_d - ifl_usl_d - ifl_msl_d
     qr = pn - (ifl_usl+ifl_msl)
   END SUBROUTINE VIC3L_INFILTRATION_D
@@ -18692,6 +18717,7 @@ CONTAINS
     REAL(sp) :: cumsl_b, wumsl_b, humsl_b, iflm_b, ifl0_b, ifl_b, &
 &   ifl_usl_b, ifl_msl_b
     INTRINSIC MIN
+    INTRINSIC MAX
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_b
     REAL(sp) :: pwy1
@@ -18740,10 +18766,50 @@ CONTAINS
       ifl_msl = (1._sp-hmsl)*cmsl
       CALL PUSHCONTROL1B(1)
     END IF
+    CALL PUSHREAL4(husl)
+    husl = husl + ifl_usl/cusl
+    CALL PUSHREAL4(hmsl)
+    hmsl = hmsl + ifl_msl/cmsl
+    IF (0.999999_sp .GT. husl) THEN
+      CALL PUSHCONTROL1B(0)
+      husl = husl
+    ELSE
+      husl = 0.999999_sp
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (1e-6_sp .LT. husl) THEN
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (0.999999_sp .GT. hmsl) THEN
+      CALL PUSHCONTROL1B(0)
+      hmsl = hmsl
+    ELSE
+      hmsl = 0.999999_sp
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (1e-6_sp .LT. hmsl) THEN
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
     pn_b = qr_b
-    ifl_usl_b = husl_b/cusl - qr_b
-    ifl_msl_b = hmsl_b/cmsl - qr_b
+    ifl_usl_b = -qr_b
+    ifl_msl_b = -qr_b
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) hmsl_b = 0.0_4
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) hmsl_b = 0.0_4
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) husl_b = 0.0_4
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) husl_b = 0.0_4
+    CALL POPREAL4(hmsl)
+    ifl_msl_b = ifl_msl_b + hmsl_b/cmsl
     cmsl_b = cmsl_b - ifl_msl*hmsl_b/cmsl**2
+    CALL POPREAL4(husl)
+    ifl_usl_b = ifl_usl_b + husl_b/cusl
     cusl_b = cusl_b - ifl_usl*husl_b/cusl**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
@@ -18830,6 +18896,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: qr
     REAL(sp) :: cumsl, wumsl, humsl, iflm, ifl0, ifl, ifl_usl, ifl_msl
     INTRINSIC MIN
+    INTRINSIC MAX
     REAL(sp) :: pwx1
     REAL(sp) :: pwy1
     REAL(sp) :: pwr1
@@ -18866,6 +18933,26 @@ CONTAINS
     END IF
     husl = husl + ifl_usl/cusl
     hmsl = hmsl + ifl_msl/cmsl
+    IF (0.999999_sp .GT. husl) THEN
+      husl = husl
+    ELSE
+      husl = 0.999999_sp
+    END IF
+    IF (1e-6_sp .LT. husl) THEN
+      husl = husl
+    ELSE
+      husl = 1e-6_sp
+    END IF
+    IF (0.999999_sp .GT. hmsl) THEN
+      hmsl = hmsl
+    ELSE
+      hmsl = 0.999999_sp
+    END IF
+    IF (1e-6_sp .LT. hmsl) THEN
+      hmsl = hmsl
+    ELSE
+      hmsl = 1e-6_sp
+    END IF
     qr = pn - (ifl_usl+ifl_msl)
   END SUBROUTINE VIC3L_INFILTRATION
 

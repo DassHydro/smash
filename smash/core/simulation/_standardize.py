@@ -219,7 +219,7 @@ def _standardize_simulation_optimize_options_bounds(
                         f"Choices: {bounded_parameters}"
                     )
         else:
-            TypeError("bounds optimize_options must be a dictionary")
+            raise TypeError("bounds optimize_options must be a dictionary")
 
     parameters_bounds = dict(
         **model.get_rr_parameters_bounds(),
@@ -282,7 +282,7 @@ def _standardize_simulation_optimize_options_control_tfm(
                     f"Choices: {F90_OPTIMIZER_CONTROL_TFM[optimizer]}"
                 )
         else:
-            TypeError("control_tfm optimize_options must be a str")
+            raise TypeError("control_tfm optimize_options must be a str")
 
     return control_tfm
 

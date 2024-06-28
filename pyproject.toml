@@ -1,8 +1,11 @@
 [build-system]
 requires = [
     "meson-python",
-    "numpy",
-    "f90wrap<0.2.14",  # temporary upper bound until v0.2.15 is released
+    # numpy requirement for wheel builds for distribution on PyPI - building
+    # against 2.x yields wheels that are also compatible with numpy 1.x at
+    # runtime.
+    "numpy>=2.0.0",
+    "f90wrap>=0.2.15",
     "versioneer[toml]"
 ]
 build-backend = "mesonpy"
@@ -18,13 +21,13 @@ authors = [
 license = {text = "GPL-3.0"}
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
-    "f90wrap",
-    "rasterio",
-    "pandas",
-    "h5py",
+    "numpy>=1.24",
+    "f90wrap>=0.2.15",
+    "rasterio>=1.3.10",
+    "pandas>=2.2.2",
+    "h5py>=3.11",
     "tqdm",
-    "scipy",
+    "scipy>=1.13",
     "pyyaml",
     "terminaltables",
 ]
@@ -58,7 +61,7 @@ doc = [
     "sphinxcontrib-bibtex",
     "sphinx-design",
     "sphinx-autosummary-accessors",
-    "matplotlib"
+    "matplotlib>=3.8.4"
 ]
 dev = [
     "ruff",

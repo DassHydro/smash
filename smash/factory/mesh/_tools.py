@@ -45,9 +45,9 @@ def _trim_mask_2d(
 
         inv_mask = mask[::-1]
 
-        start_ind = np.argmax(mask)
-
-        end_ind = len(inv_mask) - np.argmax(inv_mask)
+        # Force cast from np.int64 to np.int32
+        start_ind = np.argmax(mask).astype(np.int32)
+        end_ind = len(inv_mask) - np.argmax(inv_mask).astype(np.int32)
 
         if ax == 0:
             slice_col = slice(start_ind, end_ind)
