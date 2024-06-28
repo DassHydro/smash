@@ -1,8 +1,14 @@
-commit 0a666d3335fa8a9b4c975a064acb559e01bc769b
-Author: Francois Colleoni <francois.colleoni@inrae.fr>
-Date:   Thu Jun 27 10:06:16 2024 +0200
+commit 7cae4e616421f7f31e3ea4d8fa8885057f945573
+Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
+Date:   Thu Jun 27 15:25:22 2024 +0200
 
-    MAINT: numpy 2.0 support - add f90wrap lower bound
+    MAINT: numpy 2.0 support (#220)
+    
+    * MAINT: numpy 2.0 support
+    
+    * MAINT: numpy 2.0 support - add f90wrap lower bound
+    
+    * MAINT: numpy 2.0 support - elsize in mesh + multiset estimate test
 
 TEST NAME                                                 |STATUS
 bbox_mesh.active_cell                                     |NON MODIFIED
@@ -232,7 +238,7 @@ multiset_estimate.mopt_ml.sim_q                           |NON MODIFIED
 multiset_estimate.mopt_unf.lcurve_multiset.alpha          |NON MODIFIED
 multiset_estimate.mopt_unf.lcurve_multiset.alpha_opt      |NON MODIFIED
 multiset_estimate.mopt_unf.lcurve_multiset.cost           |NON MODIFIED
-multiset_estimate.mopt_unf.lcurve_multiset.mahal_dist     |MODIFIED
+multiset_estimate.mopt_unf.lcurve_multiset.mahal_dist     |NON MODIFIED
 multiset_estimate.mopt_unf.sim_q                          |NON MODIFIED
 net_init.bias_layer_1                                     |NON MODIFIED
 net_init.bias_layer_2                                     |NON MODIFIED
