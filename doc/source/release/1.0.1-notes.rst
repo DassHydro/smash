@@ -47,6 +47,3 @@ Pull requests merged
 - `#222 <https://github.com/DassHydro/smash/pull/222>`__: FIX: VIC3L under and over flow
 - `#225 <https://github.com/DassHydro/smash/pull/225>`__: MAINT: update pyproject.toml for compatibility with numpy 2
 - `#226 <https://github.com/DassHydro/smash/pull/226>`__: FIX: fix code check with some bugs detected by ruff 0.5
-
-
-
