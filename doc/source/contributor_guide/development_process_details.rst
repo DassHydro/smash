@@ -19,7 +19,7 @@ System-level dependencies
 `smash` uses compiled code for speed, which means you need compilers and some other system-level
 (i.e, non-Python / non-PyPI) dependencies to build it on your system.
 
-Anaconda (recommanded)
+Anaconda (recommended)
 ''''''''''''''''''''''
 
 If you are using `Conda <https://www.anaconda.com/>`__, all the dependencies will be installed
@@ -34,6 +34,14 @@ It will create a Conda environment called ``smash-dev`` that can be activated as
 .. code-block:: none
 
     conda activate smash-dev
+
+Once ``smash-dev`` is created, it is recommended to update pip and your Conda environment
+to ensure you have the latest package versions and to prevent any conflicts:
+
+.. code-block:: none
+
+    (smash-dev) python3 -m pip install --upgrade pip
+    (smash-dev) conda update --all
 
 Linux
 '''''
