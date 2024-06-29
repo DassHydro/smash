@@ -116,6 +116,24 @@ fortranobject_dep = declare_dependency(
   include_directories: [inc_np, inc_f2py],
 )
 
-openmp_dep = dependency('OpenMP')
+# https://github.com/dipy/dipy/blob/95d75a8ad73fe76d7ebaa35b40ee8c734c9b267f/dipy/meson.build#L141-L157
+openmp_dep = dependency('OpenMP', required: false)
+if not openmp_dep.found() and cc.get_id() == 'clang'
+  # Check for libomp (OpenMP) using Homebrew
+  brew = find_program('brew', required : false)
+  if brew.found()
+    output = run_command(brew, 'list', 'libomp', check: true)
+    output = output.stdout().strip()
+    if output.contains('/libomp/')
+      omp_prefix = fs.parent(output.split('\n')[0])
+      message('OpenMP Found: YES (Manual search) - ', omp_prefix)
+      openmp_dep = declare_dependency(
+        compile_args: ['-Xpreprocessor', '-fopenmp'],
+        link_args: ['-L' + omp_prefix + '/lib', '-lomp'],
+        include_directories: include_directories(omp_prefix / 'include')
+      )
+    endif
+  endif
+endif
 
 subdir('smash')
