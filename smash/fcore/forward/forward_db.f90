@@ -14700,22 +14700,20 @@ CONTAINS
 !  Differentiation of kw_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qz
 !   with respect to varying inputs: ac_akw ac_qz ac_qtz ac_bkw
-  SUBROUTINE KW_TIME_STEP_D(setup, mesh, options, returns, time_step, &
-&   ac_qtz, ac_qtz_d, ac_akw, ac_akw_d, ac_bkw, ac_bkw_d, ac_qz, ac_qz_d&
-& )
+  SUBROUTINE KW_TIME_STEP_D(setup, mesh, options, ac_qtz, ac_qtz_d, &
+&   ac_akw, ac_akw_d, ac_bkw, ac_bkw_d, ac_qz, ac_qz_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(IN) :: ac_qtz
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(IN) :: ac_qtz_d
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_akw, ac_bkw
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_akw_d, ac_bkw_d
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz_d
-    INTEGER :: i, j, row, col, k, time_step_returns
+!, time_step_returns
+    INTEGER :: i, j, row, col, k
     REAL(sp) :: qlijm1, qlij, qim1j, qijm1
     REAL(sp) :: qlijm1_d, qlij_d, qim1j_d, qijm1_d
     ac_qz_d(:, setup%nqz) = ac_qtz_d(:, setup%nqz)
@@ -14779,22 +14777,20 @@ CONTAINS
 !  Differentiation of kw_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: ac_akw ac_qz ac_qtz ac_bkw
 !   with respect to varying inputs: ac_akw ac_qz ac_qtz ac_bkw
-  SUBROUTINE KW_TIME_STEP_B(setup, mesh, options, returns, time_step, &
-&   ac_qtz, ac_qtz_b, ac_akw, ac_akw_b, ac_bkw, ac_bkw_b, ac_qz, ac_qz_b&
-& )
+  SUBROUTINE KW_TIME_STEP_B(setup, mesh, options, ac_qtz, ac_qtz_b, &
+&   ac_akw, ac_akw_b, ac_bkw, ac_bkw_b, ac_qz, ac_qz_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(IN) :: ac_qtz
     REAL(sp), DIMENSION(mesh%nac, setup%nqz) :: ac_qtz_b
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_akw, ac_bkw
     REAL(sp), DIMENSION(mesh%nac) :: ac_akw_b, ac_bkw_b
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz_b
-    INTEGER :: i, j, row, col, k, time_step_returns
+!, time_step_returns
+    INTEGER :: i, j, row, col, k
     REAL(sp) :: qlijm1, qlij, qim1j, qijm1
     REAL(sp) :: qlijm1_b, qlij_b, qim1j_b, qijm1_b
     INTEGER :: ad_to
@@ -14920,18 +14916,17 @@ CONTAINS
     ac_qz_b(:, setup%nqz) = 0.0_4
   END SUBROUTINE KW_TIME_STEP_B
 
-  SUBROUTINE KW_TIME_STEP(setup, mesh, options, returns, time_step, &
-&   ac_qtz, ac_akw, ac_bkw, ac_qz)
+  SUBROUTINE KW_TIME_STEP(setup, mesh, options, ac_qtz, ac_akw, ac_bkw, &
+&   ac_qz)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(IN) :: ac_qtz
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_akw, ac_bkw
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz
-    INTEGER :: i, j, row, col, k, time_step_returns
+!, time_step_returns
+    INTEGER :: i, j, row, col, k
     REAL(sp) :: qlijm1, qlij, qim1j, qijm1
     ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
 ! Skip the first partition because boundary cells are not routed
@@ -17082,9 +17077,9 @@ CONTAINS
 ! 'kw' module
 ! % akw
 ! % bkw
-        CALL KW_TIME_STEP_D(setup, mesh, options, returns, t, &
-&                     checkpoint_variable%ac_qtz, checkpoint_variable_d%&
-&                     ac_qtz, checkpoint_variable%ac_rr_parameters(:, &
+        CALL KW_TIME_STEP_D(setup, mesh, options, checkpoint_variable%&
+&                     ac_qtz, checkpoint_variable_d%ac_qtz, &
+&                     checkpoint_variable%ac_rr_parameters(:, &
 &                     rr_parameters_inc+1), checkpoint_variable_d%&
 &                     ac_rr_parameters(:, rr_parameters_inc+1), &
 &                     checkpoint_variable%ac_rr_parameters(:, &
@@ -17407,11 +17402,11 @@ CONTAINS
         CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                     checkpoint_variable%ac_qz, 1)*SIZE(&
 &                     checkpoint_variable%ac_qz, 2))
-        CALL KW_TIME_STEP(setup, mesh, options, returns, t, &
-&                   checkpoint_variable%ac_qtz, checkpoint_variable%&
-&                   ac_rr_parameters(:, rr_parameters_inc+1), &
-&                   checkpoint_variable%ac_rr_parameters(:, &
-&                   rr_parameters_inc+2), checkpoint_variable%ac_qz)
+        CALL KW_TIME_STEP(setup, mesh, options, checkpoint_variable%&
+&                   ac_qtz, checkpoint_variable%ac_rr_parameters(:, &
+&                   rr_parameters_inc+1), checkpoint_variable%&
+&                   ac_rr_parameters(:, rr_parameters_inc+2), &
+&                   checkpoint_variable%ac_qz)
         CALL PUSHCONTROL2B(3)
       CASE DEFAULT
         CALL PUSHCONTROL2B(0)
@@ -17453,9 +17448,9 @@ CONTAINS
         CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                    checkpoint_variable%ac_qz, 1)*SIZE(&
 &                    checkpoint_variable%ac_qz, 2))
-        CALL KW_TIME_STEP_B(setup, mesh, options, returns, t, &
-&                     checkpoint_variable%ac_qtz, checkpoint_variable_b%&
-&                     ac_qtz, checkpoint_variable%ac_rr_parameters(:, &
+        CALL KW_TIME_STEP_B(setup, mesh, options, checkpoint_variable%&
+&                     ac_qtz, checkpoint_variable_b%ac_qtz, &
+&                     checkpoint_variable%ac_rr_parameters(:, &
 &                     rr_parameters_inc+1), checkpoint_variable_b%&
 &                     ac_rr_parameters(:, rr_parameters_inc+1), &
 &                     checkpoint_variable%ac_rr_parameters(:, &
@@ -17952,11 +17947,11 @@ CONTAINS
 ! 'kw' module
 ! % akw
 ! % bkw
-        CALL KW_TIME_STEP(setup, mesh, options, returns, t, &
-&                   checkpoint_variable%ac_qtz, checkpoint_variable%&
-&                   ac_rr_parameters(:, rr_parameters_inc+1), &
-&                   checkpoint_variable%ac_rr_parameters(:, &
-&                   rr_parameters_inc+2), checkpoint_variable%ac_qz)
+        CALL KW_TIME_STEP(setup, mesh, options, checkpoint_variable%&
+&                   ac_qtz, checkpoint_variable%ac_rr_parameters(:, &
+&                   rr_parameters_inc+1), checkpoint_variable%&
+&                   ac_rr_parameters(:, rr_parameters_inc+2), &
+&                   checkpoint_variable%ac_qz)
         rr_parameters_inc = rr_parameters_inc + 1
       END SELECT
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &

@@ -318,20 +318,18 @@ contains
 
     end subroutine lr_time_step
 
-    subroutine kw_time_step(setup, mesh, options, returns, time_step, ac_qtz, ac_akw, ac_bkw, ac_qz)
+    subroutine kw_time_step(setup, mesh, options, ac_qtz, ac_akw, ac_bkw, ac_qz)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(inout) :: returns
-        integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac, setup%nqz), intent(in) :: ac_qtz
         real(sp), dimension(mesh%nac), intent(in) :: ac_akw, ac_bkw
         real(sp), dimension(mesh%nac, setup%nqz), intent(inout) :: ac_qz
 
-        integer :: i, j, row, col, k, time_step_returns
+        integer :: i, j, row, col, k!, time_step_returns
         real(sp) :: qlijm1, qlij, qim1j, qijm1
 
         ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
@@ -363,20 +361,6 @@ contains
 
                     call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
                     & ac_akw(k), ac_bkw(k), qlijm1, qlij, qim1j, qijm1, ac_qz(k, setup%nqz))
-      
-                    !$AD start-exclude
-                    !internal fluxes
-                    if (returns%internal_fluxes_flag) then
-                        if (allocated(returns%mask_time_step)) then
-                            if (returns%mask_time_step(time_step)) then
-                                time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                
-                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qim1j
-                                
-                            end if
-                        end if
-                    end if
-                    !$AD end-exclude  
                     
                 end do
 #ifdef _OPENMP
@@ -400,20 +384,6 @@ contains
 
                     call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
                     & ac_akw(k), ac_bkw(k), qlijm1, qlij, qim1j, qijm1, ac_qz(k, setup%nqz))
-                    
-                    !$AD start-exclude
-                    !internal fluxes
-                    if (returns%internal_fluxes_flag) then
-                        if (allocated(returns%mask_time_step)) then
-                            if (returns%mask_time_step(time_step)) then
-                                time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                
-                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qim1j
-                                
-                            end if
-                        end if
-                    end if
-                    !$AD end-exclude
 
                 end do
 
