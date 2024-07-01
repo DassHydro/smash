@@ -3,7 +3,7 @@ meson
 meson-python
 ninja
 numpy
-f90wrap<0.2.14  # temporary upper bound until v0.2.15 is released
+f90wrap
 versioneer[toml]
 rasterio
 pandas

@@ -148,8 +148,7 @@ def _load_hdf5_to_dict(h5: h5py.File | h5py.Group) -> dict[str, Any]:
         elif isinstance(value, h5py.Dataset):
             dct[key] = _load_hdf5_dataset_to_npndarray(value)
 
-    for key, value in h5.attrs.items():
-        dct[key] = value
+    dct.update(dict(h5.attrs.items()))
 
     return dct
 
