@@ -2,10 +2,7 @@ from smash import factory, io
 from smash._version_meson import __version__
 from smash.core.model.model import Model
 from smash.core.signal_analysis.evaluation.evaluation import evaluation
-from smash.core.signal_analysis.prcp_indices.prcp_indices import (
-    PrecipitationIndices,
-    precipitation_indices,
-)
+from smash.core.signal_analysis.prcp_indices.prcp_indices import PrecipitationIndices, precipitation_indices
 from smash.core.signal_analysis.segmentation.segmentation import hydrograph_segmentation
 from smash.core.signal_analysis.signatures.signatures import Signatures, signatures
 from smash.core.simulation.control import (
