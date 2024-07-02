@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import rasterio
+import pyflwdir
 
 from smash.factory.mesh._libmesh import mw_mesh
 from smash.factory.mesh._standardize import _standardize_generate_mesh_args
@@ -15,6 +17,9 @@ from smash.factory.mesh._tools import (
     _xy_to_rowcol,
 )
 
+from smash.factory.mesh._prepro import _extract_inflows, _compute_river_geometry
+
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -23,7 +28,6 @@ if TYPE_CHECKING:
     from smash.util._typing import AlphaNumeric, FilePath, ListLike, Numeric
 
 __all__ = ["generate_mesh"]
-
 
 def generate_mesh(
     flwdir_path: FilePath,
@@ -436,3 +440,69 @@ def _generate_mesh(
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
         return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
+
+
+def generate_mesh_grid_vect(flwdir_path: str, river_line_path: str, a: int, b: int) -> dict:
+    """
+    Generate a mesh for coupling a grid-based hydrological model with a vector hydraulic model.    
+    
+    Parameters
+    ----------
+    flwdir_path : str
+        Path to the flow directions file with pyflwdir conventions.
+    
+    river_line_path : str
+        Path to the river line shapefile.
+        
+    a : int
+        Parameter coefficient for river width calculation.
+        
+    b : int
+        Parameter exponent for river width calculation.
+    
+    Returns
+    -------
+    mesh : dict[str, Any]
+        Model initialization mesh dictionary. The elements are:
+
+        flwdir : numpy.ndarray
+            An array of shape *(nrow, ncol)* containing flow direction.
+
+        flwacc : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing flow accumulation. The unit is the square meter.
+
+        ...        
+        
+    Notes
+    -----
+    The formula to calculate the river width is adapted from Vatankhah and Easa (2013):
+    W = a * A^b
+    where W is the river width, A is the upstream drainage area of the cell.
+    """
+    
+    # Read the flow directions raster file and create the FlwdirRaster object
+    with rasterio.open(flwdir_path) as src:
+        flwdir = src.read(1)
+        flw = pyflwdir.from_array(
+            flwdir, ftype="d8", transform=src.transform, latlon=src.crs.is_geographic, cache=True
+        )
+
+        # Compute the flow path and extract upstream and lateral inflow points
+        flow_path_rows_cols, flow_path_idxs, inflows_idxs, upstream_inflows_rows_cols, lateral_inflows_rows_cols = _extract_inflows(flw, river_line_path)
+        
+        # Calculate river widths based on upstream drainage area
+        flwacc, river_drainage_areas, river_widths = _compute_river_geometry(flw, flow_path_rows_cols, a, b)
+
+    mesh = {
+        "flwdir": flwdir,
+        "flwacc": flwacc,
+        "flow_path_rows_cols": flow_path_rows_cols,
+        "flow_path_idxs": flow_path_idxs,
+        "inflows_idxs": inflows_idxs,
+        "upstream_inflows_rows_cols": upstream_inflows_rows_cols,
+        "lateral_inflows_rows_cols": lateral_inflows_rows_cols,
+        "river_drainage_areas": river_drainage_areas,
+        "river_widths": river_widths
+    }
+    
+    return mesh
