@@ -19,6 +19,7 @@ from smash._constant import (
     HYDROLOGICAL_MODULE,
     HYDROLOGICAL_MODULE_RR_PARAMETERS,
     HYDROLOGICAL_MODULE_RR_STATES,
+    HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
     MAX_DURATION,
     PEAK_QUANT,
@@ -27,6 +28,7 @@ from smash._constant import (
     ROUTING_MODULE_NQZ,
     ROUTING_MODULE_RR_PARAMETERS,
     ROUTING_MODULE_RR_STATES,
+    ROUTING_MODULE_RR_INTERNAL_FLUXES,
     RR_PARAMETERS,
     RR_STATES,
     SERR_MU_MAPPING,
@@ -38,6 +40,7 @@ from smash._constant import (
     SNOW_MODULE,
     SNOW_MODULE_RR_PARAMETERS,
     SNOW_MODULE_RR_STATES,
+    SNOW_MODULE_RR_INTERNAL_FLUXES,
 )
 
 
@@ -65,6 +68,12 @@ def test_module_parameters():
         ["hs"],  # % ssn
     ]
 
+    # % Check snow module rr states
+    assert list(SNOW_MODULE_RR_INTERNAL_FLUXES.values()) == [
+        [],  # % zero
+        ["mlt"],  # % ssn
+    ]
+
     # % Check hydrological module rr parameters
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
@@ -83,8 +92,20 @@ def test_module_parameters():
         ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
     ]
 
+    # % Check hydrological module rr internal fluxes
+    assert list(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES.values()) == [
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr4
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr5
+        ["ei", "pn", "en", "pr", "perc", "prr", "qr"],  # % grd
+        ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd"],  # % loieau
+        ["pn", "en", "qr", "qb"],  # % vic3l
+    ]
+
     # % Check routing module rr parameters
     assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], ["llr"], ["akw", "bkw"]]
+
+    # % Check routing module rr internal fluxes
+    assert list(ROUTING_MODULE_RR_INTERNAL_FLUXES.values()) == [["qup"], ["qup"], ["qim1j"]]
 
     # % Check routing module rr states
     assert list(ROUTING_MODULE_RR_STATES.values()) == [[], ["hlr"], []]
