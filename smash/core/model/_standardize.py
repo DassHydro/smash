@@ -16,6 +16,7 @@ from smash._constant import (
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     HYDROLOGICAL_MODULE,
     INPUT_DATA_FORMAT,
+    INTERNAL_FLUXES,
     ROUTING_MODULE,
     ROUTING_MODULE_NQZ,
     SERR_MU_MAPPING,
@@ -440,6 +441,8 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["nrrs"] = len(STRUCTURE_RR_STATES[setup["structure"]])
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
+    setup["nd"] = setup["descriptor_name"].size
+    setup["nfx"] = len(INTERNAL_FLUXES[setup["hydrological_module"]])
     setup["nqz"] = ROUTING_MODULE_NQZ[setup["routing_module"]]
 
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")

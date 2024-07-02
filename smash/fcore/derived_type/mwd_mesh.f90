@@ -84,6 +84,8 @@ module mwd_mesh
         integer, dimension(:, :), allocatable :: rowcol_to_ind_ac !$F90W index-array
         integer, dimension(:, :), allocatable :: local_active_cell
 
+        logical, dimension(:, :, :), allocatable :: mask_gauge
+
     end type MeshDT
 
 contains
@@ -154,6 +156,9 @@ contains
 
         allocate (this%local_active_cell(this%nrow, this%ncol))
         this%local_active_cell = -99
+
+        allocate (this%mask_gauge(this%nrow, this%ncol, this%ng))
+        this%mask_gauge = .false.
 
     end subroutine MeshDT_initialise
 

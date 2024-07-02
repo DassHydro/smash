@@ -829,6 +829,19 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "q_domain": False,
         "cost": False,
         "jobs": False,
+        "qt": False,
+        "stats": False,
+        "ei": False,
+        "pn": False,
+        "en": False,
+        "pr": False,
+        "perc": False,
+        "lexc": False,
+        "prr": False,
+        "prd": False,
+        "qr": False,
+        "qd": False,
+        "qb": False,
     },
     "optimize": {
         "time_step": "all",
@@ -866,6 +879,19 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "lcurve_multiset": False,
     },
 }
+
+INTERNAL_FLUXES = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        [
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr4
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr5
+            ["ei", "pn", "en", "pr", "perc", "prr", "qr"],  # % grd
+            ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd"],  # % loieau
+            ["pn", "en", "qr", "qb"],  # % vic3l
+        ],
+    )
+)
 
 SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain"]
 
