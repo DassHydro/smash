@@ -72,4 +72,5 @@ tmp*
 # Documentation files
 doc/source/api_reference/**/smash
 doc/*-dataset
-doc/*~
+doc/**/*~
+doc/**/*#
