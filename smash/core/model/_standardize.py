@@ -32,18 +32,16 @@ if TYPE_CHECKING:
     from smash.util._typing import AnyTuple, ListLike, Numeric
 
 
-def _standardize_model_setup_bool(key: str, value: bool) -> bool:
-    if not (isinstance(value, (bool, int))):
-        raise TypeError(f"{key} model setup must be a boolean")
+def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
+    if isinstance(value, bool):
+        pass
     elif isinstance(value, int):
-        if value == 0:
-            value = False
-        elif value == 1:
-            value = True
-        else:
-            raise TypeError(f"{key} model setup must be a boolean or integer (0,1)")
+        if value != 0 and value != 1:
+            raise ValueError(f"{key} model setup must be equal to 0 or 1")
+    else:
+        raise TypeError(f"{key} model setup must be a boolean or integer (0, 1)")
 
-    return value
+    return bool(value)
 
 
 def _standardize_model_setup_directory(read: bool, key: str, value: str | None) -> str:
