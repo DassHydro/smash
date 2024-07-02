@@ -188,6 +188,8 @@ RR_STATES = [
 
 ### FEASIBLE PARAMETERS ###
 ###########################
+#Float_EPSilon precision for float comparison
+F_EPS=1.0e-5
 
 # % Following RR_PARAMETERS order
 FEASIBLE_RR_PARAMETERS = dict(
@@ -225,15 +227,15 @@ FEASIBLE_RR_INITIAL_STATES = dict(
         RR_STATES,
         [
             (0, np.inf),  # % hs
-            (0, 1),  # % hi
-            (0, 1),  # % hp
-            (0, 1),  # % ht
-            (0, 1),  # % ha
-            (0, 1),  # % hc
-            (0, 1),  # % hcl
-            (0, 1),  # % husl
-            (0, 1),  # % hmsl
-            (0, 1),  # % hbsl
+            (0, 1.+F_EPS),  # % hi
+            (0, 1.+F_EPS),  # % hp
+            (0, 1.+F_EPS),  # % ht
+            (0, 1.+F_EPS),  # % ha
+            (0, 1.+F_EPS),  # % hc
+            (0, 1.+F_EPS),  # % hcl
+            (0, 1.+F_EPS),  # % husl
+            (0, 1.+F_EPS),  # % hmsl
+            (0, 1.+F_EPS),  # % hbsl
             (0, np.inf),  # % hlr
         ],
     )

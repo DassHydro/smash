@@ -32,11 +32,16 @@ if TYPE_CHECKING:
     from smash.util._typing import AnyTuple, ListLike, Numeric
 
 
-def _standardize_model_setup_bool(key: str, value: bool) -> bool:
-    if not isinstance(value, bool):
-        raise TypeError(f"{key} model setup must be a boolean")
+def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
+    if isinstance(value, bool):
+        pass
+    elif isinstance(value, int):
+        if value != 0 and value != 1:
+            raise ValueError(f"{key} model setup must be equal to 0 or 1")
+    else:
+        raise TypeError(f"{key} model setup must be a boolean or integer (0, 1)")
 
-    return value
+    return bool(value)
 
 
 def _standardize_model_setup_directory(read: bool, key: str, value: str | None) -> str:
@@ -556,8 +561,8 @@ def _standardize_rr_states_value(
             f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape "
             f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
-
-    if low_arr <= low or upp_arr >= upp:
+    
+    if (low_arr <= low) or (upp_arr >= upp):
         raise ValueError(
             f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{low_arr}, {upp_arr}] is "
             f"not included in the feasible domain ]{low}, {upp}["
