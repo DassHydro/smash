@@ -165,20 +165,20 @@ contains
                     call upstream_discharge(mesh, row, col, ac_qz(:, setup%nqz), qup)
 
                     ac_qz(k, setup%nqz) = ac_qz(k, setup%nqz) + qup
-                    
+
                     !$AD start-exclude
                     !internal fluxes
                     if (returns%internal_fluxes_flag) then
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                
+
                                 returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
-                                
+
                             end if
                         end if
                     end if
-                    !$AD end-exclude  
+                    !$AD end-exclude
 
                 end do
 #ifdef _OPENMP
@@ -197,21 +197,21 @@ contains
                     call upstream_discharge(mesh, row, col, ac_qz(:, setup%nqz), qup)
 
                     ac_qz(k, setup%nqz) = ac_qz(k, setup%nqz) + qup
-                          
+
                     !$AD start-exclude
                     !internal fluxes
                     if (returns%internal_fluxes_flag) then
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                
+
                                 returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
-                                
+
                             end if
                         end if
                     end if
-                    !$AD end-exclude  
-                    
+                    !$AD end-exclude
+
                 end do
 
             end if
@@ -262,21 +262,21 @@ contains
 
                     call linear_routing(mesh%dx(row, col), mesh%dy(row, col), setup%dt, mesh%flwacc(row, col), &
                     & ac_llr(k), ac_hlr(k), qup, ac_qz(k, setup%nqz))
-                          
+
                     !$AD start-exclude
                     !internal fluxes
                     if (returns%internal_fluxes_flag) then
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                
+
                                 returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
-                                
+
                             end if
                         end if
                     end if
-                    !$AD end-exclude  
-                    
+                    !$AD end-exclude
+
                 end do
 #ifdef _OPENMP
                 !$OMP end parallel do
@@ -302,14 +302,14 @@ contains
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                
+
                                 returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
 
                             end if
                         end if
                     end if
-                    !$AD end-exclude  
-                    
+                    !$AD end-exclude
+
                 end do
 
             end if
@@ -361,7 +361,7 @@ contains
 
                     call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
                     & ac_akw(k), ac_bkw(k), qlijm1, qlij, qim1j, qijm1, ac_qz(k, setup%nqz))
-                    
+
                 end do
 #ifdef _OPENMP
                 !$OMP end parallel do

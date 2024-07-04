@@ -27,9 +27,7 @@ from smash.fcore._mw_forward import (
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_returns import ReturnsDT
 
-from smash.core.internal_fluxes.internal_fluxes_manipulation import (
-    transform_internal_fluxes_to_dict
-)
+from smash.core.internal_fluxes.internal_fluxes_manipulation import transform_internal_fluxes_to_dict
 
 if TYPE_CHECKING:
     from typing import Any
@@ -164,7 +162,7 @@ def _forward_run(
         return_options["nmts"],
         return_options["fkeys"],
     )
-    
+
     if wrap_returns.internal_fluxes_flag:
         if model.setup.snow_module_present:
             wrap_returns.n_snow_internal_fluxes = 1
@@ -201,16 +199,13 @@ def _forward_run(
         fret[key] = value
 
     ret = {**fret, **pyret}
-    
-    if ret: 
-        
-        if "internal_fluxes" in ret:      
+
+    if ret:
+        if "internal_fluxes" in ret:
             ret["internal_fluxes"] = transform_internal_fluxes_to_dict(
-                ret["internal_fluxes"], 
-                STRUCTURE_RR_INTERNAL_FLUXES, 
-                model.setup.structure
+                ret["internal_fluxes"], STRUCTURE_RR_INTERNAL_FLUXES, model.setup.structure
             )
-        
+
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()

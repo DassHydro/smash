@@ -203,16 +203,16 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-                
+
                 !$AD start-exclude
-                !internal fluxes                
+                !internal fluxes
                 if (returns%internal_fluxes_flag) then
                     if (allocated(returns%mask_time_step)) then
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                            ! the flux of snow module is the first one inside internal fluxes 
+                            ! the flux of snow module is the first one inside internal fluxes
                             ! due to the builting of the modules so n_snow_internal_fluxes
-                            ! moves the index of the array 
+                            ! moves the index of the array
                             returns%internal_fluxes(row, col, time_step_returns, 1 + returns%n_snow_internal_fluxes) = pn
                             returns%internal_fluxes(row, col, time_step_returns, 2 + returns%n_snow_internal_fluxes) = en
                             returns%internal_fluxes(row, col, time_step_returns, 3 + returns%n_snow_internal_fluxes) = pr
@@ -301,7 +301,7 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-                
+
                 !$AD start-exclude
                 !internal fluxes
                 if (returns%internal_fluxes_flag) then
@@ -405,7 +405,7 @@ contains
                             returns%internal_fluxes(row, col, time_step_returns, 5 + returns%n_snow_internal_fluxes) = perc
                             returns%internal_fluxes(row, col, time_step_returns, 6 + returns%n_snow_internal_fluxes) = prr
                             returns%internal_fluxes(row, col, time_step_returns, 7 + returns%n_snow_internal_fluxes) = qr
-                        end if 
+                        end if
                     end if
                 end if
                 !$AD end-exclude
@@ -483,7 +483,7 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-                
+
                 !$AD start-exclude
                 !internal fluxes
                 if (returns%internal_fluxes_flag) then

@@ -136,7 +136,7 @@ contains
 
         hu = hu - d/cu
         hl = hl + d/cl
-        
+
     end subroutine vic3l_drainage_2l
 
     subroutine vic3l_drainage(cusl, cmsl, cbsl, ks, pbc, husl, hmsl, hbsl)
@@ -251,7 +251,7 @@ contains
                             returns%internal_fluxes(row, col, time_step_returns, 4) = qb
 
                         end if
-                    end if 
+                    end if
                 end if
                 !$AD end-exclude
             end do

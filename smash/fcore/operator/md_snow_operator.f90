@@ -84,13 +84,13 @@ contains
                     if (allocated(returns%mask_time_step)) then
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                            
+
                             returns%internal_fluxes(row, col, time_step_returns, 1) = ac_mlt(k)
-                            
+
                         end if
                     end if
                 end if
-                !$AD end-exclude    
+                !$AD end-exclude
             end do
         end do
 #ifdef _OPENMP

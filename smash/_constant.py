@@ -123,7 +123,6 @@ ROUTING_MODULE_NQZ = dict(
 )
 
 
-
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
@@ -880,7 +879,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
         "rr_states": False,
         "q_domain": False,
-        "qt":False,
+        "qt": False,
         "internal_fluxes": False,
         "cost": False,
         "jobs": False,
