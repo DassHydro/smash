@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
-import numpy as np
+
 import pytest
+
 import smash
 
 
@@ -69,7 +70,7 @@ def test_run_internal_fluxes_option():
         if "time_step" in kwargs["return_options"]:
             if kwargs["return_options"]["time_step"] == "all":
                 nmts = pytest.model.setup.ntime_step
-            elif type(kwargs["return_options"]["time_step"]) != list:
+            elif type(kwargs["return_options"]["time_step"]) is not list:
                 nmts = len(kwargs["return_options"]["time_step"].split())
             else:
                 nmts = len(kwargs["return_options"]["time_step"])

@@ -9,6 +9,7 @@ from smash._constant import (
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
     STRUCTURE_RR_INTERNAL_FLUXES,
 )
+from smash.core.internal_fluxes.internal_fluxes_manipulation import transform_internal_fluxes_to_dict
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (
     _forward_run_doc_appender,
@@ -26,8 +27,6 @@ from smash.fcore._mw_forward import (
 )
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_returns import ReturnsDT
-
-from smash.core.internal_fluxes.internal_fluxes_manipulation import transform_internal_fluxes_to_dict
 
 if TYPE_CHECKING:
     from typing import Any
