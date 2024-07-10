@@ -25,6 +25,7 @@ from smash._constant import (
     SNOW_MODULE,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    F_PRECISION,
 )
 
 if TYPE_CHECKING:
@@ -536,7 +537,7 @@ def _standardize_rr_parameters_value(
             f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
 
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION <= low) or (upp_arr - F_PRECISION >= upp):
         raise ValueError(
             f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{low_arr}, {upp_arr}] is "
             f"not included in the feasible domain ]{low}, {upp}["
@@ -562,7 +563,7 @@ def _standardize_rr_states_value(
             f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
     
-    if (low_arr <= low) or (upp_arr >= upp):
+    if (low_arr + F_PRECISION <= low) or (upp_arr - F_PRECISION >= upp):
         raise ValueError(
             f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{low_arr}, {upp_arr}] is "
             f"not included in the feasible domain ]{low}, {upp}["

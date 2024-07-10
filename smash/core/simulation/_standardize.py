@@ -1112,7 +1112,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
         low_arr = np.min(arr)
         upp_arr = np.max(arr)
         
-        if (low_arr+F_PRECISION <= low) or (upp_arr-F_PRECISION >= upp):
+        if (low_arr + F_PRECISION <= low) or (upp_arr - F_PRECISION >= upp):
             raise ValueError(
                 f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain "
                 f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
