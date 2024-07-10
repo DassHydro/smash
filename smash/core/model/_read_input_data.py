@@ -23,36 +23,56 @@ if TYPE_CHECKING:
     from smash.util._typing import FilePath, ListLike
 
 
-def _get_date_regex_pattern(dt: float, daily_interannual: bool) -> str:
-    if daily_interannual:
-        # % Match %m%d
-        pattern = 2 * r"\d{2}"
+# ~ def _get_date_regex_pattern(dt: float, daily_interannual: bool) -> str:
+    # ~ if daily_interannual:
+        # ~ # % Match %m%d
+        # ~ pattern = 2 * r"\d{2}"
 
-    else:
-        # % Match %Y%m%d%H%M
-        if dt < 86_400:
-            pattern = r"\d{4}" + 4 * r"\d{2}"
-        # % Match %Y%m%d
-        elif dt == 86_400:
-            pattern = r"\d{4}" + 2 * r"\d{2}"
-        # % Should be unreachable
-        else:
-            pass
+    # ~ else:
+        # ~ # % Match %Y%m%d%H%M
+        # ~ if dt < 86_400:
+            # ~ pattern = r"\d{4}" + 4 * r"\d{2}"
+        # ~ # % Match %Y%m%d
+        # ~ elif dt == 86_400:
+            # ~ pattern = r"\d{4}" + 2 * r"\d{2}"
+        # ~ # % Should be unreachable
+        # ~ else:
+            # ~ pass
+    
+    # ~ return pattern
 
-    return pattern
+def _split_date_occurence(date_pattern) -> str:
+    re_match=re.search("\%[0-9]+$",date_pattern)
+    if re_match is not None:
+        return date_pattern[0:int(re_match.span()[0])],int(re_match.group()[1])
+    else :
+        return date_pattern,0
 
+def _get_date_regex_pattern(date_pattern) -> str:
+    
+    datefmt={"%Y":4,"%m":2,"%d":2,"%H":2,"%M":2}
+    
+    pattern=""
+    for i in range(0,len(date_pattern),2):
+        if date_pattern[i:i+2] in datefmt:
+            pattern+=r"\d{"+str(datefmt[date_pattern[i:i+2]])+"}"
+    
+    return pattern 
 
 def _find_index_files_containing_date(
-    files: ListLike, date: pd.Timestamp, dt: float, daily_interannual: bool = False
-) -> int:
+    files: ListLike, date: pd.Timestamp, dt: float, date_pattern: str) -> int:
+    
+    date_fmt,occurence=_split_date_occurence(date_pattern)
     ind = -1
-    regex_pattern = _get_date_regex_pattern(dt, daily_interannual)
+    regex_pattern = _get_date_regex_pattern(date_fmt)
+    
     for i, f in enumerate(files):
-        re_match = re.search(regex_pattern, os.path.basename(f))
-        if daily_interannual:
-            fdate = pd.Timestamp(f"{date.year}{re_match.group()}")
+        re_match = re.findall(regex_pattern, os.path.basename(f))[occurence]
+        
+        if date_fmt=="%m%d":
+            fdate = pd.to_datetime(f"{date.year}{re_match}",format=f"%Y{date_fmt}")
         else:
-            fdate = pd.Timestamp(re_match.group())
+            fdate = pd.to_datetime(re_match,format=date_fmt)
         if fdate < date:
             continue
         elif fdate == date:
@@ -67,11 +87,14 @@ def _get_atmos_files(
     fmt: str,
     access: str,
     date_range: pd.DatetimeIndex,
+    prcp_date_pattern: str,
     daily_interannual: bool = False,
 ) -> list[str]:
     # Set to drop duplicates after strftime
     date_range_strftime_access = set(date_range.strftime(access)) if access else {""}
-
+    
+    date_fmt,occurence=_split_date_occurence(prcp_date_pattern)
+    print(date_fmt,occurence)
     files = []
     for date_strftime_access in date_range_strftime_access:
         files.extend(glob.glob(f"{dir}/{date_strftime_access}/**/*{fmt}", recursive=True))
@@ -84,10 +107,11 @@ def _get_atmos_files(
 
     else:
         # % Adjust list by removing files that are ealier than start_time
-        regex_pattern = _get_date_regex_pattern(date_range.freq.n, daily_interannual)
+        regex_pattern = _get_date_regex_pattern(date_fmt)
         for i, f in enumerate(files):
-            re_match = re.search(regex_pattern, os.path.basename(f))
-            fdate = pd.Timestamp(re_match.group())
+            re_match = re.findall(regex_pattern, os.path.basename(f))[occurence]
+            
+            fdate = pd.to_datetime(re_match,format=date_fmt)
             if fdate >= date_range[0]:
                 return files[i:]
 
@@ -268,10 +292,10 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.prcp_format == "tif":
-        files = _get_atmos_files(setup.prcp_directory, setup.prcp_format, setup.prcp_access, date_range)
+        files = _get_atmos_files(setup.prcp_directory, setup.prcp_format, setup.prcp_access, date_range, setup.prcp_date_pattern)
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
-            ind = _find_index_files_containing_date(files, date, setup.dt)
+            ind = _find_index_files_containing_date(files, date, setup.dt, setup.prcp_date_pattern)
 
             if ind == -1:
                 reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
@@ -331,6 +355,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             setup.pet_format,
             setup.pet_access,
             date_range,
+            setup.prcp_date_pattern,
             setup.daily_interannual_pet,
         )
 
@@ -351,7 +376,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
             for i, day in enumerate(tqdm(leap_year_days, desc="</> Reading daily interannual pet")):
                 if day.day_of_year in date_range.day_of_year:
-                    ind = _find_index_files_containing_date(files, day, setup.dt, setup.daily_interannual_pet)
+                    ind = _find_index_files_containing_date(files, day, setup.dt, setup.pet_date_pattern)
 
                     if ind == -1:
                         reading_warning["miss"].append(day.strftime("%m-%d"))
@@ -395,7 +420,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             for i, date in enumerate(tqdm(date_range, desc="</> Reading pet")):
-                ind = _find_index_files_containing_date(files, date, setup.dt, setup.daily_interannual_pet)
+                ind = _find_index_files_containing_date(files, date, setup.dt, setup.pet_date_pattern)
 
                 if ind == -1:
                     reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
@@ -450,10 +475,10 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.snow_format == "tif":
-        files = _get_atmos_files(setup.snow_directory, setup.snow_format, setup.snow_access, date_range)
+        files = _get_atmos_files(setup.snow_directory, setup.snow_format, setup.snow_access, date_range, setup.prcp_date_pattern)
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading snow")):
-            ind = _find_index_files_containing_date(files, date, setup.dt)
+            ind = _find_index_files_containing_date(files, date, setup.dt, setup.snow_date_pattern)
 
             if ind == -1:
                 reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
@@ -508,10 +533,10 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.temp_format == "tif":
-        files = _get_atmos_files(setup.temp_directory, setup.temp_format, setup.temp_access, date_range)
+        files = _get_atmos_files(setup.temp_directory, setup.temp_format, setup.temp_access, date_range, setup.prcp_access)
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading temperature")):
-            ind = _find_index_files_containing_date(files, date, setup.dt)
+            ind = _find_index_files_containing_date(files, date, setup.dt, setup.temp_date_pattern)
 
             if ind == -1:
                 reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
