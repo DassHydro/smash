@@ -37,7 +37,7 @@ def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
     if isinstance(value, bool):
         pass
     elif isinstance(value, int):
-        if value != 0 and value != 1:
+        if value not in (0,1):
             raise ValueError(f"{key} model setup must be equal to 0 or 1")
     else:
         raise TypeError(f"{key} model setup must be a boolean or integer (0, 1)")
