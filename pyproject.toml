@@ -92,7 +92,7 @@ before-build = "pip install delvewheel"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
-before-build = "brew install gfortran libomp && brew unlink gfortran && brew link gfortran"
+before-build = "brew reinstall gfortran libomp && brew unlink gfortran && brew link gfortran"
 
 [tool.ruff]
 line-length = 110

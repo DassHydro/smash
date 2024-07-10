@@ -116,7 +116,7 @@ fortranobject_dep = declare_dependency(
   include_directories: [inc_np, inc_f2py],
 )
 
-# https://github.com/dipy/dipy/blob/95d75a8ad73fe76d7ebaa35b40ee8c734c9b267f/dipy/meson.build#L141-L157
+# https://github.com/dipy/dipy/blob/master/dipy/meson.build#L141-L157
 openmp_dep = dependency('OpenMP', required: false)
 if not openmp_dep.found() and cc.get_id() == 'clang'
   # Check for libomp (OpenMP) using Homebrew
