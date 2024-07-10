@@ -10,6 +10,7 @@ import pandas as pd
 
 from smash._constant import (
     DEFAULT_MODEL_SETUP,
+    F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
     FEASIBLE_SERR_MU_PARAMETERS,
@@ -25,7 +26,6 @@ from smash._constant import (
     SNOW_MODULE,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
-    F_PRECISION,
 )
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
     if isinstance(value, bool):
         pass
     elif isinstance(value, int):
-        if value not in (0,1):
+        if value not in (0, 1):
             raise ValueError(f"{key} model setup must be equal to 0 or 1")
     else:
         raise TypeError(f"{key} model setup must be a boolean or integer (0, 1)")
@@ -562,7 +562,7 @@ def _standardize_rr_states_value(
             f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape "
             f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
-    
+
     if (low_arr + F_PRECISION <= low) or (upp_arr - F_PRECISION >= upp):
         raise ValueError(
             f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{low_arr}, {upp_arr}] is "

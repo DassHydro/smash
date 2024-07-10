@@ -187,8 +187,8 @@ RR_STATES = [
 ]
 
 
-### Float Precision for float comparison ### 
-F_PRECISION=1.0e-5
+### Float Precision for float comparison ###
+F_PRECISION = 1.0e-5
 ###########################
 
 
@@ -231,15 +231,15 @@ FEASIBLE_RR_INITIAL_STATES = dict(
         RR_STATES,
         [
             (0, np.inf),  # % hs
-            (0, 1.),  # % hi
-            (0, 1.),  # % hp
-            (0, 1.),  # % ht
-            (0, 1.),  # % ha
-            (0, 1.),  # % hc
-            (0, 1.),  # % hcl
-            (0, 1.),  # % husl
-            (0, 1.),  # % hmsl
-            (0, 1.),  # % hbsl
+            (0, 1.0),  # % hi
+            (0, 1.0),  # % hp
+            (0, 1.0),  # % ht
+            (0, 1.0),  # % ha
+            (0, 1.0),  # % hc
+            (0, 1.0),  # % hcl
+            (0, 1.0),  # % husl
+            (0, 1.0),  # % hmsl
+            (0, 1.0),  # % hbsl
             (0, np.inf),  # % hlr
         ],
     )

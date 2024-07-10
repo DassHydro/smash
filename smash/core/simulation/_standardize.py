@@ -15,6 +15,7 @@ from smash._constant import (
     DEFAULT_TERMINATION_CRIT,
     EVENT_SEG_KEYS,
     F90_OPTIMIZER_CONTROL_TFM,
+    F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
     FEASIBLE_SERR_MU_PARAMETERS,
@@ -43,7 +44,6 @@ from smash._constant import (
     STRUCTURE_RR_STATES,
     WEIGHT_ALIAS,
     WJREG_ALIAS,
-    F_PRECISION,
 )
 
 # Used inside eval statement
@@ -1111,7 +1111,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
         low, upp = FEASIBLE_RR_INITIAL_STATES[key]
         low_arr = np.min(arr)
         upp_arr = np.max(arr)
-        
+
         if (low_arr + F_PRECISION <= low) or (upp_arr - F_PRECISION >= upp):
             raise ValueError(
                 f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain "
