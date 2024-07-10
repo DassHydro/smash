@@ -43,6 +43,7 @@ from smash._constant import (
     STRUCTURE_RR_STATES,
     WEIGHT_ALIAS,
     WJREG_ALIAS,
+    F_PRECISION,
 )
 
 # Used inside eval statement
@@ -107,7 +108,7 @@ def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
             arr = getattr(samples, key)
             low_arr = np.min(arr)
             upp_arr = np.max(arr)
-            if low_arr <= low or upp_arr >= upp:
+            if (low_arr + F_PRECISION <= low) or (upp_arr - F_PRECISION >= upp):
                 raise ValueError(
                     f"Invalid sample values for parameter '{key}'. Sample domain [{low_arr}, {upp_arr}] is "
                     f"not included in the feasible domain ]{low}, {upp}["
@@ -239,13 +240,13 @@ def _standardize_simulation_optimize_options_bounds(
 
         low_arr = np.min(arr)
         upp_arr = np.max(arr)
-        if (low_arr + 1e-3) < value[0] or (upp_arr - 1e-3) > value[1]:
+        if (low_arr + F_PRECISION) < value[0] or (upp_arr - F_PRECISION) > value[1]:
             raise ValueError(
                 f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] does "
                 f"not include parameter domain [{low_arr}, {upp_arr}] in bounds optimize_options"
             )
 
-        if value[0] <= low or value[1] >= upp:
+        if (value[0] + F_PRECISION <= low) or (value[1] - F_PRECISION >= upp):
             raise ValueError(
                 f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] is not "
                 f"included in the feasible domain ]{low}, {upp}[ in bounds optimize_options"
@@ -1111,7 +1112,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
         low_arr = np.min(arr)
         upp_arr = np.max(arr)
         
-        if (low_arr <= low) or (upp_arr >= upp):
+        if (low_arr+F_PRECISION <= low) or (upp_arr-F_PRECISION >= upp):
             raise ValueError(
                 f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain "
                 f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
