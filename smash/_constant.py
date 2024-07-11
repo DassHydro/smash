@@ -879,7 +879,6 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
         "rr_states": False,
         "q_domain": False,
-        "qt": False,
         "internal_fluxes": False,
         "cost": False,
         "jobs": False,
