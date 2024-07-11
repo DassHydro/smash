@@ -93,11 +93,6 @@ contains
                     call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qz(:, setup%nqz), &
                     & returns%q_domain(:, :, time_step_returns))
                 end if
-                !% Return routage grid
-                if (returns%qt_flag) then
-                    call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qtz(:, setup%nqz), &
-                    & returns%qt(:, :, time_step_returns))
-                end if
 
             end if
         end if
