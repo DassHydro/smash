@@ -193,7 +193,7 @@ STRUCTURE_ADJUST_CI = dict(
 STRUCTURE_RR_INTERNAL_FLUXES = dict(
     zip(
         STRUCTURE,
-        [get_rr_internal_fluxes(s) for s in STRUCTURE],
+        [get_rr_internal_fluxes_from_structure(s) for s in STRUCTURE],
     )
 )
 
