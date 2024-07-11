@@ -224,7 +224,10 @@ class Model:
             This option is only applicable if **read_prcp** is set to True.
 
         prcp_date_pattern: `str`, default ''
-            The date pattern (see the datetime documentation to define the pattern) to match in the precipitation filename. If empty, the pattern will automatically defined according the model timestep. for time-step lower than 86400s, prcp_date_pattern will be set to "%Y%m%d%H%M". If dt is equal to 86400s prcp_date_pattern will be set to "%Y%m%d". A optionnal formatter %N can be added at the end where N represent the number of the occurence to match (counting from 0).
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the model
+            timestep. for time-step lower than 86400s, prcp_date_pattern will be set to "%Y%m%d%H%M".
+            If dt is equal to 86400s prcp_date_pattern will be set to "%Y%m%d".
 
         read_pet : `bool`, default False
             Whether or not to read potential evapotranspiration file(s).
@@ -257,7 +260,11 @@ class Model:
             This option is only applicable if **read_pet** is set to True.
 
         pet_date_pattern: `str`, default ''
-            The date pattern (see the datetime documentation to define the pattern) to match in the precipitation filename. If empty, the pattern will automatically defined according the model timestep or the daily_interannual_pet option. for time-step lower than 86400s, pet_date_pattern will be set to "%Y%m%d%H%M". If dt is equal to 86400s pet_date_pattern will be set to "%Y%m%d". A optionnal formatter %N can be added at the end where N represent the number of the occurence to match (counting from 0).
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the
+            model timestep or the daily_interannual_pet option. For time-step lower than 86400s,
+            pet_date_pattern will be set to "%Y%m%d%H%M".If dt is equal to 86400s pet_date_pattern will
+            be set to "%Y%m%d". If daily_interannual_pet is True, pet_date_pattern is enforced to "%m%d".
 
         daily_interannual_pet : `bool`, default False
             Whether or not to read daily interannual potential evapotranspiration.
@@ -297,7 +304,10 @@ class Model:
             ``ssn``.
 
         snow_date_pattern: `str`, default ''
-            The date pattern (see the datetime documentation to define the pattern) to match in the precipitation filename. If empty, the pattern will automatically defined according the model timestep. for time-step lower than 86400s, snow_date_pattern will be set to "%Y%m%d%H%M". If dt is equal to 86400s snow_date_pattern will be set to "%Y%m%d". A optionnal formatter %N can be added at the end where N represent the number of the occurence to match (counting from 0).
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the model
+            timestep. for time-step lower than 86400s, snow_date_pattern will be set to "%Y%m%d%H%M".
+            If dt is equal to 86400s snow_date_pattern will be set to "%Y%m%d"
 
         read_temp : `bool`, default False
             Whether or not to read temperature file(s).
@@ -327,7 +337,10 @@ class Model:
             ``ssn``.
 
         temp_date_pattern: `str`, default ''
-            The date pattern (see the datetime documentation to define the pattern) to match in the precipitation filename. If empty, the pattern will automatically defined according the model timestep . for time-step lower than 86400s, temp_date_pattern will be set to "%Y%m%d%H%M". If dt is equal to 86400s temp_date_pattern will be set to "%Y%m%d". A optionnal formatter %N can be added at the end where N represent the number of the occurence to match (counting from 0).
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the model
+            timestep . for time-step lower than 86400s, temp_date_pattern will be set to "%Y%m%d%H%M".
+            If dt is equal to 86400s temp_date_pattern will be set to "%Y%m%d"
 
         prcp_partitioning : `bool`, default False
             Whether or not to partition precipitation into liquid (precipitation) and solid (snow) parts.

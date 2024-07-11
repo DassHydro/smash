@@ -91,27 +91,23 @@ def _standardize_model_setup_access(key: str, value: str) -> str:
 
 
 def _standardize_model_date_pattern(key: str, value: str) -> str:
-    
-    if len(value)>0:
-        
+    if len(value) > 0:
         if not isinstance(value, str):
             raise TypeError(f"{key} model setup must be a str")
-        
+
         if not value.startswith("%"):
             raise ValueError(f"{value} must start by character %")
-        
-        sample=value.split("%")
-        sample.pop(0)
-        
-        for s in sample:
-            if not s.startswith("%"):
-                raise ValueError(f"{s} in {value} must match a date formatter starting by character %")
-    
-            if not isinstance(eval(s[1:]),str) or isinstance(eval(s[1:]),int):
-                    raise ValueError(f"{s} in {value} must start by character % following by a unique letter. The last formatter could be an integer indicating the occurence number. Ex: %Y%m%d%H%M%1")
-    
-    return value
 
+        sample = value.split("%")
+        sample.pop(0)
+
+        for s in sample:
+            if not isinstance(s, str) and len(s) > 1:
+                raise ValueError(
+                    f"%{s} in {value} must start by character % following by a unique letter: Ex: %Y%m%d%H%M"
+                )
+
+    return value
 
 
 def _standardize_model_setup_snow_module(snow_module: str, **kwargs) -> str:
@@ -315,8 +311,10 @@ def _standardize_model_setup_pet_directory(read_pet: bool, pet_directory: str | 
 def _standardize_model_setup_pet_access(pet_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("pet_access", pet_access)
 
+
 def _standardize_model_setup_pet_date_pattern(pet_date_pattern: str, **kwargs) -> str:
     return _standardize_model_date_pattern("pet_date_pattern", pet_date_pattern)
+
 
 def _standardize_model_setup_daily_interannual_pet(daily_interannual_pet: bool, **kwargs) -> bool:
     return _standardize_model_setup_bool("daily_interannual_pet", daily_interannual_pet)
@@ -346,6 +344,7 @@ def _standardize_model_setup_snow_directory(read_snow: bool, snow_directory: str
 def _standardize_model_setup_snow_access(snow_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("snow_access", snow_access)
 
+
 def _standardize_model_setup_snow_date_pattern(snow_date_pattern: str, **kwargs) -> str:
     return _standardize_model_date_pattern("snow_date_pattern", snow_date_pattern)
 
@@ -369,6 +368,7 @@ def _standardize_model_setup_temp_directory(read_temp: bool, temp_directory: str
 
 def _standardize_model_setup_temp_access(temp_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("temp_access", temp_access)
+
 
 def _standardize_model_setup_temp_date_pattern(temp_date_pattern: str, **kwargs) -> str:
     return _standardize_model_date_pattern("temp_date_pattern", temp_date_pattern)
@@ -480,26 +480,16 @@ def _standardize_model_setup_finalize(setup: dict):
 
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
     setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")
-    
-    if setup["prcp_date_pattern"] == "":
-        
-        if setup["dt"] == 86_400:
-            setup["prcp_date_pattern"]="%Y%m%d"
-            setup["snow_date_pattern"]="%Y%m%d"
-            setup["temp_date_pattern"]="%Y%m%d"
-        else:
-            setup["prcp_date_pattern"]="%Y%m%d%H%M"
-            setup["snow_date_pattern"]="%Y%m%d%H%M"
-            setup["temp_date_pattern"]="%Y%m%d%H%M"
-    
-    if setup["pet_date_pattern"] == "":
-        
-        if setup["daily_interannual_pet"]:
-            setup["pet_date_pattern"]="%m%d"
-        elif setup["dt"] == 86_400:
-            setup["pet_date_pattern"]="%Y%m%d"
-        else:
-            setup["pet_date_pattern"]="%Y%m%d%H%M"
+
+    for var in ["prcp_date_pattern", "snow_date_pattern", "temp_date_pattern", "pet_date_pattern"]:
+        if setup[var] == "":
+            if setup["dt"] == 86_400:
+                setup[var] = "%Y%m%d"
+            else:
+                setup[var] = "%Y%m%d%H%M"
+
+    if setup["daily_interannual_pet"]:
+        setup["pet_date_pattern"] = ""
 
 
 # % We assume that users use smash.factory.generate_mesh to generate the mesh
