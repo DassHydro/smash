@@ -631,7 +631,7 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return internal fluxes, depending of the structure model.
+        Whether to return internal fluxes, depending on the model structure.
         """,
     ),
 }
