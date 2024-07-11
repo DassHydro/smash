@@ -213,15 +213,12 @@ contains
                             ! the fluxes of the snow module are the first ones inside internal fluxes
                             ! due to the building of the modules so nsnow_fx
                             ! moves the index of the array
-                            returns%internal_fluxes(row, col, time_step_returns, 1 + returns%n_snow_internal_fluxes) = pn
-                            returns%internal_fluxes(row, col, time_step_returns, 2 + returns%n_snow_internal_fluxes) = en
-                            returns%internal_fluxes(row, col, time_step_returns, 3 + returns%n_snow_internal_fluxes) = pr
-                            returns%internal_fluxes(row, col, time_step_returns, 4 + returns%n_snow_internal_fluxes) = perc
-                            returns%internal_fluxes(row, col, time_step_returns, 5 + returns%n_snow_internal_fluxes) = l
-                            returns%internal_fluxes(row, col, time_step_returns, 6 + returns%n_snow_internal_fluxes) = prr
-                            returns%internal_fluxes(row, col, time_step_returns, 7 + returns%n_snow_internal_fluxes) = prd
-                            returns%internal_fluxes(row, col, time_step_returns, 8 + returns%n_snow_internal_fluxes) = qr
-                            returns%internal_fluxes(row, col, time_step_returns, 9 + returns%n_snow_internal_fluxes) = qd
+                            returns%internal_fluxes(&
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%nsnow_fx + 1: setup%nsnow_fx + setup%nhydrological_fx&
+                            ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
