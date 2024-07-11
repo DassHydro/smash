@@ -29,7 +29,7 @@ def get_rr_states_from_structure(structure: str) -> list[str]:
     return rr_states
 
 
-def get_rr_internal_fluxes(structure: str) -> list(str):
+def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     rr_internal_fluxes = []
     [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
     return rr_internal_fluxes
