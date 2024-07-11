@@ -100,8 +100,6 @@ module mwd_returns
         real(sp), dimension(:, :), allocatable :: serr_sigma
         logical :: serr_sigma_flag = .false.
 
-        real(sp), dimension(:, :, :), allocatable :: qt
-        logical :: qt_flag = .false.
 
         real(sp), dimension(:, :, :, :), allocatable :: internal_fluxes
         logical :: internal_fluxes_flag = .false.
