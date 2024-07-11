@@ -210,8 +210,8 @@ contains
                     if (allocated(returns%mask_time_step)) then
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                            ! the flux of snow module is the first one inside internal fluxes
-                            ! due to the builting of the modules so n_snow_internal_fluxes
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so nsnow_fx
                             ! moves the index of the array
                             returns%internal_fluxes(row, col, time_step_returns, 1 + returns%n_snow_internal_fluxes) = pn
                             returns%internal_fluxes(row, col, time_step_returns, 2 + returns%n_snow_internal_fluxes) = en
