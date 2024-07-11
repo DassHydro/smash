@@ -103,7 +103,6 @@ module mwd_returns
 
         real(sp), dimension(:, :, :, :), allocatable :: internal_fluxes
         logical :: internal_fluxes_flag = .false.
-        integer :: n_snow_internal_fluxes = 0
 
     end type ReturnsDT
 
