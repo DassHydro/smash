@@ -118,11 +118,13 @@ module mwd_setup
         real(sp) :: snow_conversion_factor = 1._sp
         character(2*lchar) :: snow_directory = "..." !$F90W char
         character(lchar) :: snow_access = "..." !$F90W char
+        character(lchar) :: snow_date_pattern = "..." !$F90W char
 
         logical :: read_temp = .false.
         character(lchar) :: temp_format = "..." !$F90W char
         character(2*lchar) :: temp_directory = "..." !$F90W char
         character(lchar) :: temp_access = "..." !$F90W char
+        character(lchar) :: temp_date_pattern = "..." !$F90W char
 
         logical :: prcp_partitioning = .false.
 
