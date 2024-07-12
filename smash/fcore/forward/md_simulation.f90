@@ -372,6 +372,8 @@ contains
                     setup, &
                     mesh, &
                     options, &
+                    returns, &
+                    t, &
                     checkpoint_variable%ac_qtz, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % akw
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % bkw

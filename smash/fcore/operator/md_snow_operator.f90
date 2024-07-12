@@ -89,7 +89,7 @@ contains
                                 row, &
                                 col, &
                                 time_step_returns, &
-                                1: 1 + setup%nsnow_fx) = (/ac_mlt(k)/)
+                                1: 1 + setup%n_snow_fluxes) = (/ac_mlt(k)/)
 
                         end if
                     end if
