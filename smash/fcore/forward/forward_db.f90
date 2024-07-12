@@ -2649,11 +2649,8 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: serr_mu_flag=.false.
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: serr_sigma
       LOGICAL :: serr_sigma_flag=.false.
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qt
-      LOGICAL :: qt_flag=.false.
       REAL(sp), DIMENSION(:, :, :, :), ALLOCATABLE :: internal_fluxes
       LOGICAL :: internal_fluxes_flag=.false.
-      INTEGER :: n_snow_internal_fluxes=0
   END TYPE RETURNSDT
 
 CONTAINS
@@ -2716,9 +2713,6 @@ CONTAINS
       CASE ('serr_sigma') 
         this%serr_sigma_flag = .true.
         ALLOCATE(this%serr_sigma(mesh%ng, setup%ntime_step))
-      CASE ('qt') 
-        this%qt_flag = .true.
-        ALLOCATE(this%qt(mesh%nrow, mesh%ncol, this%nmts))
       CASE ('internal_fluxes') 
         this%internal_fluxes_flag = .true.
         ALLOCATE(this%internal_fluxes(mesh%nrow, mesh%ncol, this%nmts, &

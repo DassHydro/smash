@@ -920,7 +920,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
     },
 }
 
-SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain"]
+SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain", "internal_fluxes"]
 
 ### IO ###
 ##########

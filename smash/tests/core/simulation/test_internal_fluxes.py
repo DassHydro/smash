@@ -15,15 +15,6 @@ def run_internal_fluxes_option(model: smash.Model, custom_options) -> dict:
     return res
 
 
-def run_qt_option(model: smash.Model) -> dict:
-    res = model.forward_run(
-        return_options={
-            "qt": True,
-        },
-    )
-    return res
-
-
 def test_run_internal_fluxes_option():
     ncpu = min(5, max(1, os.cpu_count() - 1))
     custom_options = [
@@ -79,8 +70,3 @@ def test_run_internal_fluxes_option():
 
         for k in internal_fluxes:
             assert internal_fluxes[k].shape == (pytest.model.mesh.nrow, pytest.model.mesh.ncol, nmts)
-
-
-def test_run_qt_option():
-    res = run_qt_option(pytest.model)
-    assert res.qt.shape == (pytest.model.mesh.nrow, pytest.model.mesh.ncol, pytest.model.setup.ntime_step)

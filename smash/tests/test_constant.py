@@ -94,11 +94,11 @@ def test_module_parameters():
 
     # % Check hydrological module rr internal fluxes
     assert list(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES.values()) == [
-        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr4
-        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd"],  # % gr5
-        ["ei", "pn", "en", "pr", "perc", "prr", "qr"],  # % grd
-        ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd"],  # % loieau
-        ["pn", "en", "qr", "qb"],  # % vic3l
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
+        ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
+        ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
+        ["pn", "en", "qr", "qb", "qt"],  # % vic3l
     ]
 
     # % Check routing module rr parameters

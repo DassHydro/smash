@@ -24,6 +24,9 @@ from smash._constant import (
     SERR_SIGMA_MAPPING_PARAMETERS,
     SNOW_MODULE,
     STRUCTURE_RR_INTERNAL_FLUXES,
+    SNOW_MODULE_RR_INTERNAL_FLUXES,
+    HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
+    ROUTING_MODULE_RR_INTERNAL_FLUXES,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
 )
@@ -443,6 +446,9 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
     setup["nqz"] = ROUTING_MODULE_NQZ[setup["routing_module"]]
     setup["n_internal_fluxes"] = len(STRUCTURE_RR_INTERNAL_FLUXES[setup["structure"]])
+    setup["n_snow_fluxes"] = len(SNOW_MODULE_RR_INTERNAL_FLUXES[setup["snow_module"]])
+    setup["n_hydro_fluxes"] = len(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES[setup["hydrological_module"]])
+    setup["n_routing_fluxes"] = len(ROUTING_MODULE_RR_INTERNAL_FLUXES[setup["routing_module"]])
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
     setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")
 

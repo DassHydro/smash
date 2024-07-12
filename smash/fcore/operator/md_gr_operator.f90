@@ -211,13 +211,13 @@ contains
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
                             ! the fluxes of the snow module are the first ones inside internal fluxes
-                            ! due to the building of the modules so nsnow_fx
+                            ! due to the building of the modules so n_snow_fluxes
                             ! moves the index of the array
                             returns%internal_fluxes(&
                                 row, &
                                 col, &
                                 time_step_returns, &
-                                setup%nsnow_fx + 1: setup%nsnow_fx + setup%nhydrological_fx&
+                                setup%n_snow_fluxes + 1: setup%n_snow_fluxes + setup%n_hydro_fluxes&
                             ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
@@ -305,16 +305,15 @@ contains
                     if (allocated(returns%mask_time_step)) then
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
-
-                            returns%internal_fluxes(row, col, time_step_returns, 1 + returns%n_snow_internal_fluxes) = pn
-                            returns%internal_fluxes(row, col, time_step_returns, 2 + returns%n_snow_internal_fluxes) = en
-                            returns%internal_fluxes(row, col, time_step_returns, 3 + returns%n_snow_internal_fluxes) = pr
-                            returns%internal_fluxes(row, col, time_step_returns, 4 + returns%n_snow_internal_fluxes) = perc
-                            returns%internal_fluxes(row, col, time_step_returns, 5 + returns%n_snow_internal_fluxes) = l
-                            returns%internal_fluxes(row, col, time_step_returns, 6 + returns%n_snow_internal_fluxes) = prr
-                            returns%internal_fluxes(row, col, time_step_returns, 7 + returns%n_snow_internal_fluxes) = prd
-                            returns%internal_fluxes(row, col, time_step_returns, 8 + returns%n_snow_internal_fluxes) = qr
-                            returns%internal_fluxes(row, col, time_step_returns, 9 + returns%n_snow_internal_fluxes) = qd
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes(&
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1: setup%n_snow_fluxes + setup%n_hydro_fluxes&
+                            ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -394,14 +393,15 @@ contains
                     if (allocated(returns%mask_time_step)) then
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
-
-                            returns%internal_fluxes(row, col, time_step_returns, 1 + returns%n_snow_internal_fluxes) = ei
-                            returns%internal_fluxes(row, col, time_step_returns, 2 + returns%n_snow_internal_fluxes) = pn
-                            returns%internal_fluxes(row, col, time_step_returns, 3 + returns%n_snow_internal_fluxes) = en
-                            returns%internal_fluxes(row, col, time_step_returns, 4 + returns%n_snow_internal_fluxes) = pr
-                            returns%internal_fluxes(row, col, time_step_returns, 5 + returns%n_snow_internal_fluxes) = perc
-                            returns%internal_fluxes(row, col, time_step_returns, 6 + returns%n_snow_internal_fluxes) = prr
-                            returns%internal_fluxes(row, col, time_step_returns, 7 + returns%n_snow_internal_fluxes) = qr
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes(&
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1: setup%n_snow_fluxes + setup%n_hydro_fluxes&
+                            ) = (/ei, pn, en, pr, perc, prr, qr, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -487,16 +487,15 @@ contains
                     if (allocated(returns%mask_time_step)) then
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
-
-                            returns%internal_fluxes(row, col, time_step_returns, 1 + returns%n_snow_internal_fluxes) = ei
-                            returns%internal_fluxes(row, col, time_step_returns, 2 + returns%n_snow_internal_fluxes) = pn
-                            returns%internal_fluxes(row, col, time_step_returns, 3 + returns%n_snow_internal_fluxes) = en
-                            returns%internal_fluxes(row, col, time_step_returns, 4 + returns%n_snow_internal_fluxes) = pr
-                            returns%internal_fluxes(row, col, time_step_returns, 5 + returns%n_snow_internal_fluxes) = perc
-                            returns%internal_fluxes(row, col, time_step_returns, 6 + returns%n_snow_internal_fluxes) = prr
-                            returns%internal_fluxes(row, col, time_step_returns, 7 + returns%n_snow_internal_fluxes) = prd
-                            returns%internal_fluxes(row, col, time_step_returns, 8 + returns%n_snow_internal_fluxes) = qr
-                            returns%internal_fluxes(row, col, time_step_returns, 9 + returns%n_snow_internal_fluxes) = qd
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes(&
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1: setup%n_snow_fluxes + setup%n_hydro_fluxes&
+                            ) = (/ei, pn, en, pr, perc, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
