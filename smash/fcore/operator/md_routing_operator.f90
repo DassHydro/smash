@@ -173,7 +173,11 @@ contains
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
 
-                                returns%internal_fluxes(row, col, time_step_returns, setup%n_internal_fluxes) = qup
+                                returns%internal_fluxes(&
+                                    row, &
+                                    col, &
+                                    time_step_returns, &
+                                    setup%nsnow_fx + setup%nhydrological_fx + 1: setup%nsnow_fx + setup%nhydrological_fx + setup%nrouting_fx) = (/qup/)
 
                             end if
                         end if
