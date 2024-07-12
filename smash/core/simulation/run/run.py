@@ -9,7 +9,6 @@ from smash._constant import (
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
     STRUCTURE_RR_INTERNAL_FLUXES,
 )
-from smash.core.internal_fluxes.internal_fluxes_manipulation import transform_internal_fluxes_to_dict
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (
     _forward_run_doc_appender,
@@ -201,9 +200,10 @@ def _forward_run(
 
     if ret:
         if "internal_fluxes" in ret:
-            ret["internal_fluxes"] = transform_internal_fluxes_to_dict(
-                ret["internal_fluxes"], STRUCTURE_RR_INTERNAL_FLUXES, model.setup.structure
-            )
+            ret["internal_fluxes"] = {
+                key: ret["internal_fluxes"][..., i] \
+                    for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+                }
 
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
