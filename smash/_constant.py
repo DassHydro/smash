@@ -642,7 +642,7 @@ PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
 
 PY_OPTIMIZER = [opt.lower() for opt in PY_OPTIMIZER_CLASS]
 
-ACTIVATION_FUNCTION = [
+ACTIVATION_FUNCTION_CLASS = [
     "Sigmoid",
     "Softmax",
     "TanH",
@@ -652,6 +652,8 @@ ACTIVATION_FUNCTION = [
     "SELU",
     "SoftPlus",
 ]
+
+ACTIVATION_FUNCTION = [func.lower() for func in ACTIVATION_FUNCTION_CLASS]
 
 
 ### EVENT SEGMENTATION ###

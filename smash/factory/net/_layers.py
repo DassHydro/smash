@@ -4,8 +4,6 @@ import copy
 
 import numpy as np
 
-from smash._constant import WB_INITIALIZER
-
 
 class Layer(object):
     def _set_input_shape(self, shape: tuple):
@@ -17,7 +15,7 @@ class Layer(object):
     def n_params(self):
         return 0
 
-    def _forward_pass(self, x: np.ndarray, training: bool):
+    def _forward_pass(self, x: np.ndarray):
         raise NotImplementedError()
 
     def _backward_pass(self, accum_grad: np.ndarray):
@@ -28,36 +26,17 @@ class Layer(object):
 
 
 class Activation(Layer):
-    """
-    Activation layer that applies a specified activation function to the input.
-
-    Options
-    -------
-    name : str
-        The name of the activation function that will be used. Should be one of
-
-        - 'relu' : Rectified Linear Unit
-        - 'sigmoid' : Sigmoid
-        - 'selu' : Scaled Exponential Linear Unit
-        - 'elu' : Exponential Linear Unit
-        - 'softmax' : Softmax
-        - 'leaky_relu' : Leaky Rectified Linear Unit
-        - 'tanh' : Hyperbolic Tangent
-        - 'softplus' : Softplus
-    """
-
-    # TODO: Add function check_unknown_options
-    def __init__(self, name: str, **unknown_options):
+    def __init__(self, name: str):
         self.input_shape = None
 
         self._activation_func = eval(name)()
         self.activation_name = self._activation_func.__class__.__name__
-        self.trainable = True
+        self.trainable = False
 
     def layer_name(self):
         return f"Activation ({self.activation_name})"
 
-    def _forward_pass(self, x: np.ndarray, training: bool = True):
+    def _forward_pass(self, x: np.ndarray):
         self.layer_input = x
         return self._activation_func(x)
 
@@ -69,29 +48,19 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-    """
-    Scale layer that applies the min-max scaling function to the outputs.
-
-    Options
-    -------
-    bounds : ListLike
-        A sequence of ``(min, max)`` values that the outputs will be scaled to.
-    """
-
-    # TODO: Add function check_unknown_options
-    def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
+    def __init__(self, bounds: np.ndarray):
         self.input_shape = None
 
-        self._scale_func = MinMaxScale(np.array(bounds))
+        self._scale_func = MinMaxScale(bounds)
 
         self.scale_name = self._scale_func.__class__.__name__
 
-        self.trainable = True
+        self.trainable = False
 
     def layer_name(self):
         return f"Scale ({self.scale_name})"
 
-    def _forward_pass(self, x, training=True):
+    def _forward_pass(self, x):
         self.layer_input = x
         return self._scale_func(x)
 
@@ -102,78 +71,75 @@ class Scale(Layer):
         return self.input_shape
 
 
-def _wb_initialization(layer: Layer, attr: str):
-    fin = layer.input_shape[0]
-    fout = layer.neurons
-
-    if attr == "bias":
-        initializer = layer.bias_initializer
-        shape = (1, fout)
-
-    else:
-        initializer = layer.kernel_initializer
-        shape = (fin, fout)
-
+def _initialize_nn_parameter(n_in: int, n_out: int, initializer: str) -> np.ndarray:
     split_inizer = initializer.split("_")
 
     if split_inizer[-1] == "uniform":
         if split_inizer[0] == "glorot":
-            limit = np.sqrt(6 / (fin + fout))
+            limit = np.sqrt(6 / (n_in + n_out))
 
         elif split_inizer[0] == "he":
-            limit = np.sqrt(6 / fin)
+            limit = np.sqrt(6 / n_in)
 
         else:
-            limit = 1 / np.sqrt(fin)
+            limit = 1 / np.sqrt(n_in)
 
-        setattr(layer, attr, np.random.uniform(-limit, limit, shape))
+        value = np.random.uniform(-limit, limit, (n_out, n_in))
 
     elif split_inizer[-1] == "normal":
         if split_inizer[0] == "glorot":
-            std = np.sqrt(2 / (fin + fout))
+            std = np.sqrt(2 / (n_in + n_out))
 
         elif split_inizer[0] == "he":
-            std = np.sqrt(2 / fin)
+            std = np.sqrt(2 / n_in)
 
         else:
             std = 0.01
 
-        setattr(layer, attr, np.random.normal(0, std, shape))
+        value = np.random.normal(0, std, (n_out, n_in))
 
     else:
-        setattr(layer, attr, np.zeros(shape))
+        value = np.zeros((n_out, n_in))
+
+    return value
+
+
+def _set_initialized_wb_to_layer(layer: Layer, kind: str):
+    if layer.layer_name() == "Dense":
+        n_in = layer.input_shape[-1]
+        n_out = layer.neurons
+
+    elif layer.layer_name() == "Conv2D":
+        n_in = layer.input_shape[-1] * np.prod(layer.filter_shape)
+        n_out = layer.filters
+        # The real shape of W in this case is (filters, depth, height, width),
+        # which is simplified as (filters, depth*height*width)
+
+    else:  # Should be unreachable
+        pass
+
+    if kind == "bias":
+        initializer = layer.bias_initializer
+        value = _initialize_nn_parameter(1, n_out, initializer)
+        value = value.T
+
+    elif kind == "weight":
+        initializer = layer.kernel_initializer
+        value = _initialize_nn_parameter(n_in, n_out, initializer)
+
+    else:  # Should be unreachable
+        pass
+
+    setattr(layer, kind, value)
 
 
 class Dense(Layer):
-    """
-    Fully-connected (dense) layer.
-
-    Options
-    -------
-    neurons : int
-        The number of neurons in the layer.
-
-    input_shape : tuple or None, default None
-        The expected input shape of the dense layer.
-        It must be specified if this is the first layer in the network.
-
-    kernel_initializer : str, default 'glorot_uniform'
-        Weight initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
-        'glorot_normal', 'he_normal', 'zeros'.
-
-    bias_initializer : str, default 'zeros'
-        Bias initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
-        'glorot_normal', 'he_normal', 'zeros'.
-    """
-
-    # TODO: Add function check_unknown_options
     def __init__(
         self,
         neurons: int,
-        input_shape: tuple | None = None,
-        kernel_initializer: str = "glorot_uniform",
-        bias_initializer: str = "zeros",
-        **unknown_options,
+        input_shape: tuple,
+        kernel_initializer: str,
+        bias_initializer: str,
     ):
         self.layer_input = None
 
@@ -187,86 +153,155 @@ class Dense(Layer):
 
         self.bias = None
 
-        self.kernel_initializer = kernel_initializer.lower()
-
-        if self.kernel_initializer not in WB_INITIALIZER:
-            raise ValueError(
-                f"Unknown kernel initializer: {self.kernel_initializer}. Choices {WB_INITIALIZER}"
-            )
-
-        self.bias_initializer = bias_initializer.lower()
-
-        if self.bias_initializer not in WB_INITIALIZER:
-            raise ValueError(f"Unknown bias initializer: {self.bias_initializer}. Choices {WB_INITIALIZER}")
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
 
     # TODO TYPE HINT: replace function by Callable
     def _initialize(self, optimizer: function):  # noqa: F821
-        # Initialize weights and biases if not initialized
         if self.weight is None:
-            _wb_initialization(self, "weight")
+            _set_initialized_wb_to_layer(self, "weight")
         if self.bias is None:
-            _wb_initialization(self, "bias")
+            _set_initialized_wb_to_layer(self, "bias")
 
         # Set optimizer
         self._weight_opt = copy.copy(optimizer)
         self._bias_opt = copy.copy(optimizer)
 
     def n_params(self):
-        return self.input_shape[0] * self.neurons + self.neurons
+        return self.neurons * (self.input_shape[-1] + 1)
 
-    def _forward_pass(self, x: np.ndarray, training: bool = True):
-        if training:
-            self.layer_input = x
-        return x.dot(self.weight) + self.bias
+    def _forward_pass(self, x: np.ndarray):
+        self.layer_input = x
+        return x.dot(self.weight.T) + self.bias
 
     def _backward_pass(self, accum_grad: np.ndarray):
-        # Save weights used during forwards pass
         weight = self.weight
 
         if self.trainable:
-            # Calculate gradient w.r.t layer weights
-            grad_w = self.layer_input.T.dot(accum_grad)
-            grad_w0 = np.sum(accum_grad, axis=0, keepdims=True)
+            # Compute gradients w.r.t. weights and biases
+            grad_weight = accum_grad.T.dot(self.layer_input)
+            grad_bias = np.sum(accum_grad, axis=0, keepdims=True)
 
-            # Update the layer weights
-            self.weight = self._weight_opt.update(self.weight, grad_w)
-            self.bias = self._bias_opt.update(self.bias, grad_w0)
+            # Update weights and biases
+            self.weight = self._weight_opt.update(self.weight, grad_weight)
+            self.bias = self._bias_opt.update(self.bias, grad_bias)
 
-        # Return accumulated gradient for next layer
-        # Calculated based on the weights used during the forward pass
-        accum_grad = accum_grad.dot(weight.T)
+        # Gradient propogated back to previous layer
+        return accum_grad.dot(weight)
+
+    def output_shape(self):
+        return self.input_shape[:-1] + (self.neurons,)
+
+
+class Conv2D(Layer):
+    def __init__(
+        self,
+        filters: int,
+        filter_shape: tuple,
+        input_shape: tuple,
+        kernel_initializer: str,
+        bias_initializer: str,
+    ):
+        self.layer_input = None
+
+        self.filters = filters
+        self.filter_shape = filter_shape
+
+        self.input_shape = input_shape
+
+        self.trainable = True
+
+        self.weight = None
+
+        self.bias = None
+
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
+
+    def _initialize(self, optimizer):
+        if self.weight is None:
+            _set_initialized_wb_to_layer(self, "weight")
+        if self.bias is None:
+            _set_initialized_wb_to_layer(self, "bias")
+
+        # Set optimizer
+        self._weight_opt = copy.copy(optimizer)
+        self._bias_opt = copy.copy(optimizer)
+
+    def n_params(self):
+        return self.filters * (self.input_shape[-1] * np.prod(self.filter_shape) + 1)
+
+    def _forward_pass(self, x: np.ndarray):
+        self.layer_input = x
+
+        self.x_col = _im2col(x, self.filter_shape)
+
+        res = self.x_col.dot(self.weight.T) + self.bias
+
+        return res.reshape(self.output_shape())
+
+    def _backward_pass(self, accum_grad):
+        weight = self.weight
+
+        # Reshape accum_grad into column shape
+        accum_grad = accum_grad.reshape(-1, self.filters)
+
+        if self.trainable:
+            # Compute gradients w.r.t. weights and biases
+            grad_weight = accum_grad.T.dot(self.x_col)
+            grad_bias = np.sum(accum_grad, axis=0, keepdims=True)
+
+            # Update weights and biases
+            self.weight = self._weight_opt.update(self.weight, grad_weight)
+            self.bias = self._bias_opt.update(self.bias, grad_bias)
+
+        # Gradient propogated back to previous layer
+        accum_grad = accum_grad.dot(weight)
+        accum_grad = _col2im(accum_grad, self.input_shape, self.filter_shape)
+
         return accum_grad
 
     def output_shape(self):
-        return (self.neurons,)
+        height, width, _ = self.input_shape
+
+        return height, width, self.filters
+
+
+class Flatten(Layer):
+    def __init__(self):
+        self._prev_shape = None
+
+        self.input_shape = None
+
+        self.trainable = False
+
+    def _forward_pass(self, x):
+        self._prev_shape = x.shape
+
+        return x.reshape((-1, x.shape[-1]))
+
+    def _backward_pass(self, accum_grad):
+        return accum_grad.reshape(self._prev_shape)
+
+    def output_shape(self):
+        return (self.input_shape[0] * self.input_shape[1], self.input_shape[2])
 
 
 class Dropout(Layer):
-    """
-    Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
-
-    Options
-    -------
-    drop_rate : float
-        The probability of setting a given output value to zero.
-    """
-
-    # TODO: Add function check_unknown_options
-    def __init__(self, drop_rate: float, **unknown_options):
+    def __init__(self, drop_rate: float):
         self.drop_rate = drop_rate
 
         self._mask = None
 
         self.input_shape = None
 
-        self.trainable = True
+        self.trainable = False
 
-    def _forward_pass(self, x: np.ndarray, training: bool = True):
+    def _forward_pass(self, x: np.ndarray):
         c = 1 - self.drop_rate
 
-        if training:
-            self._mask = np.random.uniform(size=x.shape) > self.drop_rate
-            c = self._mask
+        self._mask = np.random.uniform(size=x.shape) > self.drop_rate
+        c = self._mask
 
         return x * c
 
@@ -300,7 +335,7 @@ class Softmax:
 
 class TanH:
     def __call__(self, x):
-        return 2 / (1 + np.exp(-2 * x)) - 1
+        return 1 - 2 / (1 + np.exp(2 * x))
 
     def gradient(self, x):
         return 1 - np.power(self.__call__(x), 2)
@@ -315,7 +350,7 @@ class ReLU:
 
 
 class LeakyReLU:
-    def __init__(self, alpha=0.2):
+    def __init__(self, alpha=0.01):
         self.alpha = alpha
 
     def __call__(self, x):
@@ -361,13 +396,74 @@ class SoftPlus:
 
 class MinMaxScale:
     def __init__(self, bounds: np.ndarray):
-        self._bounds = bounds
-
-        self.lower = np.array([b[0] for b in bounds])
-        self.upper = np.array([b[1] for b in bounds])
+        self.lower = bounds[:, 0]
+        self.upper = bounds[:, 1]
 
     def __call__(self, x: np.ndarray):
         return self.lower + x * (self.upper - self.lower)
 
     def gradient(self, x: np.ndarray):
         return self.upper - self.lower
+
+
+### UTILS ###
+
+
+def _im2col(im: np.ndarray, filter_shape: tuple) -> np.ndarray:
+    pad_h, pad_w = _same_padding(filter_shape)
+
+    im_padded = np.pad(im, (pad_h, pad_w, (0, 0)), mode="constant")
+
+    i, j, k = _get_imcol_indices(im.shape, filter_shape, (pad_h, pad_w))
+
+    return np.transpose(im_padded[i, j, k])
+
+
+def _col2im(col: np.ndarray, im_shape: tuple, filter_shape: tuple) -> np.ndarray:
+    height, width, depth = im_shape
+
+    pad_h, pad_w = _same_padding(filter_shape)
+
+    im_padded = np.zeros((height + np.sum(pad_h), width + np.sum(pad_w), depth))
+
+    i, j, k = _get_imcol_indices(im_shape, filter_shape, (pad_h, pad_w))
+
+    np.add.at(im_padded, (i, j, k), col.T)
+
+    # Remove padding
+    return im_padded[pad_h[0] : -pad_h[1], pad_w[0] : -pad_w[1]]
+
+
+def _get_imcol_indices(im_shape: tuple, filter_shape: tuple, padding: tuple) -> tuple:
+    height, width, depth = im_shape
+    filter_height, filter_width = filter_shape
+
+    pad_h, pad_w = padding
+
+    height_out = height + np.sum(pad_h) - filter_height + 1
+    width_out = width + np.sum(pad_w) - filter_width + 1
+
+    i0 = np.repeat(np.arange(filter_height), filter_width)
+    i0 = np.tile(i0, depth)
+    i1 = np.repeat(np.arange(height_out), width_out)
+
+    j0 = np.tile(np.arange(filter_width), filter_height * depth)
+    j1 = np.tile(np.arange(width_out), height_out)
+
+    i = i0.reshape(-1, 1) + i1.reshape(1, -1)
+    j = j0.reshape(-1, 1) + j1.reshape(1, -1)
+
+    k = np.repeat(np.arange(depth), filter_height * filter_width).reshape(-1, 1)
+
+    return (i, j, k)
+
+
+def _same_padding(filter_shape: tuple) -> tuple:
+    # Compute 'same' padding where the output size is the same as input size
+
+    pad_h1 = int((filter_shape[0] - 1) // 2)
+    pad_h2 = filter_shape[0] - 1 - pad_h1
+    pad_w1 = int((filter_shape[1] - 1) // 2)
+    pad_w2 = filter_shape[1] - 1 - pad_w1
+
+    return (pad_h1, pad_h2), (pad_w1, pad_w2)

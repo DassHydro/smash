@@ -567,25 +567,24 @@ def _ann_optimize(
     wrap_returns: ReturnsDT,
 ) -> Net:
     # % Preprocessing input descriptors and normalization
-    active_mask = np.where(model.mesh.active_cell == 1)
-
     l_desc = model._input_data.physio_data.l_descriptor
     u_desc = model._input_data.physio_data.u_descriptor
 
     desc = model._input_data.physio_data.descriptor.copy()
+    desc_shape = desc.shape
     desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
 
-    # % Training the network
-    x_train = desc[active_mask]
-
+    # % Train regionalization network
     net = optimize_options["net"]
+
+    if net.layers[0].layer_name() == "Dense":
+        desc = desc.reshape(-1, desc_shape[-1])
 
     # % Change the mapping to trigger distributed control to get distributed gradients
     wrap_options.optimize.mapping = "distributed"
 
     net._fit_d2p(
-        x_train,
-        active_mask,
+        desc,
         model,
         wrap_options,
         wrap_returns,
@@ -604,22 +603,22 @@ def _ann_optimize(
     # % Reset mapping to ann once fit_d2p done
     wrap_options.optimize.mapping = "ann"
 
-    # % Predicting at active and inactive cells
-    x = desc.reshape(-1, desc.shape[-1])
-    y = net._predict(x)
+    # % Run a forward pass with net
+    y = net._forward_pass(desc)
+
+    if y.ndim < 3:
+        y = y.reshape(desc_shape[:-1] + (-1,))
 
     for i, name in enumerate(optimize_options["parameters"]):
-        y_reshape = y[:, i].reshape(desc.shape[:2])
-
         if name in model.rr_parameters.keys:
             ind = np.argwhere(model.rr_parameters.keys == name).item()
 
-            model.rr_parameters.values[..., ind] = y_reshape
+            model.rr_parameters.values[..., ind] = y[..., i]
 
-        else:
+        elif name in model.rr_initial_states.keys:
             ind = np.argwhere(model.rr_initial_states.keys == name).item()
 
-            model.rr_initial_states.values[..., ind] = y_reshape
+            model.rr_initial_states.values[..., ind] = y[..., i]
 
     # % Forward run for updating final states
     wrap_forward_run(

@@ -19,7 +19,6 @@ import warnings
 import smash
 
 sys.path.insert(0, os.path.abspath("../.."))
-sys.path.insert(0, os.path.abspath("./_ext"))
 
 
 # -- Project information -----------------------------------------------------
@@ -52,7 +51,6 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "matplotlib.sphinxext.plot_directive",
     "sphinx_autosummary_accessors",
-    "custom_options_directive",
 ]
 
 
