@@ -54,17 +54,15 @@ def _standardize_multiple_forward_run_args(
     cost_options: dict | None,
     common_options: dict | None,
 ) -> AnyTuple:
-    func_name = "forward_run"
-
     samples, spatialized_samples = _standardize_multiple_forward_run_samples(model, samples)
 
     # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
-    cost_options = _standardize_simulation_cost_options(model, func_name, cost_options)
+    cost_options = _standardize_simulation_cost_options(model, "forward_run", cost_options)
 
     # % Finalize cost_options
-    _standardize_simulation_cost_options_finalize(model, func_name, cost_options)
+    _standardize_simulation_cost_options_finalize(model, "forward_run", cost_options)
 
     common_options = _standardize_simulation_common_options(common_options)
 

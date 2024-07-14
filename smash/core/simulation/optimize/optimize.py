@@ -816,16 +816,16 @@ def _lbfgsb_optimize(
     l_control = np.where(parameters.control.l == -99, None, parameters.control.l)
     u_control = np.where(parameters.control.u == -99, None, parameters.control.u)
 
-    logger = _OptimizeCallback(wrap_options.comm.verbose)
+    cb = _OptimizeCallback(wrap_options.comm.verbose)
 
     res_optimize = scipy_minimize(
         _optimize_problem,
         x0,
-        args=(model, parameters, wrap_options, wrap_returns, logger),
+        args=(model, parameters, wrap_options, wrap_returns, cb),
         method="l-bfgs-b",
         jac=_jac_optimize_problem,
         bounds=tuple(zip(l_control, u_control)),
-        callback=logger.callback,
+        callback=cb.callback,
         options={
             "maxiter": wrap_options.optimize.maxiter,
             "ftol": 2.22e-16 * wrap_options.optimize.factr,
@@ -834,7 +834,7 @@ def _lbfgsb_optimize(
         },
     )
 
-    logger.termination(res_optimize)
+    cb.termination(res_optimize)
 
     ret = {}
 
@@ -842,10 +842,10 @@ def _lbfgsb_optimize(
         ret["control_vector"] = parameters.control.x.copy()
 
     if "iter_cost" in return_options["keys"]:
-        ret["iter_cost"] = logger.iter_cost
+        ret["iter_cost"] = cb.iter_cost
 
     if "iter_projg" in return_options["keys"]:
-        ret["iter_projg"] = logger.iter_projg
+        ret["iter_projg"] = cb.iter_projg
 
     if "serr_mu" in return_options["keys"]:
         ret["serr_mu"] = model.get_serr_mu().copy()
@@ -1063,7 +1063,7 @@ def _optimize_problem(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-    logger: _OptimizeCallback,
+    callback: _OptimizeCallback,
 ) -> float:
     setattr(parameters.control, "x", x)
 
@@ -1077,10 +1077,10 @@ def _optimize_problem(
         wrap_returns,
     )
 
-    if logger.iter_cost.size == 0:
-        logger.iter_cost = np.append(logger.iter_cost, model._output.cost)
+    if callback.iter_cost.size == 0:
+        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
 
-    logger.count_nfg += 1
+    callback.count_nfg += 1
 
     return model._output.cost
 
@@ -1091,7 +1091,7 @@ def _jac_optimize_problem(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-    logger: _OptimizeCallback,
+    callback: _OptimizeCallback,
 ) -> np.ndarray:
     setattr(parameters.control, "x", x)
 
@@ -1113,10 +1113,10 @@ def _jac_optimize_problem(
 
     grad = parameters_b.control.x.copy()
 
-    if logger.projg is None:
-        logger.projg = _inf_norm(grad)
+    if callback.projg is None:
+        callback.projg = _inf_norm(grad)
 
     else:
-        logger.tmp_projg = _inf_norm(grad)
+        callback.tmp_projg = _inf_norm(grad)
 
     return grad
