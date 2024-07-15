@@ -853,7 +853,7 @@ Parameters
 ----------
 %(model_parameter)s
 
-multiset : `MultipleForwardRun <smash.MultipleForwardRun>`
+multiset : `MultipleForwardRun <MultipleForwardRun>`
     The returned object created by `multiple_forward_run` method containing
     information about multiple sets of rainfall-runoff parameters or initial states.
 
@@ -1525,8 +1525,7 @@ uniform optimization
 
 _forward_run_doc_appender = DocAppender(_forward_run_doc, indents=0)
 _smash_forward_run_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model " "`smash`.",
     model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_fwd = smash.forward_run()",
     model_example_response="model_fwd",
@@ -1542,8 +1541,7 @@ _model_forward_run_doc_substitution = DocSubstitution(
 
 _optimize_doc_appender = DocAppender(_optimize_doc, indents=0)
 _smash_optimize_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model " "`smash`.",
     default_optimize_options_func="default_optimize_options",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1569,8 +1567,7 @@ _model_optimize_doc_substitution = DocSubstitution(
 
 _multiset_estimate_doc_appender = DocAppender(_multiset_estimate_doc, indents=0)
 _smash_multiset_estimate_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model " "`smash`.",
     model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_estim = smash.multiset_estimate(model, multiset=mfr)",
     model_example_response="model_estim",
@@ -1586,8 +1583,7 @@ _model_multiset_estimate_doc_substitution = DocSubstitution(
 
 _bayesian_optimize_doc_appender = DocAppender(_bayesian_optimize_doc, indents=0)
 _smash_bayesian_optimize_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model " "`smash`.",
     default_optimize_options_func="default_bayesian_optimize_options",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
