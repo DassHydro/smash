@@ -18,6 +18,7 @@ sphinx
 numpydoc
 pydata-sphinx-theme
 ipython
+pickleshare
 sphinxcontrib-bibtex
 sphinx-design
 sphinx-autosummary-accessors

@@ -28,7 +28,7 @@ def evaluation(
 
     Parameters
     ----------
-    model : `Model <smash.Model>`
+    model : `Model`
         Primary data structure of the hydrological model `smash`.
 
     metric : `str` or `list[str]`, default 'nse'
