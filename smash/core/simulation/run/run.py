@@ -88,11 +88,11 @@ class ForwardRun:
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
-    
+
     internal_fluxes: `dict[str, numpy.ndarray]`
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
-    
+
     cost : `float`
         Cost value.
 
@@ -205,9 +205,9 @@ def _forward_run(
     if ret:
         if "internal_fluxes" in ret:
             ret["internal_fluxes"] = {
-                key: ret["internal_fluxes"][..., i] \
-                    for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
-                }
+                key: ret["internal_fluxes"][..., i]
+                for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+            }
 
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):

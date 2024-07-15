@@ -8,8 +8,8 @@ import numpy as np
 from smash._constant import (
     CONTROL_PRIOR_DISTRIBUTION,
     CONTROL_PRIOR_DISTRIBUTION_PARAMETERS,
-    STRUCTURE_RR_INTERNAL_FLUXES,
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
+    STRUCTURE_RR_INTERNAL_FLUXES,
 )
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (
@@ -112,11 +112,11 @@ class Optimize:
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
-    
+
     internal_fluxes: `dict[str, numpy.ndarray]`
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
-    
+
     iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 
@@ -204,11 +204,11 @@ class BayesianOptimize:
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
-    
+
     internal_fluxes: `dict[str, numpy.ndarray]`
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
-    
+
     iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 
@@ -598,9 +598,9 @@ def _optimize(
     if ret:
         if "internal_fluxes" in ret:
             ret["internal_fluxes"] = {
-                key: ret["internal_fluxes"][..., i] \
-                    for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
-                }
+                key: ret["internal_fluxes"][..., i]
+                for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+            }
 
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
@@ -973,13 +973,13 @@ def _bayesian_optimize(
         fret[key] = value
 
     ret = {**fret, **pyret}
-    
+
     if "internal_fluxes" in ret:
         ret["internal_fluxes"] = {
-            key: ret["internal_fluxes"][..., i] \
-                for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
-            }
-    
+            key: ret["internal_fluxes"][..., i]
+            for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+        }
+
     if ret:
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):

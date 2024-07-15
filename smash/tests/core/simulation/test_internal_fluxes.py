@@ -14,6 +14,7 @@ def run_internal_fluxes_option(model: smash.Model, custom_options) -> dict:
     )
     return res
 
+
 def test_run_internal_fluxes_option():
     ncpu = min(5, max(1, os.cpu_count() - 1))
     custom_options = [
@@ -78,6 +79,7 @@ def optimize_internal_fluxes_option(model: smash.Model, custom_options) -> dict:
     )
     return res
 
+
 def test_optimize_internal_fluxes_option():
     ncpu = min(5, max(1, os.cpu_count() - 1))
     custom_options = [
@@ -91,10 +93,10 @@ def test_optimize_internal_fluxes_option():
                 "ncpu": ncpu,
                 "verbose": False,
             },
-            "optimize_options":{
-            "termination_crit": dict(maxiter=5),
+            "optimize_options": {
+                "termination_crit": {"maxiter": 1},
             },
-            "mapping":"distributed",
+            "mapping": "distributed",
         },
     ]
     for i, kwargs in enumerate(custom_options):

@@ -85,11 +85,11 @@ contains
                         if (returns%mask_time_step(time_step)) then
                             time_step_returns = returns%time_step_to_returns_time_step(time_step)
 
-                            returns%internal_fluxes(&
+                            returns%internal_fluxes( &
                                 row, &
                                 col, &
                                 time_step_returns, &
-                                1: 1 + setup%n_snow_fluxes) = (/ac_mlt(k)/)
+                                1:1 + setup%n_snow_fluxes) = (/ac_mlt(k)/)
 
                         end if
                     end if

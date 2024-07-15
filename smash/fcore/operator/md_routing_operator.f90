@@ -172,13 +172,13 @@ contains
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                returns%internal_fluxes(&
+                                returns%internal_fluxes( &
                                     row, &
                                     col, &
                                     time_step_returns, &
                                     setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
-                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes&
-                                ) = (/qup/)
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
                             end if
                         end if
                     end if
@@ -208,13 +208,13 @@ contains
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                returns%internal_fluxes(&
+                                returns%internal_fluxes( &
                                     row, &
                                     col, &
                                     time_step_returns, &
                                     setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
-                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes&
-                                ) = (/qup/)
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
                             end if
                         end if
                     end if
@@ -277,13 +277,13 @@ contains
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                returns%internal_fluxes(&
+                                returns%internal_fluxes( &
                                     row, &
                                     col, &
                                     time_step_returns, &
                                     setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
-                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes&
-                                ) = (/qup/)
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
                             end if
                         end if
                     end if
@@ -314,13 +314,13 @@ contains
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(time_step)) then
                                 time_step_returns = returns%time_step_to_returns_time_step(time_step)
-                                returns%internal_fluxes(&
+                                returns%internal_fluxes( &
                                     row, &
                                     col, &
                                     time_step_returns, &
                                     setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
-                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes&
-                                ) = (/qup/)
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
                             end if
                         end if
                     end if
@@ -337,8 +337,8 @@ contains
     subroutine kw_time_step(setup, mesh, options, returns, t, ac_qtz, ac_akw, ac_bkw, ac_qz)
         ! Bug fixed on the parallel adjoint linked to variable names by changing of variable names :
         ! Added local variable t instead of time_step as input to kw_time_step -> no change
-        ! Added local variable t_returns instead of time_step_returns to kw_time_step 
-        ! -> modified openMP, unmodified non-openMP  
+        ! Added local variable t_returns instead of time_step_returns to kw_time_step
+        ! -> modified openMP, unmodified non-openMP
 
         implicit none
 
@@ -383,20 +383,20 @@ contains
 
                     call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
                     & ac_akw(k), ac_bkw(k), qlijm1, qlij, qim1j, qijm1, ac_qz(k, setup%nqz))
-                    
+
                     !$AD start-exclude
                     !internal fluxes
                     if (returns%internal_fluxes_flag) then
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(t)) then
                                 t_returns = returns%time_step_to_returns_time_step(t)
-                                returns%internal_fluxes(&
+                                returns%internal_fluxes( &
                                     row, &
                                     col, &
                                     t_returns, &
                                     setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
-                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes&
-                                ) = (/qim1j/)
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qim1j/)
                             end if
                         end if
                     end if
@@ -430,13 +430,13 @@ contains
                         if (allocated(returns%mask_time_step)) then
                             if (returns%mask_time_step(t)) then
                                 t_returns = returns%time_step_to_returns_time_step(t)
-                                returns%internal_fluxes(&
+                                returns%internal_fluxes( &
                                     row, &
                                     col, &
                                     t_returns, &
                                     setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
-                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes&
-                                ) = (/qim1j/)
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qim1j/)
                             end if
                         end if
                     end if

@@ -100,7 +100,6 @@ module mwd_returns
         real(sp), dimension(:, :), allocatable :: serr_sigma
         logical :: serr_sigma_flag = .false.
 
-
         real(sp), dimension(:, :, :, :), allocatable :: internal_fluxes
         logical :: internal_fluxes_flag = .false.
 
@@ -188,7 +187,6 @@ contains
             case ("serr_sigma")
                 this%serr_sigma_flag = .true.
                 allocate (this%serr_sigma(mesh%ng, setup%ntime_step))
-
 
             case ("internal_fluxes")
                 this%internal_fluxes_flag = .true.

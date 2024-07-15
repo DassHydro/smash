@@ -247,12 +247,12 @@ contains
                             ! the fluxes of the snow module are the first ones inside internal fluxes
                             ! due to the building of the modules so n_snow_fluxes
                             ! moves the index of the array
-                            returns%internal_fluxes(&
+                            returns%internal_fluxes( &
                                 row, &
                                 col, &
                                 time_step_returns, &
-                                setup%n_snow_fluxes + 1: setup%n_snow_fluxes + setup%n_hydro_fluxes&
-                            ) = (/pn, en, qr, qb, ac_qt(k)/)
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn, en, qr, qb, ac_qt(k)/)
                         end if
                     end if
                 end if
