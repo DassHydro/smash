@@ -1,7 +1,5 @@
 .. _release.0.4.1-notes:
 
-.. currentmodule:: smash
-
 =========================
 smash 0.4.1 Release Notes
 =========================
