@@ -23,7 +23,7 @@ def metrics(model: Model, metric: str = "nse", end_warmup: str | Timestamp | Non
 
     Parameters
     ----------
-    model : `Model <smash.Model>`
+    model : `Model`
         Primary data structure of the hydrological model `smash`.
 
     metric : `str`, default 'nse'
