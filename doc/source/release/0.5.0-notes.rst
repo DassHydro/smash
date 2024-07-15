@@ -1,7 +1,5 @@
 .. _release.0.5.0-notes:
 
-.. currentmodule:: smash
-
 =========================
 smash 0.5.0 Release Notes
 =========================

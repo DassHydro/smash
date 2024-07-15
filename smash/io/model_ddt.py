@@ -23,8 +23,8 @@ def save_model_ddt(model: Model, path: FilePath):
     """
     Save some derived data types of the Model object to HDF5.
 
-    This method is considerably lighter than `smash.io.save_model` method that saves the entire Model object.
-    However, it is not capable of reconstructing the Model object from the saved data file.
+    This method is considerably lighter than `smash.io.save_model <save_model>` method that saves the entire
+    Model object. However, it is not capable of reconstructing the Model object from the saved data file.
 
     By default, the following data are stored into the `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__
     file:
@@ -90,7 +90,7 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
     Read some derived data types of the Model object from HDF5.
 
     This method does not reconstruct the Model object because certain information has not been saved from the
-    `smash.io.save_model_ddt` method
+    `smash.io.save_model_ddt <save_model_ddt>` method
     in order to have light memory backup. This method returns a dictionary whose organisation is similar to
     the Model object.
 

@@ -210,7 +210,10 @@ def wrap_mangling_directive(base_directive):
 
                 else:
                     new_lines.append(line)
-            self.content = ViewList(new_lines, self.content.parent)
+            if sphinx.__version__ >= "7.4":
+                self.content = "\n".join(new_lines)
+            else:
+                self.content = ViewList(new_lines, self.content.parent)
             return base_directive.run(self)
 
         option_spec = dict(base_directive.option_spec)

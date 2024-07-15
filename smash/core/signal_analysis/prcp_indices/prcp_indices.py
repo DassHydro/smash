@@ -132,12 +132,12 @@ def precipitation_indices(
 
     Parameters
     ----------
-    model : `Model <smash.Model>`
+    model : `Model`
         Primary data structure of the hydrological model `smash`.
 
     Returns
     -------
-    precipitation_indices : `PrecipitationIndices <smash.PrecipitationIndices>`
+    precipitation_indices : `PrecipitationIndices`
         It returns an object containing the results of the precipitation indices computation.
 
     See Also

@@ -1,7 +1,5 @@
 .. _release.template-notes:
 
-.. currentmodule:: smash
-
 =========================
 smash x.y.z Release Notes
 =========================
