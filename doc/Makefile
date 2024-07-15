@@ -19,7 +19,7 @@ help:
 %: Makefile
 	@mkdir $(BUILDDIR)_tmp 
 	@cp -r $(BUILDDIR)/* $(BUILDDIR)_tmp 2>/dev/null || true
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) || \
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) --fail-on-warning || \
     (echo "An error occurred while generating the documentation. Returning to previous version." && \
 	rm -rf $(BUILDDIR) && mv $(BUILDDIR)_tmp $(BUILDDIR) && false)
 	@rm -rf $(BUILDDIR)_tmp
