@@ -112,7 +112,11 @@ class Optimize:
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
-
+    
+    internal_fluxes: `dict[str, numpy.ndarray]`
+        A dictionary where keys are the names of the internal fluxes and the values are array of
+        shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
+    
     iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 
@@ -200,7 +204,11 @@ class BayesianOptimize:
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
-
+    
+    internal_fluxes: `dict[str, numpy.ndarray]`
+        A dictionary where keys are the names of the internal fluxes and the values are array of
+        shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
+    
     iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 

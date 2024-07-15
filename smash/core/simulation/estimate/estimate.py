@@ -40,7 +40,11 @@ class MultisetEstimate:
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
-
+    
+    internal_fluxes: `dict[str, numpy.ndarray]`
+        A dictionary where keys are the names of the internal fluxes and the values are array of
+        shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
+    
     cost : `float`
         Cost value.
 
@@ -172,4 +176,9 @@ def _multiset_estimate(
     ret = {**fret, **pyret}
 
     if ret:
+        if "internal_fluxes" in ret:
+            ret["internal_fluxes"] = {
+                key: ret["internal_fluxes"][..., i] \
+                    for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+                }
         return MultisetEstimate(ret)
