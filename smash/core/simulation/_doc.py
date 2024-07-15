@@ -1074,9 +1074,8 @@ model : `Model`
 
 samples : `Samples` or `dict[str, Any]`
     Represents the rainfall-runoff parameters and/or initial states sample.
-    This can be either a `Samples <smash.Samples>` object or a dictionary, where the keys are
-    parameter/state names and the corresponding value is a sequence of specified values,
-    representing multiple samples.
+    This can be either a `Samples` object or a dictionary, where the keys are parameter/state names
+    and the corresponding value is a sequence of specified values, representing multiple samples.
 
 cost_options : `dict[str, Any]` or None, default None
     Dictionary containing computation cost options for simulated and observed responses. The elements are:
