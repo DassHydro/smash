@@ -8,6 +8,7 @@ import numpy as np
 from smash._constant import (
     CONTROL_PRIOR_DISTRIBUTION,
     CONTROL_PRIOR_DISTRIBUTION_PARAMETERS,
+    STRUCTURE_RR_INTERNAL_FLUXES,
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
 )
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
@@ -585,7 +586,14 @@ def _optimize(
         pyret["lcurve_wjreg"] = lcurve_wjreg
 
     ret = {**fret, **pyret}
+
     if ret:
+        if "internal_fluxes" in ret:
+            ret["internal_fluxes"] = {
+                key: ret["internal_fluxes"][..., i] \
+                    for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+                }
+
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()
@@ -957,6 +965,13 @@ def _bayesian_optimize(
         fret[key] = value
 
     ret = {**fret, **pyret}
+    
+    if "internal_fluxes" in ret:
+        ret["internal_fluxes"] = {
+            key: ret["internal_fluxes"][..., i] \
+                for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+            }
+    
     if ret:
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
