@@ -51,6 +51,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "matplotlib.sphinxext.plot_directive",
     "sphinx_autosummary_accessors",
+    "custom_options_directive",
 ]
 
 
