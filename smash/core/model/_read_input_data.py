@@ -593,7 +593,7 @@ def _read_interannual_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
 
 
 def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-    reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
+    reading_warning = {"got": [],"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
     for i, name in enumerate(setup.descriptor_name):
         path = glob.glob(
             f"{setup.descriptor_directory}/**/{name}.tif*",
