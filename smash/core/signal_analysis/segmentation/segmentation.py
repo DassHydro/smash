@@ -31,7 +31,7 @@ def hydrograph_segmentation(
 
     Parameters
     ----------
-    model : `Model <smash.Model>`
+    model : `Model`
         Primary data structure of the hydrological model `smash`.
 
     peak_quant : `float`, default 0.995

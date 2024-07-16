@@ -29,7 +29,7 @@ class Samples:
     Notes
     -----
     This class may have additional attributes not listed here depending on the specific names provided
-    in the argument ``problem`` in the `smash.factory.generate_samples` method.
+    in the argument ``problem`` in the `smash.factory.generate_samples <factory.generate_samples>` method.
 
     Attributes
     ----------
@@ -73,7 +73,7 @@ class Samples:
 
         Returns
         -------
-        slice : `Samples <smash.Samples>`
+        slice : `Samples`
             The Samples object sliced according to **start** and **end** arguments.
 
         Examples
@@ -146,7 +146,7 @@ class Samples:
 
         Yields
         ------
-        slice : `Samples <smash.Samples>`
+        slice : `Samples`
             The Samples object sliced according to **by** arguments.
 
         See Also
