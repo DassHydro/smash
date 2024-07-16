@@ -86,15 +86,15 @@ if TYPE_CHECKING:
 # We suppose that the atmos file are sorted in ascendent order with the date
 # (this a drawback of the method) ! Must be documented !
 def _check_files_containing_date(files: str, date: pd.Timestamp, date_pattern: str) -> int:
-    res = False
     date_string = date.strftime(date_pattern)
 
+    ind = -1
     for i, f in enumerate(files):
         if date_string in os.path.basename(f):
-            res = True
+            ind = i
 
     # print(file,date_string,date_pattern,res)
-    return res
+    return ind
 
 
 # We suppose that the atmos file are sorted in ascendent order with the date
@@ -398,9 +398,9 @@ def _read_common_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, at
 
         for i, date in enumerate(tqdm(date_range, desc=f"</> Reading {atmos_data}")):
             # ind = _find_index_files_containing_date(files, date, setup.prcp_date_pattern)
-            res = _check_files_containing_date(files, date, atmos_date_pattern)
+            ind = _check_files_containing_date(files, date, atmos_date_pattern)
 
-            if not res:
+            if ind == -1:
                 reading_warning["miss"].append(
                     date.strftime("%Y-%m-%d %H:%M")
                     + f", (matching pattern {date.strftime(atmos_date_pattern)})"
@@ -420,10 +420,10 @@ def _read_common_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, at
 
             else:
                 reading_warning["got"].append(
-                    date.strftime("%Y-%m-%d %H:%M") + f" ({os.path.basename(files[0])})"
+                    date.strftime("%Y-%m-%d %H:%M") + f" ({os.path.basename(files[ind])})"
                 )
 
-                matrix, warning = _read_windowed_raster(files[0], mesh)
+                matrix, warning = _read_windowed_raster(files[ind], mesh)
                 matrix *= prcp_conversion_factor
                 reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
 
@@ -493,18 +493,19 @@ def _read_interannual_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
 
             for i, date in enumerate(tqdm(leap_year_days, desc="</> Reading daily interannual pet")):
                 if list_date_in_leap_year_days[i] in list_date_in_daterange:
-                    res = _check_files_containing_date(files, date, setup.pet_date_pattern)
+                    ind = _check_files_containing_date(files, date, setup.pet_date_pattern)
 
-                    if not res:
+                    if ind == -1:
                         reading_warning["miss"].append(
-                            os.path.basename(files[i]) + f", (matching pattern {date.strftime('%m%d')})"
+                            list_date_in_daterange[i].strftime("%Y-%m-%d")
+                            + f", (matching pattern {date.strftime('%m%d')})"
                         )
                         missing_day = np.append(missing_day, date)
                     else:
                         reading_warning["got"].append(
-                            date.strftime("%Y-%m-%d") + f" ({os.path.basename(files[i])})"
+                            date.strftime("%Y-%m-%d") + f" ({os.path.basename(files[ind])})"
                         )
-                        matrix_dip[..., i], warning = _read_windowed_raster(files[i], mesh)
+                        matrix_dip[..., i], warning = _read_windowed_raster(files[ind], mesh)
                         matrix_dip[..., i] *= setup.pet_conversion_factor
                         reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
 
