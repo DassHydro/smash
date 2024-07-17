@@ -74,6 +74,7 @@ module mwd_parameters_manipulation
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_control !% only: ControlDT_initialise, ControlDT_finalise
+    use mwd_stats !% only: StatsDT
 
     implicit none
 

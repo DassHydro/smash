@@ -20,6 +20,7 @@ module md_gr_operator
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
+    use mwd_returns !% only: ReturnDT
     use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
 
     implicit none
@@ -135,7 +136,7 @@ contains
     end subroutine gr_transfer
 
     subroutine gr4_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
-    & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
+    & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt, returns)
 
         implicit none
 
@@ -143,6 +144,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
@@ -202,6 +204,30 @@ contains
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = pn
+                    returns%stats%internal_fluxes(row, col, 2) = en
+                    returns%stats%internal_fluxes(row, col, 3) = pr
+                    returns%stats%internal_fluxes(row, col, 4) = perc
+                    returns%stats%internal_fluxes(row, col, 5) = l
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = prd
+                    returns%stats%internal_fluxes(row, col, 8) = qr
+                    returns%stats%internal_fluxes(row, col, 9) = qd
+                end if
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%lexc_flag) returns%lexc(row, col, time_step) = l
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%prd_flag) returns%prd(row, col, time_step) = prd
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                if (returns%qd_flag) returns%qd(row, col, time_step) = qd
+                !$AD end-exclude
+
             end do
         end do
 #ifdef _OPENMP
@@ -210,7 +236,7 @@ contains
     end subroutine gr4_time_step
 
     subroutine gr5_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
-    & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
+    & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt, returns)
 
         implicit none
 
@@ -218,6 +244,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc
@@ -277,6 +304,30 @@ contains
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = pn
+                    returns%stats%internal_fluxes(row, col, 2) = en
+                    returns%stats%internal_fluxes(row, col, 3) = pr
+                    returns%stats%internal_fluxes(row, col, 4) = perc
+                    returns%stats%internal_fluxes(row, col, 5) = l
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = prd
+                    returns%stats%internal_fluxes(row, col, 8) = qr
+                    returns%stats%internal_fluxes(row, col, 9) = qd
+                end if
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%lexc_flag) returns%lexc(row, col, time_step) = l
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%prd_flag) returns%prd(row, col, time_step) = prd
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                if (returns%qd_flag) returns%qd(row, col, time_step) = qd
+                !$AD end-exclude
+
             end do
         end do
 #ifdef _OPENMP
@@ -285,7 +336,7 @@ contains
     end subroutine gr5_time_step
 
     subroutine grd_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
-    & ac_ht, ac_qt)
+    & ac_ht, ac_qt, returns)
 
         implicit none
 
@@ -293,6 +344,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_cp, ac_ct
@@ -345,6 +397,26 @@ contains
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = ei
+                    returns%stats%internal_fluxes(row, col, 2) = pn
+                    returns%stats%internal_fluxes(row, col, 3) = en
+                    returns%stats%internal_fluxes(row, col, 4) = pr
+                    returns%stats%internal_fluxes(row, col, 5) = perc
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = qr
+                end if
+                if (returns%ei_flag) returns%ei(row, col, time_step) = ei
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                !$AD end-exclude
+
             end do
         end do
 #ifdef _OPENMP
@@ -353,7 +425,7 @@ contains
     end subroutine grd_time_step
 
     subroutine loieau_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ca, ac_cc, ac_kb, &
-    & ac_ha, ac_hc, ac_qt)
+    & ac_ha, ac_hc, ac_qt, returns)
 
         implicit none
 
@@ -361,6 +433,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in):: ac_mlt
         real(sp), dimension(mesh%nac), intent(in):: ac_ca, ac_cc, ac_kb
@@ -418,6 +491,30 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = ei
+                    returns%stats%internal_fluxes(row, col, 2) = pn
+                    returns%stats%internal_fluxes(row, col, 3) = en
+                    returns%stats%internal_fluxes(row, col, 4) = pr
+                    returns%stats%internal_fluxes(row, col, 5) = perc
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = prd
+                    returns%stats%internal_fluxes(row, col, 8) = qr
+                    returns%stats%internal_fluxes(row, col, 9) = qd
+                end if
+                if (returns%ei_flag) returns%ei(row, col, time_step) = ei
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%prd_flag) returns%prd(row, col, time_step) = prd
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                if (returns%qd_flag) returns%qd(row, col, time_step) = qd
+                !$AD end-exclude
 
             end do
         end do

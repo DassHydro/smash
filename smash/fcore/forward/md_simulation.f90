@@ -7,6 +7,8 @@
 !%      - store_time_step
 !%      - simulation_checkpoint
 !%      - simulation
+!%      - get_atmos_data_timstep
+!%      - get_extended_atmos_data_timestep
 
 module md_simulation
 
@@ -19,13 +21,14 @@ module md_simulation
     use mwd_output !% only: OutputDT
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
+    use mwd_parameters_manipulation !% only: get_rr_parameters, get_rr_states, set_rr_states
+    use md_stats !% only: quicksort, compute_fluxes_stats, compute_states_stats
     use md_checkpoint_variable !% only: Checkpoint_VariableDT
     use md_snow_operator !% only: ssn_time_step
     use md_gr_operator !% only: gr4_time_step, gr5_time_step, grd_time_step, loieau_time_step
     use md_vic3l_operator !% only: vic3l_time_step
     use md_routing_operator !% only: lag0_time_step, lr_time_step, kw_time_step
-    use mwd_sparse_matrix_manipulation !% only: matrix_to_ac_vector, &
-    !& ac_vector_to_matrix
+    use mwd_sparse_matrix_manipulation !% only: matrix_to_ac_vector, ac_vector_to_matrix
 
     implicit none
 
@@ -94,6 +97,11 @@ contains
                     & returns%q_domain(:, :, time_step_returns))
                 end if
 
+                if (returns%qt_flag) then
+                    call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    & returns%qt(:, :, time_step_returns))
+                end if
+
             end if
         end if
         !$AD end-exclude
@@ -115,7 +123,7 @@ contains
         type(Checkpoint_VariableDT), intent(inout) :: checkpoint_variable
         integer, intent(in) :: start_time_step, end_time_step
 
-        integer :: t, rr_parameters_inc, rr_states_inc
+        integer :: t, rr_parameters_inc, rr_states_inc, i
         ! % Might add any number if needed
         real(sp), dimension(mesh%nac) :: h1, h2, h3, h4
 
@@ -187,7 +195,8 @@ contains
                     h1, & ! % hi
                     h2, & ! % hp
                     h3, & ! % ht
-                    checkpoint_variable%ac_qtz(:, setup%nqz))
+                    checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    returns)
 
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
@@ -219,7 +228,8 @@ contains
                     h1, & ! % hi
                     h2, & ! % hp
                     h3, & ! % ht
-                    checkpoint_variable%ac_qtz(:, setup%nqz))
+                    checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    returns)
 
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
@@ -246,7 +256,8 @@ contains
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % ct
                     h1, & ! % hp
                     h2, & ! % ht
-                    checkpoint_variable%ac_qtz(:, setup%nqz))
+                    checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    returns)
 
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
@@ -273,7 +284,8 @@ contains
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % kb
                     h1, & ! % ha
                     h2, & ! % hc
-                    checkpoint_variable%ac_qtz(:, setup%nqz))
+                    checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    returns)
 
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
@@ -310,7 +322,8 @@ contains
                     h2, & ! % husl
                     h3, & ! % hmsl
                     h4, & ! % hbsl
-                    checkpoint_variable%ac_qtz(:, setup%nqz))
+                    checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    returns)
 
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
@@ -370,7 +383,17 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 1
 
             end select
+            !$AD start-exclude
+            if (returns%stats_flag) then
+                do i = 1, setup%nfx
+                    call compute_fluxes_stats(mesh, t, i, returns)
+                end do
 
+                do i = 1, setup%nrrs
+                    call compute_states_stats(mesh, output, t, i, returns)
+                end do
+            end if
+            !$AD end-exclude
             call store_time_step(setup, mesh, output, returns, checkpoint_variable, t)
 
         end do
