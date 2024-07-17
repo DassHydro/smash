@@ -113,6 +113,9 @@ def fast_index_search_for_date(files, date, date_pattern):
                 pos = previous_pos
                 i = pos + step
 
+                if step == 0:
+                    break
+
             elif date_match == date:
                 pos = i
                 previous_pos = i
@@ -131,6 +134,7 @@ def fast_index_search_for_date(files, date, date_pattern):
             )
 
         nb_iteration = nb_iteration + 1
+    print(vec_date)
     return previous_pos
 
 
