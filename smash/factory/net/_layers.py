@@ -48,10 +48,10 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-    def __init__(self, bounds: np.ndarray):
+    def __init__(self, bounds: np.ndarray, bound_in: tuple):
         self.input_shape = None
 
-        self._scale_func = MinMaxScale(bounds)
+        self._scale_func = MinMaxScale(bounds, bound_in)
 
         self.scale_name = self._scale_func.__class__.__name__
 
@@ -316,6 +316,9 @@ class Dropout(Layer):
 
 
 class Sigmoid:
+    def __init__(self):
+        self.bound = (0, 1)
+
     def __call__(self, x):
         return 1 / (1 + np.exp(-x))
 
@@ -324,6 +327,9 @@ class Sigmoid:
 
 
 class Softmax:
+    def __init__(self):
+        self.bound = (0, 1)
+
     def __call__(self, x):
         e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
         return e_x / np.sum(e_x, axis=-1, keepdims=True)
@@ -334,6 +340,9 @@ class Softmax:
 
 
 class TanH:
+    def __init__(self):
+        self.bound = (-1, 1)
+
     def __call__(self, x):
         return 1 - 2 / (1 + np.exp(2 * x))
 
@@ -395,15 +404,19 @@ class SoftPlus:
 
 
 class MinMaxScale:
-    def __init__(self, bounds: np.ndarray):
+    def __init__(self, bounds: np.ndarray, bound_in: tuple):
         self.lower = bounds[:, 0]
         self.upper = bounds[:, 1]
 
+        self.bound_in_lower, self.bound_in_upper = bound_in
+
     def __call__(self, x: np.ndarray):
-        return self.lower + x * (self.upper - self.lower)
+        return self.lower + (x - self.bound_in_lower) / (self.bound_in_upper - self.bound_in_lower) * (
+            self.upper - self.lower
+        )
 
     def gradient(self, x: np.ndarray):
-        return self.upper - self.lower
+        return (self.upper - self.lower) / (self.bound_in_upper - self.bound_in_lower)
 
 
 ### UTILS ###

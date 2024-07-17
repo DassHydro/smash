@@ -47,7 +47,18 @@ def _standardize_add_conv2d_args(
     return filters, filter_shape, input_shape, activation, kernel_initializer, bias_initializer
 
 
-def _standardize_add_scale_args(net: Net, bounds: ListLike) -> np.ndarray:
+def _standardize_add_scale_args(net: Net, bounds: ListLike) -> AnyTuple:
+    if net.layers:
+        try:
+            bound_in = net.layers[-1]._activation_func.bound
+        except Exception:
+            raise ValueError(
+                "Cannot apply scaling function to unbounded outputs from previous layer"
+            ) from None
+
+    else:
+        raise ValueError("Scaling layer cannot be the first layer of the network")
+
     if isinstance(bounds, (tuple, list, np.ndarray)):
         if len(bounds) != net.layers[-1].output_shape()[-1]:
             raise ValueError(
@@ -71,7 +82,7 @@ def _standardize_add_scale_args(net: Net, bounds: ListLike) -> np.ndarray:
     else:
         raise TypeError("bounds argument must be of ListLike type (List, Tuple, np.ndarray)")
 
-    return np.array(bounds)
+    return np.array(bounds), bound_in
 
 
 def _standardize_add_dropout_args(drop_rate: Numeric) -> float:

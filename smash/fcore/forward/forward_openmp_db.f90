@@ -6400,7 +6400,7 @@ CONTAINS
 &               (i)
               parameters%control%u(j) = options%optimize%u_rr_parameters&
 &               (i)
-              parameters%control%nbd = 2
+              parameters%control%nbd(j) = 2
               WRITE(name, '(a,i0,a,i0)') TRIM(parameters%rr_parameters%&
 &             keys(i)), row, '-', col
               parameters%control%name(j) = name
@@ -6435,7 +6435,7 @@ CONTAINS
 &               l_rr_initial_states(i)
               parameters%control%u(j) = options%optimize%&
 &               u_rr_initial_states(i)
-              parameters%control%nbd = 2
+              parameters%control%nbd(j) = 2
               WRITE(name, '(a,i0,a,i0)') TRIM(parameters%&
 &             rr_initial_states%keys(i)), row, '-', col
               parameters%control%name(j) = name
