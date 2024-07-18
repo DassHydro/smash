@@ -34,6 +34,8 @@ def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
     return rr_internal_fluxes
 
+### FLOAT PRECISION FOR FLOAT COMPARISON ###
+F_PRECISION = 1.0e-5
 
 ### MODULE ###
 ##############

@@ -107,7 +107,7 @@ class Optimize:
         A list of length *n* containing the returned time steps.
 
     rr_states : `FortranDerivedTypeArray`
-        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
+        A list of length *n* of `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
@@ -127,7 +127,7 @@ class Optimize:
     control_vector : `numpy.ndarray`
         An array of shape *(k,)* representing the control vector at end of optimization.
 
-    net : `Net <smash.factory.Net>`
+    net : `Net <factory.Net>`
         The trained neural network.
 
     cost : `float`
@@ -164,7 +164,7 @@ class Optimize:
     Notes
     -----
     The object's available attributes depend on what is requested by the user during a call to
-    `smash.optimize` in **return_options**.
+    `optimize` in **return_options**.
 
     See Also
     --------
@@ -199,7 +199,7 @@ class BayesianOptimize:
         A list of length *n* containing the returned time steps.
 
     rr_states : `FortranDerivedTypeArray`
-        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
+        A list of length *n* of `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
@@ -242,7 +242,7 @@ class BayesianOptimize:
     Notes
     -----
     The object's available attributes depend on what is requested by the user during a call to
-    `smash.bayesian_optimize` in **return_options**.
+    `bayesian_optimize` in **return_options**.
 
     See Also
     --------

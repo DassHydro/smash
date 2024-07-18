@@ -36,7 +36,7 @@ class MultisetEstimate:
         A list of length *n* containing the returned time steps.
 
     rr_states : `FortranDerivedTypeArray`
-        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
+        A list of length *n* of `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
@@ -70,7 +70,7 @@ class MultisetEstimate:
     Notes
     -----
     The object's available attributes depend on what is requested by the user during a call to
-    `smash.multiset_estimate`.
+    `multiset_estimate`.
 
     See Also
     --------

@@ -1,7 +1,5 @@
 .. _release.0.3.0-notes:
 
-.. currentmodule:: smash
-
 =========================
 smash 0.3.0 Release Notes
 =========================
@@ -116,7 +114,7 @@ It can be used as follows:
 Save a sample of the Model object data
 **************************************
 
-Two new methods `smash.save_model_ddt` and `smash.read_model_ddt` had been added to avoid to save all the data of the Model object (i.e. all precipitation data) but
+Two new methods :meth:`smash.save_model_ddt` and :meth:`smash.read_model_ddt` had been added to avoid to save all the data of the Model object (i.e. all precipitation data) but
 only the main data. A set of default has been chosen in order to facilitate the use of the method but any kind of data can be extra saved.
 
 It can be used as follows:
