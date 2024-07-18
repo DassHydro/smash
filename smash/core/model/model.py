@@ -1065,6 +1065,7 @@ class Model:
         --------
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
 
         Access to Model structural error sigma parameters
 
