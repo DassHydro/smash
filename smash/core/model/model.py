@@ -1127,7 +1127,44 @@ class Model:
 
         Examples
         --------
-        TODO TH: Fill
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+        >>> model = smash.Model(setup, mesh)
+
+        By default, the weights and biases of the parameterization neural network is set to zero.
+        Access to their values with the getter method
+        `get_nn_parameters_weight <Model.get_nn_parameters_weight>` or
+        `get_nn_parameters_bias <Model.get_nn_parameters_bias>`
+
+        >>> model.get_nn_parameters_bias()
+        [array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
+
+        The output contains a list of weight or bias values for all layers.
+
+        Set random values with the setter methods
+        `set_nn_parameters_weight <Model.set_nn_parameters_weight>` or
+        `set_nn_parameters_bias <Model.set_nn_parameters_bias>` using available initializers
+
+        >>> model.set_nn_parameters_bias(initializer="uniform", random_state=0)
+        >>> model.get_nn_parameters_bias()
+        [array([ 0.09762701,  0.43037874,  0.20552675,  0.08976637, -0.1526904 ,
+                0.29178822, -0.12482557,  0.78354603,  0.92732555, -0.23311697,
+                0.5834501 ,  0.05778984,  0.13608912,  0.85119325, -0.85792786,
+                -0.8257414 ], dtype=float32),
+        array([-0.9595632 ,  0.6652397 ,  0.5563135 ,  0.74002427], dtype=float32)]
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
+
+        >>> model.nn_parameters.<TAB>
+        model.nn_parameters.bias_1                  model.nn_parameters.from_handle(
+        model.nn_parameters.bias_2                  model.nn_parameters.weight_1
+        model.nn_parameters.copy()                  model.nn_parameters.weight_2
         """
 
         return self._parameters.nn_parameters
@@ -2345,15 +2382,44 @@ class Model:
         """
         Get the weight of the parameterization neural network.
 
-        TODO TH: Fill
-
         Returns
         -------
+        value : list[`numpy.ndarray`]
+            A list of arrays representing the weights for each layer of the parameterization neural network.
 
         See Also
         --------
         Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.set_nn_parameters_weight : Set the values of the weight in the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+
+        Set the number of neurons in the hidden layer to 3 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 3
+        >>> model = smash.Model(setup, mesh)
+
+        By default, the weights of the parameterization neural network is set to zero.
+        Access to their values with the getter methods
+        `get_nn_parameters_weight <Model.get_nn_parameters_weight>`
+
+        >>> model.get_nn_parameters_weight()
+        [array([[0., 0., 0., 0.],
+                [0., 0., 0., 0.],
+                [0., 0., 0., 0.]], dtype=float32), array([[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]], dtype=float32)]
+
+        The output contains a list of weight values for all layers.
         """
 
         return [self._parameters.nn_parameters.weight_1, self._parameters.nn_parameters.weight_2]
@@ -2362,15 +2428,39 @@ class Model:
         """
         Get the bias of the parameterization neural network.
 
-        TODO TH: Fill
-
         Returns
         -------
+        value : list[`numpy.ndarray`]
+            A list of arrays representing the biases for each layer of the parameterization neural network.
 
         See Also
         --------
         Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.set_nn_parameters_bias : Set the values of the bias in the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+
+        Set the number of neurons in the hidden layer to 6 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 6
+        >>> model = smash.Model(setup, mesh)
+
+        By default, the biases of the parameterization neural network is set to zero.
+        Access to their values with the getter methods
+        `get_nn_parameters_bias <Model.get_nn_parameters_bias>`
+
+        >>> model.get_nn_parameters_bias()
+        [array([0., 0., 0., 0., 0., 0.], dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
+
+        The output contains a list of bias values for all layers.
         """
 
         return [self._parameters.nn_parameters.bias_1, self._parameters.nn_parameters.bias_2]
@@ -2384,15 +2474,71 @@ class Model:
         """
         Set the values of the weight in the parameterization neural network.
 
-        TODO TH: Fill
-
         Parameters
         ----------
+        value : list[`float` or `numpy.ndarray`] or None, default None
+            The list of value(s) to set to the weights of the neural network.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the weight shape.
+            If not used, a default or specified initialization method will be used.
+
+        initializer : str, default 'glorot_uniform'
+            Weight initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Only used if **value** is not set.
+
+        random_state : `int` or None, default None
+            Random seed used for the initialization in case of using **initializer**.
+
+            .. note::
+                If not given, the parameters will be initialized with a random seed.
 
         See Also
         --------
         Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.get_nn_parameters_weight : Get the weight of the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+
+        Set the number of neurons in the hidden layer to 3 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 3
+        >>> model = smash.Model(setup, mesh)
+
+        Set random weights using Glorot uniform initializer
+
+        >>> model.set_nn_parameters_weight(initializer="glorot_uniform", random_state=0)
+        >>> model.get_nn_parameters_weight()
+        [array([[ 0.09038505,  0.3984533 ,  0.1902808 ,  0.08310751],
+                [-0.14136384,  0.27014342, -0.11556603,  0.7254226 ],
+                [ 0.8585366 , -0.21582437,  0.54016984,  0.053503  ]], dtype=float32),
+        array([[ 0.12599404,  0.78805184, -0.7942869 ],
+                [-0.764488  , -0.8883829 ,  0.6158923 ],
+                [ 0.51504624,  0.68512934,  0.886229  ],
+                [ 0.55393404, -0.07132636,  0.5194391 ]], dtype=float32)]
+
+        The output contains a list of weight values for all layers.
+
+        Set weights with specified values
+
+        >>> import numpy as np
+        >>> np.random.seed(0)
+        >>> model.set_nn_parameters_weight([0.01, np.random.normal(size=(4,3))])
+        >>> model.get_nn_parameters_weight()
+        [array([[0.01, 0.01, 0.01, 0.01],
+                [0.01, 0.01, 0.01, 0.01],
+                [0.01, 0.01, 0.01, 0.01]], dtype=float32),
+        array([[ 1.7640524 ,  0.4001572 ,  0.978738  ],
+                [ 2.2408931 ,  1.867558  , -0.9772779 ],
+                [ 0.95008844, -0.1513572 , -0.10321885],
+                [ 0.41059852,  0.14404356,  1.4542735 ]], dtype=float32)]
         """
 
         value, initializer, random_state = _standardize_set_nn_parameters_weight_args(
@@ -2422,15 +2568,63 @@ class Model:
         """
         Set the values of the bias in the parameterization neural network.
 
-        TODO TH: Fill
-
         Parameters
         ----------
+        value : list[`float` or `numpy.ndarray`] or None, default None
+            The list of value(s) to set to the biases of the neural network.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the bias shape.
+            If not used, a default or specified initialization method will be used.
+
+        initializer : str, default 'zeros'
+            Bias initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Only used if **value** is not set.
+
+        random_state : `int` or None, default None
+            Random seed used for the initialization in case of using **initializer**.
+
+            .. note::
+                If not given, the parameters will be initialized with a random seed.
 
         See Also
         --------
         Model.nn_parameters : The weight and bias of the parameterization neural network.
         Model.get_nn_parameters_bias : Get the bias of the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+
+        Set the number of neurons in the hidden layer to 6 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 6
+        >>> model = smash.Model(setup, mesh)
+
+        Set random biases using Glorot normal initializer
+
+        >>> model.set_nn_parameters_bias(initializer="glorot_normal", random_state=0)
+        >>> model.get_nn_parameters_bias()
+        [array([ 0.94292563,  0.21389303,  0.5231575 ,  1.1978078 ,  0.99825174, -0.522377  ],
+            dtype=float32),
+        array([ 0.60088867, -0.09572671, -0.06528133,  0.2596853 ],
+            dtype=float32)]
+
+        The output contains a list of bias values for all layers.
+
+        Set biases with specified values
+
+        >>> import numpy as np
+        >>> np.random.seed(0)
+        >>> model.set_nn_parameters_bias([np.random.normal(size=6), 0])
+        >>> model.get_nn_parameters_bias()
+        [array([ 1.7640524,  0.4001572,  0.978738 ,  2.2408931,  1.867558 ,
+                -0.9772779], dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
         """
 
         value, initializer, random_state = _standardize_set_nn_parameters_bias_args(
