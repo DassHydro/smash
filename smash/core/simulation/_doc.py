@@ -109,14 +109,14 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
     ),
     "net": (
         """
-        `Net <smash.factory.Net>` or None, default None
+        `Net <factory.Net>` or None, default None
         """,
         """
         The regionalization neural network used to learn the descriptors-to-parameters mapping.
 
         .. note::
             If not given, a default neural network will be used. This option is only used when **mapping** is
-            ``'ann'``. See `Net <smash.factory.Net>` to learn how to create a customized neural network for
+            ``'ann'``. See `Net <factory.Net>` to learn how to create a customized neural network for
             training.
         """,
     ),
@@ -385,7 +385,7 @@ COST_OPTIONS_BASE_DOC = {
         Prior applied to the control vector.
         A dictionary containing the type of prior to link to control vector. The keys are any control
         parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc.), see
-        `bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` to retrieve control parameters
+        `bayesian_optimize_control_info` to retrieve control parameters
         names. The values are list of length 2 containing distribution information (i.e. distribution name and
         parameters). Below, the set of available distributions and the associated number of parameters:
 
@@ -428,7 +428,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See the `hydrograph_segmentation <smash.hydrograph_segmentation>` function and
+            See the `hydrograph_segmentation` function and
             :ref:`math_num_documentation.hydrograph_segmentation` section.
 
         """,
@@ -533,7 +533,7 @@ RETURN_OPTIONS_BASE_DOC = {
         """,
         """
         Whether to return control vector at end of optimization. In case of optimization with ``'ann'``
-        **mapping**, the control vector is represented in `Net.layers <smash.factory.Net.layers>` instead.
+        **mapping**, the control vector is represented in `Net.layers <factory.Net.layers>` instead.
         """,
     ),
     "net": (
@@ -541,7 +541,7 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return the trained neural network `Net <smash.factory.Net>`. Only used with ``'ann'``
+        Whether to return the trained neural network `Net <factory.Net>`. Only used with ``'ann'``
         **mapping**.
         """,
     ),
@@ -682,7 +682,7 @@ return_options : `dict[str, Any]` or None, default None
 Returns
 -------
 %(model_return)s
-forward_run : `ForwardRun <smash.ForwardRun>` or None, default None
+forward_run : `ForwardRun` or None, default None
     It returns an object containing the intermediate variables defined in **return_options**.
     If no intermediate variables are defined, it returns None.
 
@@ -805,7 +805,7 @@ return_options : `dict[str, Any]` or None, default None
 Returns
 -------
 %(model_return)s
-optimize : `Optimize <smash.Optimize>` or None, default None
+optimize : `Optimize` or None, default None
     It returns an object containing the intermediate variables defined in **return_options**.
     If no intermediate variables are defined, it returns None.
 
@@ -854,10 +854,9 @@ Parameters
 ----------
 %(model_parameter)s
 
-multiset : `MultipleForwardRun <smash.MultipleForwardRun>` or `MultipleOptimize <smash.MultipleOptimize>`
-    The returned object created by `multiple_forward_run <smash.multiple_forward_run>` or
-    `multiple_optimize <smash.multiple_optimize>` method containing information about multiple sets of
-    rainfall-runoff parameters or initial states.
+multiset : `MultipleForwardRun <MultipleForwardRun>`
+    The returned object created by `multiple_forward_run` method containing
+    information about multiple sets of rainfall-runoff parameters or initial states.
 
 alpha : `float`, `list[float, ...]`, or None, default None
     A regularization parameter that controls the decay rate of the likelihood function.
@@ -891,7 +890,7 @@ Returns
 -------
 %(model_return)s
 
-multiset_estimate : `MultisetEstimate <smash.MultisetEstimate>` or None, default None
+multiset_estimate : `MultisetEstimate` or None, default None
     It returns an object containing the intermediate variables defined in **return_options**. If no
     intermediate variables are defined, it returns None.
 
@@ -899,7 +898,6 @@ See Also
 --------
 MultisetEstimate : Represents multiset estimate optional results.
 MultipleForwardRun : Represents multiple forward run computation result.
-MultipleOptimize : Represents multiple optimize computation result.
 
 Examples
 --------
@@ -1026,7 +1024,7 @@ return_options : `dict[str, Any]` or None, default None
 Returns
 -------
 %(model_return)s
-bayesian_optimize : `BayesianOptimize <smash.BayesianOptimize>` or None, default None
+bayesian_optimize : `BayesianOptimize` or None, default None
     It returns an object containing the intermediate variables defined in **return_options**.
     If no intermediate variables are defined, it returns None.
 
@@ -1072,11 +1070,13 @@ Run the forward Model with multiple sets of parameters.
 
 Parameters
 ----------
-model : `Model <smash.Model>`
+model : `Model`
     Primary data structure of the hydrological model `smash`.
 
-samples : `Samples <smash.Samples>`
-    Represents the generated samples result.
+samples : `Samples` or `dict[str, Any]`
+    Represents the rainfall-runoff parameters and/or initial states sample.
+    This can be either a `Samples` object or a dictionary, where the keys are parameter/state names
+    and the corresponding value is a sequence of specified values, representing multiple samples.
 
 cost_options : `dict[str, Any]` or None, default None
     Dictionary containing computation cost options for simulated and observed responses. The elements are:
@@ -1099,7 +1099,7 @@ common_options : `dict[str, Any]` or None, default None
 
 Returns
 -------
-multiple_forward_run : `MultipleForwardRun <smash.MultipleForwardRun>`
+multiple_forward_run : `MultipleForwardRun`
     It returns an object containing the results of the multiple forward run.
 
 See Also
@@ -1136,135 +1136,13 @@ array([1.2170078, 1.0733036, 1.2239422, 1.2506678, 1.2261102], dtype=float32)
     """
 )
 
-_multiple_optimize_doc = (
-    # % TODO FC: Add advanced user guide
-    """
-Run multiple optimization processes with multiple sets of parameters (i.e. starting points), yielding multiple
-solutions.
-
-Parameters
-----------
-model : `Model <smash.Model>`
-    Primary data structure of the hydrological model `smash`.
-
-samples : `Samples <smash.Samples>`
-    Represents the generated samples result.
-
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
-
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
-
-optimize_options : `dict[str, Any]` or None, default None
-    Dictionary containing optimization options for fine-tuning the optimization process.
-    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
-    and **optimizer**.
-
-"""
-    + _gen_docstring_from_base_doc(
-        OPTIMIZE_OPTIONS_BASE_DOC,
-        [
-            "parameters",
-            "bounds",
-            "control_tfm",
-            "descriptor",
-            "termination_crit",
-        ],
-        nindent=1,
-    )
-    + """
-cost_options : `dict[str, Any]` or None, default None
-    Dictionary containing computation cost options for simulated and observed responses. The elements are:
-
-"""
-    + _gen_docstring_from_base_doc(
-        COST_OPTIONS_BASE_DOC,
-        DEFAULT_SIMULATION_COST_OPTIONS["optimize"].keys(),
-        nindent=1,
-    )
-    + """
-common_options : `dict[str, Any]` or None, default None
-    Dictionary containing common options with two elements:
-
-"""
-    + _gen_docstring_from_base_doc(
-        COMMON_OPTIONS_BASE_DOC, DEFAULT_SIMULATION_COMMON_OPTIONS.keys(), nindent=1
-    )
-    + """
-
-Returns
--------
-multiple_optimize : `MultipleOptimize <smash.MultipleOptimize>`
-    It returns an object containing the results of the multiple optimize.
-
-See Also
---------
-Samples : Represents the generated samples result.
-MultipleOptimize : Represents the multiple optimize result.
-
-Examples
---------
->>> from smash.factory import load_dataset
->>> from smash.factory import generate_samples
->>> setup, mesh = load_dataset("cance")
->>> model = smash.Model(setup, mesh)
-
-Define sampling problem and generate samples
-
->>> problem = {
-...            'num_vars': 4,
-...            'names': ['cp', 'ct', 'kexc', 'llr'],
-...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
-... }
->>> sr = generate_samples(problem, n=3, random_state=11)
-
-Run multiple optimization processes
-
->>> mopt = smash.multiple_optimize(
-...     model,
-...     samples=sr,
-...     optimize_options={"termination_crit": {"maxiter": 2}}
-... )
-</> Multiple Optimize
-    Optimize 3/3 (100%(percent)s)
-
-Get the cost values through multiple runs of optimization
-
->>> mopt.cost
-array([0.51374453, 0.0528878 , 0.15056956], dtype=float32)
-"""
-)
-
 _optimize_control_info_doc = (
     """
 Information on the optimization control vector of Model.
 
 Parameters
 ----------
-model : `Model <smash.Model>`
+model : `Model`
     Primary data structure of the hydrological model `smash`.
 
 mapping : `str`, default 'uniform'
@@ -1440,7 +1318,7 @@ Information on the bayesian optimization control vector of Model.
 
 Parameters
 ----------
-model : `Model <smash.Model>`
+model : `Model`
     Primary data structure of the hydrological model `smash`.
 
 mapping : `str`, default 'uniform'
@@ -1623,7 +1501,7 @@ Retrieving information from the control vector is particularly useful for defini
 During a bayesian optimization, it is possible to define these priors in the **cost_options** argument within
 the ``'control_prior'`` key. The problem is that we don't know the control vector in advance until we've
 filled in all the optimization options. This is why we can define all the optimization options in the
-`bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` method, retrieve the names of the
+`bayesian_optimize_control_info` method, retrieve the names of the
 parameters that make up the control vector and then call the optimization function, assigning the priors we
 want to.
 
@@ -1648,9 +1526,8 @@ uniform optimization
 
 _forward_run_doc_appender = DocAppender(_forward_run_doc, indents=0)
 _smash_forward_run_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
-    model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
+    model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_fwd = smash.forward_run()",
     model_example_response="model_fwd",
     percent="%",
@@ -1665,9 +1542,8 @@ _model_forward_run_doc_substitution = DocSubstitution(
 
 _optimize_doc_appender = DocAppender(_optimize_doc, indents=0)
 _smash_optimize_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
-    default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
+    default_optimize_options_func="default_optimize_options",
     parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
     "(depending on **hydrological_module**)",
     parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
@@ -1675,14 +1551,14 @@ _smash_optimize_doc_substitution = DocSubstitution(
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
     bounds_get_serr_parameters_bounds="",
-    model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
+    model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_opt = smash.optimize()",
     model_example_response="model_opt",
     percent="%",
 )
 _model_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
-    default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    default_optimize_options_func="default_optimize_options",
     parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
     "(depending on **hydrological_module**)",
     parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
@@ -1698,9 +1574,8 @@ _model_optimize_doc_substitution = DocSubstitution(
 
 _multiset_estimate_doc_appender = DocAppender(_multiset_estimate_doc, indents=0)
 _smash_multiset_estimate_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
-    model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
+    model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_estim = smash.multiset_estimate(model, multiset=mfr)",
     model_example_response="model_estim",
     percent="%",
@@ -1715,10 +1590,8 @@ _model_multiset_estimate_doc_substitution = DocSubstitution(
 
 _bayesian_optimize_doc_appender = DocAppender(_bayesian_optimize_doc, indents=0)
 _smash_bayesian_optimize_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
-    "`smash`.",
-    default_optimize_options_func="default_bayesian_optimize_options "
-    "<smash.default_bayesian_optimize_options>",
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
+    default_optimize_options_func="default_bayesian_optimize_options",
     parameters_nn_parameters="",
     parameters_note_nn_parameters="",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
@@ -1726,15 +1599,14 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
-    model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
+    model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_bayes_opt = smash.bayesian_optimize()",
     model_example_response="model_bayes_opt",
     percent="%",
 )
 _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
-    default_optimize_options_func="default_bayesian_optimize_options "
-    "<smash.default_bayesian_optimize_options>",
+    default_optimize_options_func="default_bayesian_optimize_options",
     parameters_nn_parameters="",
     parameters_note_nn_parameters="",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
@@ -1750,22 +1622,9 @@ _model_bayesian_optimize_doc_substitution = DocSubstitution(
 
 _multiple_forward_run_doc_appender = DocAppender(_multiple_forward_run_doc, indents=0)
 
-_multiple_optimize_doc_appender = DocAppender(_multiple_optimize_doc, indents=0)
-_smash_multiple_optimize_doc_substitution = DocSubstitution(
-    default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
-    parameters_serr_mu_parameters="",
-    parameters_serr_sigma_parameters="",
-    parameters_note_serr_parameters="",
-    bounds_get_serr_parameters_bounds="",
-    percent="%",
-)
-
 _optimize_control_info_doc_appender = DocAppender(_optimize_control_info_doc, indents=0)
 _smash_optimize_control_info_doc_substitution = DocSubstitution(
-    default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    default_optimize_options_func="default_optimize_options",
     parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
     "(depending on **hydrological_module**)",
     parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
@@ -1777,8 +1636,7 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
 
 _bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_control_info_doc, indents=0)
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
-    default_optimize_options_func="default_bayesian_optimize_options "
-    "<smash.default_bayesian_optimize_options>",
+    default_optimize_options_func="default_bayesian_optimize_options",
     parameters_nn_parameters="",
     parameters_note_nn_parameters="",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",

@@ -338,9 +338,9 @@ class Net(object):
         Trainable parameters: 18
         """
 
-        bounds = _standardize_add_scale_args(self, bounds)
+        bounds, bound_in = _standardize_add_scale_args(self, bounds)
 
-        layer = Scale(bounds)
+        layer = Scale(bounds, bound_in)
         layer._set_input_shape(shape=self.layers[-1].output_shape())
 
         self.layers.append(layer)

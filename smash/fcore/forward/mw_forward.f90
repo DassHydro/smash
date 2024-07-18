@@ -77,21 +77,21 @@ contains
 
         implicit none
 
-        real(sp), dimension(:), intent(in) :: sample
-        integer, dimension(size(sample)), intent(in) :: samples_kind, samples_ind
+        real(sp), dimension(:, :, :), intent(in) :: sample
+        integer, dimension(size(sample, 3)), intent(in) :: samples_kind, samples_ind
         type(ParametersDT), intent(inout) :: parameters
 
         integer :: i
 
-        do i = 1, size(sample)
+        do i = 1, size(sample, 3)
 
             select case (samples_kind(i))
 
             case (0)
-                parameters%rr_parameters%values(:, :, samples_ind(i)) = sample(i)
+                parameters%rr_parameters%values(:, :, samples_ind(i)) = sample(:, :, i)
 
             case (1)
-                parameters%rr_initial_states%values(:, :, samples_ind(i)) = sample(i)
+                parameters%rr_initial_states%values(:, :, samples_ind(i)) = sample(:, :, i)
 
                 ! Should be unreachable
             case default
@@ -113,10 +113,10 @@ contains
         type(ParametersDT), intent(inout) :: parameters
         type(OutputDT), intent(inout) :: output
         type(OptionsDT), intent(inout) :: options
-        real(sp), dimension(:, :), intent(in) :: samples
-        integer, dimension(size(samples, 1)) :: samples_kind, samples_ind
-        real(sp), dimension(size(samples, 2)), intent(inout) :: cost
-        real(sp), dimension(mesh%ng, setup%ntime_step, size(samples, 2)), intent(inout) :: q
+        real(sp), dimension(:, :, :, :), intent(in) :: samples
+        integer, dimension(size(samples, 3)) :: samples_kind, samples_ind
+        real(sp), dimension(size(samples, 4)), intent(inout) :: cost
+        real(sp), dimension(mesh%ng, setup%ntime_step, size(samples, 4)), intent(inout) :: q
 
         integer :: i, iter, niter, ncpu
         logical :: verbose
@@ -125,7 +125,7 @@ contains
         type(OutputDT) :: output_thread
         type(ReturnsDT) :: returns
 
-        niter = size(samples, 2)
+        niter = size(samples, 4)
         iter = 0
         task = "Forward Run"
 
@@ -149,7 +149,7 @@ contains
             parameters_thread = parameters
             output_thread = output
 
-            call multiple_forward_run_sample_to_parameters(samples(:, i), samples_kind, samples_ind, parameters_thread)
+            call multiple_forward_run_sample_to_parameters(samples(:, :, :, i), samples_kind, samples_ind, parameters_thread)
 
             call forward_run(setup, mesh, input_data, parameters_thread, output_thread, options, returns)
 #ifdef _OPENMP

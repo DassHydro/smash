@@ -29,6 +29,11 @@ def get_rr_states_from_structure(structure: str) -> list[str]:
     return rr_states
 
 
+### FLOAT PRECISION FOR FLOAT COMPARISON ###
+F_PRECISION = 1.0e-5
+############################################
+
+
 ### MODULE ###
 ##############
 

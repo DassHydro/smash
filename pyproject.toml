@@ -42,10 +42,12 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3 :: Only',
     'Topic :: Scientific/Engineering',
     'Operating System :: Unix',
     'Operating System :: Microsoft :: Windows',
+    "Operating System :: MacOS",
 ]
 
 [project.optional-dependencies]
@@ -58,6 +60,7 @@ doc = [
     "numpydoc",
     "pydata-sphinx-theme",
     "ipython",
+    "pickleshare",
     "sphinxcontrib-bibtex",
     "sphinx-design",
     "sphinx-autosummary-accessors",
@@ -81,7 +84,7 @@ tag_prefix = "v"
 parentdir_prefix = "smash-"
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* cp38-* cp312-* pp* *_i686 *_ppc64le *_s390x"
+skip = "cp36-* cp37-* cp38-* pp* *_i686 *_ppc64le *_s390x"
 test-command = 'python -c "import smash; print(smash.__version__)"'
 build-verbosity = 3
 
@@ -89,9 +92,11 @@ build-verbosity = 3
 before-build = "pip install delvewheel"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 
+[tool.cibuildwheel.macos]
+before-build = "brew reinstall gfortran libomp && brew unlink gfortran && brew link gfortran"
+
 [tool.ruff]
 line-length = 110
-target-version = "py311"
 
 # ruff lint rules derived from Pandas
 [tool.ruff.lint]

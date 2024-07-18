@@ -99,7 +99,7 @@ def signatures(
 
     Parameters
     ----------
-    model : `Model <smash.Model>`
+    model : `Model`
         Primary data structure of the hydrological model `smash`.
 
     sign : `str`, `list[str, ...]` or None, default None
@@ -120,14 +120,14 @@ def signatures(
         .. note::
             If not given, default values will be set for all elements.
             If a specific element is not given in the dictionary, a default value will be set for that
-            element. See `smash.hydrograph_segmentation` for more.
+            element. See `hydrograph_segmentation` for more.
 
     domain : `str`, default 'obs'
         Compute observed (``'obs'``) or simulated (``'sim'``) signatures.
 
     Returns
     -------
-    signatures : `Signatures <smash.Signatures>`
+    signatures : `Signatures`
         It returns an object containing the results of the signatures computation.
 
     See Also

@@ -892,7 +892,7 @@ contains
                     parameters%control%x(j) = parameters%rr_parameters%values(row, col, i)
                     parameters%control%l(j) = options%optimize%l_rr_parameters(i)
                     parameters%control%u(j) = options%optimize%u_rr_parameters(i)
-                    parameters%control%nbd = 2
+                    parameters%control%nbd(j) = 2
                     write (name, '(a,i0,a,i0)') trim(parameters%rr_parameters%keys(i)), row, "-", col
                     parameters%control%name(j) = name
 
@@ -934,7 +934,7 @@ contains
                     parameters%control%x(j) = parameters%rr_initial_states%values(row, col, i)
                     parameters%control%l(j) = options%optimize%l_rr_initial_states(i)
                     parameters%control%u(j) = options%optimize%u_rr_initial_states(i)
-                    parameters%control%nbd = 2
+                    parameters%control%nbd(j) = 2
                     write (name, '(a,i0,a,i0)') trim(parameters%rr_initial_states%keys(i)), row, "-", col
                     parameters%control%name(j) = name
 

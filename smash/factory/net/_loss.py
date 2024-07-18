@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.fcore._mwd_options import OptionsDT
     from smash.fcore._mwd_returns import ReturnsDT
-    from smash.util._typing import AnyTuple
 
 
 def _hcost(instance: Model) -> float:
@@ -30,11 +29,11 @@ def _hcost_prime(
     instance: Model,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-) -> AnyTuple:
+):
     if y.ndim < 3:
         y = y.reshape(instance.mesh.flwdir.shape + (-1,))
         return_3d_grad = False
-    else:
+    else:  # in case of CNN
         return_3d_grad = True
 
     # % Set parameters or states
@@ -97,7 +96,7 @@ def _hcost_prime(
         else:  # nn_parameters excluded from descriptors-to-parameters mapping
             pass
 
-    if return_3d_grad:
+    if return_3d_grad:  # in case of CNN
         grad_reg = np.transpose(grad_reg, (1, 2, 0))
     else:
         grad_reg = np.reshape(grad_reg, (len(grad_reg), -1)).T

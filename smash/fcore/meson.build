@@ -34,13 +34,11 @@ md_f90_sources = [
     'operator/md_snow_operator.f90',
     'operator/md_vic3l_operator.f90',
 
-    'optimize/md_regularization.f90',
+    'cost/md_regularization.f90',
 ]
 
 mw_f90_sources = [
     'forward/mw_forward.f90',
-
-    'optimize/mw_optimize.f90',
 
     'routine/mw_atmos_statistic.f90',
     'routine/mw_interception_capacity.f90',
@@ -75,7 +73,7 @@ mwd_f90_sources = [
 
     'external/mwd_bayesian_tools.f90',
 
-    'optimize/mwd_cost.f90',
+    'cost/mwd_cost.f90',
 
     'routine/mwd_atmos_manipulation.f90',
     'routine/mwd_parameters_manipulation.f90',

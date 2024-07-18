@@ -28,13 +28,6 @@ Numerical Optimization
       optimize
       bayesian_optimize
 
-Multiple Numerical Optimization
-*******************************
-.. autosummary::
-      :toctree: smash/
-
-      multiple_optimize
-
 Multiple Sets Estimation
 ************************
 .. autosummary::
