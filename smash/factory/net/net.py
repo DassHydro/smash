@@ -201,7 +201,7 @@ class Net(object):
         Trainable parameters: 884
         """
 
-        layer, options = _standardize_add_args(layer, options)
+        layer, options = _standardize_add_args(self, layer, options)
 
         lay = eval(layer)(**options)
 

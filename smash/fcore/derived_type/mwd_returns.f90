@@ -75,6 +75,9 @@ module mwd_returns
         real(sp) :: log_h
         logical :: log_h_flag = .false.
 
+        real(sp), dimension(:, :, :, :), allocatable :: internal_fluxes
+        logical :: internal_fluxes_flag = .false.
+
     end type ReturnsDT
 
 contains
@@ -142,6 +145,10 @@ contains
 
             case ("log_h")
                 this%log_h_flag = .true.
+
+            case ("internal_fluxes")
+                this%internal_fluxes_flag = .true.
+                allocate (this%internal_fluxes(mesh%nrow, mesh%ncol, this%nmts, setup%n_internal_fluxes))
 
             end select
 
