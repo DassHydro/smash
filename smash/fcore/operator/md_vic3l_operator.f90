@@ -5,6 +5,7 @@ module md_vic3l_operator
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
+    use mwd_returns !% only: ReturnDT
     use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
 
     implicit none
@@ -173,7 +174,7 @@ contains
 
     end subroutine vic3l_baseflow
 
-    subroutine vic3l_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_b, ac_cusl, ac_cmsl, &
+    subroutine vic3l_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_b, ac_cusl, ac_cmsl, &
     & ac_cbsl, ac_ks, ac_pbc, ac_dsm, ac_ds, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt)
 
         implicit none
@@ -182,6 +183,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, &
@@ -190,7 +192,7 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
-        integer :: row, col, k
+        integer :: row, col, k, time_step_returns
         real(sp) :: pn, en, qr, qb
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
@@ -236,6 +238,25 @@ contains
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn, en, qr, qb, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
             end do
         end do
 #ifdef _OPENMP
