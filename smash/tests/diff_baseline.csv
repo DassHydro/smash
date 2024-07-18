@@ -1,8 +1,8 @@
-commit 2141f02d41233db9fcbe02ee5de49e7d58fcde75
+commit e0b1ccd2b03ec8054202f9cc7bd404ec30fff756
 Author: Apolline Elbaz <aelbaz@localhost.localdomain>
-Date:   Fri Jul 12 16:21:32 2024 +0200
+Date:   Mon Jul 15 09:57:40 2024 +0200
 
-    added doc in ForwardRun
+    check format and linters
 
 TEST NAME                                                 |STATUS
 bbox_mesh.active_cell                                     |NON MODIFIED
@@ -155,6 +155,150 @@ generate_samples.normal                                   |NON MODIFIED
 generate_samples.uniform                                  |NON MODIFIED
 hydrograph_segmentation.by_obs                            |NON MODIFIED
 hydrograph_segmentation.by_sim                            |NON MODIFIED
+internal_fluxes.zero-gr4-kw.en                            |ADDED
+internal_fluxes.zero-gr4-kw.lexc                          |ADDED
+internal_fluxes.zero-gr4-kw.perc                          |ADDED
+internal_fluxes.zero-gr4-kw.pn                            |ADDED
+internal_fluxes.zero-gr4-kw.pr                            |ADDED
+internal_fluxes.zero-gr4-kw.prd                           |ADDED
+internal_fluxes.zero-gr4-kw.prr                           |ADDED
+internal_fluxes.zero-gr4-kw.qd                            |ADDED
+internal_fluxes.zero-gr4-kw.qim1j                         |ADDED
+internal_fluxes.zero-gr4-kw.qr                            |ADDED
+internal_fluxes.zero-gr4-kw.qt                            |ADDED
+internal_fluxes.zero-gr4-lag0.en                          |ADDED
+internal_fluxes.zero-gr4-lag0.lexc                        |ADDED
+internal_fluxes.zero-gr4-lag0.perc                        |ADDED
+internal_fluxes.zero-gr4-lag0.pn                          |ADDED
+internal_fluxes.zero-gr4-lag0.pr                          |ADDED
+internal_fluxes.zero-gr4-lag0.prd                         |ADDED
+internal_fluxes.zero-gr4-lag0.prr                         |ADDED
+internal_fluxes.zero-gr4-lag0.qd                          |ADDED
+internal_fluxes.zero-gr4-lag0.qr                          |ADDED
+internal_fluxes.zero-gr4-lag0.qt                          |ADDED
+internal_fluxes.zero-gr4-lag0.qup                         |ADDED
+internal_fluxes.zero-gr4-lr.en                            |ADDED
+internal_fluxes.zero-gr4-lr.lexc                          |ADDED
+internal_fluxes.zero-gr4-lr.perc                          |ADDED
+internal_fluxes.zero-gr4-lr.pn                            |ADDED
+internal_fluxes.zero-gr4-lr.pr                            |ADDED
+internal_fluxes.zero-gr4-lr.prd                           |ADDED
+internal_fluxes.zero-gr4-lr.prr                           |ADDED
+internal_fluxes.zero-gr4-lr.qd                            |ADDED
+internal_fluxes.zero-gr4-lr.qr                            |ADDED
+internal_fluxes.zero-gr4-lr.qt                            |ADDED
+internal_fluxes.zero-gr4-lr.qup                           |ADDED
+internal_fluxes.zero-gr5-kw.en                            |ADDED
+internal_fluxes.zero-gr5-kw.lexc                          |ADDED
+internal_fluxes.zero-gr5-kw.perc                          |ADDED
+internal_fluxes.zero-gr5-kw.pn                            |ADDED
+internal_fluxes.zero-gr5-kw.pr                            |ADDED
+internal_fluxes.zero-gr5-kw.prd                           |ADDED
+internal_fluxes.zero-gr5-kw.prr                           |ADDED
+internal_fluxes.zero-gr5-kw.qd                            |ADDED
+internal_fluxes.zero-gr5-kw.qim1j                         |ADDED
+internal_fluxes.zero-gr5-kw.qr                            |ADDED
+internal_fluxes.zero-gr5-kw.qt                            |ADDED
+internal_fluxes.zero-gr5-lag0.en                          |ADDED
+internal_fluxes.zero-gr5-lag0.lexc                        |ADDED
+internal_fluxes.zero-gr5-lag0.perc                        |ADDED
+internal_fluxes.zero-gr5-lag0.pn                          |ADDED
+internal_fluxes.zero-gr5-lag0.pr                          |ADDED
+internal_fluxes.zero-gr5-lag0.prd                         |ADDED
+internal_fluxes.zero-gr5-lag0.prr                         |ADDED
+internal_fluxes.zero-gr5-lag0.qd                          |ADDED
+internal_fluxes.zero-gr5-lag0.qr                          |ADDED
+internal_fluxes.zero-gr5-lag0.qt                          |ADDED
+internal_fluxes.zero-gr5-lag0.qup                         |ADDED
+internal_fluxes.zero-gr5-lr.en                            |ADDED
+internal_fluxes.zero-gr5-lr.lexc                          |ADDED
+internal_fluxes.zero-gr5-lr.perc                          |ADDED
+internal_fluxes.zero-gr5-lr.pn                            |ADDED
+internal_fluxes.zero-gr5-lr.pr                            |ADDED
+internal_fluxes.zero-gr5-lr.prd                           |ADDED
+internal_fluxes.zero-gr5-lr.prr                           |ADDED
+internal_fluxes.zero-gr5-lr.qd                            |ADDED
+internal_fluxes.zero-gr5-lr.qr                            |ADDED
+internal_fluxes.zero-gr5-lr.qt                            |ADDED
+internal_fluxes.zero-gr5-lr.qup                           |ADDED
+internal_fluxes.zero-grd-kw.ei                            |ADDED
+internal_fluxes.zero-grd-kw.en                            |ADDED
+internal_fluxes.zero-grd-kw.perc                          |ADDED
+internal_fluxes.zero-grd-kw.pn                            |ADDED
+internal_fluxes.zero-grd-kw.pr                            |ADDED
+internal_fluxes.zero-grd-kw.prr                           |ADDED
+internal_fluxes.zero-grd-kw.qim1j                         |ADDED
+internal_fluxes.zero-grd-kw.qr                            |ADDED
+internal_fluxes.zero-grd-kw.qt                            |ADDED
+internal_fluxes.zero-grd-lag0.ei                          |ADDED
+internal_fluxes.zero-grd-lag0.en                          |ADDED
+internal_fluxes.zero-grd-lag0.perc                        |ADDED
+internal_fluxes.zero-grd-lag0.pn                          |ADDED
+internal_fluxes.zero-grd-lag0.pr                          |ADDED
+internal_fluxes.zero-grd-lag0.prr                         |ADDED
+internal_fluxes.zero-grd-lag0.qr                          |ADDED
+internal_fluxes.zero-grd-lag0.qt                          |ADDED
+internal_fluxes.zero-grd-lag0.qup                         |ADDED
+internal_fluxes.zero-grd-lr.ei                            |ADDED
+internal_fluxes.zero-grd-lr.en                            |ADDED
+internal_fluxes.zero-grd-lr.perc                          |ADDED
+internal_fluxes.zero-grd-lr.pn                            |ADDED
+internal_fluxes.zero-grd-lr.pr                            |ADDED
+internal_fluxes.zero-grd-lr.prr                           |ADDED
+internal_fluxes.zero-grd-lr.qr                            |ADDED
+internal_fluxes.zero-grd-lr.qt                            |ADDED
+internal_fluxes.zero-grd-lr.qup                           |ADDED
+internal_fluxes.zero-loieau-kw.ei                         |ADDED
+internal_fluxes.zero-loieau-kw.en                         |ADDED
+internal_fluxes.zero-loieau-kw.perc                       |ADDED
+internal_fluxes.zero-loieau-kw.pn                         |ADDED
+internal_fluxes.zero-loieau-kw.pr                         |ADDED
+internal_fluxes.zero-loieau-kw.prd                        |ADDED
+internal_fluxes.zero-loieau-kw.prr                        |ADDED
+internal_fluxes.zero-loieau-kw.qd                         |ADDED
+internal_fluxes.zero-loieau-kw.qim1j                      |ADDED
+internal_fluxes.zero-loieau-kw.qr                         |ADDED
+internal_fluxes.zero-loieau-kw.qt                         |ADDED
+internal_fluxes.zero-loieau-lag0.ei                       |ADDED
+internal_fluxes.zero-loieau-lag0.en                       |ADDED
+internal_fluxes.zero-loieau-lag0.perc                     |ADDED
+internal_fluxes.zero-loieau-lag0.pn                       |ADDED
+internal_fluxes.zero-loieau-lag0.pr                       |ADDED
+internal_fluxes.zero-loieau-lag0.prd                      |ADDED
+internal_fluxes.zero-loieau-lag0.prr                      |ADDED
+internal_fluxes.zero-loieau-lag0.qd                       |ADDED
+internal_fluxes.zero-loieau-lag0.qr                       |ADDED
+internal_fluxes.zero-loieau-lag0.qt                       |ADDED
+internal_fluxes.zero-loieau-lag0.qup                      |ADDED
+internal_fluxes.zero-loieau-lr.ei                         |ADDED
+internal_fluxes.zero-loieau-lr.en                         |ADDED
+internal_fluxes.zero-loieau-lr.perc                       |ADDED
+internal_fluxes.zero-loieau-lr.pn                         |ADDED
+internal_fluxes.zero-loieau-lr.pr                         |ADDED
+internal_fluxes.zero-loieau-lr.prd                        |ADDED
+internal_fluxes.zero-loieau-lr.prr                        |ADDED
+internal_fluxes.zero-loieau-lr.qd                         |ADDED
+internal_fluxes.zero-loieau-lr.qr                         |ADDED
+internal_fluxes.zero-loieau-lr.qt                         |ADDED
+internal_fluxes.zero-loieau-lr.qup                        |ADDED
+internal_fluxes.zero-vic3l-kw.en                          |ADDED
+internal_fluxes.zero-vic3l-kw.pn                          |ADDED
+internal_fluxes.zero-vic3l-kw.qb                          |ADDED
+internal_fluxes.zero-vic3l-kw.qim1j                       |ADDED
+internal_fluxes.zero-vic3l-kw.qr                          |ADDED
+internal_fluxes.zero-vic3l-kw.qt                          |ADDED
+internal_fluxes.zero-vic3l-lag0.en                        |ADDED
+internal_fluxes.zero-vic3l-lag0.pn                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qb                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qr                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qt                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qup                       |ADDED
+internal_fluxes.zero-vic3l-lr.en                          |ADDED
+internal_fluxes.zero-vic3l-lr.pn                          |ADDED
+internal_fluxes.zero-vic3l-lr.qb                          |ADDED
+internal_fluxes.zero-vic3l-lr.qr                          |ADDED
+internal_fluxes.zero-vic3l-lr.qt                          |ADDED
+internal_fluxes.zero-vic3l-lr.qup                         |ADDED
 mesh_io.active_cell                                       |NON MODIFIED
 mesh_io.area                                              |NON MODIFIED
 mesh_io.area_dln                                          |NON MODIFIED
