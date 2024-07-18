@@ -974,13 +974,12 @@ def _bayesian_optimize(
 
     ret = {**fret, **pyret}
 
-    if "internal_fluxes" in ret:
-        ret["internal_fluxes"] = {
-            key: ret["internal_fluxes"][..., i]
-            for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
-        }
-
     if ret:
+        if "internal_fluxes" in ret:
+            ret["internal_fluxes"] = {
+                key: ret["internal_fluxes"][..., i]
+                for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+            }
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()

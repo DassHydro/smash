@@ -165,10 +165,6 @@ def _forward_run(
         return_options["fkeys"],
     )
 
-    if wrap_returns.internal_fluxes_flag:
-        if model.setup.snow_module_present:
-            wrap_returns.n_snow_internal_fluxes = 1
-
     # % Map cost_options dict to derived type
     _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
