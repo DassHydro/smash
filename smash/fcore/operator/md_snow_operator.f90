@@ -13,6 +13,7 @@ module md_snow_operator
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
+    use mwd_returns !% only: ReturnsDT
     use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
 
     implicit none
@@ -37,7 +38,7 @@ contains
 
     end subroutine simple_snow
 
-    subroutine ssn_time_step(setup, mesh, input_data, options, time_step, ac_kmlt, ac_hs, ac_mlt)
+    subroutine ssn_time_step(setup, mesh, input_data, options, returns, time_step, ac_kmlt, ac_hs, ac_mlt)
 
         implicit none
 
@@ -45,12 +46,13 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_kmlt
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hs
         real(sp), dimension(mesh%nac), intent(inout) :: ac_mlt
 
-        integer :: row, col, k
+        integer :: row, col, k, time_step_returns
         real(sp), dimension(mesh%nac) :: ac_snow, ac_temp
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "snow", ac_snow)
@@ -76,7 +78,23 @@ contains
                     ac_mlt(k) = 0._sp
 
                 end if
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
 
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                1:1 + setup%n_snow_fluxes) = (/ac_mlt(k)/)
+
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
             end do
         end do
 #ifdef _OPENMP
