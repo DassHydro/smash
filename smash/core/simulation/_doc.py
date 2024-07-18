@@ -510,6 +510,15 @@ RETURN_OPTIONS_BASE_DOC = {
         Whether to return simulated discharge on the whole domain for specific time steps.
         """,
     ),
+    "internal_fluxes": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal fluxes depending on the model structure on \
+        the whole domain for specific time steps.
+        """,
+    ),
     "iter_cost": (
         """
         `bool`, default False
@@ -624,14 +633,6 @@ RETURN_OPTIONS_BASE_DOC = {
         """
         Whether to return sigma, the standard deviation of structural errors. It can also be returned directly
         from the Model object using the `Model.get_serr_sigma` method.
-        """,
-    ),
-    "internal_fluxes": (
-        """
-        `bool`, default False
-        """,
-        """
-        Whether to return internal fluxes, depending on the model structure.
         """,
     ),
 }

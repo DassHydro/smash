@@ -43,6 +43,7 @@ def run_internal_fluxes_option(model: smash.Model, custom_options) -> dict:
     )
     return res
 
+
 def test_run_internal_fluxes():
     res = generic_internal_fluxes(pytest.model_structure)
 
