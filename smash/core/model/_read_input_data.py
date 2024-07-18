@@ -77,65 +77,105 @@ def sample_delta_time_in_file(files, date_pattern):
     return arr_delta_time
 
 
-# TODO recherche de date start par dichotomie
+# TODO recherche de date start
+# return the first position after oe equal at date in files
 def fast_index_search_for_date(files, date, date_pattern):
     # print("search for",date)
     d_pattern, occurence = _split_date_occurence(date_pattern)
     regex_date = _build_date_regex_pattern(d_pattern)
 
-    vec_date = []
+    re_match = re.findall(regex_date, os.path.basename(files[-1]))
+    if len(re_match) > 0:
+        date_match = pd.to_datetime(re_match[occurence], format=d_pattern)
+
+        # cas1
+        if date > date_match:
+            return -1
+
+    else:
+        raise ValueError(
+            f"Date formatter {d_pattern} corresponding to regex {regex_date}"
+            " not found in filename {os.path.basename(files[i])}"
+        )
+
+    re_match = re.findall(regex_date, os.path.basename(files[0]))
+    if len(re_match) > 0:
+        date_match = pd.to_datetime(re_match[occurence], format=d_pattern)
+
+        # cas2
+        if date < date_match:
+            return 0
+
+    else:
+        raise ValueError(
+            f"Date formatter {d_pattern} corresponding to regex {regex_date}"
+            " not found in filename {os.path.basename(files[i])}"
+        )
+
+    # cas3
     pos = 0
-    previous_pos = pos
+    final_pos = 0
+    move = 1
+    previous_move = 0
     step = len(files) - 1
-    nb_iteration = 0
-    i = 0
-    while nb_iteration < 100:
-        re_match = re.findall(regex_date, os.path.basename(files[i]))
+    nb_iter = 0
+    while nb_iter < 100:
+        re_match = re.findall(regex_date, os.path.basename(files[pos]))
+        date_match = pd.to_datetime(re_match[occurence], format=d_pattern)
 
-        if len(re_match) > 0:
-            date_match = pd.to_datetime(re_match[occurence], format=d_pattern)
-            vec_date.append(
-                "iteration "
-                + str(nb_iteration)
-                + " at "
-                + date_match.strftime("%Y%m%d%H%M%S")
-                + " steps "
-                + str(step)
-            )
+        # print(
+        #             "At iteration "
+        #             + str(nb_iter)
+        #             +f" searching {date},"
+        #             + "and match "
+        #             + date_match.strftime("%Y-%m-%d %H:%M:%S")
+        #             + f" at pos {pos}"
+        #         )
 
-            if date_match > date:
-                if i == 0:
-                    previous_pos = 0
-                    print(f"</>  No atmospheric data anterior to {date} found ")
-                    break
+        if date_match < date:
+            pos = min(pos + step, len(files) - 1)
+            move = 1
+        elif date_match > date:
+            pos = max(pos - step, 0)
+            move = -1
+        elif date_match == date:
+            final_pos = pos
+            break
 
-                step = int(step / 2)
-                pos = previous_pos
-                i = pos + step
-
-                if step == 0:
-                    break
-
-            elif date_match == date:
-                pos = i
-                previous_pos = i
+        if step == 0:
+            if date_match < date:
+                final_pos = pos + 1
                 break
-            else:
-                previous_pos = i
-                if i == len(files) - 1:
-                    break
+            elif date_match > date:
+                final_pos = pos
+                break
 
-                i = i + step
+        # print(f"-> Move to pos {pos} with step {step}")
 
-        else:
-            raise ValueError(
-                f"Date formatter {d_pattern} corresponding to regex {regex_date}"
-                " not found in filename {os.path.basename(files[i])}"
-            )
+        # reduce step only if we change search direction
+        if previous_move != move:
+            step = int(step / 2)
 
-        nb_iteration = nb_iteration + 1
-    print(vec_date)
-    return previous_pos
+        nb_iter = nb_iter + 1
+        previous_move = move
+
+    # print(
+    #             "At last iteration "
+    #             + str(nb_iter)
+    #             +f" searching {date},"
+    #             + "and match "
+    #             + date_match.strftime("%Y-%m-%d %H:%M:%S")
+    #             + f" at pos {pos}"
+    #         )
+
+    # iter>maxlimit:
+    if date_match < date:
+        final_pos = pos
+    elif date_match > date:
+        # back to previous pos
+        final_pos = pos - 2 * step
+
+    return final_pos
 
 
 # Getting dates for all files
