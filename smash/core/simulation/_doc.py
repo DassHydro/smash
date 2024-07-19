@@ -69,10 +69,11 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `str` or None, default None
         """,
         """
-        Transformation method applied to the control vector. Should be one of:
+        Transformation method applied to the control vector. Only used with ``'sbs'`` or ``'lbfgsb'``
+        optimizer. Should be one of:
 
-        - ``'keep'`` (all **optimizer**)
-        - ``'normalize'`` (``'sbs'`` or ``'lbfgsb'`` **optimizer** only)
+        - ``'keep'``
+        - ``'normalize'``
         - ``'sbs'`` (``'sbs'`` **optimizer** only)
 
         .. note::
@@ -80,7 +81,6 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
             - **optimizer** = ``'sbs'``; **control_tfm** = ``'sbs'``
             - **optimizer** = ``'lbfgsb'``; **control_tfm** = ``'normalize'``
-            - **optimizer** = ``'ann'``; **control_tfm** = ``'keep'``
         """,
     ),
     "descriptor": (
