@@ -6428,7 +6428,7 @@ CONTAINS
         parameters%control%u(j) = options%optimize%u_rr_parameters(i)
         parameters%control%nbd(j) = 2
         parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
-&         i))//'0'
+&         i))//'-0'
       END IF
     END DO
   END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_CONTROL
@@ -6458,7 +6458,7 @@ CONTAINS
 &         )
         parameters%control%nbd(j) = 2
         parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
-&         keys(i))//'0'
+&         keys(i))//'-0'
       END IF
     END DO
   END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_CONTROL
@@ -6488,8 +6488,8 @@ CONTAINS
               parameters%control%u(j) = options%optimize%u_rr_parameters&
 &               (i)
               parameters%control%nbd(j) = 2
-              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%rr_parameters%&
-&             keys(i)), row, '-', col
+              WRITE(name, '(a,a,i0,a,i0)') TRIM(parameters%rr_parameters&
+&             %keys(i)), '-', row, '-', col
               parameters%control%name(j) = name
             END IF
           END DO
@@ -6523,8 +6523,8 @@ CONTAINS
               parameters%control%u(j) = options%optimize%&
 &               u_rr_initial_states(i)
               parameters%control%nbd(j) = 2
-              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%&
-&             rr_initial_states%keys(i)), row, '-', col
+              WRITE(name, '(a,a,i0,a,i0)') TRIM(parameters%&
+&             rr_initial_states%keys(i)), '-', row, '-', col
               parameters%control%name(j) = name
             END IF
           END DO
@@ -6558,7 +6558,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
-&         i))//'0'
+&         i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
@@ -6598,7 +6598,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
-&         keys(i))//'0'
+&         keys(i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
@@ -6639,7 +6639,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
-&         i))//'0'
+&         i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
@@ -6685,7 +6685,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
-&         keys(i))//'0'
+&         keys(i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
@@ -6788,7 +6788,7 @@ CONTAINS
           parameters%control%x(j) = parameters%nn_parameters%weight_1(l&
 &           , k)
           parameters%control%nbd(j) = 0
-          WRITE(name, '(a,i0,a,i0)') 'weight_1', l, '-', k
+          WRITE(name, '(a,i0,a,i0)') 'weight_1-', l, '-', k
           parameters%control%name(j) = name
         END DO
       END DO
@@ -6798,7 +6798,7 @@ CONTAINS
         j = j + 1
         parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
         parameters%control%nbd(j) = 0
-        WRITE(name, '(a,i0)') 'bias_1', k
+        WRITE(name, '(a,i0)') 'bias_1-', k
         parameters%control%name(j) = name
       END DO
     END IF
@@ -6809,7 +6809,7 @@ CONTAINS
           parameters%control%x(j) = parameters%nn_parameters%weight_2(l&
 &           , k)
           parameters%control%nbd(j) = 0
-          WRITE(name, '(a,i0,a,i0)') 'weight_2', l, '-', k
+          WRITE(name, '(a,i0,a,i0)') 'weight_2-', l, '-', k
           parameters%control%name(j) = name
         END DO
       END DO
@@ -6819,7 +6819,7 @@ CONTAINS
         j = j + 1
         parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
         parameters%control%nbd(j) = 0
-        WRITE(name, '(a,i0)') 'bias_2', k
+        WRITE(name, '(a,i0)') 'bias_2-', k
         parameters%control%name(j) = name
       END DO
     END IF
