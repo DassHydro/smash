@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import OPTIMIZABLE_NN_PARAMETERS, PY_OPTIMIZER, PY_OPTIMIZER_CLASS
+from smash._constant import OPTIMIZABLE_NN_PARAMETERS, ADAPTIVE_OPTIMIZER, OPTIMIZER_CLASS
 from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
 
@@ -475,9 +475,9 @@ class Net(object):
         """
         Private function: Compile the neural network.
         """
-        ind = PY_OPTIMIZER.index(optimizer.lower())
+        ind = ADAPTIVE_OPTIMIZER.index(optimizer.lower())
 
-        func = eval(PY_OPTIMIZER_CLASS[ind])
+        func = eval(OPTIMIZER_CLASS[ind])
 
         opt = func(**learning_param)
 
@@ -515,8 +515,8 @@ class Net(object):
         )
 
         # % Initialize optimizer for the parameterization NN if used
-        ind = PY_OPTIMIZER.index(optimizer.lower())
-        func = eval(PY_OPTIMIZER_CLASS[ind])
+        ind = ADAPTIVE_OPTIMIZER.index(optimizer.lower())
+        func = eval(OPTIMIZER_CLASS[ind])
 
         n_layers = 2 if sum(instance.setup.neurons) > 0 else 0
         opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * n_layers)]

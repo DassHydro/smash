@@ -14,7 +14,7 @@ from smash._constant import (
     DEFAULT_SIMULATION_RETURN_OPTIONS,
     DEFAULT_TERMINATION_CRIT,
     EVENT_SEG_KEYS,
-    F90_OPTIMIZER_CONTROL_TFM,
+    OPTIMIZER_CONTROL_TFM,
     F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
@@ -32,8 +32,8 @@ from smash._constant import (
     OPTIMIZABLE_RR_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
-    PY_OPTIMIZER,
-    PY_OPTIMIZER_CLASS,
+    ADAPTIVE_OPTIMIZER,
+    OPTIMIZER_CLASS,
     REGIONAL_MAPPING,
     RR_PARAMETERS,
     RR_STATES,
@@ -274,13 +274,13 @@ def _standardize_simulation_optimize_options_control_tfm(
     optimizer: str, control_tfm: str | None, **kwargs
 ) -> str | None:
     if control_tfm is None:
-        control_tfm = F90_OPTIMIZER_CONTROL_TFM[optimizer][0]
+        control_tfm = OPTIMIZER_CONTROL_TFM[optimizer][0]
     else:
         if isinstance(control_tfm, str):
-            if control_tfm.lower() not in F90_OPTIMIZER_CONTROL_TFM[optimizer]:
+            if control_tfm.lower() not in OPTIMIZER_CONTROL_TFM[optimizer]:
                 raise ValueError(
                     f"Unknown transformation '{control_tfm}' in control_tfm optimize_options. "
-                    f"Choices: {F90_OPTIMIZER_CONTROL_TFM[optimizer]}"
+                    f"Choices: {OPTIMIZER_CONTROL_TFM[optimizer]}"
                 )
         else:
             raise TypeError("control_tfm optimize_options must be a str")
@@ -400,7 +400,7 @@ def _standardize_simulation_optimize_options_learning_rate(
             raise ValueError("learning_rate optimize_options must be greater than 0")
     else:
         if learning_rate is None:
-            opt_class = eval(PY_OPTIMIZER_CLASS[PY_OPTIMIZER.index(optimizer)])
+            opt_class = eval(OPTIMIZER_CLASS[ADAPTIVE_OPTIMIZER.index(optimizer)])
             learning_rate = opt_class().learning_rate
 
         else:

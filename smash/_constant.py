@@ -710,9 +710,7 @@ WB_INITIALIZER = [
     "zeros",
 ]
 
-PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
-
-PY_OPTIMIZER = [opt.lower() for opt in PY_OPTIMIZER_CLASS]
+OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
 
 ACTIVATION_FUNCTION_CLASS = [
     "Sigmoid",
@@ -752,9 +750,11 @@ REGIONAL_MAPPING = ["multi-linear", "multi-polynomial", "ann"]
 
 MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
 
-F90_OPTIMIZER = ["sbs", "lbfgsb"]
+ADAPTIVE_OPTIMIZER = [opt.lower() for opt in OPTIMIZER_CLASS]
+GRADIENT_BASED_OPTIMIZER = ["lbfgsb"] + ADAPTIVE_OPTIMIZER
+HEURISTIC_OPTIMIZER = ["sbs"]
 
-OPTIMIZER = F90_OPTIMIZER + PY_OPTIMIZER
+OPTIMIZER = HEURISTIC_OPTIMIZER + GRADIENT_BASED_OPTIMIZER
 
 # % Following MAPPING order
 # % The first optimizer for each mapping is used as default optimizer
@@ -762,18 +762,17 @@ MAPPING_OPTIMIZER = dict(
     zip(
         MAPPING,
         [
-            F90_OPTIMIZER,
-            ["lbfgsb"],
-            ["lbfgsb"],
-            ["lbfgsb"],
-            PY_OPTIMIZER,
+            OPTIMIZER,  # for uniform mapping (all optimizers are possible)
+            *(
+                [GRADIENT_BASED_OPTIMIZER] * (len(MAPPING) - 1)
+            ),  # for the rest (only gradient-based optimizers accepted)
         ],
     )
 )
 
-F90_OPTIMIZER_CONTROL_TFM = dict(
+OPTIMIZER_CONTROL_TFM = dict(
     zip(
-        F90_OPTIMIZER,
+        ["sbs", "lbfgsb"],
         [
             ["sbs", "normalize", "keep"],
             ["normalize", "keep"],
@@ -796,11 +795,11 @@ GAUGE_ALIAS = ["dws", "all"]
 DEFAULT_TERMINATION_CRIT = dict(
     **dict(
         zip(
-            F90_OPTIMIZER,
+            ["sbs", "lbfgsb"],
             [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
         )
     ),
-    **dict(zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])),
+    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -838,6 +837,21 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
         "control_tfm",
         "termination_crit",
     ],
+    **dict(
+        zip(
+            itertools.product(["uniform", "distributed"], ADAPTIVE_OPTIMIZER),
+            2
+            * len(ADAPTIVE_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "learning_rate",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),
     ("multi-linear", "lbfgsb"): [
         "parameters",
         "bounds",
@@ -854,8 +868,31 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ],
     **dict(
         zip(
-            [("ann", optimizer) for optimizer in PY_OPTIMIZER],
-            len(PY_OPTIMIZER)
+            itertools.product(["multi-linear", "multi-polynomial"], ADAPTIVE_OPTIMIZER),
+            2
+            * len(ADAPTIVE_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "descriptor",
+                    "learning_rate",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),
+    ("ann", "lbfgsb"): [
+        "parameters",
+        "bounds",
+        "net",
+        "control_tfm",
+        "termination_crit",
+    ],
+    **dict(
+        zip(
+            [("ann", optimizer) for optimizer in ADAPTIVE_OPTIMIZER],
+            len(ADAPTIVE_OPTIMIZER)
             * [
                 [
                     "parameters",
