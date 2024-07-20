@@ -39,7 +39,7 @@ def _standardize_optimize_optimizer(mapping: str, optimizer: str, setup: SetupDT
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     if sum(setup.neurons) > 0 and optimizer == "sbs":
-        raise ValueError(f"The SBS optimizer is suitable for the {setup.hydrological_module} module")
+        raise ValueError(f"The SBS optimizer is not suitable for the {setup.hydrological_module} module")
 
     return optimizer
 

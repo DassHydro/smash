@@ -823,7 +823,7 @@ contains
             parameters%control%l(j) = options%optimize%l_rr_parameters(i)
             parameters%control%u(j) = options%optimize%u_rr_parameters(i)
             parameters%control%nbd(j) = 2
-            parameters%control%name(j) = trim(parameters%rr_parameters%keys(i))//"0"
+            parameters%control%name(j) = trim(parameters%rr_parameters%keys(i))//"-0"
 
         end do
 
@@ -856,7 +856,7 @@ contains
             parameters%control%l(j) = options%optimize%l_rr_initial_states(i)
             parameters%control%u(j) = options%optimize%u_rr_initial_states(i)
             parameters%control%nbd(j) = 2
-            parameters%control%name(j) = trim(parameters%rr_initial_states%keys(i))//"0"
+            parameters%control%name(j) = trim(parameters%rr_initial_states%keys(i))//"-0"
 
         end do
 
@@ -893,7 +893,7 @@ contains
                     parameters%control%l(j) = options%optimize%l_rr_parameters(i)
                     parameters%control%u(j) = options%optimize%u_rr_parameters(i)
                     parameters%control%nbd(j) = 2
-                    write (name, '(a,i0,a,i0)') trim(parameters%rr_parameters%keys(i)), row, "-", col
+                    write (name, '(a,a,i0,a,i0)') trim(parameters%rr_parameters%keys(i)), "-", row, "-", col
                     parameters%control%name(j) = name
 
                 end do
@@ -935,7 +935,7 @@ contains
                     parameters%control%l(j) = options%optimize%l_rr_initial_states(i)
                     parameters%control%u(j) = options%optimize%u_rr_initial_states(i)
                     parameters%control%nbd(j) = 2
-                    write (name, '(a,i0,a,i0)') trim(parameters%rr_initial_states%keys(i)), row, "-", col
+                    write (name, '(a,a,i0,a,i0)') trim(parameters%rr_initial_states%keys(i)), "-", row, "-", col
                     parameters%control%name(j) = name
 
                 end do
@@ -976,7 +976,7 @@ contains
 
             call inv_scaled_sigmoid(y, l, u, parameters%control%x(j))
             parameters%control%nbd(j) = 0
-            parameters%control%name(j) = trim(parameters%rr_parameters%keys(i))//"0"
+            parameters%control%name(j) = trim(parameters%rr_parameters%keys(i))//"-0"
 
             do k = 1, setup%nd
 
@@ -1025,7 +1025,7 @@ contains
 
             call inv_scaled_sigmoid(y, l, u, parameters%control%x(j))
             parameters%control%nbd(j) = 0
-            parameters%control%name(j) = trim(parameters%rr_initial_states%keys(i))//"0"
+            parameters%control%name(j) = trim(parameters%rr_initial_states%keys(i))//"-0"
 
             do k = 1, setup%nd
 
@@ -1074,7 +1074,7 @@ contains
 
             call inv_scaled_sigmoid(y, l, u, parameters%control%x(j))
             parameters%control%nbd(j) = 0
-            parameters%control%name(j) = trim(parameters%rr_parameters%keys(i))//"0"
+            parameters%control%name(j) = trim(parameters%rr_parameters%keys(i))//"-0"
 
             do k = 1, setup%nd
 
@@ -1130,7 +1130,7 @@ contains
 
             call inv_scaled_sigmoid(y, l, u, parameters%control%x(j))
             parameters%control%nbd(j) = 0
-            parameters%control%name(j) = trim(parameters%rr_initial_states%keys(i))//"0"
+            parameters%control%name(j) = trim(parameters%rr_initial_states%keys(i))//"-0"
 
             do k = 1, setup%nd
 
@@ -1249,7 +1249,7 @@ contains
                     j = j + 1
                     parameters%control%x(j) = parameters%nn_parameters%weight_1(l, k)
                     parameters%control%nbd(j) = 0
-                    write (name, '(a,i0,a,i0)') "weight_1", l, "-", k
+                    write (name, '(a,i0,a,i0)') "weight_1-", l, "-", k
                     parameters%control%name(j) = name
 
                 end do
@@ -1263,7 +1263,7 @@ contains
                 j = j + 1
                 parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
                 parameters%control%nbd(j) = 0
-                write (name, '(a,i0)') "bias_1", k
+                write (name, '(a,i0)') "bias_1-", k
                 parameters%control%name(j) = name
 
             end do
@@ -1277,7 +1277,7 @@ contains
                     j = j + 1
                     parameters%control%x(j) = parameters%nn_parameters%weight_2(l, k)
                     parameters%control%nbd(j) = 0
-                    write (name, '(a,i0,a,i0)') "weight_2", l, "-", k
+                    write (name, '(a,i0,a,i0)') "weight_2-", l, "-", k
                     parameters%control%name(j) = name
 
                 end do
@@ -1291,7 +1291,7 @@ contains
                 j = j + 1
                 parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
                 parameters%control%nbd(j) = 0
-                write (name, '(a,i0)') "bias_2", k
+                write (name, '(a,i0)') "bias_2-", k
                 parameters%control%name(j) = name
 
             end do

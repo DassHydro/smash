@@ -1243,15 +1243,19 @@ control_info : `dict[str, Any]`
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
-        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
-          name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
-        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
+        - ``<key>-0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
+          name of any rainfall-runoff parameters or initial_states (``'cp-0'``, ``'llr-0'``, ``'ht-0'``, etc).
+        - ``<key>-<row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
           rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in
-          the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
+          the spatial domain (``'cp-1-1'``, ``'llr-20-2'``, ``'ht-3-12'``, etc). It's one based indexing.
         - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the
           name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor
           and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``,
           ``'llr-slope-b'``, ``'ht-dd-a'``).
+        - ``<key>-<row>-<col>``: Weights and biases of the parameterization neural network where ``<key>``
+          indicates the layer and type of parameter (e.g., ``'weight_1'`` for the first layer weights,
+          ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
+          position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
 
     - x_bkg : `numpy.ndarray`
         An array of shape *(n,)* containing the background values of the control vector.
