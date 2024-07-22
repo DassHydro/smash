@@ -8,7 +8,7 @@ from smash._constant import ACTIVATION_FUNCTION, ACTIVATION_FUNCTION_CLASS, WB_I
 
 if TYPE_CHECKING:
     from smash.factory.net.net import Net
-    from smash.util._typing import AnyTuple, ListLike, Numeric
+    from smash.util._typing import Any, AnyTuple, ListLike, Numeric
 
 
 def _standardize_add_dense_args(
@@ -106,6 +106,108 @@ def _standardize_set_trainable_args(net: Net, trainable: tuple | list) -> list:
         )
 
     return trainable
+
+
+def _standardize_set_weight_args(net: Net, value: list[Any]) -> list[np.ndarray]:
+    return _standardize_set_weight_bias_value(net, value, "weight")
+
+
+def _standardize_set_bias_args(net: Net, value: list[Any]) -> list[np.ndarray]:
+    return _standardize_set_weight_bias_value(net, value, "bias")
+
+
+def _standardize_forward_pass_args(net: Net, x_train: np.ndarray) -> np.ndarray:
+    if not net.layers:
+        raise ValueError("The graph of the neural network has not been set yet")
+
+    for i, layer in enumerate(net.layers):
+        if hasattr(layer, "weight"):
+            if layer.weight is None:
+                raise ValueError(f"The weight at layer {i+1} is not set yet")
+
+        if hasattr(layer, "bias"):
+            if layer.bias is None:
+                raise ValueError(f"The bias at layer {i+1} is not set yet")
+
+    return _standardize_forward_pass_x_train(net.layers[0].input_shape, x_train)
+
+
+def _standardize_set_weight_bias_value(
+    net: Net,
+    value: list[Any],
+    kind: str,
+) -> list[np.ndarray]:
+    if not net.layers:
+        raise ValueError("The graph of the neural network has not been set yet")
+
+    else:
+        trainable_parameters = [getattr(layer, kind) for layer in net.layers if hasattr(layer, kind)]
+
+    # % Get weight or bias shape
+    shape_trainable_parameters = []
+    for layer in net.layers:
+        if hasattr(layer, kind):
+            if hasattr(layer, "neurons"):
+                n_out = layer.neurons
+
+            elif hasattr(layer, "filters"):
+                n_out = layer.filters
+
+            else:  # Should be unreachable
+                pass
+
+            if kind == "weight":
+                n_in = layer.input_shape[-1]
+
+                if hasattr(layer, "filter_shape"):
+                    n_in *= np.prod(layer.filter_shape)
+
+                shape_trainable_parameters.append((n_out, n_in))
+
+            elif kind == "bias":
+                shape_trainable_parameters.append((1, n_out))
+
+            else:  # Should be unreachable
+                pass
+
+    # % Check the shape of values to set for each trainable layer
+    if isinstance(value, list):
+        if len(value) != len(trainable_parameters):
+            raise ValueError(
+                f"Inconsistent size between value argument and the number of trainable layers: "
+                f"{len(value)} != {len(trainable_parameters)}"
+            )
+
+        else:
+            for i, arr in enumerate(value):
+                if isinstance(arr, (int, float)):
+                    value[i] = arr * np.ones(shape_trainable_parameters[i])
+                elif isinstance(arr, np.ndarray):
+                    if arr.shape != shape_trainable_parameters[i]:
+                        raise ValueError(
+                            f"Invalid shape for value argument. Could not broadcast input array "
+                            f"from shape {arr.shape} into shape {shape_trainable_parameters[i]}"
+                        )
+                else:
+                    raise TypeError("Each element of value argument must be float or a Numpy array")
+
+    else:
+        raise TypeError("value argument must be a list of a same size with layers")
+
+    return value
+
+
+def _standardize_forward_pass_x_train(input_shape: tuple, x_train: np.ndarray) -> np.ndarray:
+    if isinstance(x_train, np.ndarray):
+        if x_train.shape != input_shape:
+            raise ValueError(
+                f"Invalid shape for x_train argument. Could not broadcast input array "
+                f"from shape {x_train.shape} into shape {input_shape}"
+            )
+    else:
+        raise TypeError("x_train argument must be a Numpy array")
+
+    return x_train
 
 
 def _standardize_add_conv2d_filter_shape(filter_shape: Numeric | tuple | list) -> tuple:

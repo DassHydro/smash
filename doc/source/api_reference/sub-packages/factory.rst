@@ -40,6 +40,13 @@ Neural Network Configuration
       smash/smash.factory.Net.add_scale
       smash/smash.factory.Net.add_flatten
       smash/smash.factory.Net.add_dropout
+      smash/smash.factory.Net.copy
+      smash/smash.factory.Net.set_trainable
+      smash/smash.factory.Net.set_weight
+      smash/smash.factory.Net.set_bias
+      smash/smash.factory.Net.get_weight
+      smash/smash.factory.Net.get_bias
+      smash/smash.factory.Net.forward_pass
 
 Sample Generation
 *****************
