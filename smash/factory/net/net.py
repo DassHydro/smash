@@ -13,14 +13,17 @@ from smash.factory.net._standardize import (
     _standardize_add_dense_args,
     _standardize_add_dropout_args,
     _standardize_add_scale_args,
+    _standardize_forward_pass_args,
+    _standardize_set_bias_args,
     _standardize_set_trainable_args,
+    _standardize_set_weight_args,
 )
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.fcore._mwd_options import OptionsDT
     from smash.fcore._mwd_returns import ReturnsDT
-    from smash.util._typing import Numeric
+    from smash.util._typing import Any, Numeric
 
 import copy
 
@@ -592,6 +595,233 @@ class Net(object):
                 if hasattr(layer, "_initialize"):
                     layer.weight = np.copy(layer._weight)
                     layer.bias = np.copy(layer._bias)
+
+    def set_weight(self, value: list[Any]):
+        """
+        Set the weights of the trainable layers of the neural network `Net`.
+
+        Parameters
+        ----------
+        value : list[`float` or `numpy.ndarray`]
+            The list of value(s) to set to the weights of the neural network.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the weight shape.
+
+        See Also
+        --------
+        Net.get_weight : Get the weights of the trainable layers of the neural network `Net`.
+
+        Examples
+        --------
+        >>> from smash.factory import Net
+        >>> net = Net()
+        >>> net.add_dense(2, input_shape=3, activation="tanh")
+        +-------------------------------------------------------+
+        | Layer Type         Input/Output Shape  Num Parameters |
+        +-------------------------------------------------------+
+        | Dense              (3,)/(2,)           8              |
+        | Activation (TanH)  (2,)/(2,)           0              |
+        +-------------------------------------------------------+
+        Total parameters: 8
+        Trainable parameters: 8
+
+        Set weights of the neural network
+
+        >>> import numpy as np
+        >>> net.set_weight([np.array([[1, 2, 3], [4, 5, 6]])])
+
+        Get the weight values
+
+        >>> net.get_weight()
+        [array([[1, 2, 3],
+                [4, 5, 6]])]
+        """
+
+        value = _standardize_set_weight_args(self, value)
+
+        i = 0
+        for layer in self.layers:
+            if hasattr(layer, "weight"):
+                layer.weight = value[i]
+                i += 1
+
+    def set_bias(self, value: list[Any]):
+        """
+        Set the biases of the trainable layers of the neural network `Net`.
+
+        Parameters
+        ----------
+        value : list[`float` or `numpy.ndarray`]
+            The list of value(s) to set to the biases of the neural network.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the bias shape.
+
+        See Also
+        --------
+        Net.get_bias : Get the biases of the trainable layers of the neural network `Net`.
+
+        Examples
+        --------
+        >>> from smash.factory import Net
+        >>> net = Net()
+        >>> net.add_dense(2, input_shape=3, activation="tanh")
+        +-------------------------------------------------------+
+        | Layer Type         Input/Output Shape  Num Parameters |
+        +-------------------------------------------------------+
+        | Dense              (3,)/(2,)           8              |
+        | Activation (TanH)  (2,)/(2,)           0              |
+        +-------------------------------------------------------+
+        Total parameters: 8
+        Trainable parameters: 8
+
+        Set biases of the neural network
+
+        >>> net.set_bias([0])
+
+        Get the weight values
+
+        >>> net.get_bias()
+        [array([[0., 0.]])]
+        """
+
+        value = _standardize_set_bias_args(self, value)
+
+        i = 0
+        for layer in self.layers:
+            if hasattr(layer, "bias"):
+                layer.bias = value[i]
+                i += 1
+
+    def get_weight(self) -> list[np.ndarray]:
+        """
+        Get the weights of the trainable layers of the neural network `Net`.
+
+        Returns
+        -------
+        value : list[`numpy.ndarray`]
+            A list of numpy arrays containing the weights of the trainable layers.
+
+        See Also
+        --------
+        Net.set_weight : Set the weights of the trainable layers of the neural network `Net`.
+
+        Examples
+        --------
+        >>> from smash.factory import Net
+        >>> net = Net()
+        >>> net.add_dense(2, input_shape=3, activation="tanh")
+        +-------------------------------------------------------+
+        | Layer Type         Input/Output Shape  Num Parameters |
+        +-------------------------------------------------------+
+        | Dense              (3,)/(2,)           8              |
+        | Activation (TanH)  (2,)/(2,)           0              |
+        +-------------------------------------------------------+
+        Total parameters: 8
+        Trainable parameters: 8
+
+        Set random weights of the neural network
+
+        >>> import numpy as np
+        >>> np.random.seed(0)  # Set a random seed
+        >>> net.set_weight([np.random.uniform(size=(2,3))])
+
+        Get the weight values
+
+        >>> net.get_weight()
+        [array([[0.5488135 , 0.71518937, 0.60276338],
+            [0.54488318, 0.4236548 , 0.64589411]])]
+        """
+
+        return [layer.weight for layer in self.layers if hasattr(layer, "weight")]
+
+    def get_bias(self) -> list[np.ndarray]:
+        """
+        Get the biases of the trainable layers of the neural network `Net`.
+
+        Returns
+        -------
+        value : list[`numpy.ndarray`]
+            A list of numpy arrays containing the biases of the trainable layers.
+
+        See Also
+        --------
+        Net.set_bias : Set the biases of the trainable layers of the neural network `Net`.
+
+        Examples
+        --------
+        >>> from smash.factory import Net
+        >>> net = Net()
+        >>> net.add_dense(2, input_shape=3, activation="tanh")
+        +-------------------------------------------------------+
+        | Layer Type         Input/Output Shape  Num Parameters |
+        +-------------------------------------------------------+
+        | Dense              (3,)/(2,)           8              |
+        | Activation (TanH)  (2,)/(2,)           0              |
+        +-------------------------------------------------------+
+        Total parameters: 8
+        Trainable parameters: 8
+
+        Set random biases of the neural network
+
+        >>> import numpy as np
+        >>> np.random.seed(0)  # Set a random seed
+        >>> net.set_bias([np.random.uniform(size=(1, 2))])
+
+        Get the weight values
+
+        >>> net.get_bias()
+        [array([[0.60276338, 0.54488318]])]
+        """
+
+        return [layer.bias for layer in self.layers if hasattr(layer, "bias")]
+
+    def forward_pass(self, x_train: np.ndarray):
+        """
+        Perform a forward pass through the neural network.
+
+        Parameters
+        ----------
+        x_train : `numpy.ndarray`
+            An array representing the input data for the neural network.
+
+        Returns
+        -------
+        y : `numpy.ndarray`
+            The output of the neural network after passing through all layers.
+
+        Examples
+        --------
+        >>> from smash.factory import Net
+        >>> net = Net()
+        >>> net.add_dense(12, input_shape=5, activation="tanh")
+        >>> net.add_dense(3, activation="softmax")
+        >>> net
+        +----------------------------------------------------------+
+        | Layer Type            Input/Output Shape  Num Parameters |
+        +----------------------------------------------------------+
+        | Dense                 (5,)/(12,)          72             |
+        | Activation (TanH)     (12,)/(12,)         0              |
+        | Dense                 (12,)/(3,)          39             |
+        | Activation (Softmax)  (3,)/(3,)           0              |
+        +----------------------------------------------------------+
+        Total parameters: 111
+        Trainable parameters: 111
+
+        Set weights and biases of the neural network
+
+        >>> import numpy as np
+        >>> np.random.seed(0)  # Set a random seed
+        >>> net.set_weight([1, np.random.uniform(size=(3, 12))])
+        >>> net.set_bias([0, 0])
+
+        Run the forward pass
+
+        >>> x = np.random.uniform(size=5)
+        >>> net.forward_pass(x)
+        array([[0.53357954, 0.39343288, 0.07298759]])
+        """
+
+        x_train = _standardize_forward_pass_args(self, x_train)
+
+        return self._forward_pass(x_train)
 
     def _forward_pass(self, x_train: np.ndarray):
         layer_output = x_train
