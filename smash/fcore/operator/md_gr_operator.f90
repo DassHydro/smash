@@ -136,29 +136,28 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr_exponential_transfer(pre, ce, he, qre)
+    subroutine gr_exponential_transfer(pre, te, he, qre)
 
         implicit none
 
-        real(sp), intent(in) :: pre, ce
+        real(sp), intent(in) :: pre, te
         real(sp), intent(inout) :: he
         real(sp), intent(out) :: qre
         real(sp) :: he_star, AR
         
         he_star = he + pre
-        AR = he_star / ce
+        AR = he_star / te
         if (AR .lt. -7._sp) then
-            qre = ce * exp(AR)
+            qre = te * exp(AR)
         elseif (AR .gt. 7._sp) then
-            qre = he_star + ce / exp(AR)
+            qre = he_star + te / exp(AR)
         else
-            qre = ce * log(exp(AR) + 1._sp)
+            qre = te * log(exp(AR) + 1._sp)
         end if
         he = he_star - qre
 
-    end subroutine exponential_transfer
+    end subroutine gr_exponential_transfer
     
-    subroutine gr4_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -411,7 +410,7 @@ contains
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 
-                call exponential_transfer(ac_he(k), pre, ac_te(k), qre)
+                call gr_exponential_transfer(pre, ac_te(k), ac_he(k), qre)
                 
                 qd = max(0._sp, prd + l)
 
@@ -427,7 +426,6 @@ contains
 #endif
     end subroutine gr6_time_step
 
-    subroutine grd_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
     subroutine grd_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
     & ac_ht, ac_qt)
 
