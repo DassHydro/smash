@@ -745,11 +745,11 @@ def _standardize_set_nn_parameters_weight_value(
                 elif isinstance(arr, np.ndarray):
                     if arr.shape != weights[i].shape:
                         raise ValueError(
-                            f"Inconsistent size between the expected weight to set "
-                            f"to the current one: {arr.shape} != {weights[i].shape}"
+                            f"Invalid shape for value argument. Could not broadcast input array "
+                            f"from shape {arr.shape} into shape {weights[i].shape}"
                         )
                 else:
-                    raise TypeError("Each element of value argument must be a Numpy array")
+                    raise TypeError("Each element of value argument must be float or a Numpy array")
 
     else:
         raise TypeError("value argument must be a list of a same size with layers")
@@ -779,11 +779,11 @@ def _standardize_set_nn_parameters_bias_value(
                 elif isinstance(arr, np.ndarray):
                     if arr.shape != biases[i].shape:
                         raise ValueError(
-                            f"Inconsistent size between the expected bias to set "
-                            f"to the current one: {arr.shape} != {biases[i].shape}"
+                            f"Invalid shape for value argument. Could not broadcast input array "
+                            f"from shape {arr.shape} into shape {biases[i].shape}"
                         )
                 else:
-                    raise TypeError("Each element of value argument must be a Numpy array")
+                    raise TypeError("Each element of value argument must be float or a Numpy array")
 
     else:
         raise TypeError("value argument must be a list of a same size with layers")
