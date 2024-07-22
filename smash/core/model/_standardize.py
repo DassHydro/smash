@@ -10,19 +10,24 @@ import pandas as pd
 
 from smash._constant import (
     DEFAULT_MODEL_SETUP,
+    F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     HYDROLOGICAL_MODULE,
+    HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
     ROUTING_MODULE,
     ROUTING_MODULE_NQZ,
+    ROUTING_MODULE_RR_INTERNAL_FLUXES,
     SERR_MU_MAPPING,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING,
     SERR_SIGMA_MAPPING_PARAMETERS,
     SNOW_MODULE,
+    SNOW_MODULE_RR_INTERNAL_FLUXES,
+    STRUCTURE_RR_INTERNAL_FLUXES,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
 )
@@ -32,11 +37,16 @@ if TYPE_CHECKING:
     from smash.util._typing import AnyTuple, ListLike, Numeric
 
 
-def _standardize_model_setup_bool(key: str, value: bool) -> bool:
-    if not isinstance(value, bool):
-        raise TypeError(f"{key} model setup must be a boolean")
+def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
+    if isinstance(value, bool):
+        pass
+    elif isinstance(value, int):
+        if value not in (0, 1):
+            raise ValueError(f"{key} model setup must be equal to 0 or 1")
+    else:
+        raise TypeError(f"{key} model setup must be a boolean or integer (0, 1)")
 
-    return value
+    return bool(value)
 
 
 def _standardize_model_setup_directory(read: bool, key: str, value: str | None) -> str:
@@ -441,7 +451,10 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
     setup["nqz"] = ROUTING_MODULE_NQZ[setup["routing_module"]]
-
+    setup["n_internal_fluxes"] = len(STRUCTURE_RR_INTERNAL_FLUXES[setup["structure"]])
+    setup["n_snow_fluxes"] = len(SNOW_MODULE_RR_INTERNAL_FLUXES[setup["snow_module"]])
+    setup["n_hydro_fluxes"] = len(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES[setup["hydrological_module"]])
+    setup["n_routing_fluxes"] = len(ROUTING_MODULE_RR_INTERNAL_FLUXES[setup["routing_module"]])
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
     setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")
 
@@ -531,7 +544,7 @@ def _standardize_rr_parameters_value(
             f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
 
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{low_arr}, {upp_arr}] is "
             f"not included in the feasible domain ]{low}, {upp}["
@@ -557,7 +570,7 @@ def _standardize_rr_states_value(
             f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
 
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{low_arr}, {upp_arr}] is "
             f"not included in the feasible domain ]{low}, {upp}["

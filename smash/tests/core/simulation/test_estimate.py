@@ -57,9 +57,11 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
 
         res[f"multiset_estimate.{key}.sim_q"] = qsim
 
-        # Remove multi-linear temporarily (solver precision issue)
         for lc_key, lc_value in ret.lcurve_multiset.items():
-            if key != "mopt_ml":
+            # Remove mahal_dist (precision issue with a number limited of multi-set runs)
+            # Remove multi-linear temporarily (solver precision issue)
+            # TODO: fix these issues for a future release
+            if lc_key != "mahal_dist" and key != "mopt_ml":
                 res[f"multiset_estimate.{key}.lcurve_multiset.{lc_key}"] = np.array(lc_value, ndmin=1)
 
     return res

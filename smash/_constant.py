@@ -29,6 +29,14 @@ def get_rr_states_from_structure(structure: str) -> list[str]:
     return rr_states
 
 
+def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
+    rr_internal_fluxes = []
+    [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
+    return rr_internal_fluxes
+
+### FLOAT PRECISION FOR FLOAT COMPARISON ###
+F_PRECISION = 1.0e-5
+
 ### MODULE ###
 ##############
 
@@ -39,6 +47,7 @@ HYDROLOGICAL_MODULE = ["gr4", "gr5", "gr6", "grd", "loieau", "vic3l"]
 ROUTING_MODULE = ["lag0", "lr", "kw"]
 
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
+
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_PARAMETERS = dict(
@@ -117,6 +126,43 @@ ROUTING_MODULE_NQZ = dict(
     zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
 )
 
+
+# % Following SNOW_MODULE order
+SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
+    zip(
+        SNOW_MODULE,
+        [
+            [],  # % zero
+            ["mlt"],  # % ssn
+        ],
+    )
+)
+
+# % Following HYDROLOGICAL_MODULE order
+HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        [
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
+            ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
+            ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
+            ["pn", "en", "qr", "qb", "qt"],  # % vic3l
+        ],
+    )
+)
+
+# % Following ROUTING_MODULE order
+ROUTING_MODULE_RR_INTERNAL_FLUXES = dict(
+    zip(ROUTING_MODULE, [["qup"], ["qup"], ["qim1j"]])  # % lag0  # % lr  # % kw
+)
+
+MODULE_RR_INTERNAL_FLUXES = dict(
+    **SNOW_MODULE_RR_INTERNAL_FLUXES,
+    **HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
+    **ROUTING_MODULE_RR_INTERNAL_FLUXES,
+)
+
 ### STRUCTURE ###
 #################
 
@@ -144,6 +190,14 @@ STRUCTURE_ADJUST_CI = dict(
     zip(
         STRUCTURE,
         ["ci" in v for v in STRUCTURE_RR_PARAMETERS.values()],
+    )
+)
+
+# % Following STRUCTURE order
+STRUCTURE_RR_INTERNAL_FLUXES = dict(
+    zip(
+        STRUCTURE,
+        [get_rr_internal_fluxes_from_structure(s) for s in STRUCTURE],
     )
 )
 
@@ -837,6 +891,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
         "rr_states": False,
         "q_domain": False,
+        "internal_fluxes": False,
         "cost": False,
         "jobs": False,
     },
@@ -844,6 +899,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
         "rr_states": False,
         "q_domain": False,
+        "internal_fluxes": False,
         "iter_cost": False,
         "iter_projg": False,
         "control_vector": False,
@@ -857,6 +913,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
         "rr_states": False,
         "q_domain": False,
+        "internal_fluxes": False,
         "iter_cost": False,
         "iter_projg": False,
         "control_vector": False,
@@ -871,13 +928,14 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
         "rr_states": False,
         "q_domain": False,
+        "internal_fluxes": False,
         "cost": False,
         "jobs": False,
         "lcurve_multiset": False,
     },
 }
 
-SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain"]
+SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain", "internal_fluxes"]
 
 ### IO ###
 ##########

@@ -6,16 +6,16 @@ Forward & Inverse Problems
 
 This section explains:
  
-- The **hydrological modeling problem statement (forward/direct problem)**, that consists in modeling the spatio-temporal evolution of water states-fluxes within a basin/domain given atmospheric forcings and basin physical descriptors. 
+- The **hydrological modeling problem (forward/direct problem)**, that consists in modeling the spatio-temporal evolution of water states-fluxes within a spatio-temporal domain given atmospheric forcings and basin physical descriptors. 
  
-- The **parameter estimation problem statement (inverse problem)**, that pertains to estimating uncertain or unknows model parameters from the available spatio-temporal observations of hydrological state-fluxes and from basin physical descriptors.
+- The **parameter estimation problem (inverse problem)**, that aims to estimating uncertain or unknows model parameters from the available spatio-temporal observations of hydrological state-fluxes and from basin physical descriptors.
 
 Forward problem statement
 -------------------------
 
 The forward/direct hydrological modeling problem statement is formulated here.
 
-Let :math:`\Omega\subset\mathbb{R}^{2}` denote a 2D spatial domain, :math:`x\in\Omega` the spatial coordinates, and :math:`t\in\left]0,T\right]` the physical time. 
+The 2D spatial domain is denoted :math:`\Omega` with :math:`x` the vector of spatial coordinates, and :math:`t` is the time in the simulation window :math:`\left]0,T\right]`. 
 
 
 Hydrological model definition
@@ -32,7 +32,7 @@ catchment physical descriptors :math:`\boldsymbol{D}` onto surface discharge :ma
     \boldsymbol{U}(x,t)=(Q,\boldsymbol{h},\boldsymbol{q})(x,t)=\mathcal{M}\left(\left[\boldsymbol{I},\boldsymbol{D}\right](x,t);\left[\boldsymbol{\theta},\boldsymbol{h}_{0}\right](x)\right)
     }
 
-with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\boldsymbol{\theta}` the parameters and :math:`\boldsymbol{h}_{0}` the initial states.
+with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\boldsymbol{\theta}` the parameters and :math:`\boldsymbol{h}_{0}=\boldsymbol{h}\left(x,t=0\right)` the initial states.
 
 
 .. figure:: ../_static/forward_simple_flowchart.png
@@ -41,7 +41,7 @@ with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\bolds
     
     Flowchart of the forward modeling problem: input data, forward hydrological model :math:`\mathcal{M}`, simulated quantites.
 
-.. dropdown:: Sizes of model variables
+.. dropdown:: Detail on model variables
     :animate: fade-in-slide-down
 
     The sizes of the variables in the forward/direct problem are detailed here. We denote by :math:`N=N_{x} \times N_{t}` with :math:`N_{x}` the number of  cells in :math:`\Omega` and :math:`N_t` the number of simulation time steps in :math:`\left]0,T\right]`.
@@ -60,10 +60,14 @@ with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\bolds
 
     - Initial states :math:`\boldsymbol{h}_{0}=\boldsymbol{h}(x,t=0)`
 
-Operators Composition
-*********************
+    
+.. _math_num_documentation.forward_inverse_problem.chaining:
+    
+    
+Operators Chaining Principle
+****************************
 
-The **forward hydrological model** :math:`\mathcal{M}` is obtained by combining at least two operators: the hydrological operator :math:`\mathcal{M}_{rr}` to simulate runoff from atmospheric forcings and use this runoff to feed a routing operator :math:`\mathcal{M}_{hy}` for cell to cell flow routing. 
+The **forward hydrological model** :math:`\mathcal{M}` is obtained by chaining through fluxes at least two operators: the hydrological operator :math:`\mathcal{M}_{rr}` to simulate runoff from atmospheric forcings and use this runoff to feed a routing operator :math:`\mathcal{M}_{hy}` for cell to cell flow routing. 
 
 A snow module :math:`\mathcal{M}_{snw}` can also be added.
 
@@ -112,6 +116,8 @@ Consequently, replacing in :ref:`Eq. 1 <math_num_documentation.forward_inverse_p
     :name: math_num_documentation.forward_inverse_problem.forward_problem_M_2
 
     \boldsymbol{U}(x,t)=(Q,\boldsymbol{h},\boldsymbol{q})(x,t)=\mathcal{M}\left(\left[\boldsymbol{I},\boldsymbol{D}\right](x,t);\phi\left(\boldsymbol{D}(x,t),\boldsymbol{\rho}\right)\right)
+    
+The descriptors-to-parameters mappings are described in  :ref:`mapping section <math_num_documentation.mapping>`.
 
 Parameter Estimation problem statement
 --------------------------------------

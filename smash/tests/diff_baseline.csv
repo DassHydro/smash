@@ -37,6 +37,17 @@ custom_optimize.zero-gr4-lr.custom_set_6.sim_q            |NON MODIFIED
 custom_optimize.zero-gr4-lr.custom_set_7.sim_q            |NON MODIFIED
 custom_optimize.zero-gr4-lr.custom_set_8.sim_q            |NON MODIFIED
 custom_optimize.zero-gr4-lr.custom_set_9.sim_q            |NON MODIFIED
+<<<<<<< HEAD
+=======
+evaluation.kge                                            |NON MODIFIED
+evaluation.lgrm                                           |NON MODIFIED
+evaluation.mae                                            |NON MODIFIED
+evaluation.mape                                           |NON MODIFIED
+evaluation.mse                                            |NON MODIFIED
+evaluation.nnse                                           |NON MODIFIED
+evaluation.nse                                            |NON MODIFIED
+evaluation.rmse                                           |NON MODIFIED
+>>>>>>> main
 forward_run.zero-gr4-kw.cost                              |NON MODIFIED
 forward_run.zero-gr4-kw.jobs                              |NON MODIFIED
 forward_run.zero-gr4-kw.q_domain                          |NON MODIFIED
@@ -81,6 +92,7 @@ forward_run.zero-gr5-lr.rr_states.hlr                     |NON MODIFIED
 forward_run.zero-gr5-lr.rr_states.hp                      |NON MODIFIED
 forward_run.zero-gr5-lr.rr_states.ht                      |NON MODIFIED
 forward_run.zero-gr5-lr.sim_q                             |NON MODIFIED
+<<<<<<< HEAD
 forward_run.zero-gr6-kw.cost                              |NON MODIFIED
 forward_run.zero-gr6-kw.jobs                              |NON MODIFIED
 forward_run.zero-gr6-kw.q_domain                          |NON MODIFIED
@@ -106,6 +118,8 @@ forward_run.zero-gr6-lr.rr_states.hlr                     |NON MODIFIED
 forward_run.zero-gr6-lr.rr_states.hp                      |NON MODIFIED
 forward_run.zero-gr6-lr.rr_states.ht                      |NON MODIFIED
 forward_run.zero-gr6-lr.sim_q                             |NON MODIFIED
+=======
+>>>>>>> main
 forward_run.zero-grd-kw.cost                              |NON MODIFIED
 forward_run.zero-grd-kw.jobs                              |NON MODIFIED
 forward_run.zero-grd-kw.q_domain                          |NON MODIFIED
@@ -173,6 +187,150 @@ generate_samples.normal                                   |NON MODIFIED
 generate_samples.uniform                                  |NON MODIFIED
 hydrograph_segmentation.by_obs                            |NON MODIFIED
 hydrograph_segmentation.by_sim                            |NON MODIFIED
+internal_fluxes.zero-gr4-kw.en                            |ADDED
+internal_fluxes.zero-gr4-kw.lexc                          |ADDED
+internal_fluxes.zero-gr4-kw.perc                          |ADDED
+internal_fluxes.zero-gr4-kw.pn                            |ADDED
+internal_fluxes.zero-gr4-kw.pr                            |ADDED
+internal_fluxes.zero-gr4-kw.prd                           |ADDED
+internal_fluxes.zero-gr4-kw.prr                           |ADDED
+internal_fluxes.zero-gr4-kw.qd                            |ADDED
+internal_fluxes.zero-gr4-kw.qim1j                         |ADDED
+internal_fluxes.zero-gr4-kw.qr                            |ADDED
+internal_fluxes.zero-gr4-kw.qt                            |ADDED
+internal_fluxes.zero-gr4-lag0.en                          |ADDED
+internal_fluxes.zero-gr4-lag0.lexc                        |ADDED
+internal_fluxes.zero-gr4-lag0.perc                        |ADDED
+internal_fluxes.zero-gr4-lag0.pn                          |ADDED
+internal_fluxes.zero-gr4-lag0.pr                          |ADDED
+internal_fluxes.zero-gr4-lag0.prd                         |ADDED
+internal_fluxes.zero-gr4-lag0.prr                         |ADDED
+internal_fluxes.zero-gr4-lag0.qd                          |ADDED
+internal_fluxes.zero-gr4-lag0.qr                          |ADDED
+internal_fluxes.zero-gr4-lag0.qt                          |ADDED
+internal_fluxes.zero-gr4-lag0.qup                         |ADDED
+internal_fluxes.zero-gr4-lr.en                            |ADDED
+internal_fluxes.zero-gr4-lr.lexc                          |ADDED
+internal_fluxes.zero-gr4-lr.perc                          |ADDED
+internal_fluxes.zero-gr4-lr.pn                            |ADDED
+internal_fluxes.zero-gr4-lr.pr                            |ADDED
+internal_fluxes.zero-gr4-lr.prd                           |ADDED
+internal_fluxes.zero-gr4-lr.prr                           |ADDED
+internal_fluxes.zero-gr4-lr.qd                            |ADDED
+internal_fluxes.zero-gr4-lr.qr                            |ADDED
+internal_fluxes.zero-gr4-lr.qt                            |ADDED
+internal_fluxes.zero-gr4-lr.qup                           |ADDED
+internal_fluxes.zero-gr5-kw.en                            |ADDED
+internal_fluxes.zero-gr5-kw.lexc                          |ADDED
+internal_fluxes.zero-gr5-kw.perc                          |ADDED
+internal_fluxes.zero-gr5-kw.pn                            |ADDED
+internal_fluxes.zero-gr5-kw.pr                            |ADDED
+internal_fluxes.zero-gr5-kw.prd                           |ADDED
+internal_fluxes.zero-gr5-kw.prr                           |ADDED
+internal_fluxes.zero-gr5-kw.qd                            |ADDED
+internal_fluxes.zero-gr5-kw.qim1j                         |ADDED
+internal_fluxes.zero-gr5-kw.qr                            |ADDED
+internal_fluxes.zero-gr5-kw.qt                            |ADDED
+internal_fluxes.zero-gr5-lag0.en                          |ADDED
+internal_fluxes.zero-gr5-lag0.lexc                        |ADDED
+internal_fluxes.zero-gr5-lag0.perc                        |ADDED
+internal_fluxes.zero-gr5-lag0.pn                          |ADDED
+internal_fluxes.zero-gr5-lag0.pr                          |ADDED
+internal_fluxes.zero-gr5-lag0.prd                         |ADDED
+internal_fluxes.zero-gr5-lag0.prr                         |ADDED
+internal_fluxes.zero-gr5-lag0.qd                          |ADDED
+internal_fluxes.zero-gr5-lag0.qr                          |ADDED
+internal_fluxes.zero-gr5-lag0.qt                          |ADDED
+internal_fluxes.zero-gr5-lag0.qup                         |ADDED
+internal_fluxes.zero-gr5-lr.en                            |ADDED
+internal_fluxes.zero-gr5-lr.lexc                          |ADDED
+internal_fluxes.zero-gr5-lr.perc                          |ADDED
+internal_fluxes.zero-gr5-lr.pn                            |ADDED
+internal_fluxes.zero-gr5-lr.pr                            |ADDED
+internal_fluxes.zero-gr5-lr.prd                           |ADDED
+internal_fluxes.zero-gr5-lr.prr                           |ADDED
+internal_fluxes.zero-gr5-lr.qd                            |ADDED
+internal_fluxes.zero-gr5-lr.qr                            |ADDED
+internal_fluxes.zero-gr5-lr.qt                            |ADDED
+internal_fluxes.zero-gr5-lr.qup                           |ADDED
+internal_fluxes.zero-grd-kw.ei                            |ADDED
+internal_fluxes.zero-grd-kw.en                            |ADDED
+internal_fluxes.zero-grd-kw.perc                          |ADDED
+internal_fluxes.zero-grd-kw.pn                            |ADDED
+internal_fluxes.zero-grd-kw.pr                            |ADDED
+internal_fluxes.zero-grd-kw.prr                           |ADDED
+internal_fluxes.zero-grd-kw.qim1j                         |ADDED
+internal_fluxes.zero-grd-kw.qr                            |ADDED
+internal_fluxes.zero-grd-kw.qt                            |ADDED
+internal_fluxes.zero-grd-lag0.ei                          |ADDED
+internal_fluxes.zero-grd-lag0.en                          |ADDED
+internal_fluxes.zero-grd-lag0.perc                        |ADDED
+internal_fluxes.zero-grd-lag0.pn                          |ADDED
+internal_fluxes.zero-grd-lag0.pr                          |ADDED
+internal_fluxes.zero-grd-lag0.prr                         |ADDED
+internal_fluxes.zero-grd-lag0.qr                          |ADDED
+internal_fluxes.zero-grd-lag0.qt                          |ADDED
+internal_fluxes.zero-grd-lag0.qup                         |ADDED
+internal_fluxes.zero-grd-lr.ei                            |ADDED
+internal_fluxes.zero-grd-lr.en                            |ADDED
+internal_fluxes.zero-grd-lr.perc                          |ADDED
+internal_fluxes.zero-grd-lr.pn                            |ADDED
+internal_fluxes.zero-grd-lr.pr                            |ADDED
+internal_fluxes.zero-grd-lr.prr                           |ADDED
+internal_fluxes.zero-grd-lr.qr                            |ADDED
+internal_fluxes.zero-grd-lr.qt                            |ADDED
+internal_fluxes.zero-grd-lr.qup                           |ADDED
+internal_fluxes.zero-loieau-kw.ei                         |ADDED
+internal_fluxes.zero-loieau-kw.en                         |ADDED
+internal_fluxes.zero-loieau-kw.perc                       |ADDED
+internal_fluxes.zero-loieau-kw.pn                         |ADDED
+internal_fluxes.zero-loieau-kw.pr                         |ADDED
+internal_fluxes.zero-loieau-kw.prd                        |ADDED
+internal_fluxes.zero-loieau-kw.prr                        |ADDED
+internal_fluxes.zero-loieau-kw.qd                         |ADDED
+internal_fluxes.zero-loieau-kw.qim1j                      |ADDED
+internal_fluxes.zero-loieau-kw.qr                         |ADDED
+internal_fluxes.zero-loieau-kw.qt                         |ADDED
+internal_fluxes.zero-loieau-lag0.ei                       |ADDED
+internal_fluxes.zero-loieau-lag0.en                       |ADDED
+internal_fluxes.zero-loieau-lag0.perc                     |ADDED
+internal_fluxes.zero-loieau-lag0.pn                       |ADDED
+internal_fluxes.zero-loieau-lag0.pr                       |ADDED
+internal_fluxes.zero-loieau-lag0.prd                      |ADDED
+internal_fluxes.zero-loieau-lag0.prr                      |ADDED
+internal_fluxes.zero-loieau-lag0.qd                       |ADDED
+internal_fluxes.zero-loieau-lag0.qr                       |ADDED
+internal_fluxes.zero-loieau-lag0.qt                       |ADDED
+internal_fluxes.zero-loieau-lag0.qup                      |ADDED
+internal_fluxes.zero-loieau-lr.ei                         |ADDED
+internal_fluxes.zero-loieau-lr.en                         |ADDED
+internal_fluxes.zero-loieau-lr.perc                       |ADDED
+internal_fluxes.zero-loieau-lr.pn                         |ADDED
+internal_fluxes.zero-loieau-lr.pr                         |ADDED
+internal_fluxes.zero-loieau-lr.prd                        |ADDED
+internal_fluxes.zero-loieau-lr.prr                        |ADDED
+internal_fluxes.zero-loieau-lr.qd                         |ADDED
+internal_fluxes.zero-loieau-lr.qr                         |ADDED
+internal_fluxes.zero-loieau-lr.qt                         |ADDED
+internal_fluxes.zero-loieau-lr.qup                        |ADDED
+internal_fluxes.zero-vic3l-kw.en                          |ADDED
+internal_fluxes.zero-vic3l-kw.pn                          |ADDED
+internal_fluxes.zero-vic3l-kw.qb                          |ADDED
+internal_fluxes.zero-vic3l-kw.qim1j                       |ADDED
+internal_fluxes.zero-vic3l-kw.qr                          |ADDED
+internal_fluxes.zero-vic3l-kw.qt                          |ADDED
+internal_fluxes.zero-vic3l-lag0.en                        |ADDED
+internal_fluxes.zero-vic3l-lag0.pn                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qb                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qr                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qt                        |ADDED
+internal_fluxes.zero-vic3l-lag0.qup                       |ADDED
+internal_fluxes.zero-vic3l-lr.en                          |ADDED
+internal_fluxes.zero-vic3l-lr.pn                          |ADDED
+internal_fluxes.zero-vic3l-lr.qb                          |ADDED
+internal_fluxes.zero-vic3l-lr.qr                          |ADDED
+internal_fluxes.zero-vic3l-lr.qt                          |ADDED
+internal_fluxes.zero-vic3l-lr.qup                         |ADDED
 mesh_io.active_cell                                       |NON MODIFIED
 mesh_io.area                                              |NON MODIFIED
 mesh_io.area_dln                                          |NON MODIFIED
@@ -196,14 +354,6 @@ mesh_io.xmin                                              |NON MODIFIED
 mesh_io.xres                                              |NON MODIFIED
 mesh_io.ymax                                              |NON MODIFIED
 mesh_io.yres                                              |NON MODIFIED
-metrics.kge                                               |NON MODIFIED
-metrics.lgrm                                              |NON MODIFIED
-metrics.mae                                               |NON MODIFIED
-metrics.mape                                              |NON MODIFIED
-metrics.mse                                               |NON MODIFIED
-metrics.nnse                                              |NON MODIFIED
-metrics.nse                                               |NON MODIFIED
-metrics.rmse                                              |NON MODIFIED
 model_ddt_io.mesh.active_cell                             |NON MODIFIED
 model_ddt_io.mesh.area                                    |NON MODIFIED
 model_ddt_io.mesh.code                                    |NON MODIFIED
@@ -252,13 +402,19 @@ model_io.setup.structure                                  |NON MODIFIED
 multiset_estimate.mfwr.lcurve_multiset.alpha              |NON MODIFIED
 multiset_estimate.mfwr.lcurve_multiset.alpha_opt          |NON MODIFIED
 multiset_estimate.mfwr.lcurve_multiset.cost               |NON MODIFIED
+<<<<<<< HEAD
 multiset_estimate.mfwr.lcurve_multiset.mahal_dist         |NON MODIFIED
+=======
+>>>>>>> main
 multiset_estimate.mfwr.sim_q                              |NON MODIFIED
 multiset_estimate.mopt_ml.sim_q                           |NON MODIFIED
 multiset_estimate.mopt_unf.lcurve_multiset.alpha          |NON MODIFIED
 multiset_estimate.mopt_unf.lcurve_multiset.alpha_opt      |NON MODIFIED
 multiset_estimate.mopt_unf.lcurve_multiset.cost           |NON MODIFIED
+<<<<<<< HEAD
 multiset_estimate.mopt_unf.lcurve_multiset.mahal_dist     |NON MODIFIED
+=======
+>>>>>>> main
 multiset_estimate.mopt_unf.sim_q                          |NON MODIFIED
 net_init.bias_layer_1                                     |NON MODIFIED
 net_init.bias_layer_2                                     |NON MODIFIED
@@ -347,6 +503,7 @@ optimize.zero-gr5-lr.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr5-lr.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr5-lr.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr5-lr.uniform.sim_q                        |NON MODIFIED
+<<<<<<< HEAD
 optimize.zero-gr6-kw.ann.sim_q                            |MODIFIED
 optimize.zero-gr6-kw.distributed.control_vector           |MODIFIED
 optimize.zero-gr6-kw.distributed.iter_cost                |MODIFIED
@@ -386,6 +543,8 @@ optimize.zero-gr6-lr.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr6-lr.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr6-lr.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr6-lr.uniform.sim_q                        |NON MODIFIED
+=======
+>>>>>>> main
 optimize.zero-grd-kw.ann.sim_q                            |NON MODIFIED
 optimize.zero-grd-kw.distributed.control_vector           |NON MODIFIED
 optimize.zero-grd-kw.distributed.iter_cost                |NON MODIFIED

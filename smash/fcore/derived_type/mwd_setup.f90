@@ -56,6 +56,10 @@
 !%          ``nsep_mu``                Number of structural error parameters for mu
 !%          ``nsep_sigma``             Number of structural error parameters for sigma
 !%          ``nqz``                    Size of the temporal buffer for discharge grids
+!%          ``n_internal_fluxes``      Number of internal fluxes
+!%          ``n_snow_fluxes``          Number of internal fluxes of snow module
+!%          ``n_hydro_fluxes``         Number of internal fluxes of hydrological module
+!%          ``n_routing_fluxes``       Number of internal fluxes of routing module
 !%
 !%      Subroutine
 !%      ----------
@@ -138,6 +142,10 @@ module mwd_setup
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
         integer :: nqz = -99
+        integer :: n_internal_fluxes = -99
+        integer :: n_snow_fluxes = -99
+        integer :: n_hydro_fluxes = -99
+        integer :: n_routing_fluxes = -99
 
     end type SetupDT
 

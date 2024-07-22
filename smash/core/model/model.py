@@ -353,7 +353,7 @@ class Model:
         Model initialization mesh dictionary.
 
         .. note::
-            The elements are described in the `smash.factory.generate_mesh` method.
+            The elements are described in the `smash.factory.generate_mesh <factory.generate_mesh>` method.
 
     See Also
     --------
@@ -481,7 +481,7 @@ class Model:
 
         Returns
         -------
-        setup : `SetupDT <smash.fcore._mwd_setup.SetupDT>`
+        setup : `SetupDT <fcore._mwd_setup.SetupDT>`
             It returns a Fortran derived type containing the variables relating to the setup.
 
         Examples
@@ -547,7 +547,7 @@ class Model:
 
         Returns
         -------
-        mesh : `MeshDT <smash.fcore._mwd_mesh.MeshDT>`
+        mesh : `MeshDT <fcore._mwd_mesh.MeshDT>`
             It returns a Fortran derived type containing the variables relating to the mesh.
 
         Examples
@@ -609,7 +609,7 @@ class Model:
 
         Returns
         -------
-        response_data : `Response_DataDT <smash.fcore._mwd_response_data.Response_DataDT>`
+        response_data : `Response_DataDT <fcore._mwd_response_data.Response_DataDT>`
             It returns a Fortran derived type containing the variables relating to the response data.
 
         Examples
@@ -657,7 +657,7 @@ class Model:
 
         Returns
         -------
-        u_response_data : `U_Response_DataDT <smash.fcore._mwd_u_response_data.U_Response_DataDT>`
+        u_response_data : `U_Response_DataDT <fcore._mwd_u_response_data.U_Response_DataDT>`
             It returns a Fortran derived type containing the variables relating to the response data
             uncertainties.
 
@@ -715,7 +715,7 @@ class Model:
 
         Returns
         -------
-        physio_data : `Physio_DataDT <smash.fcore._mwd_physio_data.Physio_DataDT>`
+        physio_data : `Physio_DataDT <fcore._mwd_physio_data.Physio_DataDT>`
             It returns a Fortran derived type containing the variables relating to the physiographic data.
 
         Examples
@@ -771,7 +771,7 @@ class Model:
 
         Returns
         -------
-        atmos_data : `Atmos_DataDT <smash.fcore._mwd_atmos_data.Atmos_DataDT>`
+        atmos_data : `Atmos_DataDT <fcore._mwd_atmos_data.Atmos_DataDT>`
             It returns a Fortran derived type containing the variables relating to the atmospheric data.
 
         Examples
@@ -801,7 +801,7 @@ class Model:
 
         .. warning::
             If the Model object has been initialised with the ``sparse_storage`` option in setup
-            (see `smash.Model`), the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are
+            (see `Model`), the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are
             unavailable and replaced by ``sparse_prcp``, ``sparse_pet`` (``sparse_snow`` and ``sparse_temp``,
             optionally) and vice versa if the sparse_storage option has not been chosen.
 
@@ -852,7 +852,7 @@ class Model:
 
         Returns
         -------
-        rr_parameters : `RR_ParametersDT <smash.fcore._mwd_rr_parameters.RR_ParametersDT>`
+        rr_parameters : `RR_ParametersDT <fcore._mwd_rr_parameters.RR_ParametersDT>`
             It returns a Fortran derived type containing the variables relating to the rainfall-runoff
             parameters.
 
@@ -917,7 +917,7 @@ class Model:
 
         Returns
         -------
-        rr_initial_states : `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>`
+        rr_initial_states : `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>`
             It returns a Fortran derived type containing the variables relating to the rainfall-runoff
             initial states.
 
@@ -982,7 +982,7 @@ class Model:
 
         Returns
         -------
-        serr_mu_parameters : `SErr_Mu_ParametersDT <smash.fcore._mwd_serr_mu_parameters.SErr_Mu_ParametersDT>`
+        serr_mu_parameters : `SErr_Mu_ParametersDT <fcore._mwd_serr_mu_parameters.SErr_Mu_ParametersDT>`
             It returns a Fortran derived type containing the variables relating to the structural error mu
             parameters.
 
@@ -996,7 +996,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -1053,7 +1053,7 @@ class Model:
 
         Returns
         -------
-        serr_sigma_parameters : `SErr_Sigma_ParametersDT <smash.fcore._mwd_serr_sigma_parameters.SErr_Sigma_ParametersDT>`
+        serr_sigma_parameters : `SErr_Sigma_ParametersDT <fcore._mwd_serr_sigma_parameters.SErr_Sigma_ParametersDT>`
             It returns a Fortran derived type containing the variables relating to the structural error sigma
             parameters.
 
@@ -1066,6 +1066,7 @@ class Model:
         --------
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
 
         Access to Model structural error sigma parameters
 
@@ -1109,7 +1110,7 @@ class Model:
 
         Returns
         -------
-        response : `ResponseDT <smash.fcore._mwd_response.ResponseDT>`
+        response : `ResponseDT <fcore._mwd_response.ResponseDT>`
             It returns a Fortran derived type containing the variables relating to the response.
 
         Examples
@@ -1162,7 +1163,7 @@ class Model:
 
         Returns
         -------
-        rr_final_states : `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>`
+        rr_final_states : `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>`
             It returns a Fortran derived type containing the variables relating to the rainfall-runoff final
             states.
 
@@ -1681,7 +1682,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -1744,7 +1745,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -2122,7 +2123,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -2191,7 +2192,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
