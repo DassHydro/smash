@@ -727,7 +727,7 @@ class Net(object):
 
         >>> net.get_weight()
         [array([[0.5488135 , 0.71518937, 0.60276338],
-            [0.54488318, 0.4236548 , 0.64589411]])]
+                [0.54488318, 0.4236548 , 0.64589411]])]
         """
 
         return [layer.weight for layer in self.layers if hasattr(layer, "weight")]
