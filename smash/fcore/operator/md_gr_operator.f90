@@ -135,7 +135,7 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine exponential_transfer(he, pre, ce, qre)
+    subroutine gr_exponential_transfer(pre, ce, he, qre)
 
         implicit none
 
