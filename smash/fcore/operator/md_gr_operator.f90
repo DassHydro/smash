@@ -308,7 +308,7 @@ contains
     end subroutine gr5_time_step
 
     subroutine gr6_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
-    & ac_ce, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
+    & ac_te, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
 
         implicit none
 
@@ -318,7 +318,7 @@ contains
         type(OptionsDT), intent(in) :: options
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
-        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_ce, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_te, ac_kexc, ac_aexc
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht, ac_he
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
@@ -335,7 +335,7 @@ contains
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_ce, ac_kexc, ac_aexc, ac_hi, &
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_he, ac_qt) &
         !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre)
 #endif
@@ -369,7 +369,7 @@ contains
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 
-                call exponential_transfer(ac_he(k), pre, ac_ce(k), qre)
+                call exponential_transfer(ac_he(k), pre, ac_te(k), qre)
                 
                 qd = max(0._sp, prd + l)
 

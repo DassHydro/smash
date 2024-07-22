@@ -247,7 +247,7 @@ contains
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % ct
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % ce
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % te
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 5), & ! % kexc
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 6), & ! % aexc
                     h1, & ! % hi

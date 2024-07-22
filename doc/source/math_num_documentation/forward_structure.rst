@@ -359,12 +359,12 @@ It can be expressed as follows:
 
 .. math::
 
-    q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, c_e, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t, h_e\right](x, t)\right)
+    q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, t_e, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t, h_e\right](x, t)\right)
 
 with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
 :math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
 :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
-:math:`c_e` the maximum capacity of the exponential reservoir, 
+:math:`t_e` the characteristic time of the water level recession which controls the slope of the recession, 
 :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
 :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
 :math:`h_e` the state of the exponential reservoir.
@@ -375,7 +375,7 @@ with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`
     
     - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
     - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
-    - Parameters, :math:`\{c_i, c_p, c_t, c_e, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+    - Parameters, :math:`\{c_i, c_p, c_t, t_e, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
     - States, :math:`\{h_i, h_p, h_t, h_e\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
@@ -457,11 +457,11 @@ Transfer
         q_{re}(x, t) =
         \begin{cases}
             
-            c_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{c_e(x)} \lt 7 \\
+            t_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{t_e(x)} \lt 7 \\
 
-            c_e(x) * \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{c_e(x)} \lt -7 \\
+            t_e(x) * \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{t_e(x)} \lt -7 \\
 
-            h_e(x, t^*) + \frac{ c_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) } \; &\text{otherwise}.
+            h_e(x, t^*) + \frac{ t_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) } \; &\text{otherwise}.
 
         \end{cases}
 

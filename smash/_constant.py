@@ -155,7 +155,7 @@ RR_PARAMETERS = [
     "ci",  # % (gr4, gr5, gr6)
     "cp",  # % (gr4, gr5, gr6, grd)
     "ct",  # % (gr4, gr5, gr6, grd)
-    "ce",  # % (gr6)
+    "te",  # % (gr6)
     "kexc",  # % (gr4, gr5, gr6)
     "aexc",  # % (gr5, gr6)
     "ca",  # % loieau
@@ -202,7 +202,7 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % ci
             (0, np.inf),  # % cp
             (0, np.inf),  # % ct
-            (0, np.inf),  # % ce
+            (0, np.inf),  # % te
             (-np.inf, np.inf),  # % kexc
             (0, 1),  # % aexc
             (0, np.inf),  # % ca
@@ -259,7 +259,7 @@ DEFAULT_RR_PARAMETERS = dict(
             1e-6,  # % ci
             200,  # % cp
             500,  # % ct
-            1,  # % ce
+            1,  # % te
             0,  # % kexc
             0.1,  # % aexc
             200,  # % ca
@@ -314,7 +314,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e2),  # % ci
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
-            (1e-6, 1e3),  # % ce
+            (1e-6, 1e3),  # % te
             (-50, 50),  # % kexc
             (1e-6, 0.999999),  # % aexc
             (1e-6, 1e3),  # % ca
