@@ -338,7 +338,7 @@ Exchange
 Transfer
 ''''''''
 
-Same as ``gr-4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4.transfer>`
+Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4.transfer>`
 
 .. _math_num_documentation.forward_structure.hydrological_module.gr6:
 
