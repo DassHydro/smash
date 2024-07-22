@@ -676,7 +676,7 @@ class Net(object):
 
         >>> net.set_bias([0])
 
-        Get the weight values
+        Get the bias values
 
         >>> net.get_bias()
         [array([[0., 0.]])]
@@ -765,7 +765,7 @@ class Net(object):
         >>> np.random.seed(0)  # Set a random seed
         >>> net.set_bias([np.random.uniform(size=(1, 2))])
 
-        Get the weight values
+        Get the bias values
 
         >>> net.get_bias()
         [array([[0.60276338, 0.54488318]])]
@@ -780,7 +780,8 @@ class Net(object):
         Parameters
         ----------
         x_train : `numpy.ndarray`
-            An array representing the input data for the neural network.
+            An array representing the input data for the neural network. The shape of
+            this array must be broadcastable into the input shape of the first layer.
 
         Returns
         -------
