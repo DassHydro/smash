@@ -135,7 +135,7 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine exponential_transfer(he, pre, ce, qre)
+    subroutine gr_exponential_transfer(pre, ce, he, qre)
 
         implicit none
 
@@ -373,7 +373,7 @@ contains
                 
                 qd = max(0._sp, prd + l)
 
-                ac_qt(k) = qr + qd
+                ac_qt(k) = qr + qd + qre
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
