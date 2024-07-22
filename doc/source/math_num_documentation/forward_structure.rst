@@ -404,7 +404,7 @@ Exchange
 Transfer
 ''''''''
 
-- Split the production runoff :math:`p_r` into three branches (transfer, exponential and direct), :math:`p_{rr}` and :math:`p_{rd}`
+- Split the production runoff :math:`p_r` into three branches (transfer, exponential and direct), :math:`p_{rr}`, :math:`p_{re}` and :math:`p_{rd}`
 
 .. math::
     :nowrap:
