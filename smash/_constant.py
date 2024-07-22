@@ -67,7 +67,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         [
             ["ci", "cp", "ct", "kexc"],  # % gr4
             ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
-            ["ci", "cp", "ct", "ce", "kexc", "aexc"],  # % gr6
+            ["ci", "cp", "ct", "te", "kexc", "aexc"],  # % gr6
             ["cp", "ct"],  # % grd
             ["ca", "cc", "kb"],  # % loieau
             ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -314,7 +314,7 @@ DEFAULT_RR_PARAMETERS = dict(
             1e-6,  # % ci
             200,  # % cp
             500,  # % ct
-            1,  # % te
+            10,  # % te
             0,  # % kexc
             0.1,  # % aexc
             200,  # % ca
@@ -345,7 +345,7 @@ DEFAULT_RR_INITIAL_STATES = dict(
             1e-2,  # % hi
             1e-2,  # % hp
             1e-2,  # % ht
-            -10,   # % he
+            -100,  # % he
             1e-2,  # % ha
             1e-2,  # % hc
             1e-2,  # % hcl
@@ -400,7 +400,7 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
             (1e-6, 0.999999),  # % hi
             (1e-6, 0.999999),  # % hp
             (1e-6, 0.999999),  # % ht
-            (1e-6, 0.999999),  # % he
+            (-1e3, 0),         # % he
             (1e-6, 0.999999),  # % ha
             (1e-6, 0.999999),  # % hc
             (1e-6, 0.999999),  # % hcl

@@ -12691,6 +12691,8 @@ CONTAINS
     END IF
     he_d = he_star_d - qre_d
     he = he_star - qre
+    qre_d = (qre_d-qre*te_d/te)/te
+    qre = qre/te
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER_D
 
 !  Differentiation of gr_exponential_transfer in reverse (adjoint) mode (with options fixinterface noISIZE context):
@@ -12716,15 +12718,19 @@ CONTAINS
     he_star = he + pre
     ar = he_star/te
     IF (ar .LT. -7._sp) THEN
+      qre = te*EXP(ar)
       CALL PUSHCONTROL2B(0)
     ELSE IF (ar .GT. 7._sp) THEN
+      qre = he_star + te/EXP(ar)
       CALL PUSHCONTROL2B(1)
     ELSE
       arg1 = EXP(ar) + 1._sp
+      qre = te*LOG(arg1)
       CALL PUSHCONTROL2B(2)
     END IF
+    te_b = te_b - qre*qre_b/te**2
+    qre_b = qre_b/te - he_b
     he_star_b = he_b
-    qre_b = qre_b - he_b
     CALL POPCONTROL2B(branch)
     IF (branch .EQ. 0) THEN
       ar = he_star/te
@@ -12768,6 +12774,7 @@ CONTAINS
       qre = te*LOG(arg1)
     END IF
     he = he_star - qre
+    qre = qre/te
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER
 
 !  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context):

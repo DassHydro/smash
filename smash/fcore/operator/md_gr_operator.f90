@@ -156,6 +156,8 @@ contains
         end if
         he = he_star - qre
 
+        qre = qre / te
+
     end subroutine gr_exponential_transfer
     
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
@@ -404,7 +406,7 @@ contains
 
                 end if
 
-                prr = 0.9_sp * (pr + perc) + l
+                prr = 0.6_sp * 0.9_sp * (pr + perc) + l
                 pre = 0.4_sp * 0.9_sp * (pr + perc) + l
                 prd = 0.1_sp * (pr + perc)
 
