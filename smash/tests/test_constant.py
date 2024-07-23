@@ -78,7 +78,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
-        ["ci", "cp", "ct", "ce", "kexc", "aexc"],  # % gr5
+        ["ci", "cp", "ct", "te", "kexc", "aexc"],  # % gr6
         ["cp", "ct"],  # % grd
         ["ca", "cc", "kb"],  # % loieau
         ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -122,7 +122,7 @@ def test_parameters():
         "ci",  # % (gr4, gr5, gr6)
         "cp",  # % (gr4, gr5, gr6, grd)
         "ct",  # % (gr4, gr5, gr6, grd)
-        "ce",  # % gr6
+        "te",  # % gr6
         "kexc",  # % (gr4, gr5, gr6)
         "aexc",  # % (gr5, gr6)
         "ca",  # % loieau
@@ -206,7 +206,7 @@ def test_feasible_domain():
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
-        (0, np.inf),  # % ce
+        (0, 100),  # % te
         (-np.inf, np.inf),  # % kexc
         (0, 1),  # % aexc
         (0, np.inf),  # % ca
@@ -232,7 +232,7 @@ def test_feasible_domain():
         (0, 1),  # % hi
         (0, 1),  # % hp
         (0, 1),  # % ht
-        (-np.inf, np.inf),  # % he
+        (-np.inf, 1),  # % he
         (0, 1),  # % ha
         (0, 1),  # % hc
         (0, 1),  # % hcl
@@ -263,7 +263,7 @@ def test_default_parameters():
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
-        1,  # % ce
+        10,  # % te
         0,  # % kexc
         0.1,  # % aexc
         200,  # % ca
@@ -289,7 +289,7 @@ def test_default_parameters():
         1e-2,  # % hi
         1e-2,  # % hp
         1e-2,  # % ht
-        -10,   # % he
+        -100,  # % he
         1e-2,  # % ha
         1e-2,  # % hc
         1e-2,  # % hcl
@@ -320,7 +320,7 @@ def test_default_bounds_parameters():
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
-        (1e-6, 1e3),  # % ce
+        (1e-3, 20),  # % te
         (-50, 50),  # % kexc
         (1e-6, 0.999999),  # % aexc
         (1e-6, 1e3),  # % ca
@@ -347,7 +347,7 @@ def test_default_bounds_parameters():
         (1e-6, 0.999999),  # % hp
         (1e-6, 0.999999),  # % ht
         (1e-6, 0.999999),  # % ha
-        (1e-6, 0.999999),  # % he
+        (-1e3, 0),         # % he
         (1e-6, 0.999999),  # % hc
         (1e-6, 0.999999),  # % hcl
         (1e-6, 0.999999),  # % husl

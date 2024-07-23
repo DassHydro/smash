@@ -257,7 +257,7 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % ci
             (0, np.inf),  # % cp
             (0, np.inf),  # % ct
-            (0, np.inf),  # % te
+            (0, 100),  # % te
             (-np.inf, np.inf),  # % kexc
             (0, 1),  # % aexc
             (0, np.inf),  # % ca
@@ -288,7 +288,7 @@ FEASIBLE_RR_INITIAL_STATES = dict(
             (0, 1),  # % hi
             (0, 1),  # % hp
             (0, 1),  # % ht
-            (-np.inf, np.inf),  # % he
+            (-np.inf, 1),  # % he
             (0, 1),  # % ha
             (0, 1),  # % hc
             (0, 1),  # % hcl
@@ -369,7 +369,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e2),  # % ci
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
-            (1e-6, 1e3),  # % te
+            (1e-3, 20),  # % te
             (-50, 50),  # % kexc
             (1e-6, 0.999999),  # % aexc
             (1e-6, 1e3),  # % ca
