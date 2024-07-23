@@ -90,7 +90,7 @@ def fast_index_search_for_date(files, date, date_pattern):
 
         # cas1
         if date > date_match:
-            return -1
+            return len(files)
 
     else:
         raise ValueError(
