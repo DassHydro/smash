@@ -103,9 +103,9 @@ The Cance is modelled successively with GR5 and GR6. Then we optimize a first un
 
 .. code-block:: text
     
-    </> Reading precipitation: 100%|█████████████████████| 1440/1440 [00:02<00:00, 562.29it/s]
-    </> Reading daily interannual pet: 100%|██████████████| 366/366 [00:00<00:00, 2182.46it/s]
-    </> Disaggregating daily interannual pet: 100%|███| 1440/1440 [00:00<00:00, 130819.33it/s]
+    </> Reading precipitation: 100%|████████████████████████████████████████████████████████████████████████████████████| 1440/1440 [00:02<00:00, 529.85it/s]
+    </> Reading daily interannual pet: 100%|█████████████████████████████████████████████████████████████████████████████| 366/366 [00:00<00:00, 2126.80it/s]
+    </> Disaggregating daily interannual pet: 100%|██████████████████████████████████████████████████████████████████| 1440/1440 [00:00<00:00, 130435.11it/s]
     </> Computing mean atmospheric data
     </> Adjusting GR interception capacity
     </> Forward Run
@@ -122,24 +122,24 @@ The Cance is modelled successively with GR5 and GR6. Then we optimize a first un
         At iterate      3    nfg =     5    J =      0.036018    |proj g| =      0.029318
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT                                                                                      
 
-    </> Reading precipitation: 100%|█████████████████████| 1440/1440 [00:02<00:00, 562.29it/s]
-    </> Reading daily interannual pet: 100%|██████████████| 366/366 [00:00<00:00, 2217.64it/s]
-    </> Disaggregating daily interannual pet: 100%|███| 1440/1440 [00:00<00:00, 134426.84it/s]
+    </> Reading precipitation: 100%|████████████████████████████████████████████████████████████████████████████████████| 1440/1440 [00:02<00:00, 534.58it/s]
+    </> Reading daily interannual pet: 100%|█████████████████████████████████████████████████████████████████████████████| 366/366 [00:00<00:00, 2127.16it/s]
+    </> Disaggregating daily interannual pet: 100%|██████████████████████████████████████████████████████████████████| 1440/1440 [00:00<00:00, 134116.40it/s]
     </> Computing mean atmospheric data
     </> Adjusting GR interception capacity
     </> Forward Run
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.963149    ddx = 0.64
-        At iterate      1    nfg =    68    J =      0.192955    ddx = 0.64
-        At iterate      2    nfg =   135    J =      0.047702    ddx = 0.16
+        At iterate      0    nfg =     1    J =      0.805968    ddx = 0.64
+        At iterate      1    nfg =    68    J =      0.101309    ddx = 0.64
+        At iterate      2    nfg =   136    J =      0.037820    ddx = 0.16
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT                                                                                      
 
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.807825    |proj g| =      0.500000
-        At iterate      1    nfg =     4    J =      0.794968    |proj g| =      0.092528
-        At iterate      2    nfg =     6    J =      0.494628    |proj g| =      0.105983
-        At iterate      3    nfg =     7    J =      0.169516    |proj g| =      0.244625
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT 
+        At iterate      0    nfg =     1    J =      0.037820    |proj g| =      0.039416
+        At iterate      1    nfg =     4    J =      0.035688    |proj g| =      0.057545
+        At iterate      2    nfg =     5    J =      0.034707    |proj g| =      0.030183
+        At iterate      3    nfg =     6    J =      0.033398    |proj g| =      0.034014
+        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
 
 
 Post-processing
