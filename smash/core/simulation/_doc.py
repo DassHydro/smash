@@ -70,10 +70,11 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `str` or None, default None
         """,
         """
-        Transformation method applied to the control vector. Should be one of:
+        Transformation method applied to the control vector. Only used with ``'sbs'`` or ``'lbfgsb'``
+        optimizer. Should be one of:
 
-        - ``'keep'`` (all **optimizer**)
-        - ``'normalize'`` (``'sbs'`` or ``'lbfgsb'`` **optimizer** only)
+        - ``'keep'``
+        - ``'normalize'``
         - ``'sbs'`` (``'sbs'`` **optimizer** only)
 
         .. note::
@@ -81,7 +82,6 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
             - **optimizer** = ``'sbs'``; **control_tfm** = ``'sbs'``
             - **optimizer** = ``'lbfgsb'``; **control_tfm** = ``'normalize'``
-            - **optimizer** = ``'ann'``; **control_tfm** = ``'keep'``
         """,
     ),
     "descriptor": (
@@ -1399,9 +1399,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
-        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
+        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
+        vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
         An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
