@@ -143,21 +143,21 @@ contains
         real(sp), intent(in) :: pre, te
         real(sp), intent(inout) :: he
         real(sp), intent(out) :: qre
-        real(sp) :: he_star, AR
+        real(sp) :: he_star, ar
         
         he_star = he + pre
-        AR = he_star / te
-        if (AR .lt. -7._sp) then
-            qre = te * exp(AR)
-        elseif (AR .gt. 7._sp) then
-            qre = he_star + te / exp(AR)
+        ar = he_star / te
+        if (ar .lt. -7._sp) then
+            qre = te * exp(ar)
+        elseif (ar .gt. 7._sp) then
+            qre = he_star + te / exp(ar)
         else
-            qre = te * log(exp(AR) + 1._sp)
+            qre = te * log(exp(ar) + 1._sp)
         end if
+        
         he = he_star - qre
-
-        qre = qre / te
-
+        
+        qre = qre / te 
     end subroutine gr_exponential_transfer
     
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
