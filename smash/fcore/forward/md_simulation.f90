@@ -245,6 +245,7 @@ contains
                     mesh, &
                     input_data, &
                     options, &
+                    returns, &
                     t, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci

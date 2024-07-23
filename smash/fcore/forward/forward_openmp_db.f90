@@ -11975,7 +11975,7 @@ MODULE MD_GR_OPERATOR_DIFF
   USE MWD_INPUT_DATA
 !% only: OptionsDT
   USE MWD_OPTIONS_DIFF
-!% only: ReturnDT
+!% only: ReturnsDT
   USE MWD_RETURNS_DIFF
 !% get_ac_atmos_data_time_step
   USE MWD_ATMOS_MANIPULATION_DIFF
@@ -12680,17 +12680,17 @@ CONTAINS
   END SUBROUTINE GR_TRANSFER
 
 !  Differentiation of gr_exponential_transfer in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
-!   variations   of useful results: he qre
+!   variations   of useful results: qe he
 !   with respect to varying inputs: he pre te
   SUBROUTINE GR_EXPONENTIAL_TRANSFER_D(pre, pre_d, te, te_d, he, he_d, &
-&   qre, qre_d)
+&   qe, qe_d)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pre, te
     REAL(sp), INTENT(IN) :: pre_d, te_d
     REAL(sp), INTENT(INOUT) :: he
     REAL(sp), INTENT(INOUT) :: he_d
-    REAL(sp), INTENT(OUT) :: qre
-    REAL(sp), INTENT(OUT) :: qre_d
+    REAL(sp), INTENT(OUT) :: qe
+    REAL(sp), INTENT(OUT) :: qe_d
     REAL(sp) :: he_star, ar
     REAL(sp) :: he_star_d, ar_d
     INTRINSIC EXP
@@ -12704,37 +12704,35 @@ CONTAINS
     ar = he_star/te
     IF (ar .LT. -7._sp) THEN
       temp = EXP(ar)
-      qre_d = temp*te_d + te*EXP(ar)*ar_d
-      qre = te*temp
+      qe_d = temp*te_d + te*EXP(ar)*ar_d
+      qe = te*temp
     ELSE IF (ar .GT. 7._sp) THEN
       temp = EXP(ar)
-      qre_d = he_star_d + (te_d-te*EXP(ar)*ar_d/temp)/temp
-      qre = he_star + te/temp
+      qe_d = he_star_d + (te_d-te*EXP(ar)*ar_d/temp)/temp
+      qe = he_star + te/temp
     ELSE
       arg1_d = EXP(ar)*ar_d
       arg1 = EXP(ar) + 1._sp
       temp = LOG(arg1)
-      qre_d = temp*te_d + te*arg1_d/arg1
-      qre = te*temp
+      qe_d = temp*te_d + te*arg1_d/arg1
+      qe = te*temp
     END IF
-    he_d = he_star_d - qre_d
-    he = he_star - qre
-    qre_d = (qre_d-qre*te_d/te)/te
-    qre = qre/te
+    he_d = he_star_d - qe_d
+    he = he_star - qe
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER_D
 
 !  Differentiation of gr_exponential_transfer in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
-!   gradient     of useful results: he qre te
+!   gradient     of useful results: qe he te
 !   with respect to varying inputs: he pre te
   SUBROUTINE GR_EXPONENTIAL_TRANSFER_B(pre, pre_b, te, te_b, he, he_b, &
-&   qre, qre_b)
+&   qe, qe_b)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pre, te
     REAL(sp) :: pre_b, te_b
     REAL(sp), INTENT(INOUT) :: he
     REAL(sp), INTENT(INOUT) :: he_b
-    REAL(sp) :: qre
-    REAL(sp) :: qre_b
+    REAL(sp) :: qe
+    REAL(sp) :: qe_b
     REAL(sp) :: he_star, ar
     REAL(sp) :: he_star_b, ar_b
     INTRINSIC EXP
@@ -12746,37 +12744,32 @@ CONTAINS
     he_star = he + pre
     ar = he_star/te
     IF (ar .LT. -7._sp) THEN
-      qre = te*EXP(ar)
       CALL PUSHCONTROL2B(0)
     ELSE IF (ar .GT. 7._sp) THEN
-      qre = he_star + te/EXP(ar)
       CALL PUSHCONTROL2B(1)
     ELSE
       arg1 = EXP(ar) + 1._sp
-      qre = te*LOG(arg1)
       CALL PUSHCONTROL2B(2)
     END IF
-!$OMP ATOMIC update
-    te_b = te_b - qre*qre_b/te**2
-    qre_b = qre_b/te - he_b
     he_star_b = he_b
+    qe_b = qe_b - he_b
     CALL POPCONTROL2B(branch)
     IF (branch .EQ. 0) THEN
       ar = he_star/te
 !$OMP ATOMIC update
-      te_b = te_b + EXP(ar)*qre_b
-      ar_b = EXP(ar)*te*qre_b
+      te_b = te_b + EXP(ar)*qe_b
+      ar_b = EXP(ar)*te*qe_b
     ELSE IF (branch .EQ. 1) THEN
       ar = he_star/te
       temp = EXP(ar)
-      he_star_b = he_star_b + qre_b
+      he_star_b = he_star_b + qe_b
 !$OMP ATOMIC update
-      te_b = te_b + qre_b/temp
-      ar_b = -(EXP(ar)*te*qre_b/temp**2)
+      te_b = te_b + qe_b/temp
+      ar_b = -(EXP(ar)*te*qe_b/temp**2)
     ELSE
 !$OMP ATOMIC update
-      te_b = te_b + LOG(arg1)*qre_b
-      arg1_b = te*qre_b/arg1
+      te_b = te_b + LOG(arg1)*qe_b
+      arg1_b = te*qe_b/arg1
       ar = he_star/te
       ar_b = EXP(ar)*arg1_b
     END IF
@@ -12787,11 +12780,11 @@ CONTAINS
     pre_b = he_star_b
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER_B
 
-  SUBROUTINE GR_EXPONENTIAL_TRANSFER(pre, te, he, qre)
+  SUBROUTINE GR_EXPONENTIAL_TRANSFER(pre, te, he, qe)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pre, te
     REAL(sp), INTENT(INOUT) :: he
-    REAL(sp), INTENT(OUT) :: qre
+    REAL(sp), INTENT(OUT) :: qe
     REAL(sp) :: he_star, ar
     INTRINSIC EXP
     INTRINSIC LOG
@@ -12799,15 +12792,14 @@ CONTAINS
     he_star = he + pre
     ar = he_star/te
     IF (ar .LT. -7._sp) THEN
-      qre = te*EXP(ar)
+      qe = te*EXP(ar)
     ELSE IF (ar .GT. 7._sp) THEN
-      qre = he_star + te/EXP(ar)
+      qe = he_star + te/EXP(ar)
     ELSE
       arg1 = EXP(ar) + 1._sp
-      qre = te*LOG(arg1)
+      qe = te*LOG(arg1)
     END IF
-    he = he_star - qre
-    qre = qre/te
+    he = he_star - qe
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER
 
 !  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
@@ -13452,16 +13444,17 @@ CONTAINS
 !   variations   of useful results: ac_qt ac_he ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_te
 !                ac_qt ac_he ac_hi ac_hp ac_ht ac_mlt ac_aexc
-  SUBROUTINE GR6_TIME_STEP_D(setup, mesh, input_data, options, time_step&
-&   , ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, ac_ct_d, &
-&   ac_te, ac_te_d, ac_kexc, ac_kexc_d, ac_aexc, ac_aexc_d, ac_hi, &
-&   ac_hi_d, ac_hp, ac_hp_d, ac_ht, ac_ht_d, ac_he, ac_he_d, ac_qt, &
-&   ac_qt_d)
+  SUBROUTINE GR6_TIME_STEP_D(setup, mesh, input_data, options, returns, &
+&   time_step, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, &
+&   ac_ct_d, ac_te, ac_te_d, ac_kexc, ac_kexc_d, ac_aexc, ac_aexc_d, &
+&   ac_hi, ac_hi_d, ac_hp, ac_hp_d, ac_ht, ac_ht_d, ac_he, ac_he_d, &
+&   ac_qt, ac_qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
@@ -13477,10 +13470,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
-    INTEGER :: row, col, k
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d&
-&   , qd_d, qre_d
+&   , qd_d, qe_d
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -13496,9 +13489,9 @@ CONTAINS
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(ac_prcp_d, &
 !$OMP&ac_ci_d, ac_cp_d, ac_ct_d, ac_te_d, ac_kexc_d, ac_aexc_d, ac_hi_d&
 !$OMP&, ac_hp_d, ac_ht_d, ac_he_d, ac_qt_d), PRIVATE(row, col, k, pn, en&
-!$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qre), PRIVATE(pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qre_d), &
-!$OMP&PRIVATE(temp), SCHEDULE(static)
+!$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qe), PRIVATE(pn_d, en_d, &
+!$OMP&pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qe_d), PRIVATE&
+!$OMP&(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -13522,8 +13515,8 @@ CONTAINS
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
-          prr_d = 0.9_sp*(pr_d+perc_d) + l_d
-          prr = 0.9_sp*(pr+perc) + l
+          prr_d = 0.9_sp*0.6_sp*(pr_d+perc_d) + l_d
+          prr = 0.6_sp*0.9_sp*(pr+perc) + l
           pre_d = 0.9_sp*0.4_sp*(pr_d+perc_d) + l_d
           pre = 0.4_sp*0.9_sp*(pr+perc) + l
           prd_d = 0.1_sp*(pr_d+perc_d)
@@ -13531,7 +13524,7 @@ CONTAINS
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
           CALL GR_EXPONENTIAL_TRANSFER_D(pre, pre_d, ac_te(k), ac_te_d(k&
-&                                  ), ac_he(k), ac_he_d(k), qre, qre_d)
+&                                  ), ac_he(k), ac_he_d(k), qe, qe_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
             qd = prd + l
@@ -13539,8 +13532,8 @@ CONTAINS
             qd = 0._sp
             qd_d = 0.0_4
           END IF
-          ac_qt_d(k) = qr_d + qd_d + qre_d
-          ac_qt(k) = qr + qd + qre
+          ac_qt_d(k) = qr_d + qd_d + qe_d
+          ac_qt(k) = qr + qd + qe
 ! Transform from mm/dt to m3/s
           temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
           ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
@@ -13555,16 +13548,17 @@ CONTAINS
 !                ac_qt ac_he ac_hi ac_hp ac_ht ac_mlt ac_aexc
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_te
 !                ac_qt ac_he ac_hi ac_hp ac_ht ac_mlt ac_aexc
-  SUBROUTINE GR6_TIME_STEP_B(setup, mesh, input_data, options, time_step&
-&   , ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, ac_ct_b, &
-&   ac_te, ac_te_b, ac_kexc, ac_kexc_b, ac_aexc, ac_aexc_b, ac_hi, &
-&   ac_hi_b, ac_hp, ac_hp_b, ac_ht, ac_ht_b, ac_he, ac_he_b, ac_qt, &
-&   ac_qt_b)
+  SUBROUTINE GR6_TIME_STEP_B(setup, mesh, input_data, options, returns, &
+&   time_step, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, &
+&   ac_ct_b, ac_te, ac_te_b, ac_kexc, ac_kexc_b, ac_aexc, ac_aexc_b, &
+&   ac_hi, ac_hi_b, ac_hp, ac_hp_b, ac_ht, ac_ht_b, ac_he, ac_he_b, &
+&   ac_qt, ac_qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
@@ -13580,10 +13574,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
-    INTEGER :: row, col, k
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
-&   , qd_b, qre_b
+&   , qd_b, qe_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
     INTEGER :: branch
@@ -13599,7 +13593,7 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row, col, k, &
-!$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre), PRIVATE(&
+!$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe), PRIVATE(&
 !$OMP&chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
@@ -13628,7 +13622,7 @@ CONTAINS
             l = 0._sp
           END IF
           CALL PUSHREAL4(prr)
-          prr = 0.9_sp*(pr+perc) + l
+          prr = 0.6_sp*0.9_sp*(pr+perc) + l
           CALL PUSHREAL4(pre)
           pre = 0.4_sp*0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
@@ -13636,7 +13630,7 @@ CONTAINS
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           CALL PUSHREAL4(ac_he(k))
-          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_te(k), ac_he(k), qre)
+          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_te(k), ac_he(k), qe)
           IF (0._sp .LT. prd + l) THEN
             CALL PUSHCONTROL1B(0)
           ELSE
@@ -13657,9 +13651,9 @@ CONTAINS
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(ac_prcp_b, &
 !$OMP&ac_ci_b, ac_cp_b, ac_ct_b, ac_te_b, ac_kexc_b, ac_aexc_b, ac_hi_b&
 !$OMP&, ac_hp_b, ac_ht_b, ac_he_b, ac_qt_b), PRIVATE(row, col, k, pn, en&
-!$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qre), PRIVATE(pn_b, en_b, &
-!$OMP&pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qre_b), &
-!$OMP&PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
+!$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qe), PRIVATE(pn_b, en_b, &
+!$OMP&pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qe_b), PRIVATE&
+!$OMP&(branch, chunk_end, chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
     CALL POPREAL4(pre)
     CALL POPREAL4(prr)
@@ -13674,7 +13668,7 @@ CONTAINS
     prd_b = 0.0_4
     qr_b = 0.0_4
     qd_b = 0.0_4
-    qre_b = 0.0_4
+    qe_b = 0.0_4
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
@@ -13685,7 +13679,7 @@ CONTAINS
 &           ac_qt_b(k)/setup%dt
           qr_b = ac_qt_b(k)
           qd_b = ac_qt_b(k)
-          qre_b = ac_qt_b(k)
+          qe_b = ac_qt_b(k)
           ac_qt_b(k) = 0.0_4
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
@@ -13697,16 +13691,19 @@ CONTAINS
           END IF
           CALL POPREAL4(ac_he(k))
           CALL GR_EXPONENTIAL_TRANSFER_B(pre, pre_b, ac_te(k), ac_te_b(k&
-&                                  ), ac_he(k), ac_he_b(k), qre, qre_b)
+&                                  ), ac_he(k), ac_he_b(k), qe, qe_b)
           CALL POPREAL4(ac_ht(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
 &                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
           CALL POPREAL4(pre)
           temp_b = 0.9_sp*0.4_sp*pre_b
-          pr_b = 0.1_sp*prd_b + temp_b + 0.9_sp*prr_b
-          perc_b = 0.1_sp*prd_b + temp_b + 0.9_sp*prr_b
+          pr_b = 0.1_sp*prd_b + temp_b
+          perc_b = 0.1_sp*prd_b + temp_b
           l_b = l_b + pre_b + prr_b
           CALL POPREAL4(prr)
+          temp_b = 0.9_sp*0.6_sp*prr_b
+          pr_b = pr_b + temp_b
+          perc_b = perc_b + temp_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
             CALL GR_THRESHOLD_EXCHANGE_B(ac_kexc(k), ac_kexc_b(k), &
@@ -13730,14 +13727,15 @@ CONTAINS
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GR6_TIME_STEP_B
 
-  SUBROUTINE GR6_TIME_STEP(setup, mesh, input_data, options, time_step, &
-&   ac_mlt, ac_ci, ac_cp, ac_ct, ac_te, ac_kexc, ac_aexc, ac_hi, ac_hp, &
-&   ac_ht, ac_he, ac_qt)
+  SUBROUTINE GR6_TIME_STEP(setup, mesh, input_data, options, returns, &
+&   time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_te, ac_kexc, ac_aexc, &
+&   ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
@@ -13746,8 +13744,8 @@ CONTAINS
 &   , ac_he
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
-    INTEGER :: row, col, k
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -13759,7 +13757,7 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row, col, k, &
-!$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre), SCHEDULE(static)
+!$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -13777,18 +13775,18 @@ CONTAINS
             perc = 0._sp
             l = 0._sp
           END IF
-          prr = 0.9_sp*(pr+perc) + l
+          prr = 0.6_sp*0.9_sp*(pr+perc) + l
           pre = 0.4_sp*0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
-          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_te(k), ac_he(k), qre)
+          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_te(k), ac_he(k), qe)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
             qd = 0._sp
           END IF
-          ac_qt(k) = qr + qd + qre
+          ac_qt(k) = qr + qd + qe
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt
@@ -17916,29 +17914,30 @@ CONTAINS
 ! % hp
 ! % ht
 ! % he
-        CALL GR6_TIME_STEP_D(setup, mesh, input_data, options, t, &
-&                      checkpoint_variable%ac_mlt, checkpoint_variable_d&
-&                      %ac_mlt, checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+1), checkpoint_variable_d%&
-&                      ac_rr_parameters(:, rr_parameters_inc+1), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+2), checkpoint_variable_d%&
+        CALL GR6_TIME_STEP_D(setup, mesh, input_data, options, returns, &
+&                      t, checkpoint_variable%ac_mlt, &
+&                      checkpoint_variable_d%ac_mlt, checkpoint_variable&
+&                      %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+1), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+2), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+3), checkpoint_variable_d%&
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+2), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+3), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+4), checkpoint_variable_d%&
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+3), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+4), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+5), checkpoint_variable_d%&
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+4), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+5), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+6), checkpoint_variable_d%&
-&                      ac_rr_parameters(:, rr_parameters_inc+6), h1, &
-&                      h1_d, h2, h2_d, h3, h3_d, h4, h4_d, &
-&                      checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                      checkpoint_variable_d%ac_qtz(:, setup%nqz))
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+5), checkpoint_variable%&
+&                      ac_rr_parameters(:, rr_parameters_inc+6), &
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+6), h1, h1_d, h2, h2_d, h3, &
+&                      h3_d, h4, h4_d, checkpoint_variable%ac_qtz(:, &
+&                      setup%nqz), checkpoint_variable_d%ac_qtz(:, setup&
+&                      %nqz))
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -18315,8 +18314,8 @@ CONTAINS
         CALL PUSHREAL4ARRAY(h3, mesh%nac)
         CALL PUSHREAL4ARRAY(h2, mesh%nac)
         CALL PUSHREAL4ARRAY(h1, mesh%nac)
-        CALL GR6_TIME_STEP(setup, mesh, input_data, options, t, &
-&                    checkpoint_variable%ac_mlt, checkpoint_variable%&
+        CALL GR6_TIME_STEP(setup, mesh, input_data, options, returns, t&
+&                    , checkpoint_variable%ac_mlt, checkpoint_variable%&
 &                    ac_rr_parameters(:, rr_parameters_inc+1), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+2), checkpoint_variable%&
@@ -18676,8 +18675,8 @@ CONTAINS
           CALL POPREAL4ARRAY(h4, mesh%nac)
           CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
 &                      SIZE(checkpoint_variable%ac_qtz, 1))
-          CALL GR6_TIME_STEP_B(setup, mesh, input_data, options, t, &
-&                        checkpoint_variable%ac_mlt, &
+          CALL GR6_TIME_STEP_B(setup, mesh, input_data, options, returns&
+&                        , t, checkpoint_variable%ac_mlt, &
 &                        checkpoint_variable_b%ac_mlt, &
 &                        checkpoint_variable%ac_rr_parameters(:, &
 &                        rr_parameters_inc+1), checkpoint_variable_b%&
@@ -18999,8 +18998,8 @@ CONTAINS
 ! % hp
 ! % ht
 ! % he
-        CALL GR6_TIME_STEP(setup, mesh, input_data, options, t, &
-&                    checkpoint_variable%ac_mlt, checkpoint_variable%&
+        CALL GR6_TIME_STEP(setup, mesh, input_data, options, returns, t&
+&                    , checkpoint_variable%ac_mlt, checkpoint_variable%&
 &                    ac_rr_parameters(:, rr_parameters_inc+1), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+2), checkpoint_variable%&

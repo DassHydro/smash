@@ -21,7 +21,7 @@ module md_gr_operator
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
-    use mwd_returns !% only: ReturnDT
+    use mwd_returns !% only: ReturnsDT
     use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
 
     implicit none
@@ -136,28 +136,27 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr_exponential_transfer(pre, te, he, qre)
+    subroutine gr_exponential_transfer(pre, te, he, qe)
 
         implicit none
 
         real(sp), intent(in) :: pre, te
         real(sp), intent(inout) :: he
-        real(sp), intent(out) :: qre
+        real(sp), intent(out) :: qe
         real(sp) :: he_star, ar
         
         he_star = he + pre
         ar = he_star / te
         if (ar .lt. -7._sp) then
-            qre = te * exp(ar)
+            qe = te * exp(ar)
         elseif (ar .gt. 7._sp) then
-            qre = he_star + te / exp(ar)
+            qe = he_star + te / exp(ar)
         else
-            qre = te * log(exp(ar) + 1._sp)
+            qe = te * log(exp(ar) + 1._sp)
         end if
         
-        he = he_star - qre
+        he = he_star - qe
         
-        qre = qre / te 
     end subroutine gr_exponential_transfer
     
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
@@ -350,7 +349,7 @@ contains
 #endif
     end subroutine gr5_time_step
 
-    subroutine gr6_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    subroutine gr6_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_te, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
 
         implicit none
@@ -359,6 +358,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_te, ac_kexc, ac_aexc
@@ -366,8 +366,8 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
-        integer :: row, col, k
-        real(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre
+        integer :: row, col, k, time_step_returns
+        real(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -380,7 +380,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_he, ac_qt) &
-        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qre)
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -412,15 +412,34 @@ contains
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 
-                call gr_exponential_transfer(pre, ac_te(k), ac_he(k), qre)
+                call gr_exponential_transfer(pre, ac_te(k), ac_he(k), qe)
                 
                 qd = max(0._sp, prd + l)
 
-                ac_qt(k) = qr + qd + qre
+                ac_qt(k) = qr + qd + qe
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn, en, pr, perc, l, prr, prd, pre, qr, qd, qe, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
             end do
         end do
 #ifdef _OPENMP
