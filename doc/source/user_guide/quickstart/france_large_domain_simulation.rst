@@ -138,6 +138,7 @@ We can visualize the shape of the ``mesh``, the flow direction and the flow accu
 Then, we can initialize the `smash.Model` object
 
 .. ipython:: python
+    :okwarning:
 
     model = smash.Model(setup, mesh)
 

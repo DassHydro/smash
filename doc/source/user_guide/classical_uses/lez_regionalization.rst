@@ -142,6 +142,7 @@ Model mesh creation
 Then, we can initialize the `smash.Model` object
 
 .. ipython:: python
+    :okwarning:
 
     model = smash.Model(setup, mesh)
 

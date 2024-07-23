@@ -424,6 +424,7 @@ with the two following functions, `smash.io.save_setup` and `smash.io.save_mesh`
 Finally, initialize the `smash.Model` object
 
 .. ipython:: python
+    :okwarning:
 
     model = smash.Model(setup, mesh)
     model
