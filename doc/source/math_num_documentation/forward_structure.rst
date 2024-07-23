@@ -335,6 +335,7 @@ Production
 
 Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4.production>`
 
+.. _math_num_documentation.forward_structure.hydrological_module.gr5.exchange:
 
 Exchange
 ''''''''
@@ -404,11 +405,7 @@ Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.for
 Exchange
 ''''''''
 
-- Compute the exchange flux :math:`l_{exc}`
-
-.. math::
-
-    l_{exc}(x, t) = k_{exc}(x) \left(h_t(x, t - 1) - a_{exc}(x)\right)
+Same as ``gr5`` exchange, see :ref:`GR5 Production <math_num_documentation.forward_structure.hydrological_module.gr5.exchange>`
 
 
 Transfer
@@ -457,14 +454,14 @@ Transfer
     
     h_e(x, t^*) = h_e(x, t - 1) + p_{re}
 
-- Compute the exponential branch elemental discharge :math:`q_{re}`
+- Compute the exponential branch elemental discharge :math:`q_{e}`
 
 .. math::
     :nowrap:
 
     \begin{eqnarray}
 
-        q_{re}(x, t) =
+        q_{e}(x, t) =
         \begin{cases}
             
             t_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{t_e(x)} \lt 7 \\
@@ -481,7 +478,7 @@ Transfer
 
 .. math::
 
-    h_e(x, t) = h_e(x, t^*) - q_{re}
+    h_e(x, t) = h_e(x, t^*) - q_{e}
 
 
 - Compute the direct branch elemental discharge :math:`q_d`
@@ -494,7 +491,7 @@ Transfer
 
 .. math::
 
-    q_t(x, t) = q_r(x, t) + q_{re}(x, t) + q_d(x, t) 
+    q_t(x, t) = q_r(x, t) + q_{e}(x, t) + q_d(x, t) 
 
 
 grd (Génie Rural Distribué)

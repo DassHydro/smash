@@ -15,7 +15,7 @@ in a continuous manner using expression :
         q(x, t) = \exp\left(\frac{h_e(x, t)}{t_e(x)}\right)
     \end{eqnarray}
 
-with :math:`t_e` the characteristic time of the water level recession and :math:`h_e` (:math:`mm`) is the level of the reservoir.
+with :math:`t_e` controls the water level recession (:math:`mm`) and :math:`h_e` (:math:`mm`) is the level of the reservoir.
 :cite:p:`michel2003` suggests considering the continuity equation :math:`dh_e = -q ds` over a given period, between two time steps :math:`t^*` and :math:`t`.
 
 .. math::
@@ -24,29 +24,29 @@ with :math:`t_e` the characteristic time of the water level recession and :math:
     
     & - t_e(x) \left( \exp \left( \frac{-h_e(x, t)}{t_e(x)} \right) - \exp \left( \frac{-h_e(x, t^*)}{t_e(x)} \right) \right) = t - t^*
         
-We can express the loss of water between :math:`t^*` and  :math:`t` as :math:`h_e(x, t) = h_e(x, t^*) - q_{re}(x, t)`.
+We can express the loss of water between :math:`t^*` and  :math:`t` as :math:`h_e(x, t) = h_e(x, t^*) - q_{e}(x, t)`.
 
 .. math::
 
-    & \exp \left( \frac{-h_e(x, t^*) + q_{re}(x,t)}{t_e(x)} \right) - \exp \left( \frac{-h_e(x, t^*)}{t_e(x)} \right) = \frac{t^* - t}{t_e(x)}
+    & \exp \left( \frac{-h_e(x, t^*) + q_{e}(x,t)}{t_e(x)} \right) - \exp \left( \frac{-h_e(x, t^*)}{t_e(x)} \right) = \frac{t^* - t}{t_e(x)}
     
-    & \exp \left( \frac{q_{re}}{t_e(x)} \right) = 1 + \frac{t^* - t}{t_e(x)} \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right)
+    & \exp \left( \frac{q_{e}}{t_e(x)} \right) = 1 + \frac{t^* - t}{t_e(x)} \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right)
 
 
-If we choose the initial condition carefully, we can express the loss of water as :
+If we choose the initial condition carefully, we can express the loss of water (mm) as :
 
 .. math::
 
-    q_{re}(x,t) = t_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) \right).
+    q_{e}(x,t) = t_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) \right).
 
-In the GR6 module from airGR package https://hydrogr.github.io/airGR, they suggest some treatments of the asymptotic behaviors of the quantity :math:`q_{re}`, as follow :
+In :cite:p:`michel2003`, they suggest some treatments of the asymptotic behaviors of the quantity :math:`q_{e}` and take over in the GR6 module from airGR package https://hydrogr.github.io/airGR as follow :
 
 .. math::
     :nowrap:
 
     \begin{eqnarray}
 
-        q_{re}(x, t) =
+        q_{e}(x, t) =
         \begin{cases}
             
             t_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{t_e(x)} \lt 7 \\
@@ -84,7 +84,7 @@ The Cance is modelled successively with GR5 and GR6. Then we optimize a first un
     :suppress:
     
     setup, mesh = load_dataset("Cance")
-    models = ['gr5','gr6']
+    models = ['gr5', 'gr6']
     for m in models:
         setup['hydrological_module']=m
         model = smash.Model(setup, mesh)        
@@ -96,64 +96,50 @@ The Cance is modelled successively with GR5 and GR6. Then we optimize a first un
             );
         res = model.optimize(
                 mapping="distributed",
-                optimize_options={"termination_crit":{"maxiter": 15}},
+                optimize_options={"termination_crit":{"maxiter": 3}},
                 return_options={"cost": True, "iter_cost": True},
             )
         save_model(model, "model_sd_{}.hdf5".format(m))
 
 .. code-block:: text
     
-    </> Reading precipitation: 100%|████████████████████| 1440/1440 [00:00<00:00, 4591.17it/s]
-    </> Reading daily interannual pet: 100%|█████████████| 366/366 [00:00<00:00, 12317.18it/s]
-    </> Disaggregating daily interannual pet: 100%|███| 1440/1440 [00:00<00:00, 129417.77it/s]
-        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-        At iterate      1    nfg =    47    J =      0.097397    ddx = 0.32
-        At iterate      2    nfg =    94    J =      0.048932    ddx = 0.08
+    </> Reading precipitation: 100%|█████████████████████| 1440/1440 [00:02<00:00, 562.29it/s]
+    </> Reading daily interannual pet: 100%|██████████████| 366/366 [00:00<00:00, 2182.46it/s]
+    </> Disaggregating daily interannual pet: 100%|███| 1440/1440 [00:00<00:00, 130819.33it/s]
+    </> Computing mean atmospheric data
+    </> Adjusting GR interception capacity
+    </> Forward Run
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
+        At iterate      1    nfg =    47    J =      0.069483    ddx = 0.64
+        At iterate      2    nfg =    94    J =      0.039312    ddx = 0.16
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT                                                                                      
 
-        At iterate      0    nfg =     1    J =      0.048932    |proj g| =      0.079021
-        At iterate      1    nfg =     4    J =      0.045529    |proj g| =      0.041243
-        At iterate      2    nfg =     5    J =      0.043874    |proj g| =      0.017285
-        At iterate      3    nfg =     6    J =      0.043481    |proj g| =      0.014298
-        At iterate      4    nfg =     8    J =      0.042662    |proj g| =      0.015985
-        At iterate      5    nfg =     9    J =      0.041588    |proj g| =      0.009900
-        At iterate      6    nfg =    10    J =      0.040576    |proj g| =      0.030573
-        At iterate      7    nfg =    11    J =      0.039574    |proj g| =      0.019104
-        At iterate      8    nfg =    12    J =      0.038581    |proj g| =      0.029094
-        At iterate      9    nfg =    13    J =      0.037825    |proj g| =      0.065368
-        At iterate     10    nfg =    14    J =      0.036845    |proj g| =      0.017084
-        At iterate     11    nfg =    15    J =      0.035724    |proj g| =      0.038028
-        At iterate     12    nfg =    16    J =      0.034238    |proj g| =      0.036330
-        At iterate     13    nfg =    17    J =      0.031792    |proj g| =      0.058857
-        At iterate     14    nfg =    18    J =      0.029198    |proj g| =      0.024985
-        At iterate     15    nfg =    19    J =      0.027338    |proj g| =      0.027682
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.039311    |proj g| =      0.001498
+        At iterate      1    nfg =     3    J =      0.037930    |proj g| =      0.015125
+        At iterate      2    nfg =     4    J =      0.037024    |proj g| =      0.010977
+        At iterate      3    nfg =     5    J =      0.036018    |proj g| =      0.029318
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT                                                                                      
 
-    </> Reading precipitation: 100%|████████████████████| 1440/1440 [00:00<00:00, 4682.68it/s]
-    </> Reading daily interannual pet: 100%|█████████████| 366/366 [00:00<00:00, 12533.80it/s]
-    </> Disaggregating daily interannual pet: 100%|███| 1440/1440 [00:00<00:00, 130570.46it/s]
-        At iterate      0    nfg =     1    J =      0.503706    ddx = 0.64
-        At iterate      1    nfg =    68    J =      0.211769    ddx = 0.64
-        At iterate      2    nfg =   134    J =      0.053807    ddx = 0.64
+    </> Reading precipitation: 100%|█████████████████████| 1440/1440 [00:02<00:00, 562.29it/s]
+    </> Reading daily interannual pet: 100%|██████████████| 366/366 [00:00<00:00, 2217.64it/s]
+    </> Disaggregating daily interannual pet: 100%|███| 1440/1440 [00:00<00:00, 134426.84it/s]
+    </> Computing mean atmospheric data
+    </> Adjusting GR interception capacity
+    </> Forward Run
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.963149    ddx = 0.64
+        At iterate      1    nfg =    68    J =      0.192955    ddx = 0.64
+        At iterate      2    nfg =   135    J =      0.047702    ddx = 0.16
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT                                                                                      
 
-        At iterate      0    nfg =     1    J =      0.053808    |proj g| =      0.099369
-        At iterate      1    nfg =     5    J =      0.046207    |proj g| =      0.154723
-        At iterate      2    nfg =     6    J =      0.043945    |proj g| =      0.115107
-        At iterate      3    nfg =     7    J =      0.040459    |proj g| =      0.029903
-        At iterate      4    nfg =     8    J =      0.039962    |proj g| =      0.031887
-        At iterate      5    nfg =     9    J =      0.038804    |proj g| =      0.044005
-        At iterate      6    nfg =    10    J =      0.037164    |proj g| =      0.043613
-        At iterate      7    nfg =    11    J =      0.035314    |proj g| =      0.046803
-        At iterate      8    nfg =    12    J =      0.034041    |proj g| =      0.036070
-        At iterate      9    nfg =    13    J =      0.031954    |proj g| =      0.042313
-        At iterate     10    nfg =    14    J =      0.030495    |proj g| =      0.045343
-        At iterate     11    nfg =    15    J =      0.029325    |proj g| =      0.039053
-        At iterate     12    nfg =    16    J =      0.028579    |proj g| =      0.038041
-        At iterate     13    nfg =    17    J =      0.028112    |proj g| =      0.030944
-        At iterate     14    nfg =    18    J =      0.027698    |proj g| =      0.014870
-        At iterate     15    nfg =    19    J =      0.027394    |proj g| =      0.028152
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.807825    |proj g| =      0.500000
+        At iterate      1    nfg =     4    J =      0.794968    |proj g| =      0.092528
+        At iterate      2    nfg =     6    J =      0.494628    |proj g| =      0.105983
+        At iterate      3    nfg =     7    J =      0.169516    |proj g| =      0.244625
+        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT 
 
 
 Post-processing
@@ -183,21 +169,24 @@ We compare the output discharges of GR6 and GR5 models.
     plt.ylabel("Discharge $(m^3/s)$");
     plt.legend();
     @savefig user_guide.others.gr6.forward.png
-    plt.title("Run at station {}".format(model_gr5.mesh.code[0]));
+    plt.title("Forward run at station {}".format(model_gr5.mesh.code[0]));
 
 We can show NSE and KGE errors on the distributed solution.
 
 .. ipython:: python
 
     metrics = ["nse", "kge"]
+    perf_gr5 = smash.evaluation(model_gr5, metric=metrics)
+    perf_gr6 = smash.evaluation(model_gr6, metric=metrics)
+
     perf = pd.DataFrame(index=["GR5", "GR6"], columns=metrics)
     for m in metrics:
-        perf.loc["GR5", m] = smash.metrics(model_gr5, metric=m)[0]
+        perf.loc["GR5", m] = smash.evaluation(model_gr5, metric=m)[0]
     for m in metrics:
-        perf.loc["GR6", m] = smash.metrics(model_gr6, metric=m)[0]
+        perf.loc["GR6", m] = smash.evaluation(model_gr6, metric=m)[0]
     perf 
 
-By direct computation, GR6 is better than GR5 comparing the NSE : 0.53 > 0.36 and KGE : 0.49 > 0.25. 
+By direct computation, GR5 is better than GR6 comparing the NSE and KGE. 
 
 Optimized discharge
 *******************
@@ -220,20 +209,23 @@ We compare the optimized discharge of GR6 and GR5 models, the metrics.
 .. ipython:: python
 
     metrics = ["nse", "kge"]
+    perf_gr5 = smash.evaluation(model_gr5, metric=metrics)
+    perf_gr6 = smash.evaluation(model_gr6, metric=metrics)
+
     perf = pd.DataFrame(index=["GR5", "GR6"], columns=metrics)
     for m in metrics:
-        perf.loc["GR5", m] = smash.metrics(model_sd_gr5, metric=m)[0]
+        perf.loc["GR5", m] = smash.evaluation(model_sd_gr5, metric=m)[0]
     for m in metrics:
-        perf.loc["GR6", m] = smash.metrics(model_sd_gr6, metric=m)[0]
+        perf.loc["GR6", m] = smash.evaluation(model_sd_gr6, metric=m)[0]
     perf 
 
 The GR6 model doesn't perform the result on the case of Cance : the run of GR5 is better
-and the values for metrics of optimized discharges are similar.  
+for KGE metric and similar for NSE metric.  
 
 Parameters mapping
 ******************
 
-Finally, we can draw the parameter map.
+Finally, we can draw the parameter maps.
 
 .. ipython:: python
 
@@ -246,7 +238,7 @@ Finally, we can draw the parameter map.
     map_kexc = ax[1,0].imshow(model_sd_gr5.get_rr_parameters("kexc"));
     f.colorbar(map_kexc, ax=ax[1,0], label="kexc (mm/d)");
     map_aexc = ax[1,1].imshow(model_sd_gr5.get_rr_parameters("aexc"));
-    f.colorbar(map_aexc, ax=ax[1,1], label="aexc (mm/d)");
+    f.colorbar(map_aexc, ax=ax[1,1], label="aexc");
     map_llr = ax[1,2].imshow(model_sd_gr5.get_rr_parameters("llr"));
     f.colorbar(map_llr, ax=ax[1,2], label="llr (min)");
     @savefig user_guide.others.gr6.gr5_parameters.png
@@ -257,12 +249,12 @@ Finally, we can draw the parameter map.
     f.colorbar(map_cp, ax=ax[0,0], label="cp (mm)");
     map_ct = ax[0,1].imshow(model_sd_gr6.get_rr_parameters("ct"));
     f.colorbar(map_ct, ax=ax[0,1], label="ct (mm)");
-    map_ce = ax[0,2].imshow(model_sd_gr6.get_rr_parameters("ce"));
-    f.colorbar(map_ce, ax=ax[0,2], label="ce (mm)");
+    map_te = ax[0,2].imshow(model_sd_gr6.get_rr_parameters("te"));
+    f.colorbar(map_te, ax=ax[0,2], label="te (mm)");
     map_kexc = ax[1,0].imshow(model_sd_gr6.get_rr_parameters("kexc"));
     f.colorbar(map_kexc, ax=ax[1,0], label="kexc (mm/d)");
     map_aexc = ax[1,1].imshow(model_sd_gr6.get_rr_parameters("aexc"));
-    f.colorbar(map_aexc, ax=ax[1,1], label="aexc (mm/d)");
+    f.colorbar(map_aexc, ax=ax[1,1], label="aexc");
     map_llr = ax[1,2].imshow(model_sd_gr6.get_rr_parameters("llr"));
     f.colorbar(map_llr, ax=ax[1,2], label="llr (min)");
     @savefig user_guide.others.gr6.gr6_parameters.png
