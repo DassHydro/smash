@@ -859,9 +859,7 @@ def _sbs_optimize(
     clg = 0.7 ** (1 / n)
     ddx = 0.64
     dxn = ddx
-    ia = -1
-    iaa = -1
-    iam = -1
+    ia = iaa = iam = -1
     jfaa = 0
     nfg = 1
 
@@ -985,10 +983,6 @@ def _sbs_optimize(
 
         if ddx < 0.01:
             message = "CONVERGENCE: DDX < 0.01"
-            break
-
-        if iter == wrap_options.optimize.maxiter * n:
-            message = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
             break
 
     parameters.control.x = z_wa
