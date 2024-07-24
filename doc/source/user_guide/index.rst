@@ -26,4 +26,3 @@ Others
     :maxdepth: 1
 
     others/input_data_convention.rst
-    others/cance_gr6.rst
