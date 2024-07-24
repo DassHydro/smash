@@ -42,7 +42,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                         "parameters": parameters,
                         "learning_rate": 0.01,
                         "random_state": 11,
-                        "termination_crit": {"epochs": 3},
+                        "termination_crit": {"maxiter": 3},
                     },
                     common_options={"ncpu": ncpu, "verbose": False},
                 )

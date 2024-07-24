@@ -199,13 +199,13 @@ def default_optimize_options(
             Trainable parameters: 265,
         'learning_rate': 0.001,
         'random_state': None,
-        'termination_crit': {'epochs': 200, 'early_stopping': 0}
+        'termination_crit': {'maxiter': 200, 'early_stopping': 0}
     }
 
     Again, customize the optimize options and optimize the Model
 
     >>> opt_ann["learning_rate"] = 0.004
-    >>> opt_ann["termination_crit"]["epochs"] = 40
+    >>> opt_ann["termination_crit"]["maxiter"] = 40
     >>> opt_ann["termination_crit"]["early_stopping"] = 10
     >>> opt_ann["random_state"] = 11
     >>> model.optimize(mapping="ann", optimize_options=opt_ann)
@@ -221,8 +221,8 @@ def default_optimize_options(
         At epoch     36    J =  0.172950    |proj g| =  0.015864
         Training:  90%|████████████████▌     | 36/40 [00:21<00:02,  1.65it/s]
 
-    The training process was terminated after 36 epochs, where the loss did not decrease below the minimal
-    value at epoch 26 for 10 consecutive epochs. The optimal parameters are thus recorded at epoch 26
+    The training process was terminated after 36 iterations, where the loss did not decrease below the minimal
+    value at epoch 26 for 10 consecutive iterations. The optimal parameters are thus recorded at epoch 26
     """
     mapping, optimizer = _standardize_default_optimize_options_args(mapping, optimizer)
 

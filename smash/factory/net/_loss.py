@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from smash._constant import OPTIMIZABLE_NN_PARAMETERS
-from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
+from smash.core.simulation.optimize._tools import _forward_run_b
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,
 )
@@ -15,7 +15,7 @@ from smash.fcore._mwd_parameters_manipulation import (
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
-    from smash.fcore._mwd_options import OptionsDT
+    from smash.fcore._mwd_options import OptionsDT, ParametersDT
     from smash.fcore._mwd_returns import ReturnsDT
 
 
@@ -25,8 +25,9 @@ def _hcost(instance: Model) -> float:
 
 def _hcost_prime(
     y: np.ndarray,
-    parameters: np.ndarray,
+    model_params_states: np.ndarray,
     instance: Model,
+    parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
 ):
@@ -37,16 +38,16 @@ def _hcost_prime(
         return_3d_grad = True
 
     # % Set parameters or states
-    for i, name in enumerate(parameters):
-        if name in instance.rr_parameters.keys:
-            ind = np.argwhere(instance.rr_parameters.keys == name).item()
+    for i, name in enumerate(model_params_states):
+        if name in parameters.rr_parameters.keys:
+            ind = np.argwhere(parameters.rr_parameters.keys == name).item()
 
-            instance.rr_parameters.values[..., ind] = y[..., i]
+            parameters.rr_parameters.values[..., ind] = y[..., i]
 
-        elif name in instance.rr_initial_states.keys:
-            ind = np.argwhere(instance.rr_initial_states.keys == name).item()
+        elif name in parameters.rr_initial_states.keys:
+            ind = np.argwhere(parameters.rr_initial_states.keys == name).item()
 
-            instance.rr_initial_states.values[..., ind] = y[..., i]
+            parameters.rr_initial_states.values[..., ind] = y[..., i]
 
         else:  # nn_parameters excluded from descriptors-to-parameters mapping
             pass
@@ -56,25 +57,11 @@ def _hcost_prime(
         instance.setup,
         instance.mesh,
         instance._input_data,
-        instance._parameters,
+        parameters,
         wrap_options,
     )
 
-    parameters_b = instance._parameters.copy()
-    output_b = instance._output.copy()
-    output_b.cost = np.float32(1)
-
-    wrap_forward_run_b(
-        instance.setup,
-        instance.mesh,
-        instance._input_data,
-        instance._parameters,
-        parameters_b,
-        instance._output,
-        output_b,
-        wrap_options,
-        wrap_returns,
-    )
+    parameters_b = _forward_run_b(instance, parameters, wrap_options, wrap_returns)
 
     wrap_control_to_parameters(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
@@ -82,14 +69,14 @@ def _hcost_prime(
 
     # % Get the gradient of regionalization NN
     grad_reg = []
-    for name in parameters:
-        if name in instance.rr_parameters.keys:
-            ind = np.argwhere(instance.rr_parameters.keys == name).item()
+    for name in model_params_states:
+        if name in parameters.rr_parameters.keys:
+            ind = np.argwhere(parameters.rr_parameters.keys == name).item()
 
             grad_reg.append(parameters_b.rr_parameters.values[..., ind])
 
-        elif name in instance.rr_initial_states.keys:
-            ind = np.argwhere(instance.rr_initial_states.keys == name).item()
+        elif name in parameters.rr_initial_states.keys:
+            ind = np.argwhere(parameters.rr_initial_states.keys == name).item()
 
             grad_reg.append(parameters_b.rr_initial_states.values[..., ind])
 
@@ -105,22 +92,3 @@ def _hcost_prime(
     grad_par = [getattr(parameters_b.nn_parameters, key).copy() for key in OPTIMIZABLE_NN_PARAMETERS]
 
     return grad_reg, grad_par
-
-
-def _inf_norm(grad: np.ndarray | list) -> float:
-    if isinstance(grad, list):
-        if grad:  # If not an empty list
-            return max(_inf_norm(g) for g in grad)
-
-        else:
-            return 0
-
-    elif isinstance(grad, np.ndarray):
-        if grad.size > 0:
-            return np.amax(np.abs(grad))
-
-        else:
-            return 0
-
-    else:  # Should be unreachable
-        pass

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import OPTIMIZABLE_NN_PARAMETERS, ADAPTIVE_OPTIMIZER, OPTIMIZER_CLASS
+from smash._constant import ADAPTIVE_OPTIMIZER, OPTIMIZABLE_NN_PARAMETERS, OPTIMIZER_CLASS
+from smash.core.simulation.optimize._tools import _inf_norm
 from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
-from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
+from smash.factory.net._loss import _hcost, _hcost_prime
 
 # Used inside eval statement
 from smash.factory.net._optimizers import SGD, Adagrad, Adam, RMSprop  # noqa: F401
@@ -22,6 +23,7 @@ from smash.factory.net._standardize import (
 if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.fcore._mwd_options import OptionsDT
+    from smash.fcore._mwd_parameters import ParametersDT
     from smash.fcore._mwd_returns import ReturnsDT
     from smash.util._typing import Any, Numeric
 
@@ -29,7 +31,6 @@ import copy
 
 import numpy as np
 from terminaltables import AsciiTable
-from tqdm import tqdm
 
 __all__ = ["Net"]
 
@@ -53,7 +54,7 @@ class Net(object):
     def __init__(self):
         self.layers = []
 
-        self.history = {"loss_train": [], "loss_valid": [], "proj_grad": []}
+        self.history = {"loss_train": [], "proj_grad": []}
 
         self._opt = None
 
@@ -117,12 +118,13 @@ class Net(object):
 
         >>> layer_1 = net.layers[0]
         >>> layer_1.<TAB>
-        layer_1.bias                layer_1.neurons
-        layer_1.bias_initializer    layer_1.n_params(
-        layer_1.input_shape         layer_1.output_shape(
-        layer_1.kernel_initializer  layer_1.trainable
-        layer_1.layer_input         layer_1.weight
-        layer_1.layer_name(
+        layer_1.bias                layer_1.n_params()
+        layer_1.bias_initializer    layer_1.neurons
+        layer_1.bias_shape          layer_1.output_shape()
+        layer_1.input_shape         layer_1.trainable
+        layer_1.kernel_initializer  layer_1.weight
+        layer_1.layer_input         layer_1.weight_shape
+        layer_1.layer_name()
 
         >>> layer_2 = net.layers[1]
         >>> layer_2.<TAB>
@@ -148,7 +150,7 @@ class Net(object):
         """
         A dictionary saving training information.
 
-        The keys are 'loss_train', 'loss_valid', and 'proj_grad'.
+        The keys are 'loss_train' and 'proj_grad'.
         """
 
         return self._history
@@ -478,7 +480,7 @@ class Net(object):
         """
         Private function: Compile the neural network.
         """
-        ind = ADAPTIVE_OPTIMIZER.index(optimizer.lower())
+        ind = ADAPTIVE_OPTIMIZER.index(optimizer)
 
         func = eval(OPTIMIZER_CLASS[ind])
 
@@ -497,13 +499,14 @@ class Net(object):
         self,
         x_train: np.ndarray,
         instance: Model,
+        parameters: ParametersDT,
         wrap_options: OptionsDT,
         wrap_returns: ReturnsDT,
         optimizer: str,
-        parameters: np.ndarray,
+        model_params_states: np.ndarray,
         learning_rate: Numeric,
         random_state: Numeric | None,
-        epochs: int,
+        maxiter: int,
         early_stopping: int,
         verbose: bool,
     ):
@@ -518,21 +521,21 @@ class Net(object):
         )
 
         # % Initialize optimizer for the parameterization NN if used
-        ind = ADAPTIVE_OPTIMIZER.index(optimizer.lower())
+        ind = ADAPTIVE_OPTIMIZER.index(optimizer)
         func = eval(OPTIMIZER_CLASS[ind])
 
         n_layers = 2 if sum(instance.setup.neurons) > 0 else 0
         opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * n_layers)]
 
         # % Train model
-        for epo in tqdm(range(epochs), desc="    Training"):
+        for ite in range(maxiter + 1):
             # forward propogation
             y_pred = self._forward_pass(x_train)
 
             # calculate the gradient of the loss function wrt y_pred of the regionalization NN
             # and get the gradient of the parameterization NN if used
             init_loss_grad, nn_parameters_b = _hcost_prime(
-                y_pred, parameters, instance, wrap_options, wrap_returns
+                y_pred, model_params_states, instance, parameters, wrap_options, wrap_returns
             )
 
             # compute loss
@@ -541,11 +544,11 @@ class Net(object):
 
             # save optimal weights if early stopping is used
             if early_stopping:
-                if epo == 0:
-                    loss_opt = {"epo": 0, "value": loss}
+                if ite == 0:
+                    loss_opt = {"ite": 0, "value": loss}
 
-                if loss <= loss_opt["value"]:
-                    loss_opt["epo"] = epo
+                if loss < loss_opt["value"]:
+                    loss_opt["ite"] = ite
                     loss_opt["value"] = loss
 
                     for layer in self.layers:
@@ -555,46 +558,63 @@ class Net(object):
 
                 else:
                     if (
-                        epo - loss_opt["epo"] > early_stopping
+                        ite - loss_opt["ite"] > early_stopping
                     ):  # stop training if the loss values do not decrease through early_stopping consecutive
-                        # epochs
+                        # iterations
+                        if verbose:
+                            print(
+                                f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
+                                f"ITERATIONS"
+                            )
                         break
 
             # backpropagation and weights update
-            if epo < epochs - 1:
+            if ite < maxiter:
                 for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS):
-                    if key in parameters:  # update trainable parameters of the parameterization NN if used
+                    if (
+                        key in model_params_states
+                    ):  # update trainable parameters of the parameterization NN if used
                         setattr(
-                            instance.nn_parameters,
+                            parameters.nn_parameters,
                             key,
                             opt_nn_parameters[i].update(
-                                getattr(instance.nn_parameters, key), nn_parameters_b[i]
+                                getattr(parameters.nn_parameters, key), nn_parameters_b[i]
                             ),
                         )
 
                 # backpropagation and update weights of the regionalization NN
                 loss_grad = self._backward_pass(init_loss_grad, inplace=True)
-            else:  # do not update weights at the last epoch
+            else:  # do not update weights at the last iteration
                 loss_grad = self._backward_pass(init_loss_grad, inplace=False)
 
             # calculate projected gradient for the LPR operator
-            self.history["proj_grad"].append(_inf_norm([loss_grad, nn_parameters_b]))
+            projg = _inf_norm([loss_grad, nn_parameters_b])
+            self.history["proj_grad"].append(projg)
 
             if verbose:
-                ret = []
+                print(
+                    f"{' '*4}At iterate{str(ite).rjust(7)}    nfg = {str(ite+1).rjust(4)}"
+                    f"{' '*4}J = {loss:14.6f}    |proj g| = {projg:14.6f}"
+                )
 
-                ret.append(f"{' ' * 4}At epoch")
-                ret.append("{:3}".format(epo + 1))
-                ret.append("J =" + "{:10.6f}".format(loss))
-                ret.append("|proj g| =" + "{:10.6f}".format(self.history["proj_grad"][-1]))
-
-                tqdm.write((" " * 4).join(ret))
+                if ite == maxiter:
+                    print(f"{' '*4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
 
         if early_stopping:
+            if loss_opt["ite"] < maxiter:
+                if verbose:
+                    print(
+                        f"{' '*4}Reverting to iteration {loss_opt['ite']} with "
+                        f"J = {loss_opt['value']:.6f} due to early stopping"
+                    )
+
             for layer in self.layers:
                 if hasattr(layer, "_initialize"):
                     layer.weight = np.copy(layer._weight)
+                    del layer._weight
+
                     layer.bias = np.copy(layer._bias)
+                    del layer._bias
 
     def set_weight(self, value: list[Any]):
         """

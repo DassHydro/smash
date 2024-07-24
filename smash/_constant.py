@@ -764,18 +764,19 @@ MAPPING_OPTIMIZER = dict(
         [
             OPTIMIZER,  # for uniform mapping (all optimizers are possible)
             *(
-                [GRADIENT_BASED_OPTIMIZER] * (len(MAPPING) - 1)
-            ),  # for the rest (only gradient-based optimizers accepted)
+                [GRADIENT_BASED_OPTIMIZER] * (len(MAPPING) - 2)
+            ),  # for distributed, multi-linear, multi-polynomial mappings (default is lbfgsb)
+            ADAPTIVE_OPTIMIZER + GRADIENT_BASED_OPTIMIZER[:1],  # for ann mapping (default is adam)
         ],
     )
 )
 
 OPTIMIZER_CONTROL_TFM = dict(
     zip(
-        ["sbs", "lbfgsb"],
+        OPTIMIZER,
         [
-            ["sbs", "normalize", "keep"],
-            ["normalize", "keep"],
+            ["sbs", "normalize", "keep"],  # for uniform mapping
+            *([["normalize", "keep"]] * len(GRADIENT_BASED_OPTIMIZER)),  # for the rest
         ],
     )
 )
@@ -799,7 +800,7 @@ DEFAULT_TERMINATION_CRIT = dict(
             [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
         )
     ),
-    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])),
+    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -846,6 +847,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 [
                     "parameters",
                     "bounds",
+                    "control_tfm",
                     "learning_rate",
                     "termination_crit",
                 ]
@@ -875,6 +877,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 [
                     "parameters",
                     "bounds",
+                    "control_tfm",
                     "descriptor",
                     "learning_rate",
                     "termination_crit",
@@ -886,7 +889,6 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
         "parameters",
         "bounds",
         "net",
-        "control_tfm",
         "termination_crit",
     ],
     **dict(

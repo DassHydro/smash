@@ -70,18 +70,16 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `str` or None, default None
         """,
         """
-        Transformation method applied to the control vector. Only used with ``'sbs'`` or ``'lbfgsb'``
-        optimizer. Should be one of:
+        Transformation method applied to the bounded control vector. Not used with ``'ann'`` **mapping**.
+        Should be one of:
 
         - ``'keep'``
         - ``'normalize'``
         - ``'sbs'`` (``'sbs'`` **optimizer** only)
 
         .. note::
-            If not given, a default control vector transformation will be set depending on the optimizer:
-
-            - **optimizer** = ``'sbs'``; **control_tfm** = ``'sbs'``
-            - **optimizer** = ``'lbfgsb'``; **control_tfm** = ``'normalize'``
+            If not given, the default control vector transformation is **control_tfm** = ``'normalize'``
+            except for the ``'sbs'`` optimizer, where **control_tfm** = ``'sbs'``.
         """,
     ),
     "descriptor": (
@@ -151,18 +149,15 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         """
         Termination criteria. The elements are:
 
-        - ``'maxiter'``: The maximum number of iterations. Only used when **optimizer** is ``'sbs'`` or
-          ``'lbfgsb'``.
+        - ``'maxiter'``: The maximum number of iterations.
         - ``'factr'``: An additional termination criterion based on cost values. Only used when **optimizer**
           is ``'lbfgsb'``.
         - ``'pgtol'``: An additional termination criterion based on the projected gradient of the cost
           function. Only used when **optimizer** is ``'lbfgsb'``.
-        - ``'epochs'``: The number of training epochs for the neural network. Only used when **mapping** is
-          ``'ann'``.
         - ``'early_stopping'``: A positive number to stop training when the loss function does not decrease
-          below the current optimal value for **early_stopping** consecutive epochs. When set to zero, early
-          stopping is disabled, and the training continues for the full number of epochs. Only used when
-          **mapping** is ``'ann'``.
+          below the current optimal value for **early_stopping** consecutive iterations. When set to zero,
+          early stopping is disabled, and the training continues for the full number of iterations.
+          Not used with ``'sbs'`` and ``'lbfgsb'`` optimizers.
 
         >>> optimize_options = {
             "termination_crit": {
@@ -172,7 +167,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         }
         >>> optimize_options = {
             "termination_crit": {
-                "epochs": 200,
+                "maxiter": 200,
+                "early_stopping": 20,
             },
         }
 
@@ -279,8 +275,8 @@ COST_OPTIONS_BASE_DOC = {
         `str` or `list[str, ...]`, default 'prior'
         """,
         """
-        Type(s) of regularization function(s) to be minimized when regularization term is set (i.e.,**wjreg**
-        > 0). Should be one or a sequence of any of
+        Type(s) of regularization function(s) to be minimized when regularization term is set
+        (i.e., **wjreg** > 0). Should be one or a sequence of any of
 
         - ``'prior'``
         - ``'smoothing'``
@@ -541,8 +537,7 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return control vector at end of optimization. In case of optimization with ``'ann'``
-        **mapping**, the control vector is represented in `Net.layers <factory.Net.layers>` instead.
+        Whether to return control vector at end of optimization.
         """,
     ),
     "net": (
@@ -583,7 +578,7 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return the wjreg lcurve. Only used if **wjreg** in cost_options is equal to ``'lcurve'``.
+        Whether to return the wjreg L-curve. Only used if **wjreg** in cost_options is equal to ``'lcurve'``.
         """,
     ),
     "lcurve_multiset": (
@@ -1219,12 +1214,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
+        An array of shape *(6,)* containing the number of elements by kind (`Model.rr_parameters`,
         `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
-        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
-
-    - x : `numpy.ndarray`
-        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
+        `Model.nn_parameters`, `Net`) of the control vector (``sum(nbk) = n``).
 
     - l : `numpy.ndarray`
         An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
@@ -1256,6 +1248,10 @@ control_info : `dict[str, Any]`
           indicates the layer and type of parameter (e.g., ``'weight_1'`` for the first layer weights,
           ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
           position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
+        - ``reg_<key>-<row>-<col>``: Weights and biases of the regionalization neural network where ``<key>``
+          indicates the layer and type of parameter (e.g., ``'reg_weight_1'`` for the first layer weights,
+          ``'reg_bias_3'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
+          position in the matrix or vector (``'reg_weight_3-32-28'``, ``'reg_bias_1-4'``, etc).
 
     - x_bkg : `numpy.ndarray`
         An array of shape *(n,)* containing the background values of the control vector.
@@ -1399,12 +1395,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
-        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
-
-    - x : `numpy.ndarray`
-        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
+        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
+        vector (``sum(nbk) = n``).
 
     - l : `numpy.ndarray`
         An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).

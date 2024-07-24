@@ -203,8 +203,9 @@ class Conv2D(Layer):
 
         self.weight = None
         self.weight_shape = (filters, input_shape[-1] * np.prod(filter_shape))
-        # The real shape of W in this case is (filters, depth, height, width),
-        # which is simplified as (filters, depth*height*width)
+        # The real W shape of a Conv2D layer is (filters, depth, height, width)
+        # = (filters, input_shape[-1], **filter_shape),
+        # which is reshaped as (filters, depth*height*width)
 
         self.bias = None
         self.bias_shape = (1, filters)

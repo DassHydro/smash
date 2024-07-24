@@ -786,6 +786,12 @@ contains
             call multi_polynomial_rr_parameters_get_control_size(setup, options, nbk(1))
             call multi_polynomial_rr_initial_states_get_control_size(setup, options, nbk(2))
 
+            !% Should be reach by "ann" only
+        case default
+
+            nbk(1) = 0
+            nbk(2) = 0
+
         end select
 
         ! Directly working with hyper parameters

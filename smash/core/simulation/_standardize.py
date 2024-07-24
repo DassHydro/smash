@@ -9,12 +9,12 @@ import numpy as np
 import pandas as pd
 
 from smash._constant import (
+    ADAPTIVE_OPTIMIZER,
     DEFAULT_SIMULATION_COMMON_OPTIONS,
     DEFAULT_SIMULATION_COST_OPTIONS,
     DEFAULT_SIMULATION_RETURN_OPTIONS,
     DEFAULT_TERMINATION_CRIT,
     EVENT_SEG_KEYS,
-    OPTIMIZER_CONTROL_TFM,
     F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
@@ -32,8 +32,8 @@ from smash._constant import (
     OPTIMIZABLE_RR_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
-    ADAPTIVE_OPTIMIZER,
     OPTIMIZER_CLASS,
+    OPTIMIZER_CONTROL_TFM,
     REGIONAL_MAPPING,
     RR_PARAMETERS,
     RR_STATES,
@@ -488,17 +488,6 @@ def _standardize_simulation_optimize_options_termination_crit_pgtol(pgtol: Numer
         raise TypeError("pgtol termination_crit must be of Numeric type (int, float)")
 
     return pgtol
-
-
-def _standardize_simulation_optimize_options_termination_crit_epochs(epochs: Numeric, **kwargs) -> float:
-    if isinstance(epochs, (int, float)):
-        epochs = int(epochs)
-        if epochs < 0:
-            raise ValueError("epochs termination_crit must be greater than or equal to 0")
-    else:
-        raise TypeError("epochs termination_crit must be of Numeric type (int, float)")
-
-    return epochs
 
 
 def _standardize_simulation_optimize_options_termination_crit_early_stopping(

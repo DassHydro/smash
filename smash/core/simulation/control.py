@@ -13,7 +13,7 @@ from smash.core.simulation.optimize._standardize import (
     _standardize_bayesian_optimize_args,
     _standardize_optimize_args,
 )
-from smash.core.simulation.optimize.optimize import _get_control_info
+from smash.core.simulation.optimize._tools import _get_control_info
 
 if TYPE_CHECKING:
     from typing import Any
