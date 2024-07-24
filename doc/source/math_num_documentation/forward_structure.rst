@@ -109,6 +109,9 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     :align: center
     :width: 500
 
+gr4 (Génie Rural 4)
+*******************
+
 .. _math_num_documentation.forward_structure.hydrological_module.gr4:
 
 .. dropdown:: gr4 (Génie Rural 4)
@@ -375,7 +378,7 @@ It can be expressed as follows:
 with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
 :math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
 :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
-:math:`t_e` the characteristic time of the water level recession which controls the slope of the recession, 
+:math:`t_e` controls the slope of the recession, 
 :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
 :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
 :math:`h_e` the state of the exponential reservoir.
