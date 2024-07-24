@@ -54,6 +54,7 @@ mwd_f90_sources = [
     'derived_type/mwd_cost_options.f90',
     'derived_type/mwd_input_data.f90',
     'derived_type/mwd_mesh.f90',
+    'derived_type/mwd_mesh_hy.f90',
     'derived_type/mwd_optimize_options.f90',
     'derived_type/mwd_options.f90',
     'derived_type/mwd_output.f90',

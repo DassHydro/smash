@@ -17,7 +17,7 @@ from smash.factory.mesh._tools import (
     _xy_to_rowcol,
 )
 
-from smash.factory.mesh._prepro import _extract_inflows, _compute_river_geometry
+from smash.factory.mesh._prepro import _hydro_prepro
 
 
 if TYPE_CHECKING:
@@ -442,7 +442,7 @@ def _generate_mesh(
         return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
 
 
-def generate_mesh_grid_vect(flwdir_path: str, river_line_path: str, a: int, b: int) -> dict:
+def generate_mesh_grid_vect(flwdir_path: str, river_line_path: str, a: int, b: int):
     """
     Generate a mesh for coupling a grid-based hydrological model with a vector hydraulic model.    
     
@@ -487,13 +487,38 @@ def generate_mesh_grid_vect(flwdir_path: str, river_line_path: str, a: int, b: i
             flwdir, ftype="d8", transform=src.transform, latlon=src.crs.is_geographic, cache=True
         )
 
-        # Compute the flow path and extract upstream and lateral inflow points
-        flow_path_rows_cols, flow_path_idxs, inflows_idxs, upstream_inflows_rows_cols, lateral_inflows_rows_cols = _extract_inflows(flw, river_line_path)
+        # Preprocessing for coupling hydrological and hydraulic models
+        streams, smoothed_streams, smoothed_xs, seg, cs = _hydro_prepro(flw, river_line_path, a, b)
         
         # Calculate river widths based on upstream drainage area
-        flwacc, river_drainage_areas, river_widths = _compute_river_geometry(flw, flow_path_rows_cols, a, b)
-
-    mesh = {
+        #flwacc, river_drainage_areas, river_widths = _compute_river_geometry(flw, flow_path_rows_cols, a, b)
+    
+    
+    mesh_gv = {
+        "ncs": len(smoothed_xs),
+        "nseg": len(smoothed_streams),
+        "seg": seg,
+        "cs": cs
+    }
+    
+    """mesh_gv = {
+        "ncs": len(xs_idx),
+        "nseg": len(streams),
+        "seg": seg,
+        'cs': cs
+    }"""
+    
+    """mesh_gv = {
+        "ncs": len(xs_idx),
+        "nseg": len(streams),
+        "streams": streams,
+        "segment_xs": segment_xs,
+        "xs_idx": xs_idx,
+        "segment": seg,
+        'crosssection': cs
+    }"""
+    
+    """mesh = {
         "flwdir": flwdir,
         "flwacc": flwacc,
         "flow_path_rows_cols": flow_path_rows_cols,
@@ -503,6 +528,7 @@ def generate_mesh_grid_vect(flwdir_path: str, river_line_path: str, a: int, b: i
         "lateral_inflows_rows_cols": lateral_inflows_rows_cols,
         "river_drainage_areas": river_drainage_areas,
         "river_widths": river_widths
-    }
+    }"""
     
-    return mesh
+    #return mesh_gv, streams, smoothed_streams, seg, smoothed_xs
+    return mesh_gv, streams, smoothed_streams, smoothed_xs
