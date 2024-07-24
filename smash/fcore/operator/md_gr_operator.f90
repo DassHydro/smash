@@ -149,7 +149,7 @@ contains
         ar = he_star / te
         if (ar .lt. -7._sp) then
             qe = te * exp(ar)
-        elseif (ar .gt. 7._sp) then
+        else if (ar .gt. 7._sp) then
             qe = he_star + te / exp(ar)
         else
             qe = te * log(exp(ar) + 1._sp)
