@@ -141,52 +141,28 @@ def _standardize_set_weight_bias_value(
         raise ValueError("The graph of the neural network has not been set yet")
 
     else:
-        trainable_parameters = [getattr(layer, kind) for layer in net.layers if hasattr(layer, kind)]
-
-    # % Get weight or bias shape
-    shape_trainable_parameters = []
-    for layer in net.layers:
-        if hasattr(layer, kind):
-            if hasattr(layer, "neurons"):
-                n_out = layer.neurons
-
-            elif hasattr(layer, "filters"):
-                n_out = layer.filters
-
-            else:  # Should be unreachable
-                pass
-
-            if kind == "weight":
-                n_in = layer.input_shape[-1]
-
-                if hasattr(layer, "filter_shape"):
-                    n_in *= np.prod(layer.filter_shape)
-
-                shape_trainable_parameters.append((n_out, n_in))
-
-            elif kind == "bias":
-                shape_trainable_parameters.append((1, n_out))
-
-            else:  # Should be unreachable
-                pass
+        trainable_layers = [layer for layer in net.layers if hasattr(layer, kind)]
 
     # % Check the shape of values to set for each trainable layer
     if isinstance(value, list):
-        if len(value) != len(trainable_parameters):
+        if len(value) != len(trainable_layers):
             raise ValueError(
                 f"Inconsistent size between value argument and the number of trainable layers: "
-                f"{len(value)} != {len(trainable_parameters)}"
+                f"{len(value)} != {len(trainable_layers)}"
             )
 
         else:
             for i, arr in enumerate(value):
+                kind_shape = getattr(trainable_layers[i], f"{kind}_shape")
+
                 if isinstance(arr, (int, float)):
-                    value[i] = arr * np.ones(shape_trainable_parameters[i])
+                    value[i] = np.full(kind_shape, arr)
+
                 elif isinstance(arr, np.ndarray):
-                    if arr.shape != shape_trainable_parameters[i]:
+                    if arr.shape != kind_shape:
                         raise ValueError(
                             f"Invalid shape for value argument. Could not broadcast input array "
-                            f"from shape {arr.shape} into shape {shape_trainable_parameters[i]}"
+                            f"from shape {arr.shape} into shape {kind_shape}"
                         )
                 else:
                     raise TypeError("Each element of value argument must be float or a Numpy array")
