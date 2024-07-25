@@ -1117,7 +1117,14 @@ class Model:
     def nn_parameters(self) -> NN_ParametersDT:
         """
         The weight and bias of the parameterization neural network.
+
         The neural network is used in hybrid model structures to correct internal fluxes.
+
+        Returns
+        -------
+        nn_parameters : `NN_ParametersDT <fcore._mwd_nn_parameters.NN_ParametersDT>`
+            It returns a Fortran derived type containing the weight and bias of the parameterization
+            neural network.
 
         See Also
         --------
