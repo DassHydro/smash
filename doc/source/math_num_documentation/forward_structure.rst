@@ -377,7 +377,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. math::
 
-        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, t_e, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t, h_e\right](x, t)\right)
+        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, b_e, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t, h_e\right](x, t)\right)
 
     with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
     :math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
@@ -393,7 +393,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         
         - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
-        - Parameters, :math:`\{c_i, c_p, c_t, t_e, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+        - Parameters, :math:`\{c_i, c_p, c_t, b_e, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
         - States, :math:`\{h_i, h_p, h_t, h_e\}\in\boldsymbol{h}`
 
     The function :math:`f` is resolved numerically as follows:
@@ -466,11 +466,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             q_{e}(x, t) =
             \begin{cases}
                 
-                t_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{t_e(x)} \lt 7 \\
+                b_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{b_e(x)} \lt 7 \\
 
-                t_e(x) * \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{t_e(x)} \lt -7 \\
+                b_e(x) * \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{b_e(x)} \lt -7 \\
 
-                h_e(x, t^*) + \frac{ t_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{t_e(x)} \right) } \; &\text{otherwise}.
+                h_e(x, t^*) + \frac{ b_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) } \; &\text{otherwise}.
 
             \end{cases}
 
