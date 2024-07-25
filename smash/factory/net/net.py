@@ -148,7 +148,7 @@ class Net(object):
         """
         A dictionary saving training information.
 
-        The keys are 'loss_train' and 'proj_grad'.
+        The keys are ``'loss_train'`` and ``'proj_grad'``.
         """
 
         return self._history

@@ -46,7 +46,7 @@ def _get_control_info(
 
     ret = {}
     for attr in dir(model._parameters.control):
-        if attr.startswith("_") or attr == "x":  # remove control values (it should be get after optimization)
+        if attr.startswith("_"):
             continue
         value = getattr(model._parameters.control, attr)
         if callable(value):
@@ -108,12 +108,14 @@ def _finalize_get_control_info(ret: dict, net: Net | None):
             ret[key] = np.append(ret[key], np.full(x_net_size, value))
 
         try:  # if net is initialized
-            x_net_bkg = _net_to_vect(net)
+            x = _net_to_vect(net)
 
         except Exception:  # it will be set by random values
-            x_net_bkg = np.full(x_net_size, np.nan)
+            x = np.full(x_net_size, np.nan)
 
-        ret["x_bkg"] = np.append(ret["x_bkg"], x_net_bkg)
+        ret["x"] = np.append(ret["x"], x)
+
+        ret["x_bkg"] = np.append(ret["x_bkg"], x)  # no transformation applied to x
 
 
 def _net_to_vect(net: Net) -> np.ndarray:

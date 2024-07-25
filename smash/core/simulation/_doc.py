@@ -89,6 +89,9 @@ control_info : `dict[str, Any]`
         `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
         `Model.nn_parameters`, `Net <factory.Net>`) of the control vector (``sum(nbk) = n``).
 
+    - x : `numpy.ndarray`
+        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
+
     - l : `numpy.ndarray`
         An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
 
@@ -1266,9 +1269,9 @@ Default optimize control vector information
     'l': array([-13.815511 , -13.815511 ,  -4.6052704, -13.815511 ], dtype=float32),
     'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06], dtype=float32),
     'n': 4,
-    'name': array(['cp0', 'ct0', 'kexc0', 'llr0'], dtype='<U5'),
+    'name': array(['cp-0', 'ct-0', 'kexc-0', 'llr-0'], dtype='<U128'),
     'nbd': array([2, 2, 2, 2], dtype=int32),
-    'nbk': array([4, 0, 0, 0], dtype=int32),
+    'nbk': array([4, 0, 0, 0, 0, 0]),
     'u': array([6.9077554, 6.9077554, 4.6052704, 6.9077554], dtype=float32),
     'u_bkg': array([1000., 1000.,   50., 1000.], dtype=float32),
     'x': array([5.2983174, 6.214608 , 0.       , 1.609438 ], dtype=float32),
@@ -1276,9 +1279,9 @@ Default optimize control vector information
 }
 
 This gives a direct indication of what the optimizer takes as input, depending on the optimization
-configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'``
-and ``'llr0'``). Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was
-applied to the control (``x`` relative to ``x_bkg``)
+configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp-0'``, ``'ct-0'``,
+``'kexc-0'`` and ``'llr-0'``). Each parameter has a lower and upper bound (``2`` in ``nbd``) and a
+transformation was applied to the control (``x`` relative to ``x_bkg``).
 
 With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and optimizing only ``cp``
 and ``kexc`` with different descriptors
@@ -1293,21 +1296,21 @@ and ``kexc`` with different descriptors
     )
 >>> control_info
 {
-    'l': array([-99., -99., -99., -99., -99.], dtype=float32),
-    'l_bkg': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'l': array([-inf, -inf, -inf, -inf, -inf], dtype=float32),
+    'l_bkg': array([-inf, -inf, -inf, -inf, -inf], dtype=float32),
     'n': 5,
-    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a'], dtype='<U10'),
+    'name': array(['cp-0', 'cp-slope-a', 'cp-dd-a', 'kexc-0', 'kexc-dd-a'], dtype='<U128'),
     'nbd': array([0, 0, 0, 0, 0], dtype=int32),
-    'nbk': array([5, 0, 0, 0], dtype=int32),
-    'u': array([-99., -99., -99., -99., -99.], dtype=float32),
-    'u_bkg': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'nbk': array([5, 0, 0, 0, 0, 0]),
+    'u': array([inf, inf, inf, inf, inf], dtype=float32),
+    'u_bkg': array([inf, inf, inf, inf, inf], dtype=float32),
     'x': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
     'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
 }
 
-5 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``) and the coefficients
+5 parameters are optimized which are the intercepts (``'cp-0'`` and  ``'kexc-0'``) and the coefficients
 (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the descriptors
-(``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``)
+(``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``).
 """
 )
 
@@ -1385,7 +1388,7 @@ Default optimize control vector information
          dtype=float32),
     'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06,  1.e-06,  1.e-06], dtype=float32),
     'n': 6,
-    'name': array(['cp0', 'ct0', 'kexc0', 'llr0', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U12'),
+    'name': array(['cp-0', 'ct-0', 'kexc-0', 'llr-0', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U12'),
     'nbd': array([2, 2, 2, 2, 2, 2], dtype=int32),
     'nbk': array([4, 0, 0, 2], dtype=int32),
     'u': array([   6.9077554,    6.9077554,    4.6052704,    6.9077554, 1000.       ,   10.       ],
@@ -1396,10 +1399,10 @@ Default optimize control vector information
 }
 
 This gives a direct indication of what the optimizer takes as input, depending on the optimization
-configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'``
-and ``'llr0'``) and 2 structural error sigma parameters at gauge ``'V3524010'`` (``'sg0-V3524010'``,
-``'sg1-V3524010'``) Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was
-applied to the control (``x`` relative to ``x_bkg``)
+configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp-0'``, ``'ct-0'``,
+``'kexc-0'`` and ``'llr-0'``) and 2 structural error sigma parameters at gauge ``'V3524010'``
+(``'sg0-V3524010'``, ``'sg1-V3524010'``). Each parameter has a lower and upper bound (``2`` in ``nbd``)
+and a transformation was applied to the control (``x`` relative to ``x_bkg``).
 
 With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and
 optimizing only 2 rainfall-runoff parameters ``cp``, ``kexc`` with different descriptors and 2 structural
@@ -1415,22 +1418,22 @@ error sigma parameters ``sg0`` and ``sg1``.
     )
 >>> control_info
 {
-    'l': array([-99., -99., -99., -99., -99.,   0.,   0.], dtype=float32),
-    'l_bkg': array([-9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01,  1.0e-06, 1.0e-06], dtype=float32),
+    'l': array([-inf, -inf, -inf, -inf, -inf,   0.,   0.], dtype=float32),
+    'l_bkg': array([  -inf,   -inf,   -inf,   -inf,   -inf, 1.e-06, 1.e-06], dtype=float32),
     'n': 7,
-    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'],
+    'name': array(['cp-0', 'cp-slope-a', 'cp-dd-a', 'kexc-0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'],
             dtype='<U12'),
     'nbd': array([0, 0, 0, 0, 0, 2, 2], dtype=int32),
     'nbk': array([5, 0, 0, 2], dtype=int32),
-    'u': array([-99., -99., -99., -99., -99.,   1.,   1.], dtype=float32),
-    'u_bkg': array([ -99.,  -99.,  -99.,  -99.,  -99., 1000.,   10.], dtype=float32),
+    'u': array([inf, inf, inf, inf, inf,  1.,  1.], dtype=float32),
+    'u_bkg': array([  inf,   inf,   inf,   inf,   inf, 1000.,   10.], dtype=float32),
     'x': array([-1.3862944e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  9.9999900e-04,
          1.9999903e-02], dtype=float32),
     'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       , 1.       ,  0.2      ],
              dtype=float32),
 }
 
-7 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``)
+7 parameters are optimized which are the intercepts (``'cp-0'`` and  ``'kexc-0'``)
 and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the
 descriptors  (``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``) and the 2
 structural error sigma parameters (``'sg0'`` and ``'sg1'``) associated to the gauge ``'V3524010'``.
@@ -1443,12 +1446,12 @@ filled in all the optimization options. This is why we can define all the optimi
 parameters that make up the control vector and then call the optimization function, assigning the priors we
 want to.
 
-Assign Gaussian priors to the two rainfall-runoff parameters ``'cp0'`` and ``'kexc0'`` and perform a spatially
-uniform optimization
+Assign Gaussian priors to the two rainfall-runoff parameters ``'cp-0'`` and ``'kexc-0'`` and perform
+a spatially uniform optimization
 
 >>> model.bayesian_optimize(
         cost_options={
-            "control_prior": {"cp0": ["Gaussian", [200, 100]], "kexc0": ["Gaussian", [0, 5]]}
+            "control_prior": {"cp-0": ["Gaussian", [200, 100]], "kexc-0": ["Gaussian", [0, 5]]}
         },
     )
 </> Bayesian Optimize
