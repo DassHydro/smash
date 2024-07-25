@@ -116,7 +116,7 @@ def _standardize_set_bias_args(net: Net, value: list[Any]) -> list[np.ndarray]:
     return _standardize_set_weight_bias_value(net, value, "bias")
 
 
-def _standardize_forward_pass_args(net: Net, x_train: np.ndarray) -> np.ndarray:
+def _standardize_forward_pass_args(net: Net, x: np.ndarray) -> np.ndarray:
     if not net.layers:
         raise ValueError("The graph of the neural network has not been set yet")
 
@@ -129,7 +129,7 @@ def _standardize_forward_pass_args(net: Net, x_train: np.ndarray) -> np.ndarray:
             if layer.bias is None:
                 raise ValueError(f"The bias at layer {i+1} is not set yet")
 
-    return _standardize_forward_pass_x_train(net.layers[0].input_shape, x_train)
+    return _standardize_forward_pass_x(net.layers[0].input_shape, x)
 
 
 def _standardize_set_weight_bias_value(
@@ -173,17 +173,17 @@ def _standardize_set_weight_bias_value(
     return value
 
 
-def _standardize_forward_pass_x_train(input_shape: tuple, x_train: np.ndarray) -> np.ndarray:
-    if isinstance(x_train, np.ndarray):
-        if x_train.shape != input_shape:
+def _standardize_forward_pass_x(input_shape: tuple, x: np.ndarray) -> np.ndarray:
+    if isinstance(x, np.ndarray):
+        if x.shape != input_shape:
             raise ValueError(
-                f"Invalid shape for x_train argument. Could not broadcast input array "
-                f"from shape {x_train.shape} into shape {input_shape}"
+                f"Invalid shape for input x. Could not broadcast input array "
+                f"from shape {x.shape} into shape {input_shape}"
             )
     else:
-        raise TypeError("x_train argument must be a Numpy array")
+        raise TypeError("Input x must be a Numpy array")
 
-    return x_train
+    return x
 
 
 def _standardize_add_conv2d_filter_shape(filter_shape: Numeric | tuple | list) -> tuple:
