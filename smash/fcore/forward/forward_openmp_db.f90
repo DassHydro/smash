@@ -12681,12 +12681,12 @@ CONTAINS
 
 !  Differentiation of gr_exponential_transfer in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: qe he
-!   with respect to varying inputs: he pre te
-  SUBROUTINE GR_EXPONENTIAL_TRANSFER_D(pre, pre_d, te, te_d, he, he_d, &
+!   with respect to varying inputs: he be pre
+  SUBROUTINE GR_EXPONENTIAL_TRANSFER_D(pre, pre_d, be, be_d, he, he_d, &
 &   qe, qe_d)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pre, te
-    REAL(sp), INTENT(IN) :: pre_d, te_d
+    REAL(sp), INTENT(IN) :: pre, be
+    REAL(sp), INTENT(IN) :: pre_d, be_d
     REAL(sp), INTENT(INOUT) :: he
     REAL(sp), INTENT(INOUT) :: he_d
     REAL(sp), INTENT(OUT) :: qe
@@ -12700,35 +12700,35 @@ CONTAINS
     REAL(sp) :: temp
     he_star_d = he_d + pre_d
     he_star = he + pre
-    ar_d = (he_star_d-he_star*te_d/te)/te
-    ar = he_star/te
+    ar_d = (he_star_d-he_star*be_d/be)/be
+    ar = he_star/be
     IF (ar .LT. -7._sp) THEN
       temp = EXP(ar)
-      qe_d = temp*te_d + te*EXP(ar)*ar_d
-      qe = te*temp
+      qe_d = temp*be_d + be*EXP(ar)*ar_d
+      qe = be*temp
     ELSE IF (ar .GT. 7._sp) THEN
       temp = EXP(ar)
-      qe_d = he_star_d + (te_d-te*EXP(ar)*ar_d/temp)/temp
-      qe = he_star + te/temp
+      qe_d = he_star_d + (be_d-be*EXP(ar)*ar_d/temp)/temp
+      qe = he_star + be/temp
     ELSE
       arg1_d = EXP(ar)*ar_d
       arg1 = EXP(ar) + 1._sp
       temp = LOG(arg1)
-      qe_d = temp*te_d + te*arg1_d/arg1
-      qe = te*temp
+      qe_d = temp*be_d + be*arg1_d/arg1
+      qe = be*temp
     END IF
     he_d = he_star_d - qe_d
     he = he_star - qe
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER_D
 
 !  Differentiation of gr_exponential_transfer in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
-!   gradient     of useful results: qe he te
-!   with respect to varying inputs: he pre te
-  SUBROUTINE GR_EXPONENTIAL_TRANSFER_B(pre, pre_b, te, te_b, he, he_b, &
+!   gradient     of useful results: qe he be
+!   with respect to varying inputs: he be pre
+  SUBROUTINE GR_EXPONENTIAL_TRANSFER_B(pre, pre_b, be, be_b, he, he_b, &
 &   qe, qe_b)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pre, te
-    REAL(sp) :: pre_b, te_b
+    REAL(sp), INTENT(IN) :: pre, be
+    REAL(sp) :: pre_b, be_b
     REAL(sp), INTENT(INOUT) :: he
     REAL(sp), INTENT(INOUT) :: he_b
     REAL(sp) :: qe
@@ -12742,7 +12742,7 @@ CONTAINS
     REAL(sp) :: temp
     INTEGER :: branch
     he_star = he + pre
-    ar = he_star/te
+    ar = he_star/be
     IF (ar .LT. -7._sp) THEN
       CALL PUSHCONTROL2B(0)
     ELSE IF (ar .GT. 7._sp) THEN
@@ -12755,34 +12755,34 @@ CONTAINS
     qe_b = qe_b - he_b
     CALL POPCONTROL2B(branch)
     IF (branch .EQ. 0) THEN
-      ar = he_star/te
+      ar = he_star/be
 !$OMP ATOMIC update
-      te_b = te_b + EXP(ar)*qe_b
-      ar_b = EXP(ar)*te*qe_b
+      be_b = be_b + EXP(ar)*qe_b
+      ar_b = EXP(ar)*be*qe_b
     ELSE IF (branch .EQ. 1) THEN
-      ar = he_star/te
+      ar = he_star/be
       temp = EXP(ar)
       he_star_b = he_star_b + qe_b
 !$OMP ATOMIC update
-      te_b = te_b + qe_b/temp
-      ar_b = -(EXP(ar)*te*qe_b/temp**2)
+      be_b = be_b + qe_b/temp
+      ar_b = -(EXP(ar)*be*qe_b/temp**2)
     ELSE
 !$OMP ATOMIC update
-      te_b = te_b + LOG(arg1)*qe_b
-      arg1_b = te*qe_b/arg1
-      ar = he_star/te
+      be_b = be_b + LOG(arg1)*qe_b
+      arg1_b = be*qe_b/arg1
+      ar = he_star/be
       ar_b = EXP(ar)*arg1_b
     END IF
-    he_star_b = he_star_b + ar_b/te
+    he_star_b = he_star_b + ar_b/be
 !$OMP ATOMIC update
-    te_b = te_b - he_star*ar_b/te**2
+    be_b = be_b - he_star*ar_b/be**2
     he_b = he_star_b
     pre_b = he_star_b
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER_B
 
-  SUBROUTINE GR_EXPONENTIAL_TRANSFER(pre, te, he, qe)
+  SUBROUTINE GR_EXPONENTIAL_TRANSFER(pre, be, he, qe)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pre, te
+    REAL(sp), INTENT(IN) :: pre, be
     REAL(sp), INTENT(INOUT) :: he
     REAL(sp), INTENT(OUT) :: qe
     REAL(sp) :: he_star, ar
@@ -12790,14 +12790,14 @@ CONTAINS
     INTRINSIC LOG
     REAL(sp) :: arg1
     he_star = he + pre
-    ar = he_star/te
+    ar = he_star/be
     IF (ar .LT. -7._sp) THEN
-      qe = te*EXP(ar)
+      qe = be*EXP(ar)
     ELSE IF (ar .GT. 7._sp) THEN
-      qe = he_star + te/EXP(ar)
+      qe = he_star + be/EXP(ar)
     ELSE
       arg1 = EXP(ar) + 1._sp
-      qe = te*LOG(arg1)
+      qe = be*LOG(arg1)
     END IF
     he = he_star - qe
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER
@@ -13442,11 +13442,11 @@ CONTAINS
 
 !  Differentiation of gr6_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_he ac_hi ac_hp ac_ht
-!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_te
-!                ac_qt ac_he ac_hi ac_hp ac_ht ac_mlt ac_aexc
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
+!                ac_he ac_hi ac_hp ac_be ac_ht ac_mlt ac_aexc
   SUBROUTINE GR6_TIME_STEP_D(setup, mesh, input_data, options, returns, &
 &   time_step, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, &
-&   ac_ct_d, ac_te, ac_te_d, ac_kexc, ac_kexc_d, ac_aexc, ac_aexc_d, &
+&   ac_ct_d, ac_be, ac_be_d, ac_kexc, ac_kexc_d, ac_aexc, ac_aexc_d, &
 &   ac_hi, ac_hi_d, ac_hp, ac_hp_d, ac_ht, ac_ht_d, ac_he, ac_he_d, &
 &   ac_qt, ac_qt_d)
     IMPLICIT NONE
@@ -13459,9 +13459,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
-&   ac_te, ac_kexc, ac_aexc
+&   ac_be, ac_kexc, ac_aexc
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci_d, ac_cp_d, &
-&   ac_ct_d, ac_te_d, ac_kexc_d, ac_aexc_d
+&   ac_ct_d, ac_be_d, ac_kexc_d, ac_aexc_d
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht&
 &   , ac_he
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_d, ac_hp_d, &
@@ -13485,9 +13485,9 @@ CONTAINS
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_be, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(ac_prcp_d, &
-!$OMP&ac_ci_d, ac_cp_d, ac_ct_d, ac_te_d, ac_kexc_d, ac_aexc_d, ac_hi_d&
+!$OMP&ac_ci_d, ac_cp_d, ac_ct_d, ac_be_d, ac_kexc_d, ac_aexc_d, ac_hi_d&
 !$OMP&, ac_hp_d, ac_ht_d, ac_he_d, ac_qt_d), PRIVATE(row, col, k, pn, en&
 !$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qe), PRIVATE(pn_d, en_d, &
 !$OMP&pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qe_d), PRIVATE&
@@ -13523,7 +13523,7 @@ CONTAINS
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
-          CALL GR_EXPONENTIAL_TRANSFER_D(pre, pre_d, ac_te(k), ac_te_d(k&
+          CALL GR_EXPONENTIAL_TRANSFER_D(pre, pre_d, ac_be(k), ac_be_d(k&
 &                                  ), ac_he(k), ac_he_d(k), qe, qe_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
@@ -13544,13 +13544,13 @@ CONTAINS
   END SUBROUTINE GR6_TIME_STEP_D
 
 !  Differentiation of gr6_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
-!   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_te
-!                ac_qt ac_he ac_hi ac_hp ac_ht ac_mlt ac_aexc
-!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_te
-!                ac_qt ac_he ac_hi ac_hp ac_ht ac_mlt ac_aexc
+!   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
+!                ac_he ac_hi ac_hp ac_be ac_ht ac_mlt ac_aexc
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
+!                ac_he ac_hi ac_hp ac_be ac_ht ac_mlt ac_aexc
   SUBROUTINE GR6_TIME_STEP_B(setup, mesh, input_data, options, returns, &
 &   time_step, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, &
-&   ac_ct_b, ac_te, ac_te_b, ac_kexc, ac_kexc_b, ac_aexc, ac_aexc_b, &
+&   ac_ct_b, ac_be, ac_be_b, ac_kexc, ac_kexc_b, ac_aexc, ac_aexc_b, &
 &   ac_hi, ac_hi_b, ac_hp, ac_hp_b, ac_ht, ac_ht_b, ac_he, ac_he_b, &
 &   ac_qt, ac_qt_b)
     IMPLICIT NONE
@@ -13563,8 +13563,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
-&   ac_te, ac_kexc, ac_aexc
-    REAL(sp), DIMENSION(mesh%nac) :: ac_ci_b, ac_cp_b, ac_ct_b, ac_te_b&
+&   ac_be, ac_kexc, ac_aexc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_ci_b, ac_cp_b, ac_ct_b, ac_be_b&
 &   , ac_kexc_b, ac_aexc_b
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht&
 &   , ac_he
@@ -13591,7 +13591,7 @@ CONTAINS
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_be, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row, col, k, &
 !$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe), PRIVATE(&
 !$OMP&chunk_start, chunk_end)
@@ -13630,7 +13630,7 @@ CONTAINS
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           CALL PUSHREAL4(ac_he(k))
-          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_te(k), ac_he(k), qe)
+          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_be(k), ac_he(k), qe)
           IF (0._sp .LT. prd + l) THEN
             CALL PUSHCONTROL1B(0)
           ELSE
@@ -13647,9 +13647,9 @@ CONTAINS
 !$OMP END PARALLEL
     ac_prcp_b = 0.0_4
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_be, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(ac_prcp_b, &
-!$OMP&ac_ci_b, ac_cp_b, ac_ct_b, ac_te_b, ac_kexc_b, ac_aexc_b, ac_hi_b&
+!$OMP&ac_ci_b, ac_cp_b, ac_ct_b, ac_be_b, ac_kexc_b, ac_aexc_b, ac_hi_b&
 !$OMP&, ac_hp_b, ac_ht_b, ac_he_b, ac_qt_b), PRIVATE(row, col, k, pn, en&
 !$OMP&, pr, perc, l, prr, pre, prd, qr, qd, qe), PRIVATE(pn_b, en_b, &
 !$OMP&pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qe_b), PRIVATE&
@@ -13690,7 +13690,7 @@ CONTAINS
             prd_b = 0.0_4
           END IF
           CALL POPREAL4(ac_he(k))
-          CALL GR_EXPONENTIAL_TRANSFER_B(pre, pre_b, ac_te(k), ac_te_b(k&
+          CALL GR_EXPONENTIAL_TRANSFER_B(pre, pre_b, ac_be(k), ac_be_b(k&
 &                                  ), ac_he(k), ac_he_b(k), qe, qe_b)
           CALL POPREAL4(ac_ht(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
@@ -13728,7 +13728,7 @@ CONTAINS
   END SUBROUTINE GR6_TIME_STEP_B
 
   SUBROUTINE GR6_TIME_STEP(setup, mesh, input_data, options, returns, &
-&   time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_te, ac_kexc, ac_aexc, &
+&   time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_be, ac_kexc, ac_aexc, &
 &   ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -13739,7 +13739,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
-&   ac_te, ac_kexc, ac_aexc
+&   ac_be, ac_kexc, ac_aexc
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht&
 &   , ac_he
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
@@ -13755,7 +13755,7 @@ CONTAINS
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_be, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row, col, k, &
 !$OMP&pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe), SCHEDULE(static)
     DO col=1,mesh%ncol
@@ -13780,7 +13780,7 @@ CONTAINS
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
-          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_te(k), ac_he(k), qe)
+          CALL GR_EXPONENTIAL_TRANSFER(pre, ac_be(k), ac_he(k), qe)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -17907,7 +17907,7 @@ CONTAINS
 ! % ci
 ! % cp
 ! % ct
-! % te
+! % be
 ! % kexc
 ! % aexc
 ! % hi
@@ -18301,7 +18301,7 @@ CONTAINS
 ! % ci
 ! % cp
 ! % ct
-! % te
+! % be
 ! % kexc
 ! % aexc
 ! % hi
@@ -18991,7 +18991,7 @@ CONTAINS
 ! % ci
 ! % cp
 ! % ct
-! % te
+! % be
 ! % kexc
 ! % aexc
 ! % hi

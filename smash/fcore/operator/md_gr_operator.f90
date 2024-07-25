@@ -136,23 +136,23 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr_exponential_transfer(pre, te, he, qe)
+    subroutine gr_exponential_transfer(pre, be, he, qe)
 
         implicit none
 
-        real(sp), intent(in) :: pre, te
+        real(sp), intent(in) :: pre, be
         real(sp), intent(inout) :: he
         real(sp), intent(out) :: qe
         real(sp) :: he_star, ar
         
         he_star = he + pre
-        ar = he_star / te
+        ar = he_star / be
         if (ar .lt. -7._sp) then
-            qe = te * exp(ar)
+            qe = be * exp(ar)
         else if (ar .gt. 7._sp) then
-            qe = he_star + te / exp(ar)
+            qe = he_star + be / exp(ar)
         else
-            qe = te * log(exp(ar) + 1._sp)
+            qe = be * log(exp(ar) + 1._sp)
         end if
         
         he = he_star - qe
@@ -350,7 +350,7 @@ contains
     end subroutine gr5_time_step
 
     subroutine gr6_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
-    & ac_te, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
+    & ac_be, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
 
         implicit none
 
@@ -361,7 +361,7 @@ contains
         type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
-        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_te, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_be, ac_kexc, ac_aexc
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht, ac_he
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
@@ -378,7 +378,7 @@ contains
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_te, ac_kexc, ac_aexc, ac_hi, &
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_be, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_he, ac_qt) &
         !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe)
 #endif
@@ -412,7 +412,7 @@ contains
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 
-                call gr_exponential_transfer(pre, ac_te(k), ac_he(k), qe)
+                call gr_exponential_transfer(pre, ac_be(k), ac_he(k), qe)
                 
                 qd = max(0._sp, prd + l)
 
