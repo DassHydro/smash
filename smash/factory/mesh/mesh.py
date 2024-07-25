@@ -422,6 +422,23 @@ def _generate_mesh_from_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: np.nd
     return mesh
 
 
+def _check_well_in_flowdir(
+        flwdir_dataset: rasterio.DatasetReader,
+    ):
+    
+    flwdir = _get_array(flwdir_dataset)
+
+    # % Can close dataset
+    #flwdir_dataset.close()
+    
+    nrow=flwdir.shape[0]
+    ncol=flwdir.shape[1]
+    print("check_well_in_flowdir")
+    print(flwdir)
+    well=mw_mesh.check_well_in_flowdir(nrow, ncol, flwdir)
+    return well
+
+
 def _generate_mesh(
     flwdir_dataset: rasterio.DatasetReader,
     bbox: np.ndarray | None,
@@ -432,7 +449,15 @@ def _generate_mesh(
     max_depth: int,
     epsg: int | None,
 ) -> dict:
+    
+    well=_check_well_in_flowdir(flwdir_dataset)
+    
+    if np.sum(well)!=0:
+        print("<\> Well detected in the flow dir direction.")
+        return {"well":well}
+    
     if bbox is not None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
         return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
+

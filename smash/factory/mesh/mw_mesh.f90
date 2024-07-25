@@ -337,6 +337,7 @@ contains
 
         integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
         integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
+        integer, dimension(8) :: opposite_dir = (/5, 6, 7, 8, 1, 2, 3, 4/)
         integer :: i, j, row_imd, col_imd
 
         do i = 1, 8
@@ -347,6 +348,9 @@ contains
             if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
 
             if (flwdir(row_imd, col_imd) .ne. i) cycle
+            
+            !% Check if well
+            if ( flwdir(row_imd, col_imd) .eq. i .and. flwdir(row, col) .eq. opposite_dir(i) ) cycle
 
             !% Check for nested catchment and set flag
             do j = 1, ng
@@ -467,5 +471,49 @@ contains
         end do
 
     end subroutine flow_partition_variable
+
+
+    subroutine check_well_in_flowdir(nrow, ncol, flwdir, well)
+
+        implicit none
+
+        integer, intent(in) :: nrow, ncol
+        integer, dimension(nrow, ncol), intent(in) :: flwdir
+        integer, dimension(nrow, ncol), intent(out) :: well
+        
+        integer :: i, j, k, row_imd, col_imd
+        integer, dimension(3) :: drow = (/0, 1, 1/)
+        integer, dimension(3) :: dcol = (/1, 1, 0/)
+        integer, dimension(3) :: dir = (/3, 4, 5/)
+        integer, dimension(3) :: opposite_dir = (/7, 8, 1/)
+        
+        write(*,*) "hello"
+        well = 0
+        
+        do i=1,nrow-1
+            
+            do j=1,ncol-1
+
+                do k = 1, 3
+                    
+                    row_imd = i + drow(i)
+                    col_imd = j + dcol(i)
+                    
+                    if ( flwdir(row_imd, col_imd) .eq. dir(k) .and. flwdir(i, j) .eq. opposite_dir(k) ) then
+                        
+                        well(i,j) = 1
+                        well(row_imd,col_imd) = 1
+                        
+                        write(*,*) '</> A well is detected at row/col',i,j
+                        
+                    end if
+                
+                end do
+            
+            end do
+        
+        end do
+
+    end subroutine check_well_in_flowdir
 
 end module mw_mesh
