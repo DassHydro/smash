@@ -784,13 +784,13 @@ class Net(object):
 
         return [layer.bias for layer in self.layers if hasattr(layer, "bias")]
 
-    def forward_pass(self, x_train: np.ndarray):
+    def forward_pass(self, x: np.ndarray):
         """
         Perform a forward pass through the neural network.
 
         Parameters
         ----------
-        x_train : `numpy.ndarray`
+        x : `numpy.ndarray`
             An array representing the input data for the neural network. The shape of
             this array must be broadcastable into the input shape of the first layer.
 
@@ -831,12 +831,12 @@ class Net(object):
         array([[0.53357954, 0.39343288, 0.07298759]])
         """
 
-        x_train = _standardize_forward_pass_args(self, x_train)
+        x = _standardize_forward_pass_args(self, x)
 
-        return self._forward_pass(x_train)
+        return self._forward_pass(x)
 
-    def _forward_pass(self, x_train: np.ndarray):
-        layer_output = x_train
+    def _forward_pass(self, x: np.ndarray):
+        layer_output = x
 
         for layer in self.layers:
             layer_output = layer._forward_pass(layer_output)
