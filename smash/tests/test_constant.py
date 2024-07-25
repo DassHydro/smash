@@ -207,7 +207,7 @@ def test_feasible_domain():
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
-        (0, 100),  # % te
+        (0, np.inf),  # % te
         (-np.inf, np.inf),  # % kexc
         (0, 1),  # % aexc
         (0, np.inf),  # % ca
@@ -233,7 +233,7 @@ def test_feasible_domain():
         (0, 1),  # % hi
         (0, 1),  # % hp
         (0, 1),  # % ht
-        (-np.inf, 1),  # % he
+        (-np.inf, np.inf),  # % he
         (0, 1),  # % ha
         (0, 1),  # % hc
         (0, 1),  # % hcl
