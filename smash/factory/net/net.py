@@ -523,30 +523,34 @@ class Net(object):
         n_layers = 2 if sum(instance.setup.neurons) > 0 else 0
         opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * n_layers)]
 
+        early_stopped = False
+
         # % Train model
         for ite in range(maxiter + 1):
-            # forward propogation
-            y_pred = self._forward_pass(x_train)
-
-            # calculate the gradient of the loss function wrt y_pred of the regionalization NN
+            # calculate the gradient of J wrt rr_parameters (output of the regionalization NN)
             # and get the gradient of the parameterization NN if used
             init_loss_grad, nn_parameters_b = _hcost_prime(
-                y_pred, model_params_states, instance, parameters, wrap_options, wrap_returns
+                self, x_train, model_params_states, instance, parameters, wrap_options, wrap_returns
             )
 
             # compute loss
             loss = _hcost(instance)
             self.history["loss_train"].append(loss)
 
-            # save optimal weights if early stopping is used
+            # save optimal paramters if early stopping is used
             if early_stopping:
                 if ite == 0:
                     loss_opt = {"ite": 0, "value": loss}
+                    nn_parameters_bak = parameters.nn_parameters.copy()
 
                 if loss < loss_opt["value"]:
                     loss_opt["ite"] = ite
                     loss_opt["value"] = loss
 
+                    # backup nn_parameters
+                    nn_parameters_bak = parameters.nn_parameters.copy()
+
+                    # backup weights and biases of rr_parameters
                     for layer in self.layers:
                         if hasattr(layer, "_initialize"):
                             layer._weight = np.copy(layer.weight)
@@ -555,8 +559,8 @@ class Net(object):
                 else:
                     if (
                         ite - loss_opt["ite"] > early_stopping
-                    ):  # stop training if the loss values do not decrease through early_stopping consecutive
-                        # iterations
+                    ):  # stop training if the loss values do not decrease through
+                        # early_stopping consecutive iterations
                         if verbose:
                             print(
                                 f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
@@ -604,13 +608,22 @@ class Net(object):
                         f"J = {loss_opt['value']:.6f} due to early stopping"
                     )
 
-            for layer in self.layers:
-                if hasattr(layer, "_initialize"):
-                    layer.weight = np.copy(layer._weight)
-                    del layer._weight
+                parameters.nn_parameters = nn_parameters_bak  # revert nn_parameters
 
-                    layer.bias = np.copy(layer._bias)
+                for layer in self.layers:  # revert weights and biases of rr_parameters
+                    if hasattr(layer, "_initialize"):
+                        layer.weight = np.copy(layer._weight)
+                        layer.bias = np.copy(layer._bias)
+
+                early_stopped = True
+
+            # remove tmp attr for each layer of net
+            for layer in self.layers:  # revert weights and biases of rr_parameters
+                if hasattr(layer, "_initialize"):
+                    del layer._weight
                     del layer._bias
+
+        return early_stopped
 
     def set_weight(self, value: list[Any]):
         """

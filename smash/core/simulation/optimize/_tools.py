@@ -127,6 +127,33 @@ def _net_to_vect(net: Net) -> np.ndarray:
     return np.concatenate(x)
 
 
+def _net_to_parameters(
+    net: Net, x: np.ndarray, model_params_states: np.ndarray, parameters: ParametersDT, flwdir_shape: tuple
+):
+    # % Forward propogation
+    y = net._forward_pass(x)
+
+    output_reshaped = False
+
+    if y.ndim < 3:
+        y = y.reshape(flwdir_shape + (-1,))
+        output_reshaped = True  # reshape output in case of Dense (MLP)
+
+    # % Set parameters or states
+    for i, name in enumerate(model_params_states):
+        if name in parameters.rr_parameters.keys:
+            ind = np.argwhere(parameters.rr_parameters.keys == name).item()
+
+            parameters.rr_parameters.values[..., ind] = y[..., i]
+
+        elif name in parameters.rr_initial_states.keys:
+            ind = np.argwhere(parameters.rr_initial_states.keys == name).item()
+
+            parameters.rr_initial_states.values[..., ind] = y[..., i]
+
+    return output_reshaped
+
+
 def _get_lcurve_wjreg_best(
     cost_arr: np.ndarray,
     jobs_arr: np.ndarray,

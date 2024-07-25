@@ -9,11 +9,71 @@ from smash._constant import (
 )
 from smash.util._doctools import DocAppender, DocSubstitution
 
-# TODO: mapping and optimizer arguments are duplicated between each docstrings.
-# Maybe create intermediate variables to store this with or without ann optimizer.
-
 # TODO: store the docstring for each returned variable and then applied it
 # for each optional return object (ForwardRun, Optimize, etc.)
+
+OPTIMIZE_MAPPING_OPTIMIZER_BASE_DOC = """
+mapping : `str`, default 'uniform'
+
+    Type of mapping. Should be one of
+
+    - ``'uniform'``
+    - ``'distributed'``
+    - ``'multi-linear'``
+    - ``'multi-polynomial'``
+    - ``'ann'``
+
+    .. hint::
+        See the :ref:`math_num_documentation.mapping` section.
+
+optimizer : `str` or None, default None
+    Name of optimizer. Should be one of
+
+    - ``'sbs'`` (only for ``'uniform'`` **mapping**)
+    - ``'lbfgsb'`` (for all mappings except ``'ann'``)
+    - ``'sgd'`` (for all mappings)
+    - ``'adam'`` (for all mappings)
+    - ``'adagrad'`` (for all mappings)
+    - ``'rmsprop'`` (for all mappings)
+
+    .. note::
+        If not given, a default optimizer will be set as follows:
+
+        - ``'sbs'`` for **mapping** = ``'uniform'``
+        - ``'lbfgsb'`` for **mapping** = ``'distributed'``, ``'multi-linear'``, ``'multi-polynomial'``
+        - ``'adam'`` for **mapping** = ``'ann'``
+
+    .. hint::
+        See the :ref:`math_num_documentation.optimization_algorithm` section.
+"""
+
+BAYESIAN_OPTIMIZE_MAPPING_OPTIMIZER_BASE_DOC = """
+mapping : `str`, default 'uniform'
+    Type of mapping. Should be one of
+
+    - ``'uniform'``
+    - ``'distributed'``
+    - ``'multi-linear'``
+    - ``'multi-polynomial'``
+
+    .. hint::
+        See the :ref:`math_num_documentation.mapping` section.
+
+optimizer : `str` or None, default None
+    Name of optimizer. Should be one of
+
+    - ``'sbs'`` (only for ``'uniform'`` **mapping**)
+    - ``'lbfgsb'`` (for all mappings)
+
+    .. note::
+        If not given, a default optimizer will be set as follows:
+
+        - ``'sbs'`` for **mapping** = ``'uniform'``
+        - ``'lbfgsb'`` for **mapping** = ``'distributed'``, ``'multi-linear'``, ``'multi-polynomial'``
+
+    .. hint::
+        See the :ref:`math_num_documentation.optimization_algorithm` section.
+"""
 
 OPTIMIZE_OPTIONS_BASE_DOC = {
     "parameters": (
@@ -725,39 +785,10 @@ Model assimilation using numerical optimization algorithms.
 Parameters
 ----------
 %(model_parameter)s
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
 
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-    - ``'ann'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
-    - ``'sgd'`` (all mappings)
-    - ``'adam'`` (all mappings)
-    - ``'adagrad'`` (all mappings)
-    - ``'rmsprop'`` (all mappings)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-        - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + OPTIMIZE_MAPPING_OPTIMIZER_BASE_DOC
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.
@@ -953,32 +984,10 @@ Model bayesian assimilation using numerical optimization algorithms.
 Parameters
 ----------
 %(model_parameter)s
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
 
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (all mappings)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + BAYESIAN_OPTIMIZE_MAPPING_OPTIMIZER_BASE_DOC
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.
@@ -1150,39 +1159,9 @@ Parameters
 model : `Model`
     Primary data structure of the hydrological model `smash`.
 
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
-
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-    - ``'ann'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
-    - ``'sgd'`` (all mappings)
-    - ``'adam'`` (all mappings)
-    - ``'adagrad'`` (all mappings)
-    - ``'rmsprop'`` (all mappings)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-        - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + OPTIMIZE_MAPPING_OPTIMIZER_BASE_DOC
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.
@@ -1337,32 +1316,9 @@ Parameters
 model : `Model`
     Primary data structure of the hydrological model `smash`.
 
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
-
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (all mappings)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + BAYESIAN_OPTIMIZE_MAPPING_OPTIMIZER_BASE_DOC
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.

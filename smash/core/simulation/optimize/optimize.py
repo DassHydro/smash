@@ -23,6 +23,7 @@ from smash.core.simulation.optimize._tools import (
     _get_lcurve_wjreg_best,
     _handle_bayesian_optimize_control_prior,
     _inf_norm,
+    _net_to_parameters,
     _net_to_vect,
 )
 
@@ -637,14 +638,6 @@ def _adaptive_optimize(
             ret["iter_projg"] = net.history["proj_grad"]
 
         if "control_vector" in return_options["keys"]:
-            wrap_parameters_to_control(
-                model.setup,
-                model.mesh,
-                model._input_data,
-                parameters,
-                wrap_options,
-            )
-
             ret["control_vector"] = np.append(parameters.control.x, _net_to_vect(net))
 
     else:
@@ -677,7 +670,7 @@ def _adaptive_optimize(
         grad = parameters_b.control.x.copy()
         projg = _inf_norm(grad)
 
-        cost_opt = {"ite": 0, "value": model._output.cost, "control": x}
+        opt_info = {"ite": 0, "value": model._output.cost, "control": x}
 
         if "iter_cost" in return_options["keys"]:
             ret["iter_cost"] = np.array([model._output.cost])
@@ -710,14 +703,14 @@ def _adaptive_optimize(
                 ret["iter_projg"] = np.append(ret["iter_projg"], projg)
 
             if early_stopping:
-                if model._output.cost < cost_opt["value"]:
-                    cost_opt["ite"] = ite
-                    cost_opt["value"] = model._output.cost
-                    cost_opt["control"] = x.copy()
+                if model._output.cost < opt_info["value"]:
+                    opt_info["ite"] = ite
+                    opt_info["value"] = model._output.cost
+                    opt_info["control"] = x.copy()
 
                 else:
                     if (
-                        ite - cost_opt["ite"] > early_stopping
+                        ite - opt_info["ite"] > early_stopping
                     ):  # stop training if the loss values do not decrease through early_stopping consecutive
                         # iterations
                         if wrap_options.comm.verbose:
@@ -737,15 +730,17 @@ def _adaptive_optimize(
                     print(f"{' '*4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
 
         if early_stopping:
-            if cost_opt["ite"] < maxiter:
+            if opt_info["ite"] < maxiter:
                 if wrap_options.comm.verbose:
                     print(
-                        f"{' '*4}Reverting to iteration {cost_opt['ite']} with "
-                        f"J = {cost_opt['value']:.6f} due to early stopping"
+                        f"{' '*4}Reverting to iteration {opt_info['ite']} with "
+                        f"J = {opt_info['value']:.6f} due to early stopping"
                     )
 
-            # % Run forward model with reverted control
-            _optimize_problem(cost_opt["control"], model, parameters, wrap_options, wrap_returns)
+                x = opt_info["control"]
+
+        # % Run forward model to update final states and control vector (if early stopped)
+        _optimize_problem(x, model, parameters, wrap_options, wrap_returns)
 
         if "control_vector" in return_options["keys"]:
             ret["control_vector"] = parameters.control.x.copy()
@@ -1026,19 +1021,18 @@ def _reg_ann_adaptive_optimize(
     u_desc = model._input_data.physio_data.u_descriptor
 
     desc = model._input_data.physio_data.descriptor.copy()
-    desc_shape = desc.shape
     desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
 
     # % Train regionalization network
     net = optimize_options["net"]
 
     if net.layers[0].layer_name() == "Dense":
-        desc = desc.reshape(-1, desc_shape[-1])
+        desc = desc.reshape(-1, desc.shape[-1])
 
     # % Change the mapping to trigger distributed control to get distributed gradients
     wrap_options.optimize.mapping = "distributed"
 
-    net._fit_d2p(
+    early_stopped = net._fit_d2p(
         desc,
         model,
         parameters,
@@ -1055,6 +1049,19 @@ def _reg_ann_adaptive_optimize(
 
     # % Reset mapping to ann once fit_d2p done
     wrap_options.optimize.mapping = "ann"
+
+    # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
+    if early_stopped:
+        _net_to_parameters(net, desc, optimize_options["parameters"], parameters, model.mesh.flwdir.shape)
+
+    # % Reset control with ann mapping
+    wrap_parameters_to_control(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        wrap_options,
+    )  # only apply to nn_parameters if used since mapping has been reverted to ann
 
     # % Forward run for updating final states
     wrap_forward_run(
