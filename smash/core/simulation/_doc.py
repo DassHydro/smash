@@ -384,7 +384,7 @@ COST_OPTIONS_BASE_DOC = {
         """
         Prior applied to the control vector.
         A dictionary containing the type of prior to link to control vector. The keys are any control
-        parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc.), see
+        parameter name (i.e. ``'cp-0'``, ``'cp-1-1'``, ``'cp-slope-a'``, etc.), see
         `bayesian_optimize_control_info` to retrieve control parameters
         names. The values are list of length 2 containing distribution information (i.e. distribution name and
         parameters). Below, the set of available distributions and the associated number of parameters:
@@ -398,8 +398,8 @@ COST_OPTIONS_BASE_DOC = {
 
         >>> cost_options = {
             control_prior: {
-                "cp0": ["Gaussian", [200, 100]],
-                "kexc0": ["Gaussian", [0, 5]],
+                "cp-0": ["Gaussian", [200, 100]],
+                "kexc-0": ["Gaussian", [0, 5]],
             }
         }
 
