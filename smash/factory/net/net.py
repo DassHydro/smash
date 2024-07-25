@@ -537,7 +537,7 @@ class Net(object):
             loss = _hcost(instance)
             self.history["loss_train"].append(loss)
 
-            # save optimal paramters if early stopping is used
+            # save optimal parameters if early stopping is used
             if early_stopping:
                 if ite == 0:
                     loss_opt = {"ite": 0, "value": loss}
