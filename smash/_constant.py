@@ -762,21 +762,11 @@ MAPPING_OPTIMIZER = dict(
     zip(
         MAPPING,
         [
-            OPTIMIZER,  # for uniform mapping (all optimizers are possible)
+            OPTIMIZER,  # for uniform mapping (all optimizers are possible, default is sbs)
             *(
-                [GRADIENT_BASED_OPTIMIZER] * (len(MAPPING) - 2)
+                [GRADIENT_BASED_OPTIMIZER] * 3
             ),  # for distributed, multi-linear, multi-polynomial mappings (default is lbfgsb)
-            ADAPTIVE_OPTIMIZER + GRADIENT_BASED_OPTIMIZER[:1],  # for ann mapping (default is adam)
-        ],
-    )
-)
-
-OPTIMIZER_CONTROL_TFM = dict(
-    zip(
-        OPTIMIZER,
-        [
-            ["sbs", "normalize", "keep"],  # for uniform mapping
-            *([["normalize", "keep"]] * len(GRADIENT_BASED_OPTIMIZER)),  # for the rest
+            ADAPTIVE_OPTIMIZER,  # for ann mapping (default is adam)
         ],
     )
 )
@@ -885,12 +875,6 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
             ],
         )
     ),
-    ("ann", "lbfgsb"): [
-        "parameters",
-        "bounds",
-        "net",
-        "termination_crit",
-    ],
     **dict(
         zip(
             [("ann", optimizer) for optimizer in ADAPTIVE_OPTIMIZER],
@@ -907,6 +891,15 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
             ],
         )
     ),
+}
+
+OPTIMIZER_CONTROL_TFM = {
+    (mapping, optimizer): ["sbs", "normalize", "keep"]
+    if optimizer == "sbs"
+    else ["normalize", "keep"]
+    if mapping != "ann"
+    else ["keep"]
+    for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
 }
 
 DEFAULT_SIMULATION_COST_OPTIONS = {

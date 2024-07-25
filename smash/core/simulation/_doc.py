@@ -123,11 +123,11 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `float` or None, default None
         """,
         """
-        The learning rate used for weight updates during training.
+        The learning rate used for updating trainable parameters when using adaptive optimizers (i.e., all
+        optimizers except ``'sbs'`` and ``'lbfgsb'``).
 
         .. note::
-            If not given, a default learning rate will be used. This option is only used when **mapping** is
-            ``'ann'``.
+            If not given, a default learning rate for each optimizer will be used.
         """,
     ),
     "random_state": (
@@ -537,7 +537,7 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return control vector at end of optimization.
+        Whether to return control vector at the end of the optimization process.
         """,
     ),
     "net": (
@@ -743,12 +743,14 @@ optimizer : `str` or None, default None
     - ``'sbs'`` (``'uniform'`` **mapping** only)
     - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
       **mapping** only)
-    - ``'sgd'`` (``'ann'`` **mapping** only)
-    - ``'adam'`` (``'ann'`` **mapping** only)
-    - ``'adagrad'`` (``'ann'`` **mapping** only)
-    - ``'rmsprop'`` (``'ann'`` **mapping** only)
+    - ``'sgd'`` (all mappings)
+    - ``'adam'`` (all mappings)
+    - ``'adagrad'`` (all mappings)
+    - ``'rmsprop'`` (all mappings)
 
     .. note::
+        If not given, a default optimizer will be set depending on the optimization mapping:
+
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
           ``'lbfgsb'``
@@ -966,8 +968,7 @@ optimizer : `str` or None, default None
     Name of optimizer. Should be one of
 
     - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
+    - ``'lbfgsb'`` (all mappings)
 
     .. note::
         If not given, a default optimizer will be set depending on the optimization mapping:
@@ -1156,6 +1157,7 @@ mapping : `str`, default 'uniform'
     - ``'distributed'``
     - ``'multi-linear'``
     - ``'multi-polynomial'``
+    - ``'ann'``
 
     .. hint::
         See the :ref:`math_num_documentation.mapping` section
@@ -1166,6 +1168,10 @@ optimizer : `str` or None, default None
     - ``'sbs'`` (``'uniform'`` **mapping** only)
     - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
       **mapping** only)
+    - ``'sgd'`` (all mappings)
+    - ``'adam'`` (all mappings)
+    - ``'adagrad'`` (all mappings)
+    - ``'rmsprop'`` (all mappings)
 
     .. note::
         If not given, a default optimizer will be set depending on the optimization mapping:
@@ -1173,6 +1179,7 @@ optimizer : `str` or None, default None
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
           ``'lbfgsb'``
+        - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
 
     .. hint::
         See the :ref:`math_num_documentation.optimization_algorithm` section
@@ -1216,7 +1223,7 @@ control_info : `dict[str, Any]`
     - nbk : `numpy.ndarray`
         An array of shape *(6,)* containing the number of elements by kind (`Model.rr_parameters`,
         `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
-        `Model.nn_parameters`, `Net`) of the control vector (``sum(nbk) = n``).
+        `Model.nn_parameters`, `Net <factory.Net>`) of the control vector (``sum(nbk) = n``).
 
     - l : `numpy.ndarray`
         An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
@@ -1345,8 +1352,7 @@ optimizer : `str` or None, default None
     Name of optimizer. Should be one of
 
     - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
+    - ``'lbfgsb'`` (all mappings)
 
     .. note::
         If not given, a default optimizer will be set depending on the optimization mapping:
@@ -1395,9 +1401,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
-        vector (``sum(nbk) = n``).
+        An array of shape *(6,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
+        `Model.nn_parameters`, `Net <factory.Net>`) of the control vector (``sum(nbk) = n``).
 
     - l : `numpy.ndarray`
         An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).

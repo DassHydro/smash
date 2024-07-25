@@ -23,7 +23,7 @@ from smash.core.simulation.optimize._tools import (
     _get_lcurve_wjreg_best,
     _handle_bayesian_optimize_control_prior,
     _inf_norm,
-    _net_to_control,
+    _net_to_vect,
 )
 
 # Used inside eval statement
@@ -645,7 +645,7 @@ def _adaptive_optimize(
                 wrap_options,
             )
 
-            ret["control_vector"] = np.append(parameters.control.x, _net_to_control(net))
+            ret["control_vector"] = np.append(parameters.control.x, _net_to_vect(net))
 
     else:
         ind = ADAPTIVE_OPTIMIZER.index(wrap_options.optimize.optimizer)
@@ -1055,26 +1055,6 @@ def _reg_ann_adaptive_optimize(
 
     # % Reset mapping to ann once fit_d2p done
     wrap_options.optimize.mapping = "ann"
-
-    # % Run a forward pass with net
-    y = net._forward_pass(desc)
-
-    if y.ndim < 3:
-        y = y.reshape(desc_shape[:-1] + (-1,))
-
-    for i, name in enumerate(optimize_options["parameters"]):
-        if name in parameters.rr_parameters.keys:
-            ind = np.argwhere(parameters.rr_parameters.keys == name).item()
-
-            parameters.rr_parameters.values[..., ind] = y[..., i]
-
-        elif name in parameters.rr_initial_states.keys:
-            ind = np.argwhere(parameters.rr_initial_states.keys == name).item()
-
-            parameters.rr_initial_states.values[..., ind] = y[..., i]
-
-        else:  # nn_parameters excluded from descriptors-to-parameters mapping
-            pass
 
     # % Forward run for updating final states
     wrap_forward_run(

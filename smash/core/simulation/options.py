@@ -204,25 +204,27 @@ def default_optimize_options(
 
     Again, customize the optimize options and optimize the Model
 
-    >>> opt_ann["learning_rate"] = 0.004
-    >>> opt_ann["termination_crit"]["maxiter"] = 40
-    >>> opt_ann["termination_crit"]["early_stopping"] = 10
-    >>> opt_ann["random_state"] = 11
+    >>> opt_ann["learning_rate"] = 0.006
+    >>> opt_ann["termination_crit"]["maxiter"] = 50
+    >>> opt_ann["termination_crit"]["early_stopping"] = 5
+    >>> opt_ann["random_state"] = 21
     >>> model.optimize(mapping="ann", optimize_options=opt_ann)
     </> Optimize
-        At epoch      1    J =  1.208756    |proj g| =  0.001343
-        At epoch      2    J =  1.204409    |proj g| =  0.001567
+        At iterate      0    nfg =    1    J =       1.222062    |proj g| =       0.000209
+        At iterate      1    nfg =    2    J =       1.219307    |proj g| =       0.000240
         ...
-        At epoch     25    J =  0.099455    |proj g| =  0.009175
-        At epoch     26    J =  0.078379    |proj g| =  0.013312
-        At epoch     27    J =  0.080410    |proj g| =  0.022210
-        ...
-        At epoch     35    J =  0.176823    |proj g| =  0.015846
-        At epoch     36    J =  0.172950    |proj g| =  0.015864
-        Training:  90%|████████████████▌     | 36/40 [00:21<00:02,  1.65it/s]
+        At iterate     40    nfg =   41    J =       0.052151    |proj g| =       0.013186
+        At iterate     41    nfg =   42    J =       0.051206    |proj g| =       0.003747
+        At iterate     42    nfg =   43    J =       0.057921    |proj g| =       0.005087
+        At iterate     43    nfg =   44    J =       0.063805    |proj g| =       0.010100
+        At iterate     44    nfg =   45    J =       0.065734    |proj g| =       0.013365
+        At iterate     45    nfg =   46    J =       0.064539    |proj g| =       0.015616
+        At iterate     46    nfg =   47    J =       0.063309    |proj g| =       0.017270
+        EARLY STOPPING: NO IMPROVEMENT for 5 CONSECUTIVE ITERATIONS
+        Reverting to iteration 41 with J = 0.051206 due to early stopping
 
-    The training process was terminated after 36 iterations, where the loss did not decrease below the minimal
-    value at epoch 26 for 10 consecutive iterations. The optimal parameters are thus recorded at epoch 26
+    The training process was terminated after 46 iterations, where the loss did not decrease below the minimal
+    value at iteration 41 for 5 consecutive iterations. The optimal parameters are thus recorded at epoch 41.
     """
     mapping, optimizer = _standardize_default_optimize_options_args(mapping, optimizer)
 

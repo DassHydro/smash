@@ -56,8 +56,6 @@ class Net(object):
 
         self.history = {"loss_train": [], "proj_grad": []}
 
-        self._opt = None
-
     def __repr__(self):
         ret = []
 
@@ -492,8 +490,6 @@ class Net(object):
         for layer in self.layers:
             if hasattr(layer, "_initialize"):
                 layer._initialize(opt)
-
-        self._opt = opt
 
     def _fit_d2p(
         self,

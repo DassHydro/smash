@@ -108,7 +108,7 @@ def _finalize_get_control_info(ret: dict, net: Net | None):
             ret[key] = np.append(ret[key], np.full(x_net_size, value))
 
         try:  # if net is initialized
-            x_net_bkg = _net_to_control(net)
+            x_net_bkg = _net_to_vect(net)
 
         except Exception:  # it will be set by random values
             x_net_bkg = np.full(x_net_size, np.nan)
@@ -116,7 +116,7 @@ def _finalize_get_control_info(ret: dict, net: Net | None):
         ret["x_bkg"] = np.append(ret["x_bkg"], x_net_bkg)
 
 
-def _net_to_control(net: Net) -> np.ndarray:
+def _net_to_vect(net: Net) -> np.ndarray:
     x = []
 
     for layer in net.layers:
@@ -125,22 +125,6 @@ def _net_to_control(net: Net) -> np.ndarray:
             x.append(layer.bias.flatten())
 
     return np.concatenate(x)
-
-
-def _control_to_net(net: Net, control: np.ndarray):
-    current_pos = 0
-
-    for layer in net.layers:
-        if layer.trainable:
-            weight_size = layer.weight.size
-            layer.weight[:] = control[current_pos : current_pos + weight_size].reshape(
-                layer.weight.shape, order="F"
-            )
-            current_pos += weight_size
-
-            bias_size = layer.bias.size
-            layer.bias[:] = control[current_pos : current_pos + bias_size].reshape(layer.bias.shape)
-            current_pos += bias_size
 
 
 def _get_lcurve_wjreg_best(

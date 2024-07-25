@@ -271,16 +271,16 @@ def _standardize_simulation_optimize_options_bounds(
 
 
 def _standardize_simulation_optimize_options_control_tfm(
-    optimizer: str, control_tfm: str | None, **kwargs
+    mapping: str, optimizer: str, control_tfm: str | None, **kwargs
 ) -> str | None:
     if control_tfm is None:
-        control_tfm = OPTIMIZER_CONTROL_TFM[optimizer][0]
+        control_tfm = OPTIMIZER_CONTROL_TFM[(mapping, optimizer)][0]
     else:
         if isinstance(control_tfm, str):
-            if control_tfm.lower() not in OPTIMIZER_CONTROL_TFM[optimizer]:
+            if control_tfm.lower() not in OPTIMIZER_CONTROL_TFM[(mapping, optimizer)]:
                 raise ValueError(
                     f"Unknown transformation '{control_tfm}' in control_tfm optimize_options. "
-                    f"Choices: {OPTIMIZER_CONTROL_TFM[optimizer]}"
+                    f"Choices: {OPTIMIZER_CONTROL_TFM[(mapping, optimizer)]}"
                 )
         else:
             raise TypeError("control_tfm optimize_options must be a str")
