@@ -618,7 +618,7 @@ class Net(object):
                 early_stopped = True
 
             # remove tmp attr for each layer of net
-            for layer in self.layers:  # revert weights and biases of rr_parameters
+            for layer in self.layers:
                 if hasattr(layer, "_initialize"):
                     del layer._weight
                     del layer._bias
