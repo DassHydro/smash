@@ -540,11 +540,16 @@ class Net(object):
             if early_stopping:
                 if epo == 0:
                     loss_opt = {"epo": 0, "value": loss}
+                    nn_parameters_bak = instance.nn_parameters.copy()
 
                 if loss <= loss_opt["value"]:
                     loss_opt["epo"] = epo
                     loss_opt["value"] = loss
 
+                    # backup nn_parameters
+                    nn_parameters_bak = instance.nn_parameters.copy()
+
+                    # backup weights and biases of rr_parameters
                     for layer in self.layers:
                         if hasattr(layer, "_initialize"):
                             layer._weight = np.copy(layer.weight)
@@ -588,10 +593,16 @@ class Net(object):
                 tqdm.write((" " * 4).join(ret))
 
         if early_stopping:
+            instance.nn_parameters = nn_parameters_bak  # revert nn_parameters
+
             for layer in self.layers:
-                if hasattr(layer, "_initialize"):
+                if hasattr(layer, "_initialize"):  # revert weights and biases of rr_parameters
                     layer.weight = np.copy(layer._weight)
                     layer.bias = np.copy(layer._bias)
+
+                    # remove tmp attr for each layer of net
+                    del layer._weight
+                    del layer._bias
 
     def _forward_pass(self, x_train: np.ndarray):
         layer_output = x_train
