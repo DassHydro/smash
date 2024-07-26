@@ -87,10 +87,10 @@ def _standardize_multiple_forward_run_samples(
         try:
             lengths = [len(v) for v in samples.values()]
             if not lengths:
-                raise ValueError from None
+                raise ValueError("samples argument cannot be empty") from None
 
         except Exception:
-            raise ValueError("samples argument is empty or contains non-iterable elements") from None
+            raise ValueError("samples argument cannot contain non-iterable elements") from None
 
         if not all(length == lengths[0] for length in lengths):
             raise ValueError("All elements in the samples dictionary must have the same length")

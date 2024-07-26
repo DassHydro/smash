@@ -835,8 +835,9 @@ def _lbfgsb_optimize(
 
     x0 = parameters.control.x.copy()
 
-    l_control = np.where(parameters.control.l == -99, None, parameters.control.l)
-    u_control = np.where(parameters.control.u == -99, None, parameters.control.u)
+    # % Set None values for unbounded/semi-unbounded controls to pass to scipy l-bfgs-b
+    l_control = np.where(np.isin(parameters.control.nbd, [0, 3]), None, parameters.control.l)
+    u_control = np.where(np.isin(parameters.control.nbd, [0, 1]), None, parameters.control.u)
 
     cb = _OptimizeCallback(wrap_options.comm.verbose)
 
@@ -933,8 +934,7 @@ def _sbs_optimize(
         )
 
     if "iter_cost" in return_options["keys"]:
-        ret["iter_cost"] = np.zeros(wrap_options.optimize.maxiter + 1)
-        ret["iter_cost"][0] = gx
+        ret["iter_cost"] = np.array([gx])
 
     for iter in range(1, wrap_options.optimize.maxiter * n + 1):
         if dxn > ddx:
@@ -1038,7 +1038,7 @@ def _sbs_optimize(
                 )
 
             if "iter_cost" in return_options["keys"]:
-                ret["iter_cost"][iter // n] = gx
+                ret["iter_cost"] = np.append(ret["iter_cost"], gx)
 
         if ddx < 0.01:
             message = "CONVERGENCE: DDX < 0.01"
