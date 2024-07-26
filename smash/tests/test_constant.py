@@ -49,7 +49,7 @@ def test_module_name():
     assert SNOW_MODULE == ["zero", "ssn"]
 
     # % Check hydrological module
-    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "grd", "loieau", "vic3l"]
+    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "gr6", "grd", "loieau", "vic3l"]
 
     # % Check routing module
     assert ROUTING_MODULE == ["lag0", "lr", "kw"]
@@ -78,6 +78,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
+        ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
         ["cp", "ct"],  # % grd
         ["ca", "cc", "kb"],  # % loieau
         ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -87,6 +88,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == [
         ["hi", "hp", "ht"],  # % gr4
         ["hi", "hp", "ht"],  # % gr5
+        ["hi", "hp", "ht", "he"],  # % gr6
         ["hp", "ht"],  # % grd
         ["ha", "hc"],  # % loieau
         ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
@@ -96,6 +98,7 @@ def test_module_parameters():
     assert list(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES.values()) == [
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
         ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
         ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
         ["pn", "en", "qr", "qb", "qt"],  # % vic3l
@@ -117,11 +120,12 @@ def test_parameters():
     # % Check rainfall-runoff parameters
     assert RR_PARAMETERS == [
         "kmlt",  # % ssn
-        "ci",  # % (gr4, gr5)
-        "cp",  # % (gr4, gr5, grd)
-        "ct",  # % (gr4, gr5, grd)
-        "kexc",  # % (gr4, gr5)
-        "aexc",  # % gr5
+        "ci",  # % (gr4, gr5, gr6)
+        "cp",  # % (gr4, gr5, gr6, grd)
+        "ct",  # % (gr4, gr5, gr6, grd)
+        "be",  # % gr6
+        "kexc",  # % (gr4, gr5, gr6)
+        "aexc",  # % (gr5, gr6)
         "ca",  # % loieau
         "cc",  # % loieau
         "kb",  # % loieau
@@ -142,9 +146,10 @@ def test_parameters():
     # % Check rainfall-runoff states
     assert RR_STATES == [
         "hs",  # % ssn
-        "hi",  # % (gr4, gr5)
-        "hp",  # % (gr4, gr5, grd)
-        "ht",  # % (gr4, gr5, grd)
+        "hi",  # % (gr4, gr5, gr6)
+        "hp",  # % (gr4, gr5, gr6, grd)
+        "ht",  # % (gr4, gr5, gr6, grd)
+        "he",  # % gr6
         "ha",  # % loieau
         "hc",  # % loieau
         "hcl",  # % vic3l
@@ -202,6 +207,7 @@ def test_feasible_domain():
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
+        (0, np.inf),  # % be
         (-np.inf, np.inf),  # % kexc
         (0, 1),  # % aexc
         (0, np.inf),  # % ca
@@ -227,6 +233,7 @@ def test_feasible_domain():
         (0, 1),  # % hi
         (0, 1),  # % hp
         (0, 1),  # % ht
+        (-np.inf, np.inf),  # % he
         (0, 1),  # % ha
         (0, 1),  # % hc
         (0, 1),  # % hcl
@@ -257,6 +264,7 @@ def test_default_parameters():
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
+        10,  # % be
         0,  # % kexc
         0.1,  # % aexc
         200,  # % ca
@@ -282,6 +290,7 @@ def test_default_parameters():
         1e-2,  # % hi
         1e-2,  # % hp
         1e-2,  # % ht
+        -100,  # % he
         1e-2,  # % ha
         1e-2,  # % hc
         1e-2,  # % hcl
@@ -312,6 +321,7 @@ def test_default_bounds_parameters():
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
+        (1e-3, 20),  # % be
         (-50, 50),  # % kexc
         (1e-6, 0.999999),  # % aexc
         (1e-6, 1e3),  # % ca
@@ -337,6 +347,7 @@ def test_default_bounds_parameters():
         (1e-6, 0.999999),  # % hi
         (1e-6, 0.999999),  # % hp
         (1e-6, 0.999999),  # % ht
+        (-1e3, 0),         # % he
         (1e-6, 0.999999),  # % ha
         (1e-6, 0.999999),  # % hc
         (1e-6, 0.999999),  # % hcl
