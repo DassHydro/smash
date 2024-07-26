@@ -64,15 +64,15 @@ def _get_control_info(
 
 
 def _finalize_get_control_info(ret: dict, net: Net | None):
-    # % Replace -99 values
+    # % Handle unbounded and semi-unbounded parameters
     for key in ["l", "u", "l_bkg", "u_bkg"]:
         if key.startswith("l"):
-            value = -np.inf
+            ret[key] = np.where(np.isin(ret["nbd"], [0, 3]), -np.inf, ret[key])
+
         elif key.startswith("u"):
-            value = np.inf
+            ret[key] = np.where(np.isin(ret["nbd"], [0, 1]), np.inf, ret[key])
 
-        ret[key][ret[key] == -99] = value
-
+    # % Handle control info from net
     if net is None:
         ret["nbk"] = np.append(ret["nbk"], 0)
 
