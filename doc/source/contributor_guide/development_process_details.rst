@@ -1670,6 +1670,11 @@ If the logs in the ``diff_baseline.csv`` file seem consistent with your modifica
 and conversely that tests that should be modified are modified), all you have to do is simply delete the ``baseline.hdf5`` file and rename
 ``new_baseline.hdf5`` to ``baseline.hdf5``.
 
+.. note::
+
+    To properly generate the ``diff_baseline.csv`` file, please ensure that you have the ``baseline.hdf5`` file from the latest commit
+    on the main branch before running the ``make test-baseline`` command.
+
 Documentation
 -------------
 

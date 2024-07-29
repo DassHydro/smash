@@ -125,6 +125,7 @@ class Model:
             - ``'gr4_ode'``
             - ``'gr4_mlp_ode'``
             - ``'gr5'``
+            - ``'gr6'``
             - ``'grd'``
             - ``'loieau'``
             - ``'vic3l'``

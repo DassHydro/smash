@@ -28,9 +28,9 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
         instance = model.copy()
 
         for k in problem["names"]:
-            try:
+            if k in instance.rr_parameters.keys:
                 instance.set_rr_parameters(k, getattr(sample, k)[i])
-            except ValueError:
+            elif k in instance.rr_initial_states.keys:
                 instance.set_rr_initial_states(k, getattr(sample, k)[i])
 
         instance.optimize(
