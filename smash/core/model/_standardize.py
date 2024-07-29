@@ -614,7 +614,7 @@ def _standardize_serr_mu_parameters_value(
     low_arr = np.min(arr)
     upp_arr = np.max(arr)
 
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain "
             f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
@@ -641,7 +641,7 @@ def _standardize_serr_sigma_parameters_value(
     low_arr = np.min(arr)
     upp_arr = np.max(arr)
 
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain "
             f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
