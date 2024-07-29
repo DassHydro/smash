@@ -348,6 +348,8 @@ contains
 
             if (flwdir(row_imd, col_imd) .ne. i) cycle
 
+            if (abs(flwdir(row, col) - flwdir(row_imd, col_imd)) .eq. 4) cycle
+
             !% Check for nested catchment and set flag
             do j = 1, ng
 
