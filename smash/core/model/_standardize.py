@@ -560,16 +560,22 @@ def _standardize_rr_parameters_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
-    low, upp = FEASIBLE_RR_PARAMETERS[key]
-    low_arr = np.min(arr)
-    upp_arr = np.max(arr)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
 
-    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
+    if arr.size == 1:
+        mask = np.ones(arr.shape, dtype=bool)
+    elif arr.shape == model.mesh.flwdir.shape:
+        # Do not check if a value is inside the feasible domain outside of active cells
+        mask = model.mesh.active_cell == 1
+    else:
         raise ValueError(
             f"Invalid shape for model rr_parameter '{key}'. Could not broadcast input array from shape "
-            f"{value.shape} into shape {model.mesh.flwdir.shape}"
+            f"{arr.shape} into shape {model.mesh.flwdir.shape}"
         )
+
+    low, upp = FEASIBLE_RR_PARAMETERS[key]
+    low_arr = np.min(arr, where=mask, initial=np.inf)
+    upp_arr = np.max(arr, where=mask, initial=-np.inf)
 
     if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
@@ -586,16 +592,22 @@ def _standardize_rr_states_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
-    low, upp = FEASIBLE_RR_INITIAL_STATES[key]
-    low_arr = np.min(arr)
-    upp_arr = np.max(arr)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
 
-    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
+    if arr.size == 1:
+        mask = np.ones(arr.shape, dtype=bool)
+    elif arr.shape == model.mesh.flwdir.shape:
+        # Do not check if a value is inside the feasible domain outside of active cells
+        mask = model.mesh.active_cell == 1
+    else:
         raise ValueError(
             f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape "
-            f"{value.shape} into shape {model.mesh.flwdir.shape}"
+            f"{arr.shape} into shape {model.mesh.flwdir.shape}"
         )
+
+    low, upp = FEASIBLE_RR_INITIAL_STATES[key]
+    low_arr = np.min(arr, where=mask, initial=np.inf)
+    upp_arr = np.max(arr, where=mask, initial=-np.inf)
 
     if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
@@ -612,18 +624,19 @@ def _standardize_serr_mu_parameters_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
+
+    if arr.shape != (model.mesh.ng,) and arr.size != 1:
+        raise ValueError(
+            f"Invalid shape for model serr_mu_parameter '{key}'. Could not broadcast input array from shape "
+            f"{arr.shape} into shape {(model.mesh.ng,)}"
+        )
+
     low, upp = FEASIBLE_SERR_MU_PARAMETERS[key]
     low_arr = np.min(arr)
     upp_arr = np.max(arr)
 
-    if isinstance(value, np.ndarray) and value.shape != (model.mesh.ng,) and value.size != 1:
-        raise ValueError(
-            f"Invalid shape for model serr_mu_parameter '{key}'. Could not broadcast input array from shape "
-            f"{value.shape} into shape {(model.mesh.ng,)}"
-        )
-
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain "
             f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
@@ -638,18 +651,19 @@ def _standardize_serr_sigma_parameters_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
+
+    if arr.shape != (model.mesh.ng,) and arr.size != 1:
+        raise ValueError(
+            f"Invalid shape for model serr_sigma_parameter '{key}'. Could not broadcast input array from "
+            f"shape {arr.shape} into shape {(model.mesh.ng,)}"
+        )
+
     low, upp = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
     low_arr = np.min(arr)
     upp_arr = np.max(arr)
 
-    if isinstance(value, np.ndarray) and value.shape != (model.mesh.ng,) and value.size != 1:
-        raise ValueError(
-            f"Invalid shape for model serr_sigma_parameter '{key}'. Could not broadcast input array from "
-            f"shape {value.shape} into shape {(model.mesh.ng,)}"
-        )
-
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain "
             f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
