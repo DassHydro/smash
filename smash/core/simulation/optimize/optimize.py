@@ -859,6 +859,9 @@ def _lbfgsb_optimize(
 
     cb.termination(res_optimize)
 
+    # % Apply final control and forward run for updating final states
+    setattr(parameters.control, "x", res_optimize["x"])
+
     wrap_forward_run(
         model.setup,
         model.mesh,
@@ -867,7 +870,7 @@ def _lbfgsb_optimize(
         model._output,
         wrap_options,
         wrap_returns,
-    )  # for updating final states
+    )
 
     ret = {}
 
