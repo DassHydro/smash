@@ -78,7 +78,6 @@ if TYPE_CHECKING:
     from smash.core.simulation.estimate.estimate import MultisetEstimate
     from smash.core.simulation.optimize.optimize import (
         BayesianOptimize,
-        MultipleOptimize,
         Optimize,
     )
     from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun
@@ -2351,7 +2350,7 @@ class Model:
     @_multiset_estimate_doc_appender
     def multiset_estimate(
         self,
-        multiset: MultipleForwardRun | MultipleOptimize,
+        multiset: MultipleForwardRun,
         alpha: Numeric | ListLike | None = None,
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,

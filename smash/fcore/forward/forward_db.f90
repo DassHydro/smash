@@ -2578,12 +2578,6 @@ END MODULE MWD_PARAMETERS_DIFF
 !%          ``rr_states_flag``       Return flag of rr_states
 !%          ``q_domain``             Array of discharge
 !%          ``q_domain_flag``        Return flag of q_domain
-!%          ``iter_cost``            Array of cost iteration
-!%          ``iter_cost_flag``       Return flag of iter_cost
-!%          ``iter_projg``           Array of infinity norm of projected gradient iteration
-!%          ``iter_projg_flag``      Return flag of iter_projg
-!%          ``control_vector``       Array of control vector
-!%          ``control_vector_flag``  Return flag of control_vector
 !%          ``cost``                 Cost value
 !%          ``cost_flag``            Return flag of cost
 !%          ``jobs``                 Jobs value
@@ -2596,10 +2590,6 @@ END MODULE MWD_PARAMETERS_DIFF
 !%          ``log_prior_flag``       Return flag of log_prior
 !%          ``log_h``                Log_h value
 !%          ``log_h_flag``           Return flag of log_h
-!%          ``serr_mu``              Serr mu value
-!%          ``serr_mu_flag``         Return flag of serr_mu
-!%          ``serr_sigma``           Serr sigma value
-!%          ``serr_sigma_flag``      Return flag of serr_sigma
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -2627,12 +2617,6 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: rr_states_flag=.false.
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q_domain
       LOGICAL :: q_domain_flag=.false.
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: iter_cost
-      LOGICAL :: iter_cost_flag=.false.
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: iter_projg
-      LOGICAL :: iter_projg_flag=.false.
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: control_vector
-      LOGICAL :: control_vector_flag=.false.
       REAL(sp) :: cost
       LOGICAL :: cost_flag=.false.
       REAL(sp) :: jobs
@@ -2645,10 +2629,6 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: log_prior_flag=.false.
       REAL(sp) :: log_h
       LOGICAL :: log_h_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: serr_mu
-      LOGICAL :: serr_mu_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: serr_sigma
-      LOGICAL :: serr_sigma_flag=.false.
       REAL(sp), DIMENSION(:, :, :, :), ALLOCATABLE :: internal_fluxes
       LOGICAL :: internal_fluxes_flag=.false.
   END TYPE RETURNSDT
@@ -2689,12 +2669,6 @@ CONTAINS
         this%q_domain_flag = .true.
         ALLOCATE(this%q_domain(mesh%nrow, mesh%ncol, this%nmts))
         this%q_domain = -99._sp
-      CASE ('iter_cost') 
-        this%iter_cost_flag = .true.
-      CASE ('iter_projg') 
-        this%iter_projg_flag = .true.
-      CASE ('control_vector') 
-        this%control_vector_flag = .true.
       CASE ('cost') 
         this%cost_flag = .true.
       CASE ('jobs') 
@@ -2707,12 +2681,6 @@ CONTAINS
         this%log_prior_flag = .true.
       CASE ('log_h') 
         this%log_h_flag = .true.
-      CASE ('serr_mu') 
-        this%serr_mu_flag = .true.
-        ALLOCATE(this%serr_mu(mesh%ng, setup%ntime_step))
-      CASE ('serr_sigma') 
-        this%serr_sigma_flag = .true.
-        ALLOCATE(this%serr_sigma(mesh%ng, setup%ntime_step))
       CASE ('internal_fluxes') 
         this%internal_fluxes_flag = .true.
         ALLOCATE(this%internal_fluxes(mesh%nrow, mesh%ncol, this%nmts, &

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import numpy as np
+from scipy.optimize import minimize as scipy_minimize
 
 from smash._constant import (
     CONTROL_PRIOR_DISTRIBUTION,
@@ -14,22 +14,13 @@ from smash._constant import (
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (
     _bayesian_optimize_doc_appender,
-    _multiple_optimize_doc_appender,
     _optimize_doc_appender,
     _smash_bayesian_optimize_doc_substitution,
-    _smash_multiple_optimize_doc_substitution,
     _smash_optimize_doc_substitution,
 )
-from smash.core.simulation.optimize._standardize import (
-    _standardize_multiple_optimize_args,
-)
+from smash.factory.net._loss import _inf_norm  # this import will be removed when all optimizers are combined
 from smash.fcore._mw_forward import forward_run as wrap_forward_run
-from smash.fcore._mw_optimize import (
-    multiple_optimize as wrap_multiple_optimize,
-)
-from smash.fcore._mw_optimize import (
-    optimize as wrap_optimize,
-)
+from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_parameters_manipulation import (
     parameters_to_control as wrap_parameters_to_control,
@@ -39,62 +30,19 @@ from smash.fcore._mwd_returns import ReturnsDT
 if TYPE_CHECKING:
     from typing import Any
 
-    from numpy.typing import NDArray
+    from scipy.optimize import OptimizeResult as scipy_OptimizeResult
 
     from smash.core.model.model import Model
     from smash.factory.net.net import Net
-    from smash.factory.samples.samples import Samples
+    from smash.fcore._mwd_parameters import ParametersDT
 
 
 __all__ = [
-    "MultipleOptimize",
     "Optimize",
     "BayesianOptimize",
-    "multiple_optimize",
     "optimize",
     "bayesian_optimize",
 ]
-
-
-class MultipleOptimize:
-    """
-    Represents multiple optimize result.
-
-    Attributes
-    ----------
-    cost : `numpy.ndarray`
-        An array of shape *(n,)* representing cost values from *n* simulations.
-
-    q : `numpy.ndarray`
-        An array of shape *(ng, ntime_step, n)* representing simulated discharges from *n* simulations.
-
-    parameters : `dict[str, np.ndarray]`
-        A dictionary containing optimized rainfall-runoff parameters and/or initial states.
-        Each key represents an array of shape *(nrow, ncol, n)* corresponding to a specific rainfall-runoff
-        parameter or initial state.
-
-    See Also
-    --------
-    multiple_optimize : Run multiple optimization processes with multiple sets of parameters (i.e. starting
-        points), yielding multiple solutions.
-    """
-
-    def __init__(self, data: dict[str, NDArray[np.float32]] | None = None):
-        if data is None:
-            data = {}
-
-        self.__dict__.update(data)
-
-    def __repr__(self):
-        dct = self.__dict__
-
-        if dct.keys():
-            m = max(map(len, list(dct.keys()))) + 1
-            return "\n".join(
-                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
-            )
-        else:
-            return self.__class__.__name__ + "()"
 
 
 class Optimize:
@@ -267,6 +215,49 @@ class BayesianOptimize:
             return self.__class__.__name__ + "()"
 
 
+class _OptimizeCallback:
+    # % Private callback class for external optimizer i.e. L-BFGS-B from scipy
+    def __init__(self, verbose: bool):
+        self.verbose = verbose
+
+        self.iterations = 0
+
+        self.nfg = 1
+        self.count_nfg = 0
+
+        self.iter_cost = np.array([])
+
+        self.iter_projg = np.array([])
+        self.projg = None
+
+    def callback(self, intermediate_result: scipy_OptimizeResult):
+        # % intermediate_result is required by callback function in scipy
+        if self.verbose:
+            print(
+                f"    At iterate{str(self.iterations).rjust(7)}    nfg = {str(self.nfg).rjust(4)}"
+                f"    J = {self.iter_cost[-1]:14.6f}    |proj g| = {self.projg:14.6f}"
+            )
+
+        self.iterations += 1
+
+        self.nfg = self.count_nfg
+
+        self.iter_cost = np.append(self.iter_cost, intermediate_result.fun)
+
+        self.iter_projg = np.append(self.iter_projg, self.projg)
+        self.projg = self.tmp_projg
+
+    def termination(self, final_result: scipy_OptimizeResult):
+        if self.verbose:
+            print(
+                f"    At iterate{str(self.iterations).rjust(7)}    nfg = {str(self.nfg).rjust(4)}"
+                f"    J = {final_result.fun:14.6f}    |proj g| = {self.projg:14.6f}"
+            )
+            print(f"    {final_result.message}")
+
+        self.iter_projg = np.append(self.iter_projg, self.projg)
+
+
 def _get_control_info(
     model: Model,
     mapping: str,
@@ -306,7 +297,7 @@ def _get_control_info(
     return ret
 
 
-def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> float:
+def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT, return_options: dict) -> float:
     if options.comm.verbose:
         print(f"{' '*4}FAST WJREG CYCLE 1")
 
@@ -327,15 +318,8 @@ def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> flo
 
     # Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
-    wrap_optimize(
-        model.setup,
-        model.mesh,
-        model._input_data,
-        wparameters,
-        model._output,
-        options,
-        returns,
-    )
+    _apply_optimizer(model, wparameters, options, returns, return_options)
+
     jobs = returns.jobs
     jreg = returns.jreg
 
@@ -381,7 +365,9 @@ def _get_lcurve_wjreg_best(
     return distance, wjreg
 
 
-def _get_lcurve_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> (float, dict):
+def _get_lcurve_wjreg(
+    model: Model, options: OptionsDT, returns: ReturnsDT, return_options: dict
+) -> (float, dict):
     if options.comm.verbose:
         print(f"{' '*4}LCURVE WJREG CYCLE 1")
 
@@ -402,15 +388,8 @@ def _get_lcurve_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> (
 
     # % Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
-    wrap_optimize(
-        model.setup,
-        model.mesh,
-        model._input_data,
-        wparameters,
-        model._output,
-        options,
-        returns,
-    )
+    _apply_optimizer(model, wparameters, options, returns, return_options)
+
     cost = returns.cost
     jobs_min = returns.jobs
     jreg_min = 0.0
@@ -439,15 +418,7 @@ def _get_lcurve_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> (
             print(f"{' '*4}LCURVE WJREG CYCLE {i + 2}")
 
         wparameters = model._parameters.copy()
-        wrap_optimize(
-            model.setup,
-            model.mesh,
-            model._input_data,
-            wparameters,
-            model._output,
-            options,
-            returns,
-        )
+        _apply_optimizer(model, wparameters, options, returns, return_options)
 
         cost_arr[i + 1] = returns.cost
         jobs_arr[i + 1] = returns.jobs
@@ -543,32 +514,27 @@ def _optimize(
             common_options,
             wrap_options,
             wrap_returns,
-        )
+        )  # % TODO TH: this function will be merged into _apply_optimizer
+
+        pyret = {}
 
     else:
         if auto_wjreg == "fast":
-            wrap_options.cost.wjreg = _get_fast_wjreg(model, wrap_options, wrap_returns)
+            wrap_options.cost.wjreg = _get_fast_wjreg(model, wrap_options, wrap_returns, return_options)
             if wrap_options.comm.verbose:
                 print(f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
         elif auto_wjreg == "lcurve":
-            wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(model, wrap_options, wrap_returns)
+            wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(
+                model, wrap_options, wrap_returns, return_options
+            )
             if wrap_options.comm.verbose:
                 print(f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
         else:
             pass
 
-        wrap_optimize(
-            model.setup,
-            model.mesh,
-            model._input_data,
-            model._parameters,
-            model._output,
-            wrap_options,
-            wrap_returns,
-        )
+        pyret = _apply_optimizer(model, model._parameters, wrap_options, wrap_returns, return_options)
 
     fret = {}
-    pyret = {}
 
     # % Fortran returns
     for key in return_options["keys"]:
@@ -683,152 +649,6 @@ def _ann_optimize(
     )
 
     return net
-
-
-@_smash_multiple_optimize_doc_substitution
-@_multiple_optimize_doc_appender
-def multiple_optimize(
-    model: Model,
-    samples: Samples,
-    mapping: str = "uniform",
-    optimizer: str | None = None,
-    optimize_options: dict[str, Any] | None = None,
-    cost_options: dict[str, Any] | None = None,
-    common_options: dict[str, Any] | None = None,
-) -> MultipleOptimize:
-    args_options = [deepcopy(arg) for arg in [optimize_options, cost_options, common_options]]
-
-    args = _standardize_multiple_optimize_args(
-        model,
-        samples,
-        mapping,
-        optimizer,
-        *args_options,
-    )
-
-    res = _multiple_optimize(model, *args)
-
-    return MultipleOptimize(res)
-
-
-def _multiple_optimize(
-    model: Model,
-    samples: Samples,
-    mapping: str,
-    optimizer: str,
-    optimize_options: dict,
-    cost_options: dict,
-    common_options: dict,
-) -> dict:
-    if common_options["verbose"]:
-        print("</> Multiple Optimize")
-
-    wrap_options = OptionsDT(
-        model.setup,
-        model.mesh,
-        cost_options["njoc"],
-        cost_options["njrc"],
-    )
-
-    # % Map optimize_options dict to derived type
-    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
-
-    # % Map cost_options dict to derived type
-    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
-
-    # % Map common_options dict to derived type
-    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
-
-    # % Generate samples info
-    nv = samples._problem["num_vars"]
-    samples_kind = np.zeros(shape=nv, dtype=np.int32, order="F")
-    samples_ind = np.zeros(shape=nv, dtype=np.int32, order="F")
-
-    for i, name in enumerate(samples._problem["names"]):
-        if name in model._parameters.rr_parameters.keys:
-            samples_kind[i] = 0
-            # % Adding 1 because Fortran uses one based indexing
-            samples_ind[i] = np.argwhere(model._parameters.rr_parameters.keys == name).item() + 1
-        elif name in model._parameters.rr_initial_states.keys:
-            samples_kind[i] = 1
-            # % Adding 1 because Fortran uses one based indexing
-            samples_ind[i] = np.argwhere(model._parameters.rr_initial_states.keys == name).item() + 1
-        # % Should be unreachable
-        else:
-            pass
-
-    # % Initialise results
-    cost = np.zeros(shape=samples.n_sample, dtype=np.float32, order="F")
-    q = np.zeros(
-        shape=(*model.response_data.q.shape, samples.n_sample),
-        dtype=np.float32,
-        order="F",
-    )
-    # % Only work with grids (might be changed)
-    parameters = np.zeros(
-        shape=(
-            *model.mesh.flwdir.shape,
-            len(optimize_options["parameters"]),
-            samples.n_sample,
-        ),
-        dtype=np.float32,
-        order="F",
-    )
-
-    wrap_multiple_optimize(
-        model.setup,
-        model.mesh,
-        model._input_data,
-        model._parameters,
-        model._output,
-        wrap_options,
-        samples.to_numpy(),
-        samples_kind,
-        samples_ind,
-        cost,
-        q,
-        parameters,
-    )
-
-    # % Finalize parameters and samples for returns
-    parameters = dict(
-        zip(
-            optimize_options["parameters"],
-            np.transpose(parameters, (2, 0, 1, 3)),
-        )
-    )
-
-    for sp in samples._problem["names"]:  # add uncalibrated parameters from samples to parameters
-        if sp not in optimize_options["parameters"]:
-            value = getattr(samples, sp)
-            value = np.tile(value, (*model.mesh.flwdir.shape, 1))
-
-            parameters.update({sp: value})
-
-    samples_fnl = deepcopy(samples)  # make a deepcopy of samples (will be modified by setattr)
-
-    for op in optimize_options["parameters"]:  # add calibrated paramters from parameters to samples
-        if op not in samples._problem["names"]:
-            if op in model.rr_parameters.keys:
-                value = model.get_rr_parameters(op)[0, 0]
-
-            elif op in model.rr_initial_states.keys:
-                value = model.get_rr_initial_states(op)[0, 0]
-
-            # % In case we have other kind of parameters. Should be unreachable.
-            else:
-                pass
-
-            setattr(samples_fnl, op, value * np.ones(samples.n_sample))
-            setattr(samples_fnl, "_dst_" + op, np.ones(samples.n_sample))
-
-    return {
-        "cost": cost,
-        "q": q,
-        "parameters": parameters,
-        "_samples": samples_fnl,
-        "_cost_options": cost_options,
-    }
 
 
 def _handle_bayesian_optimize_control_prior(model: Model, control_prior: dict, options: OptionsDT):
@@ -949,20 +769,10 @@ def _bayesian_optimize(
     # % Control prior check
     _handle_bayesian_optimize_control_prior(model, cost_options["control_prior"], wrap_options)
 
-    wrap_optimize(
-        model.setup,
-        model.mesh,
-        model._input_data,
-        model._parameters,
-        model._output,
-        wrap_options,
-        wrap_returns,
-    )
-
-    fret = {}
-    pyret = {}
+    pyret = _apply_optimizer(model, model._parameters, wrap_options, wrap_returns, return_options)
 
     # % Fortran returns
+    fret = {}
     for key in return_options["keys"]:
         try:
             value = getattr(wrap_returns, key)
@@ -984,3 +794,335 @@ def _bayesian_optimize(
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()
         return BayesianOptimize(ret)
+
+
+def _apply_optimizer(
+    model: Model,
+    parameters: ParametersDT,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+    return_options: dict,
+) -> dict:
+    if wrap_options.optimize.optimizer == "sbs":
+        ret = _sbs_optimize(model, parameters, wrap_options, wrap_returns, return_options)
+
+    elif wrap_options.optimize.optimizer == "lbfgsb":
+        ret = _lbfgsb_optimize(model, parameters, wrap_options, wrap_returns, return_options)
+
+    else:  # % Machine learning optimizer (adam, adagrad, etc.)
+        pass  # TODO TH: add ML opt
+
+    # % Manually deallocate control
+    parameters.control.dealloc()
+
+    return ret
+
+
+def _lbfgsb_optimize(
+    model: Model,
+    parameters: ParametersDT,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+    return_options: dict,
+) -> dict:
+    wrap_parameters_to_control(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        wrap_options,
+    )
+
+    x0 = parameters.control.x.copy()
+
+    # % Set None values for unbounded/semi-unbounded controls to pass to scipy l-bfgs-b
+    l_control = np.where(np.isin(parameters.control.nbd, [0, 3]), None, parameters.control.l)
+    u_control = np.where(np.isin(parameters.control.nbd, [0, 1]), None, parameters.control.u)
+
+    cb = _OptimizeCallback(wrap_options.comm.verbose)
+
+    res_optimize = scipy_minimize(
+        _gradient_based_optimize_problem,
+        x0,
+        args=(model, parameters, wrap_options, wrap_returns, cb),
+        method="l-bfgs-b",
+        jac=True,
+        bounds=tuple(zip(l_control, u_control)),
+        callback=cb.callback,
+        options={
+            "maxiter": wrap_options.optimize.maxiter,
+            "ftol": 2.22e-16 * wrap_options.optimize.factr,
+            "gtol": wrap_options.optimize.pgtol,
+            "disp": False,  # TODO: change this with logger for multiple display levels
+        },
+    )
+
+    cb.termination(res_optimize)
+
+    # % Apply final control and forward run for updating final states
+    setattr(parameters.control, "x", res_optimize["x"])
+
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
+
+    ret = {}
+
+    if "control_vector" in return_options["keys"]:
+        ret["control_vector"] = parameters.control.x.copy()
+
+    if "iter_cost" in return_options["keys"]:
+        ret["iter_cost"] = cb.iter_cost
+
+    if "iter_projg" in return_options["keys"]:
+        ret["iter_projg"] = cb.iter_projg
+
+    if "serr_mu" in return_options["keys"]:
+        ret["serr_mu"] = model.get_serr_mu().copy()
+
+    if "serr_sigma" in return_options["keys"]:
+        ret["serr_sigma"] = model.get_serr_sigma().copy()
+
+    return ret
+
+
+def _sbs_optimize(
+    model: Model,
+    parameters: ParametersDT,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+    return_options: dict,
+) -> dict:
+    wrap_parameters_to_control(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        wrap_options,
+    )
+
+    n = parameters.control.n
+
+    sdx = np.zeros(n)
+
+    y_wa = parameters.control.x.copy()
+    z_wa = np.copy(y_wa)
+
+    l_wa = parameters.control.l.copy()
+    u_wa = parameters.control.u.copy()
+
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
+
+    gx = model._output.cost
+    ga = gx
+    clg = 0.7 ** (1 / n)
+    ddx = 0.64
+    dxn = ddx
+    ia = iaa = iam = -1
+    jfaa = 0
+    nfg = 1
+
+    ret = {}
+
+    message = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+
+    if wrap_options.comm.verbose:
+        print(
+            f"    At iterate{str(0).rjust(7)}    nfg = {str(nfg).rjust(4)}"
+            f"    J = {gx:14.6f}    ddx = {ddx:5.2f}"
+        )
+
+    if "iter_cost" in return_options["keys"]:
+        ret["iter_cost"] = np.array([gx])
+
+    for iter in range(1, wrap_options.optimize.maxiter * n + 1):
+        if dxn > ddx:
+            dxn = ddx
+        if ddx > 2:
+            ddx = dxn
+
+        for i in range(n):
+            x_wa = np.copy(y_wa)
+
+            for j in range(1, 3):
+                jf = 2 * j - 3
+                if i == iaa and jf == -jfaa:
+                    continue
+                if y_wa[i] <= l_wa[i] and jf < 0:
+                    continue
+                if y_wa[i] >= u_wa[i] and jf > 0:
+                    continue
+
+                x_wa[i] = y_wa[i] + jf * ddx
+                x_wa[i] = max(min(x_wa[i], u_wa[i]), l_wa[i])
+
+                parameters.control.x = x_wa
+                parameters.control.l = l_wa
+                parameters.control.u = u_wa
+
+                wrap_forward_run(
+                    model.setup,
+                    model.mesh,
+                    model._input_data,
+                    parameters,
+                    model._output,
+                    wrap_options,
+                    wrap_returns,
+                )
+                nfg += 1
+
+                if model._output.cost < gx:
+                    z_wa = np.copy(x_wa)
+                    gx = model._output.cost
+                    ia = i
+                    jfa = jf
+
+        iaa = ia
+        jfaa = jfa
+
+        if ia > -1:
+            y_wa = np.copy(z_wa)
+
+            sdx *= clg
+            sdx[ia] = (1.0 - clg) * jfa * ddx + clg * sdx[ia]
+
+            iam += 1
+
+            if iam + 1 > 2 * n:
+                ddx *= 2
+                iam = 0
+
+            if gx < ga - 2:
+                ga = gx
+        else:
+            ddx /= 2
+            iam = -1
+
+        if iter > 4 * n:
+            for i in range(n):
+                x_wa[i] = y_wa[i] + sdx[i]
+                x_wa[i] = max(min(x_wa[i], u_wa[i]), l_wa[i])
+
+            parameters.control.x = x_wa
+            parameters.control.l = l_wa
+            parameters.control.u = u_wa
+
+            wrap_forward_run(
+                model.setup,
+                model.mesh,
+                model._input_data,
+                parameters,
+                model._output,
+                wrap_options,
+                wrap_returns,
+            )
+            nfg += 1
+
+            if model._output.cost < gx:
+                gx = model._output.cost
+                jfaa = 0
+                y_wa = np.copy(x_wa)
+                z_wa = np.copy(x_wa)
+
+                if gx < ga - 2:
+                    ga = gx
+
+        ia = -1
+
+        if iter % n == 0:
+            if wrap_options.comm.verbose:
+                print(
+                    f"    At iterate{str(iter // n).rjust(7)}    nfg = {str(nfg).rjust(4)}"
+                    f"    J = {gx:14.6f}    ddx = {ddx:5.2f}"
+                )
+
+            if "iter_cost" in return_options["keys"]:
+                ret["iter_cost"] = np.append(ret["iter_cost"], gx)
+
+        if ddx < 0.01:
+            message = "CONVERGENCE: DDX < 0.01"
+            break
+
+    parameters.control.x = z_wa
+    parameters.control.l = l_wa
+    parameters.control.u = u_wa
+
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
+
+    if "control_vector" in return_options["keys"]:
+        ret["control_vector"] = parameters.control.x.copy()
+
+    if "serr_mu" in return_options["keys"]:
+        ret["serr_mu"] = model.get_serr_mu().copy()
+
+    if "serr_sigma" in return_options["keys"]:
+        ret["serr_sigma"] = model.get_serr_sigma().copy()
+
+    if wrap_options.comm.verbose:
+        print(f"    {message}")
+
+    return ret
+
+
+def _gradient_based_optimize_problem(
+    x: np.ndarray,
+    model: Model,
+    parameters: ParametersDT,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+    callback: _OptimizeCallback,
+) -> tuple[float, np.ndarray]:
+    setattr(parameters.control, "x", x)
+
+    parameters_b = parameters.copy()
+    output_b = model._output.copy()
+    output_b.cost = np.float32(1)
+
+    wrap_forward_run_b(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        parameters_b,
+        model._output,
+        output_b,
+        wrap_options,
+        wrap_returns,
+    )
+
+    if callback.iter_cost.size == 0:
+        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
+
+    callback.count_nfg += 1
+
+    grad = parameters_b.control.x.copy()
+
+    if callback.projg is None:
+        callback.projg = _inf_norm(grad)
+
+    else:
+        callback.tmp_projg = _inf_norm(grad)
+
+    return (model._output.cost, grad)
