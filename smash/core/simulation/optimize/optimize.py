@@ -1180,7 +1180,7 @@ def _gradient_based_optimize_problem(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-    callback: _OptimizeCallback | None = None,
+    callback: _OptimizeCallback,
 ) -> tuple[float, np.ndarray]:
     # % Set control values
     setattr(parameters.control, "x", x)
@@ -1190,16 +1190,15 @@ def _gradient_based_optimize_problem(
     grad = parameters_b.control.x.copy()
 
     # % Callback
-    if callback is not None:
-        callback.count_nfg += 1
+    callback.count_nfg += 1
 
-        if callback.iter_cost.size == 0:
-            callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
+    if callback.iter_cost.size == 0:
+        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
 
-        if callback.projg is None:
-            callback.projg = _inf_norm(grad)
+    if callback.projg is None:
+        callback.projg = _inf_norm(grad)
 
-        else:
-            callback.projg_bak = _inf_norm(grad)
+    else:
+        callback.projg_bak = _inf_norm(grad)
 
     return (model._output.cost, grad)
