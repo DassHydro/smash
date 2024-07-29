@@ -535,21 +535,18 @@ def _standardize_rr_parameters_value(
 
     arr = np.array(value, ndmin=1, dtype=np.float32)
 
-    if arr.shape != model.mesh.flwdir.shape and arr.size != 1:
+    if arr.size == 1:
+        mask = np.ones(arr.shape, dtype=bool)
+    elif arr.shape == model.mesh.flwdir.shape:
+        # Do not check if a value is inside the feasible domain outside of active cells
+        mask = model.mesh.active_cell == 1
+    else:
         raise ValueError(
             f"Invalid shape for model rr_parameter '{key}'. Could not broadcast input array from shape "
             f"{arr.shape} into shape {model.mesh.flwdir.shape}"
         )
 
     low, upp = FEASIBLE_RR_PARAMETERS[key]
-
-    if arr.shape == model.mesh.flwdir.shape:
-        # Do not check if a value is inside the feasible domain outside of active cells
-        mask = model.mesh.active_cell == 1
-    else:
-        # Check all values (size == 1)
-        mask = np.ones(arr.shape, dtype=bool)
-
     low_arr = np.min(arr, where=mask, initial=np.inf)
     upp_arr = np.max(arr, where=mask, initial=-np.inf)
 
@@ -570,20 +567,18 @@ def _standardize_rr_states_value(
 
     arr = np.array(value, ndmin=1, dtype=np.float32)
 
-    if arr.shape != model.mesh.flwdir.shape and arr.size != 1:
+    if arr.size == 1:
+        mask = np.ones(arr.shape, dtype=bool)
+    elif arr.shape == model.mesh.flwdir.shape:
+        # Do not check if a value is inside the feasible domain outside of active cells
+        mask = model.mesh.active_cell == 1
+    else:
         raise ValueError(
             f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape "
             f"{arr.shape} into shape {model.mesh.flwdir.shape}"
         )
 
     low, upp = FEASIBLE_RR_INITIAL_STATES[key]
-    if arr.shape == model.mesh.flwdir.shape:
-        # Do not check if a value is inside the feasible domain outside of active cells
-        mask = model.mesh.active_cell == 1
-    else:
-        # Check all values (size == 1)
-        mask = np.ones(arr.shape, dtype=bool)
-
     low_arr = np.min(arr, where=mask, initial=np.inf)
     upp_arr = np.max(arr, where=mask, initial=-np.inf)
 
