@@ -230,7 +230,7 @@ contains
 
                 rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 3
-                
+
                 ! 'gr6' module
             case ("gr6")
 
@@ -266,8 +266,8 @@ contains
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) = h4
 
                 rr_parameters_inc = rr_parameters_inc + 6
-                rr_states_inc = rr_states_inc + 4                
-                
+                rr_states_inc = rr_states_inc + 4
+
                 ! 'grd' module
             case ("grd")
 

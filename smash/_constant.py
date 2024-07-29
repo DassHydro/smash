@@ -34,6 +34,7 @@ def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
     return rr_internal_fluxes
 
+
 ### FLOAT PRECISION FOR FLOAT COMPARISON ###
 F_PRECISION = 1.0e-5
 
@@ -400,7 +401,7 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
             (1e-6, 0.999999),  # % hi
             (1e-6, 0.999999),  # % hp
             (1e-6, 0.999999),  # % ht
-            (-1e3, 0),         # % he
+            (-1e3, 0),  # % he
             (1e-6, 0.999999),  # % ha
             (1e-6, 0.999999),  # % hc
             (1e-6, 0.999999),  # % hcl
@@ -411,8 +412,6 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
         ],
     )
 )
-
-TOL_BOUNDS = 1e-9
 
 ### OPTIMIZABLE PARAMETERS ###
 ##############################

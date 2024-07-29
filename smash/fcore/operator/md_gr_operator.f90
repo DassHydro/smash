@@ -144,21 +144,21 @@ contains
         real(sp), intent(inout) :: he
         real(sp), intent(out) :: qe
         real(sp) :: he_star, ar
-        
+
         he_star = he + pre
-        ar = he_star / be
+        ar = he_star/be
         if (ar .lt. -7._sp) then
-            qe = be * exp(ar)
+            qe = be*exp(ar)
         else if (ar .gt. 7._sp) then
-            qe = he_star + be / exp(ar)
+            qe = he_star + be/exp(ar)
         else
-            qe = be * log(exp(ar) + 1._sp)
+            qe = be*log(exp(ar) + 1._sp)
         end if
-        
+
         he = he_star - qe
-        
+
     end subroutine gr_exponential_transfer
-    
+
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -406,14 +406,14 @@ contains
 
                 end if
 
-                prr = 0.6_sp * 0.9_sp * (pr + perc) + l
-                pre = 0.4_sp * 0.9_sp * (pr + perc) + l
-                prd = 0.1_sp * (pr + perc)
+                prr = 0.6_sp*0.9_sp*(pr + perc) + l
+                pre = 0.4_sp*0.9_sp*(pr + perc) + l
+                prd = 0.1_sp*(pr + perc)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
-                
+
                 call gr_exponential_transfer(pre, ac_be(k), ac_he(k), qe)
-                
+
                 qd = max(0._sp, prd + l)
 
                 ac_qt(k) = qr + qd + qe
