@@ -842,11 +842,11 @@ def _lbfgsb_optimize(
     cb = _OptimizeCallback(wrap_options.comm.verbose)
 
     res_optimize = scipy_minimize(
-        _optimize_problem,
+        _gradient_based_optimize_problem,
         x0,
         args=(model, parameters, wrap_options, wrap_returns, cb),
         method="l-bfgs-b",
-        jac=_jac_optimize_problem,
+        jac=True,
         bounds=tuple(zip(l_control, u_control)),
         callback=cb.callback,
         options={
@@ -858,6 +858,16 @@ def _lbfgsb_optimize(
     )
 
     cb.termination(res_optimize)
+
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )  # for updating final states
 
     ret = {}
 
@@ -1073,42 +1083,14 @@ def _sbs_optimize(
     return ret
 
 
-def _optimize_problem(
+def _gradient_based_optimize_problem(
     x: np.ndarray,
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
     callback: _OptimizeCallback,
-) -> float:
-    setattr(parameters.control, "x", x)
-
-    wrap_forward_run(
-        model.setup,
-        model.mesh,
-        model._input_data,
-        parameters,
-        model._output,
-        wrap_options,
-        wrap_returns,
-    )
-
-    if callback.iter_cost.size == 0:
-        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
-
-    callback.count_nfg += 1
-
-    return model._output.cost
-
-
-def _jac_optimize_problem(
-    x: np.ndarray,
-    model: Model,
-    parameters: ParametersDT,
-    wrap_options: OptionsDT,
-    wrap_returns: ReturnsDT,
-    callback: _OptimizeCallback,
-) -> np.ndarray:
+) -> tuple[float, np.ndarray]:
     setattr(parameters.control, "x", x)
 
     parameters_b = parameters.copy()
@@ -1127,6 +1109,11 @@ def _jac_optimize_problem(
         wrap_returns,
     )
 
+    if callback.iter_cost.size == 0:
+        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
+
+    callback.count_nfg += 1
+
     grad = parameters_b.control.x.copy()
 
     if callback.projg is None:
@@ -1135,4 +1122,4 @@ def _jac_optimize_problem(
     else:
         callback.tmp_projg = _inf_norm(grad)
 
-    return grad
+    return (model._output.cost, grad)
