@@ -771,17 +771,18 @@ def _lbfgsb_optimize(
 
     x0 = parameters.control.x.copy()
 
-    l_control = np.where(parameters.control.l == -99, None, parameters.control.l)
-    u_control = np.where(parameters.control.u == -99, None, parameters.control.u)
+    # % Set None values for unbounded/semi-unbounded controls to pass to scipy l-bfgs-b
+    l_control = np.where(np.isin(parameters.control.nbd, [0, 3]), None, parameters.control.l)
+    u_control = np.where(np.isin(parameters.control.nbd, [0, 1]), None, parameters.control.u)
 
     cb = _OptimizeCallback(wrap_options.comm.verbose)
 
     res_optimize = scipy_minimize(
-        _optimize_problem,
+        _gradient_based_optimize_problem,
         x0,
         args=(model, parameters, wrap_options, wrap_returns, cb),
         method="l-bfgs-b",
-        jac=_jac_optimize_problem,
+        jac=True,
         bounds=tuple(zip(l_control, u_control)),
         callback=cb.callback,
         options={
@@ -793,6 +794,19 @@ def _lbfgsb_optimize(
     )
 
     cb.termination(res_optimize)
+
+    # % Apply final control and forward run for updating final states
+    setattr(parameters.control, "x", res_optimize["x"])
+
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
 
     ret = {}
 
@@ -869,8 +883,7 @@ def _sbs_optimize(
         )
 
     if "iter_cost" in return_options["keys"]:
-        ret["iter_cost"] = np.zeros(wrap_options.optimize.maxiter + 1)
-        ret["iter_cost"][0] = gx
+        ret["iter_cost"] = np.array([gx])
 
     for iter in range(1, wrap_options.optimize.maxiter * n + 1):
         if dxn > ddx:
@@ -974,7 +987,7 @@ def _sbs_optimize(
                 )
 
             if "iter_cost" in return_options["keys"]:
-                ret["iter_cost"][iter // n] = gx
+                ret["iter_cost"] = np.append(ret["iter_cost"], gx)
 
         if ddx < 0.01:
             message = "CONVERGENCE: DDX < 0.01"
@@ -1077,16 +1090,61 @@ def _reg_ann_adaptive_optimize(
     return net
 
 
-def _optimize_problem(
-    x: np.ndarray,
+def _reg_ann_adaptive_optimize(
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-    callback: _OptimizeCallback | None = None,
-) -> float:
-    setattr(parameters.control, "x", x)
+    optimize_options: dict,
+) -> Net:
+    # % Preprocessing input descriptors and normalization
+    l_desc = model._input_data.physio_data.l_descriptor
+    u_desc = model._input_data.physio_data.u_descriptor
 
+    desc = model._input_data.physio_data.descriptor.copy()
+    desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
+
+    # % Train regionalization network
+    net = optimize_options["net"]
+
+    if net.layers[0].layer_name() == "Dense":
+        desc = desc.reshape(-1, desc.shape[-1])
+
+    # % Change the mapping to trigger distributed control to get distributed gradients
+    wrap_options.optimize.mapping = "distributed"
+
+    early_stopped = net._fit_d2p(
+        desc,
+        model,
+        parameters,
+        wrap_options,
+        wrap_returns,
+        wrap_options.optimize.optimizer,
+        optimize_options["parameters"],
+        optimize_options["learning_rate"],
+        optimize_options["random_state"],
+        optimize_options["termination_crit"]["maxiter"],
+        optimize_options["termination_crit"]["early_stopping"],
+        wrap_options.comm.verbose,
+    )
+
+    # % Reset mapping to ann once fit_d2p done
+    wrap_options.optimize.mapping = "ann"
+
+    # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
+    if early_stopped:
+        _net_to_parameters(net, desc, optimize_options["parameters"], parameters, model.mesh.flwdir.shape)
+
+    # % Reset control with ann mapping
+    wrap_parameters_to_control(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        wrap_options,
+    )  # only apply to nn_parameters if used since mapping has been reverted to ann
+
+    # % Forward run for updating final states
     wrap_forward_run(
         model.setup,
         model.mesh,
@@ -1097,26 +1155,26 @@ def _optimize_problem(
         wrap_returns,
     )
 
-    if callback is not None:
-        if callback.iter_cost.size == 0:
-            callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
-
-        callback.count_nfg += 1
-
-    return model._output.cost
+    return net
 
 
-def _jac_optimize_problem(
+def _gradient_based_optimize_problem(
     x: np.ndarray,
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-    callback: _OptimizeCallback | None = None,
-) -> np.ndarray:
+    callback: _OptimizeCallback,
+) -> tuple[float, np.ndarray]:
     setattr(parameters.control, "x", x)
 
     parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+
+    if callback.iter_cost.size == 0:
+        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
+
+    callback.count_nfg += 1
+
     grad = parameters_b.control.x.copy()
 
     if callback is not None:
@@ -1126,4 +1184,4 @@ def _jac_optimize_problem(
         else:
             callback.projg_bak = _inf_norm(grad)
 
-    return grad
+    return (model._output.cost, grad)

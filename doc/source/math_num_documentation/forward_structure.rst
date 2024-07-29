@@ -350,6 +350,152 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
 
+
+.. _math_num_documentation.forward_structure.hydrological_module.gr6:
+
+
+.. dropdown:: gr6 (Génie Rural 6)
+    :animate: fade-in-slide-down
+
+    This hydrological module is derived from the GR6 model :cite:p:`michel2003` and :cite:p:`pushpalatha`.
+
+    .. hint::
+
+        Helpful links about GR:
+
+        - `Brief history of GR models <https://webgr.inrae.fr/models/a-brief-history/>`__
+        - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
+        - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
+
+    .. figure:: ../_static/gr6_structure.svg
+        :align: center
+        :width: 400
+        
+        Diagram of the ``gr6`` like hydrological operator
+
+    It can be expressed as follows:
+
+    .. math::
+
+        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, b_e, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t, h_e\right](x, t)\right)
+
+    with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
+    :math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
+    :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
+    :math:`b_e` controls the slope of the recession, 
+    :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
+    :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
+    :math:`h_e` the state of the exponential reservoir.
+
+    .. note::
+
+        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        
+        - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+        - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+        - Parameters, :math:`\{c_i, c_p, c_t, b_e, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+        - States, :math:`\{h_i, h_p, h_t, h_e\}\in\boldsymbol{h}`
+
+    The function :math:`f` is resolved numerically as follows:
+
+
+    **Interception**
+
+    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+    **Production**
+
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+    **Exchange**
+
+    Same as ``gr5`` exchange, see :ref:`GR5 Production <math_num_documentation.forward_structure.hydrological_module.gr5>`
+
+    **Transfer**
+
+    - Split the production runoff :math:`p_r` into three branches (transfer, exponential and direct), :math:`p_{rr}`, :math:`p_{re}` and :math:`p_{rd}`
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &p_{rr}(x, t)& &=& &0.6 \times 0.9(p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+            &p_{re}(x, t)& &=& &0.4 \times 0.9(p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+            &p_{rd}(x, t)& &=& &0.1(p_r(x, t) + p_{erc}(x, t))
+
+        \end{eqnarray}
+
+    - Update the transfer reservoir state :math:`h_t`
+
+    .. math::
+        
+        h_t(x, t^*) = \max\left(0, h_t(x, t - 1) + \frac{p_{rr}(x, t)}{c_t(x)}\right)
+
+    - Compute the transfer branch elemental discharge :math:`q_r`
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            q_r(x, t) = h_t(x, t^*)c_t(x) - \left(\left(h_t(x, t^*)c_t(x)\right)^{-4} + c_t(x)^{-4}\right)^{-1/4}
+
+        \end{eqnarray}
+
+    - Update the transfer reservoir state :math:`h_t`
+
+    .. math::
+
+        h_t(x, t) = h_t(x, t^*) - \frac{q_r(x, t)}{c_t(x)}
+
+
+    - Update the exponential state :math:`h_e`
+
+    .. math::
+        
+        h_e(x, t^*) = h_e(x, t - 1) + p_{re}
+
+    - Compute the exponential branch elemental discharge :math:`q_{e}`
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            q_{e}(x, t) =
+            \begin{cases}
+                
+                b_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{b_e(x)} \lt 7 \\
+
+                b_e(x) * \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{b_e(x)} \lt -7 \\
+
+                h_e(x, t^*) + \frac{ b_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) } \; &\text{otherwise}.
+
+            \end{cases}
+
+        \end{eqnarray}
+
+    - Update the exponential reservoir state :math:`h_e`
+
+    .. math::
+
+        h_e(x, t) = h_e(x, t^*) - q_{e}
+
+
+    - Compute the direct branch elemental discharge :math:`q_d`
+
+    .. math::
+
+        q_d(x, t) = \max(0, p_{rd}(x, t) + l_{exc}(x, t))
+
+    - Compute the elemental discharge :math:`q_t`
+
+    .. math::
+
+        q_t(x, t) = q_r(x, t) + q_{e}(x, t) + q_d(x, t) 
+
+
 .. _math_num_documentation.forward_structure.hydrological_module.grd:
 
 .. dropdown:: grd (Génie Rural Distribué)
