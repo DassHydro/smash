@@ -352,8 +352,6 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
     )
 )
 
-TOL_BOUNDS = 1e-9
-
 ### OPTIMIZABLE PARAMETERS ###
 ##############################
 
