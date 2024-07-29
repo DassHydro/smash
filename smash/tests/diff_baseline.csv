@@ -1,8 +1,9 @@
-commit d0d2fe318919b0bb1869aef5a73e8c4a82995942
+commit 0d66bb225b0f61c83aee8b5348c849fc17e9e91a
+Merge: d0d2fe3 016e853
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Fri Jul 26 23:57:05 2024 +0200
+Date:   Tue Jul 30 00:14:42 2024 +0200
 
-    improve unbounded check for finalize_get_control_info function
+    Merge branch 'enh-net-forward-pass' into enh-adaptive-opt-for-all-mappings
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -28,6 +29,10 @@ custom_bayesian_optimize.zero-gr4-lr.custom_set_2.sim_q        |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_3.sim_q        |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_4.sim_q        |NON MODIFIED
 custom_optimize.zero-gr4-lr.custom_set_1.sim_q                 |NON MODIFIED
+custom_optimize.zero-gr4-lr.custom_set_10.sim_q                |ADDED
+custom_optimize.zero-gr4-lr.custom_set_11.sim_q                |ADDED
+custom_optimize.zero-gr4-lr.custom_set_12.sim_q                |ADDED
+custom_optimize.zero-gr4-lr.custom_set_13.sim_q                |ADDED
 custom_optimize.zero-gr4-lr.custom_set_2.sim_q                 |NON MODIFIED
 custom_optimize.zero-gr4-lr.custom_set_3.sim_q                 |NON MODIFIED
 custom_optimize.zero-gr4-lr.custom_set_4.sim_q                 |NON MODIFIED

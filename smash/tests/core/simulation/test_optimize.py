@@ -226,6 +226,56 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
                 "verbose": False,
             },
         },
+        # % Test custom mapping and optimizer
+        {
+            "mapping": "uniform",
+            "optimizer": "adam",
+            "optimize_options": {
+                "learning_rate": 0.06,
+                "termination_crit": {"early_stopping": 2},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
+        {
+            "mapping": "distributed",
+            "optimizer": "rmsprop",
+            "optimize_options": {
+                "learning_rate": 0.02,
+                "termination_crit": {"maxiter": 1},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
+        {
+            "mapping": "multi-linear",
+            "optimizer": "sgd",
+            "optimize_options": {
+                "learning_rate": 0.15,
+                "termination_crit": {"maxiter": 1},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
+        {
+            "mapping": "ann",
+            "optimizer": "adagrad",
+            "optimize_options": {
+                "learning_rate": 0.1,
+                "random_state": 0,
+                "termination_crit": {"early_stopping": 1},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
     ]
 
     for i, inner_kwargs in enumerate(custom_sets):

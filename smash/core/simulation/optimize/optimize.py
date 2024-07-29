@@ -662,8 +662,8 @@ def _adaptive_optimize(
         l_control = parameters.control.l.copy()
         u_control = parameters.control.u.copy()
 
-        has_lower_bound = l_control != -99
-        has_upper_bound = u_control != -99
+        has_lower_bound = np.isin(parameters.control.nbd, [1, 2])
+        has_upper_bound = np.isin(parameters.control.nbd, [2, 3])
 
         # % First evaluation
         parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
@@ -692,16 +692,22 @@ def _adaptive_optimize(
             x = np.where(has_lower_bound, np.maximum(x, l_control), x)
             x = np.where(has_upper_bound, np.minimum(x, u_control), x)
 
-            # % Run adjoint to get new gradients
-            grad = _jac_optimize_problem(x, model, parameters, wrap_options, wrap_returns)
+            # % Set control values and run adjoint model to get new gradients
+            setattr(parameters.control, "x", x)
+
+            parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+            grad = parameters_b.control.x.copy()
+
             projg = _inf_norm(grad)
 
+            # % Set returned values based on return_options
             if "iter_cost" in return_options["keys"]:
                 ret["iter_cost"] = np.append(ret["iter_cost"], model._output.cost)
 
             if "iter_projg" in return_options["keys"]:
                 ret["iter_projg"] = np.append(ret["iter_projg"], projg)
 
+            # % Stop if early stopping is set and met
             if early_stopping:
                 if model._output.cost < opt_info["value"]:
                     opt_info["ite"] = ite
@@ -739,8 +745,18 @@ def _adaptive_optimize(
 
                 x = opt_info["control"]
 
-        # % Run forward model to update final states and control vector (if early stopped)
-        _optimize_problem(x, model, parameters, wrap_options, wrap_returns)
+        # % Apply final control and forward run for updating final states
+        setattr(parameters.control, "x", x)
+
+        wrap_forward_run(
+            model.setup,
+            model.mesh,
+            model._input_data,
+            parameters,
+            model._output,
+            wrap_options,
+            wrap_returns,
+        )
 
         if "control_vector" in return_options["keys"]:
             ret["control_vector"] = parameters.control.x.copy()
@@ -1164,20 +1180,22 @@ def _gradient_based_optimize_problem(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-    callback: _OptimizeCallback,
+    callback: _OptimizeCallback | None = None,
 ) -> tuple[float, np.ndarray]:
+    # % Set control values
     setattr(parameters.control, "x", x)
 
+    # % Get gradient J wrt control vector
     parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
-
-    if callback.iter_cost.size == 0:
-        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
-
-    callback.count_nfg += 1
-
     grad = parameters_b.control.x.copy()
 
+    # % Callback
     if callback is not None:
+        callback.count_nfg += 1
+
+        if callback.iter_cost.size == 0:
+            callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
+
         if callback.projg is None:
             callback.projg = _inf_norm(grad)
 
