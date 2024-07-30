@@ -21,6 +21,18 @@ If you already have Python, you can install `smash` with:
 
     pip install hydro-smash
 
+.. note::
+    
+    If your system is **Ubuntu20** or if you use a servor machine, must install `smash` with an environment.
+    We recommend a environment using `Anaconda <https://www.anaconda.com/>`__.
+
+.. code-block:: none
+
+    conda create -n smash
+    conda activate smash
+    conda install pip
+    pip install hydro-smash
+
 ------
 Import
 ------
