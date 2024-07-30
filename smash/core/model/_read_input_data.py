@@ -54,32 +54,73 @@ def _split_date_occurence(date_pattern) -> str:
         return date_pattern, 0
 
 
-def sample_delta_time_in_file(files, date_pattern):
+#Test if files are sorted according the date
+#Create a n samples of niter contigous date
+#return True or false
+def _sample_delta_time_in_file(files, date_pattern, dt):
+
     d_pattern, occurence = _split_date_occurence(date_pattern)
     regex_date = _build_date_regex_pattern(d_pattern)
 
-    arr_index = np.zeros(shape=(20, 2))
-    for i in range(20):
-        arr_index[i, 0] = random.randrange(0, len(files) - 1)
-        arr_index[i, 1] = arr_index[i, 0] + 1
+    nsample=5
+    niter=100
+    list_delta_time=[]
+    list_date_block=[]
 
-    arr_delta_time = np.zeros(shape=20)
-    for i in range(20):
-        re_match_0 = re.findall(regex_date, os.path.basename(files[int(arr_index[i, 0])]))
-        re_match_1 = re.findall(regex_date, os.path.basename(files[int(arr_index[i, 1])]))
+    for i in range(0,len(files),int(len(files)/nsample)):
+        
+         for j in range(min(niter,len(files)-i-1)):
 
-        if len(re_match_0) > 0 and len(re_match_1) > 0:
-            date_match_0 = pd.to_datetime(re_match_0[occurence], format=d_pattern)
-            date_match_1 = pd.to_datetime(re_match_1[occurence], format=d_pattern)
-            delta_time = date_match_1 - date_match_0
-            arr_delta_time[i] = delta_time.seconds
+             re_match_0 = re.findall(regex_date, os.path.basename(files[i+j]))
+             re_match_1 = re.findall(regex_date, os.path.basename(files[i+j+1]))
 
-    return arr_delta_time
+             if len(re_match_0) > 0 and len(re_match_1) > 0:
+                 date_match_0 = pd.to_datetime(re_match_0[occurence], format=d_pattern)
+                 date_match_1 = pd.to_datetime(re_match_1[occurence], format=d_pattern)
+                 delta_time = date_match_1 - date_match_0
+                 list_delta_time.append(delta_time.total_seconds())
+                 
+                 if j==0:
+                     list_date_block.append(date_match_0)
+                 
+                 if delta_time.total_seconds()<0:
+                     return False
+    
+    #Test if all sample date block are in ascendent order
+    if len(list_date_block)>1:
+        
+        for i in range(len(list_date_block)-1):
+            delta_time = list_date_block[i+1] - list_date_block[i]
+            
+            if delta_time.total_seconds()<0.:
+                return False
+    
+    if len(list_delta_time)>0:
+        
+        if np.min(np.array(list_delta_time)) != dt:
+            # sorted but not good time-step
+            raise ValueError(
+                "Precipitation files are sorted with the date pattern but not at the good time-step:"
+                f" prcp time-step={list_delta_time[0]}, model time-step={dt}"
+            )
+        
+        #Finally test if all date are in ascendent order
+        if np.all(np.array(list_delta_time) > 0):
+            return True
+        else:
+            return False
+    
+    else:
+        raise ValueError(
+            "Date Pattern was not found in the list of the precipitation files"
+            f" while searching pattern={d_pattern} with corresponding regex={regex_date}"
+            f" In filename {files[0]},"
+        )
 
 
-# TODO recherche de date start
-# return the first position after oe equal at date in files
-def fast_index_search_for_date(files, date, date_pattern):
+# Search for a pattern in a sorted list of files
+# return the first position after or equal at date in files
+def _fast_index_search_for_date(files, date, date_pattern):
     # print("search for",date)
     d_pattern, occurence = _split_date_occurence(date_pattern)
     regex_date = _build_date_regex_pattern(d_pattern)
@@ -178,27 +219,26 @@ def fast_index_search_for_date(files, date, date_pattern):
     return final_pos
 
 
-# Getting dates for all files
-def get_files_list_for_date_range(files, date_pattern, date_range):
+# Getting  only files for the specified daterange 
+# work even files are not sorted according the date pattern
+def _get_files_list_for_date_range(files, date_pattern, date_range):
     d_pattern, occurence = _split_date_occurence(date_pattern)
     regex_date = _build_date_regex_pattern(d_pattern)
 
     vec_date = []
     for i, f in enumerate(files):
         re_match = re.findall(regex_date, os.path.basename(f))
-        # print(re_match, regex_date,os.path.basename(f))
+        
         if len(re_match) > 0:
-            date = pd.to_datetime(re_match[occurence], format=d_pattern)
-            vec_date.append(date.strftime("%Y%m%d%H%M%S"))
-
-            if date >= date_range[-1]:
-                break
-
-        else:
-            raise ValueError(
-                f"Date formatter {d_pattern} corresponding to regex {regex_date}"
-                " not found in filename {os.path.basename(f)}"
-            )
+            vec_date.append(re_match[occurence])
+        # else:
+        #     raise ValueError(
+        #         f"Date formatter {d_pattern} corresponding to regex {regex_date}"
+        #         " not found in filename {os.path.basename(f)}"
+        #     )
+    
+    vec_date=pd.to_datetime(vec_date, format=d_pattern)
+    vec_date=vec_date.strftime("%Y%m%d%H%M%S")
 
     # convert to numpy array
     np_lst_date = np.array(vec_date)
@@ -228,24 +268,6 @@ def get_files_list_for_date_range(files, date_pattern, date_range):
 
     return final_list_files
 
-
-# def _find_index_files_containing_date(
-#     files: ListLike, date: pd.Timestamp, date_pattern) -> int:
-#     ind = -1
-#     regex_pattern = _get_date_regex_pattern(dt, daily_interannual)
-#     for i, f in enumerate(files):
-#         re_match = re.search(regex_pattern, os.path.basename(f))
-#         if daily_interannual:
-#             fdate = pd.Timestamp(f"{date.year}{re_match.group()}")
-#         else:
-#             fdate = pd.Timestamp(re_match.group())
-#         if fdate < date:
-#             continue
-#         elif fdate == date:
-#             ind = i
-#         elif fdate > date:
-#             break
-#     return ind
 
 
 # We suppose that the atmos file are sorted in ascendent order with the date
@@ -289,32 +311,26 @@ def _get_atmos_files(
 
     else:
         # Check if file are sorted with the date pattern
-        arr_delta_time = sample_delta_time_in_file(files, date_pattern)
+        test = _sample_delta_time_in_file(files, date_pattern, dt)
 
         # if sorted we quickly search index of date_start and date_end
         # if not sorted we parse all files et keep the dates
-        if np.all(arr_delta_time > 0):
+        if test:
             # file seems sorted
-            pos_0 = fast_index_search_for_date(files, date_range[0], date_pattern)
-            pos_1 = fast_index_search_for_date(files, date_range[-1], date_pattern)
+            pos_0 = _fast_index_search_for_date(files, date_range[0], date_pattern)
+            pos_1 = _fast_index_search_for_date(files, date_range[-1], date_pattern)
 
             files = files[pos_0 : pos_1 + 1]
-            # if sorted check if good dt (at least one ! (possible lacuna))
-            if np.min(arr_delta_time) != dt:
-                # sorted but not good time-step
-                raise ValueError(
-                    "Precipitation files are sorted with the date pattern but not at the good time-step:"
-                    " prcp time-step={arr_delta_time[0]}, model time-step={dt}"
-                )
+
         else:
-            # not sorted
+
             print(
                 "Warnings, precipitation filename are not sorted with date."
                 " Reading precipitation may take more time."
             )
 
         # we build the file list according the date_range (sorted): we have 1 date <=>  1file
-        final_list_files = get_files_list_for_date_range(files, date_pattern, date_range)
+        final_list_files = _get_files_list_for_date_range(files, date_pattern, date_range)
 
         return final_list_files
 
@@ -496,7 +512,7 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
 
 # TODO: Unique fun to read prcp, snow and temp
-def _read_common_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, atmos_data="prcp"):
+def _read_atmos_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, atmos_data="prcp"):
     date_range = pd.date_range(
         start=setup.start_time,
         end=setup.end_time,
