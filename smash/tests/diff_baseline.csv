@@ -1,8 +1,9 @@
-commit feb09c34c027a42b66aceb6d270bf550bc78907f
+commit d8ad0b2caf76a8d9b84635bcd108d71d30fd3538
+Merge: 371f9c0 e7817df
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Fri Jul 26 00:59:35 2024 +0200
+Date:   Tue Jul 30 15:04:36 2024 +0200
 
-    Fix control prior name for bayesian_optimize
+    Merge remote-tracking branch 'upstream/enh-cnn-regionalization' into enh-hybrid-models
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
