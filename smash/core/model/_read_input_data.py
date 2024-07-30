@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import glob
 import os
-import random
 import re
 import warnings
 from typing import TYPE_CHECKING
@@ -54,62 +53,57 @@ def _split_date_occurence(date_pattern) -> str:
         return date_pattern, 0
 
 
-#Test if files are sorted according the date
-#Create a n samples of niter contigous date
-#return True or false
+# Test if files are sorted according the date
+# Create a n samples of niter contigous date
+# return True or false
 def _sample_delta_time_in_file(files, date_pattern, dt):
-
     d_pattern, occurence = _split_date_occurence(date_pattern)
     regex_date = _build_date_regex_pattern(d_pattern)
 
-    nsample=5
-    niter=100
-    list_delta_time=[]
-    list_date_block=[]
+    nsample = 5
+    niter = 100
+    list_delta_time = []
+    list_date_block = []
 
-    for i in range(0,len(files),int(len(files)/nsample)):
-        
-         for j in range(min(niter,len(files)-i-1)):
+    for i in range(0, len(files), int(len(files) / nsample)):
+        for j in range(min(niter, len(files) - i - 1)):
+            re_match_0 = re.findall(regex_date, os.path.basename(files[i + j]))
+            re_match_1 = re.findall(regex_date, os.path.basename(files[i + j + 1]))
 
-             re_match_0 = re.findall(regex_date, os.path.basename(files[i+j]))
-             re_match_1 = re.findall(regex_date, os.path.basename(files[i+j+1]))
+            if len(re_match_0) > 0 and len(re_match_1) > 0:
+                date_match_0 = pd.to_datetime(re_match_0[occurence], format=d_pattern)
+                date_match_1 = pd.to_datetime(re_match_1[occurence], format=d_pattern)
+                delta_time = date_match_1 - date_match_0
+                list_delta_time.append(delta_time.total_seconds())
 
-             if len(re_match_0) > 0 and len(re_match_1) > 0:
-                 date_match_0 = pd.to_datetime(re_match_0[occurence], format=d_pattern)
-                 date_match_1 = pd.to_datetime(re_match_1[occurence], format=d_pattern)
-                 delta_time = date_match_1 - date_match_0
-                 list_delta_time.append(delta_time.total_seconds())
-                 
-                 if j==0:
-                     list_date_block.append(date_match_0)
-                 
-                 if delta_time.total_seconds()<0:
-                     return False
-    
-    #Test if all sample date block are in ascendent order
-    if len(list_date_block)>1:
-        
-        for i in range(len(list_date_block)-1):
-            delta_time = list_date_block[i+1] - list_date_block[i]
-            
-            if delta_time.total_seconds()<0.:
+                if j == 0:
+                    list_date_block.append(date_match_0)
+
+                if delta_time.total_seconds() < 0:
+                    return False
+
+    # Test if all sample date block are in ascendent order
+    if len(list_date_block) > 1:
+        for i in range(len(list_date_block) - 1):
+            delta_time = list_date_block[i + 1] - list_date_block[i]
+
+            if delta_time.total_seconds() < 0.0:
                 return False
-    
-    if len(list_delta_time)>0:
-        
+
+    if len(list_delta_time) > 0:
         if np.min(np.array(list_delta_time)) != dt:
             # sorted but not good time-step
             raise ValueError(
                 "Precipitation files are sorted with the date pattern but not at the good time-step:"
                 f" prcp time-step={list_delta_time[0]}, model time-step={dt}"
             )
-        
-        #Finally test if all date are in ascendent order
+
+        # Finally test if all date are in ascendent order
         if np.all(np.array(list_delta_time) > 0):
             return True
         else:
             return False
-    
+
     else:
         raise ValueError(
             "Date Pattern was not found in the list of the precipitation files"
@@ -219,7 +213,7 @@ def _fast_index_search_for_date(files, date, date_pattern):
     return final_pos
 
 
-# Getting  only files for the specified daterange 
+# Getting  only files for the specified daterange
 # work even files are not sorted according the date pattern
 def _get_files_list_for_date_range(files, date_pattern, date_range):
     d_pattern, occurence = _split_date_occurence(date_pattern)
@@ -228,7 +222,7 @@ def _get_files_list_for_date_range(files, date_pattern, date_range):
     vec_date = []
     for i, f in enumerate(files):
         re_match = re.findall(regex_date, os.path.basename(f))
-        
+
         if len(re_match) > 0:
             vec_date.append(re_match[occurence])
         # else:
@@ -236,9 +230,9 @@ def _get_files_list_for_date_range(files, date_pattern, date_range):
         #         f"Date formatter {d_pattern} corresponding to regex {regex_date}"
         #         " not found in filename {os.path.basename(f)}"
         #     )
-    
-    vec_date=pd.to_datetime(vec_date, format=d_pattern)
-    vec_date=vec_date.strftime("%Y%m%d%H%M%S")
+
+    vec_date = pd.to_datetime(vec_date, format=d_pattern)
+    vec_date = vec_date.strftime("%Y%m%d%H%M%S")
 
     # convert to numpy array
     np_lst_date = np.array(vec_date)
@@ -267,7 +261,6 @@ def _get_files_list_for_date_range(files, date_pattern, date_range):
             final_list_files.append(-1)
 
     return final_list_files
-
 
 
 # We suppose that the atmos file are sorted in ascendent order with the date
@@ -323,7 +316,6 @@ def _get_atmos_files(
             files = files[pos_0 : pos_1 + 1]
 
         else:
-
             print(
                 "Warnings, precipitation filename are not sorted with date."
                 " Reading precipitation may take more time."
