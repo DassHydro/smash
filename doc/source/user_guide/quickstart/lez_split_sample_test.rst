@@ -160,6 +160,7 @@ And quickly verify that the generated ``mesh`` is correct
 Then, we can initialize the two `smash.Model` objects
 
 .. ipython:: python
+    :okwarning:
 
     model_p1 = smash.Model(setup_p1, mesh)
     model_p2 = smash.Model(setup_p2, mesh)
