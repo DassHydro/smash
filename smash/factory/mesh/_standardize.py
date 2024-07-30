@@ -96,17 +96,17 @@ def _standardize_generate_mesh_x_y_area(
     y: Numeric | ListLike,
     area: Numeric | ListLike,
 ) -> Tuple[np.ndarray]:
-    if not isinstance(x, (int, float, np.number, list, tuple, np.ndarray)):
+    if not isinstance(x, (int, float, list, tuple, np.ndarray)):
         raise TypeError(
             "x argument must be of Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
-    if not isinstance(y, (int, float, np.number, list, tuple, np.ndarray)):
+    if not isinstance(y, (int, float, list, tuple, np.ndarray)):
         raise TypeError(
             "y argument must be of Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
-    if not isinstance(area, (int, float, np.number, list, tuple, np.ndarray)):
+    if not isinstance(area, (int, float, list, tuple, np.ndarray)):
         raise TypeError(
             "area argument must be of Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
@@ -149,7 +149,7 @@ def _standardize_generate_mesh_code(x: np.ndarray, code: str | ListLike | None) 
 
 
 def _standardize_generate_mesh_max_depth(max_depth: Numeric) -> int:
-    if not isinstance(max_depth, (int, float, np.number)):
+    if not isinstance(max_depth, (int, float)):
         raise TypeError("max_depth argument must be of Numeric type (int, float)")
 
     max_depth = int(max_depth)
@@ -165,7 +165,7 @@ def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int:
         pass
 
     else:
-        if not isinstance(epsg, (str, int, float, np.number)):
+        if not isinstance(epsg, (str, int, float)):
             raise TypeError("epsg argument must be of AlphaNumeric type (str, int, float)")
 
         epsg = int(epsg)
