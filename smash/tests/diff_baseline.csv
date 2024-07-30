@@ -1,4 +1,4 @@
-commit 0ffd8adeb0b010452fafeacc6bee897c95862059
+commit 657a31d91b8fa9a8b56e677c09227e06d3241744
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
 Date:   Wed Jul 24 17:39:29 2024 +0200
 
@@ -431,35 +431,26 @@ model_io.rr_parameters.values                             |NON MODIFIED
 model_io.setup.end_time                                   |NON MODIFIED
 model_io.setup.start_time                                 |NON MODIFIED
 model_io.setup.structure                                  |NON MODIFIED
-multiset_estimate.mfwr.lcurve_multiset.alpha              |DELETED
-multiset_estimate.mfwr.lcurve_multiset.alpha_opt          |DELETED
-multiset_estimate.mfwr.lcurve_multiset.cost               |DELETED
-multiset_estimate.mfwr.sim_q                              |DELETED
-multiset_estimate.mopt_ml.sim_q                           |DELETED
-multiset_estimate.mopt_unf.lcurve_multiset.alpha          |DELETED
-multiset_estimate.mopt_unf.lcurve_multiset.alpha_opt      |DELETED
-multiset_estimate.mopt_unf.lcurve_multiset.cost           |DELETED
-multiset_estimate.mopt_unf.sim_q                          |DELETED
-multiset_estimate.set_1.lcurve_multiset.alpha             |ADDED
-multiset_estimate.set_1.lcurve_multiset.alpha_opt         |ADDED
-multiset_estimate.set_1.lcurve_multiset.cost              |ADDED
-multiset_estimate.set_1.lcurve_multiset.mahal_dist        |ADDED
-multiset_estimate.set_1.sim_q                             |ADDED
-multiset_estimate.set_2.lcurve_multiset.alpha             |ADDED
-multiset_estimate.set_2.lcurve_multiset.alpha_opt         |ADDED
-multiset_estimate.set_2.lcurve_multiset.cost              |ADDED
-multiset_estimate.set_2.lcurve_multiset.mahal_dist        |ADDED
-multiset_estimate.set_2.sim_q                             |ADDED
+multiset_estimate.set_1.lcurve_multiset.alpha             |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.alpha_opt         |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.cost              |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.mahal_dist        |NON MODIFIED
+multiset_estimate.set_1.sim_q                             |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.alpha             |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.alpha_opt         |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.cost              |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.mahal_dist        |NON MODIFIED
+multiset_estimate.set_2.sim_q                             |NON MODIFIED
 net_init.bias_layer_1                                     |NON MODIFIED
 net_init.bias_layer_2                                     |NON MODIFIED
 net_init.bias_layer_3                                     |NON MODIFIED
 net_init.bias_layer_4                                     |NON MODIFIED
-net_init.graph                                            |NON MODIFIED
-net_init.weight_layer_1                                   |NON MODIFIED
-net_init.weight_layer_2                                   |NON MODIFIED
-net_init.weight_layer_3                                   |NON MODIFIED
-net_init.weight_layer_4                                   |NON MODIFIED
-optimize.zero-gr4-kw.ann.sim_q                            |NON MODIFIED
+net_init.graph                                            |MODIFIED
+net_init.weight_layer_1                                   |MODIFIED
+net_init.weight_layer_2                                   |MODIFIED
+net_init.weight_layer_3                                   |MODIFIED
+net_init.weight_layer_4                                   |MODIFIED
+optimize.zero-gr4-kw.ann.sim_q                            |MODIFIED
 optimize.zero-gr4-kw.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr4-kw.distributed.iter_cost                |NON MODIFIED
 optimize.zero-gr4-kw.distributed.sim_q                    |NON MODIFIED
@@ -472,7 +463,7 @@ optimize.zero-gr4-kw.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr4-kw.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr4-kw.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr4-kw.uniform.sim_q                        |NON MODIFIED
-optimize.zero-gr4-lag0.ann.sim_q                          |NON MODIFIED
+optimize.zero-gr4-lag0.ann.sim_q                          |MODIFIED
 optimize.zero-gr4-lag0.distributed.control_vector         |NON MODIFIED
 optimize.zero-gr4-lag0.distributed.iter_cost              |NON MODIFIED
 optimize.zero-gr4-lag0.distributed.sim_q                  |NON MODIFIED
@@ -485,7 +476,7 @@ optimize.zero-gr4-lag0.multi-polynomial.sim_q             |NON MODIFIED
 optimize.zero-gr4-lag0.uniform.control_vector             |NON MODIFIED
 optimize.zero-gr4-lag0.uniform.iter_cost                  |NON MODIFIED
 optimize.zero-gr4-lag0.uniform.sim_q                      |NON MODIFIED
-optimize.zero-gr4-lr.ann.sim_q                            |NON MODIFIED
+optimize.zero-gr4-lr.ann.sim_q                            |MODIFIED
 optimize.zero-gr4-lr.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr4-lr.distributed.iter_cost                |NON MODIFIED
 optimize.zero-gr4-lr.distributed.sim_q                    |NON MODIFIED
@@ -498,7 +489,7 @@ optimize.zero-gr4-lr.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr4-lr.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr4-lr.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr4-lr.uniform.sim_q                        |NON MODIFIED
-optimize.zero-gr5-kw.ann.sim_q                            |NON MODIFIED
+optimize.zero-gr5-kw.ann.sim_q                            |MODIFIED
 optimize.zero-gr5-kw.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr5-kw.distributed.iter_cost                |NON MODIFIED
 optimize.zero-gr5-kw.distributed.sim_q                    |NON MODIFIED
@@ -511,7 +502,7 @@ optimize.zero-gr5-kw.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr5-kw.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr5-kw.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr5-kw.uniform.sim_q                        |NON MODIFIED
-optimize.zero-gr5-lag0.ann.sim_q                          |NON MODIFIED
+optimize.zero-gr5-lag0.ann.sim_q                          |MODIFIED
 optimize.zero-gr5-lag0.distributed.control_vector         |NON MODIFIED
 optimize.zero-gr5-lag0.distributed.iter_cost              |NON MODIFIED
 optimize.zero-gr5-lag0.distributed.sim_q                  |NON MODIFIED
@@ -524,7 +515,7 @@ optimize.zero-gr5-lag0.multi-polynomial.sim_q             |NON MODIFIED
 optimize.zero-gr5-lag0.uniform.control_vector             |NON MODIFIED
 optimize.zero-gr5-lag0.uniform.iter_cost                  |NON MODIFIED
 optimize.zero-gr5-lag0.uniform.sim_q                      |NON MODIFIED
-optimize.zero-gr5-lr.ann.sim_q                            |NON MODIFIED
+optimize.zero-gr5-lr.ann.sim_q                            |MODIFIED
 optimize.zero-gr5-lr.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr5-lr.distributed.iter_cost                |NON MODIFIED
 optimize.zero-gr5-lr.distributed.sim_q                    |NON MODIFIED
@@ -537,7 +528,7 @@ optimize.zero-gr5-lr.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr5-lr.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr5-lr.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr5-lr.uniform.sim_q                        |NON MODIFIED
-optimize.zero-gr6-kw.ann.sim_q                            |NON MODIFIED
+optimize.zero-gr6-kw.ann.sim_q                            |MODIFIED
 optimize.zero-gr6-kw.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr6-kw.distributed.iter_cost                |NON MODIFIED
 optimize.zero-gr6-kw.distributed.sim_q                    |NON MODIFIED
@@ -550,7 +541,7 @@ optimize.zero-gr6-kw.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr6-kw.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr6-kw.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr6-kw.uniform.sim_q                        |NON MODIFIED
-optimize.zero-gr6-lag0.ann.sim_q                          |NON MODIFIED
+optimize.zero-gr6-lag0.ann.sim_q                          |MODIFIED
 optimize.zero-gr6-lag0.distributed.control_vector         |NON MODIFIED
 optimize.zero-gr6-lag0.distributed.iter_cost              |NON MODIFIED
 optimize.zero-gr6-lag0.distributed.sim_q                  |NON MODIFIED
@@ -563,7 +554,7 @@ optimize.zero-gr6-lag0.multi-polynomial.sim_q             |NON MODIFIED
 optimize.zero-gr6-lag0.uniform.control_vector             |NON MODIFIED
 optimize.zero-gr6-lag0.uniform.iter_cost                  |NON MODIFIED
 optimize.zero-gr6-lag0.uniform.sim_q                      |NON MODIFIED
-optimize.zero-gr6-lr.ann.sim_q                            |NON MODIFIED
+optimize.zero-gr6-lr.ann.sim_q                            |MODIFIED
 optimize.zero-gr6-lr.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr6-lr.distributed.iter_cost                |NON MODIFIED
 optimize.zero-gr6-lr.distributed.sim_q                    |NON MODIFIED
@@ -576,7 +567,7 @@ optimize.zero-gr6-lr.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-gr6-lr.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr6-lr.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-gr6-lr.uniform.sim_q                        |NON MODIFIED
-optimize.zero-grd-kw.ann.sim_q                            |NON MODIFIED
+optimize.zero-grd-kw.ann.sim_q                            |MODIFIED
 optimize.zero-grd-kw.distributed.control_vector           |NON MODIFIED
 optimize.zero-grd-kw.distributed.iter_cost                |NON MODIFIED
 optimize.zero-grd-kw.distributed.sim_q                    |NON MODIFIED
@@ -589,7 +580,7 @@ optimize.zero-grd-kw.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-grd-kw.uniform.control_vector               |NON MODIFIED
 optimize.zero-grd-kw.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-grd-kw.uniform.sim_q                        |NON MODIFIED
-optimize.zero-grd-lag0.ann.sim_q                          |NON MODIFIED
+optimize.zero-grd-lag0.ann.sim_q                          |MODIFIED
 optimize.zero-grd-lag0.distributed.control_vector         |NON MODIFIED
 optimize.zero-grd-lag0.distributed.iter_cost              |NON MODIFIED
 optimize.zero-grd-lag0.distributed.sim_q                  |NON MODIFIED
@@ -602,7 +593,7 @@ optimize.zero-grd-lag0.multi-polynomial.sim_q             |NON MODIFIED
 optimize.zero-grd-lag0.uniform.control_vector             |NON MODIFIED
 optimize.zero-grd-lag0.uniform.iter_cost                  |NON MODIFIED
 optimize.zero-grd-lag0.uniform.sim_q                      |NON MODIFIED
-optimize.zero-grd-lr.ann.sim_q                            |NON MODIFIED
+optimize.zero-grd-lr.ann.sim_q                            |MODIFIED
 optimize.zero-grd-lr.distributed.control_vector           |NON MODIFIED
 optimize.zero-grd-lr.distributed.iter_cost                |NON MODIFIED
 optimize.zero-grd-lr.distributed.sim_q                    |NON MODIFIED
@@ -615,7 +606,7 @@ optimize.zero-grd-lr.multi-polynomial.sim_q               |NON MODIFIED
 optimize.zero-grd-lr.uniform.control_vector               |NON MODIFIED
 optimize.zero-grd-lr.uniform.iter_cost                    |NON MODIFIED
 optimize.zero-grd-lr.uniform.sim_q                        |NON MODIFIED
-optimize.zero-loieau-kw.ann.sim_q                         |NON MODIFIED
+optimize.zero-loieau-kw.ann.sim_q                         |MODIFIED
 optimize.zero-loieau-kw.distributed.control_vector        |NON MODIFIED
 optimize.zero-loieau-kw.distributed.iter_cost             |NON MODIFIED
 optimize.zero-loieau-kw.distributed.sim_q                 |NON MODIFIED
@@ -628,7 +619,7 @@ optimize.zero-loieau-kw.multi-polynomial.sim_q            |NON MODIFIED
 optimize.zero-loieau-kw.uniform.control_vector            |NON MODIFIED
 optimize.zero-loieau-kw.uniform.iter_cost                 |NON MODIFIED
 optimize.zero-loieau-kw.uniform.sim_q                     |NON MODIFIED
-optimize.zero-loieau-lag0.ann.sim_q                       |NON MODIFIED
+optimize.zero-loieau-lag0.ann.sim_q                       |MODIFIED
 optimize.zero-loieau-lag0.distributed.control_vector      |NON MODIFIED
 optimize.zero-loieau-lag0.distributed.iter_cost           |NON MODIFIED
 optimize.zero-loieau-lag0.distributed.sim_q               |NON MODIFIED
@@ -641,7 +632,7 @@ optimize.zero-loieau-lag0.multi-polynomial.sim_q          |NON MODIFIED
 optimize.zero-loieau-lag0.uniform.control_vector          |NON MODIFIED
 optimize.zero-loieau-lag0.uniform.iter_cost               |NON MODIFIED
 optimize.zero-loieau-lag0.uniform.sim_q                   |NON MODIFIED
-optimize.zero-loieau-lr.ann.sim_q                         |NON MODIFIED
+optimize.zero-loieau-lr.ann.sim_q                         |MODIFIED
 optimize.zero-loieau-lr.distributed.control_vector        |NON MODIFIED
 optimize.zero-loieau-lr.distributed.iter_cost             |NON MODIFIED
 optimize.zero-loieau-lr.distributed.sim_q                 |NON MODIFIED
@@ -654,7 +645,7 @@ optimize.zero-loieau-lr.multi-polynomial.sim_q            |NON MODIFIED
 optimize.zero-loieau-lr.uniform.control_vector            |NON MODIFIED
 optimize.zero-loieau-lr.uniform.iter_cost                 |NON MODIFIED
 optimize.zero-loieau-lr.uniform.sim_q                     |NON MODIFIED
-optimize.zero-vic3l-kw.ann.sim_q                          |NON MODIFIED
+optimize.zero-vic3l-kw.ann.sim_q                          |MODIFIED
 optimize.zero-vic3l-kw.distributed.control_vector         |NON MODIFIED
 optimize.zero-vic3l-kw.distributed.iter_cost              |NON MODIFIED
 optimize.zero-vic3l-kw.distributed.sim_q                  |NON MODIFIED
@@ -667,7 +658,7 @@ optimize.zero-vic3l-kw.multi-polynomial.sim_q             |NON MODIFIED
 optimize.zero-vic3l-kw.uniform.control_vector             |NON MODIFIED
 optimize.zero-vic3l-kw.uniform.iter_cost                  |NON MODIFIED
 optimize.zero-vic3l-kw.uniform.sim_q                      |NON MODIFIED
-optimize.zero-vic3l-lag0.ann.sim_q                        |NON MODIFIED
+optimize.zero-vic3l-lag0.ann.sim_q                        |MODIFIED
 optimize.zero-vic3l-lag0.distributed.control_vector       |NON MODIFIED
 optimize.zero-vic3l-lag0.distributed.iter_cost            |NON MODIFIED
 optimize.zero-vic3l-lag0.distributed.sim_q                |NON MODIFIED
@@ -680,7 +671,7 @@ optimize.zero-vic3l-lag0.multi-polynomial.sim_q           |NON MODIFIED
 optimize.zero-vic3l-lag0.uniform.control_vector           |NON MODIFIED
 optimize.zero-vic3l-lag0.uniform.iter_cost                |NON MODIFIED
 optimize.zero-vic3l-lag0.uniform.sim_q                    |NON MODIFIED
-optimize.zero-vic3l-lr.ann.sim_q                          |NON MODIFIED
+optimize.zero-vic3l-lr.ann.sim_q                          |MODIFIED
 optimize.zero-vic3l-lr.distributed.control_vector         |NON MODIFIED
 optimize.zero-vic3l-lr.distributed.iter_cost              |NON MODIFIED
 optimize.zero-vic3l-lr.distributed.sim_q                  |NON MODIFIED

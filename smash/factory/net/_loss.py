@@ -18,30 +18,36 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_returns import ReturnsDT
 
 
-def _hcost(instance: Model):
+def _hcost(instance: Model) -> float:
     return instance._output.cost
 
 
 def _hcost_prime(
     y: np.ndarray,
     parameters: np.ndarray,
-    mask: np.ndarray,
     instance: Model,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
 ):
+    if y.ndim < 3:
+        y = y.reshape(instance.mesh.flwdir.shape + (-1,))
+        return_3d_grad = False
+    else:  # in case of CNN
+        return_3d_grad = True
+
     # % Set parameters or states
     for i, name in enumerate(parameters):
         if name in instance.rr_parameters.keys:
             ind = np.argwhere(instance.rr_parameters.keys == name).item()
 
-            instance.rr_parameters.values[..., ind][mask] = y[:, i]
+            instance.rr_parameters.values[..., ind] = y[..., i]
 
-        else:
+        elif name in instance.rr_initial_states.keys:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            instance.rr_initial_states.values[..., ind][mask] = y[:, i]
+            instance.rr_initial_states.values[..., ind] = y[..., i]
 
+    # % Run adjoint model
     wrap_parameters_to_control(
         instance.setup,
         instance.mesh,
@@ -70,21 +76,25 @@ def _hcost_prime(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
     )
 
-    grad = []
+    # % Get the gradient of regionalization NN
+    grad_reg = []
     for name in parameters:
         if name in instance.rr_parameters.keys:
             ind = np.argwhere(instance.rr_parameters.keys == name).item()
 
-            grad.append(parameters_b.rr_parameters.values[..., ind][mask])
+            grad_reg.append(parameters_b.rr_parameters.values[..., ind])
 
-        else:
+        elif name in instance.rr_initial_states.keys:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            grad.append(parameters_b.rr_initial_states.values[..., ind][mask])
+            grad_reg.append(parameters_b.rr_initial_states.values[..., ind])
 
-    grad = np.transpose(grad)
+    if return_3d_grad:  # in case of CNN
+        grad_reg = np.transpose(grad_reg, (1, 2, 0))
+    else:
+        grad_reg = np.reshape(grad_reg, (len(grad_reg), -1)).T
 
-    return grad
+    return grad_reg
 
 
 def _inf_norm(grad: np.ndarray):
