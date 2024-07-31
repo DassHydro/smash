@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import MAPPING
+from smash._constant import GRADIENT_BASED_OPTIMIZER, MAPPING
 from smash.core.simulation._standardize import (
     _standardize_simulation_common_options,
     _standardize_simulation_cost_options,
@@ -39,7 +39,10 @@ def _standardize_optimize_optimizer(mapping: str, optimizer: str, setup: SetupDT
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     if sum(setup.neurons) > 0 and optimizer == "sbs":
-        raise ValueError(f"The SBS optimizer is not suitable for the {setup.hydrological_module} module")
+        raise ValueError(
+            f"The SBS optimizer is not suitable for the {setup.hydrological_module} module. "
+            f"Choices: {GRADIENT_BASED_OPTIMIZER}"
+        )
 
     return optimizer
 
