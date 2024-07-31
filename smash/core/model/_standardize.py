@@ -416,7 +416,7 @@ def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, *
 
 
 def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric, **kwargs) -> int:
-    if isinstance(hidden_neuron, (int, float, np.number)):
+    if isinstance(hidden_neuron, (int, float)):
         hidden_neuron = int(hidden_neuron)
         if hidden_neuron <= 0:
             raise ValueError("hidden_neuron model setup must be a positive number")
@@ -763,7 +763,9 @@ def _standardize_set_nn_parameters_weight_value(
                             f"from shape {arr.shape} into shape {weights[i].shape}"
                         )
                 else:
-                    raise TypeError("Each element of value argument must be float or a Numpy array")
+                    raise TypeError(
+                        "Each element of value argument must be of Numeric type (int, float) or np.ndarray"
+                    )
 
     else:
         raise TypeError("value argument must be a list of a same size with layers")
@@ -797,7 +799,9 @@ def _standardize_set_nn_parameters_bias_value(
                             f"from shape {arr.shape} into shape {biases[i].shape}"
                         )
                 else:
-                    raise TypeError("Each element of value argument must be float or a Numpy array")
+                    raise TypeError(
+                        "Each element of value argument must be of Numeric type (int, float) or np.ndarray"
+                    )
 
     else:
         raise TypeError("value argument must be a list of a same size with layers")

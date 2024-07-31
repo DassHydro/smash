@@ -8,7 +8,6 @@
 !%      - gr_exchange
 !%      - gr_threshold_exchange
 !%      - gr_transfer
-!%      - gr_production_transfer_mlp_alg
 !%      - gr_production_transfer_ode
 !%      - gr_production_transfer_mlp_ode
 !%      - gr4_time_step
@@ -56,11 +55,11 @@ contains
 
     end subroutine gr_interception
 
-    subroutine gr_production(pn, en, cp, beta, hp, pr, perc)
+    subroutine gr_production(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc)
 
         implicit none
 
-        real(sp), intent(in) :: pn, en, cp, beta
+        real(sp), intent(in) :: fq_ps, fq_es, pn, en, cp, beta
         real(sp), intent(inout) :: hp
         real(sp), intent(out) :: pr, perc
 
@@ -71,9 +70,11 @@ contains
 
         ps = cp*(1._sp - hp*hp)*tanh(pn*inv_cp)/ &
         & (1._sp + hp*tanh(pn*inv_cp))
+        ps = (1._sp + fq_ps)*ps
 
         es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
         & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
+        es = (1._sp + fq_es)*es
 
         hp_imd = hp + (ps - es)*inv_cp
 
@@ -89,15 +90,15 @@ contains
 
     end subroutine gr_production
 
-    subroutine gr_exchange(kexc, ht, l)
+    subroutine gr_exchange(fq_l, kexc, ht, l)
 
         implicit none
 
-        real(sp), intent(in) :: kexc
+        real(sp), intent(in) :: fq_l, kexc
         real(sp), intent(inout) :: ht
         real(sp), intent(out) :: l
 
-        l = kexc*ht**3.5_sp
+        l = (1._sp + fq_l)*kexc*ht**3.5_sp
 
     end subroutine gr_exchange
 
@@ -166,74 +167,6 @@ contains
         he = he_star - qe
 
     end subroutine gr_exponential_transfer
-
-    subroutine gr_production_transfer_mlp_alg(f_q, pn, en, cp, beta, ct, kexc, n, prcp, hp, ht, q, &
-    & pr, perc, l, prr, prd, qr, qd)
-        !% Integrate MLP in stepwise aprroximation method
-
-        implicit none
-
-        real(sp), dimension(4), intent(in) :: f_q  ! fixed NN output size
-        real(sp), intent(in) :: pn, en, cp, beta, ct, kexc, n, prcp
-        real(sp), intent(inout) :: hp, ht, q
-        real(sp), intent(out) :: pr, perc, l, prr, prd, qr, qd
-
-        real(sp) :: inv_cp, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1
-
-        !% Production
-
-        inv_cp = 1._sp/cp
-        pr = 0._sp
-
-        ps = cp*(1._sp - hp*hp)*tanh(pn*inv_cp)/(1._sp + hp*tanh(pn*inv_cp))
-        ps = (1._sp + f_q(1))*ps
-
-        es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/(1._sp + (1._sp - hp)*tanh(en*inv_cp))
-        es = (1._sp + f_q(2))*es
-
-        hp_imd = hp + (ps - es)*inv_cp
-
-        if (pn .gt. 0) then
-
-            pr = pn - (hp_imd - hp)*cp
-
-        end if
-
-        perc = (hp_imd*cp)*(1._sp - (1._sp + (hp_imd/beta)**4)**(-0.25_sp))
-
-        hp = hp_imd - perc*inv_cp
-
-        !% Transfer
-
-        nm1 = n - 1._sp
-        d1pnm1 = 1._sp/nm1
-
-        l = (1._sp + f_q(4))*kexc*ht**3.5_sp
-
-        prr = (0.9_sp*(1._sp - f_q(3)**2))*(pr + perc) + l
-        prd = (0.1_sp + 0.9_sp*f_q(3)**2)*(pr + perc)
-
-        if (prcp .lt. 0._sp) then
-
-            pr_imd = ((ht*ct)**(-nm1) - ct**(-nm1))**(-d1pnm1) - (ht*ct)
-
-        else
-
-            pr_imd = prr
-
-        end if
-
-        ht_imd = max(1.e-6_sp, ht + pr_imd/ct)
-
-        ht = (((ht_imd*ct)**(-nm1) + ct**(-nm1))**(-d1pnm1))/ct
-
-        qd = max(0._sp, prd + l)
-
-        qr = (ht_imd - ht)*ct
-
-        q = qr + qd
-
-    end subroutine gr_production_transfer_mlp_alg
 
     subroutine gr_production_transfer_ode(pn, en, cp, ct, kexc, hp, ht, q, l)
         !% Solve state-space ODE system with implicit Euler
@@ -305,12 +238,12 @@ contains
 
     end subroutine gr_production_transfer_ode
 
-    subroutine gr_production_transfer_mlp_ode(f_q, pn, en, cp, ct, kexc, hp, ht, q, l)
+    subroutine gr_production_transfer_mlp_ode(fq, pn, en, cp, ct, kexc, hp, ht, q, l)
         !% Solve state-space ODE system with explicit Euler and MLP
 
         implicit none
 
-        real(sp), dimension(5), intent(in) :: f_q  ! fixed NN output size
+        real(sp), dimension(5), intent(in) :: fq  ! fixed NN output size
         real(sp), intent(in) :: pn, en, cp, ct, kexc
         real(sp), intent(inout) :: hp, ht, q
         real(sp), intent(out) :: l
@@ -326,17 +259,17 @@ contains
 
         !do i = 1, n_subtimesteps
 
-        fhp = (1._sp + f_q(1))*pn*(1._sp - hp**2) &
-        & - (1._sp + f_q(2))*en*hp*(2._sp - hp)
+        fhp = (1._sp + fq(1))*pn*(1._sp - hp**2) &
+        & - (1._sp + fq(2))*en*hp*(2._sp - hp)
 
         hp = hp + dt*fhp*inv_cp
 
         if (hp .le. 0._sp) hp = 1.e-6_sp
         if (hp .ge. 1._sp) hp = 1._sp - 1.e-6_sp
 
-        fht = (0.9_sp*(1._sp - f_q(3)**2))*(1._sp + f_q(1))*pn*hp**2 &
-        & + (1._sp + f_q(4))*kexc*ht**3.5_sp &
-        & - (1._sp + f_q(5))*ct*ht**5
+        fht = (0.9_sp*(1._sp - fq(3)**2))*(1._sp + fq(1))*pn*hp**2 &
+        & + (1._sp + fq(4))*kexc*ht**3.5_sp &
+        & - (1._sp + fq(5))*ct*ht**5
 
         ht = ht + dt*fht/ct
 
@@ -345,10 +278,10 @@ contains
 
         !end do
 
-        l = (1._sp + f_q(4))*kexc*ht**3.5_sp
+        l = (1._sp + fq(4))*kexc*ht**3.5_sp
 
-        q = (1._sp + f_q(5))*ct*ht**5 &
-        & + (0.1_sp + 0.9_sp*f_q(3)**2)*(1._sp + f_q(1))*pn*hp**2 + l
+        q = (1._sp + fq(5))*ct*ht**5 &
+        & + (0.1_sp + 0.9_sp*fq(3)**2)*(1._sp + fq(1))*pn*hp**2 + l
 
     end subroutine gr_production_transfer_mlp_ode
 
@@ -397,9 +330,9 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_production(pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
+                    call gr_production(0._sp, 0._sp, pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
 
-                    call gr_exchange(ac_kexc(k), ac_ht(k), l)
+                    call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
 
                 else
 
@@ -519,12 +452,15 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
-                input_layer(1) = ac_hp(k)
-                input_layer(2) = ac_ht(k)
-                input_layer(3) = pn(k)
-                input_layer(4) = en(k)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                call forward_mlp(weight_1, bias_1, weight_2, bias_2, input_layer, output_layer(:, k))
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, input_layer, output_layer(:, k))
+
+                else
+                    output_layer(:, k) = 0._sp
+
+                end if
 
             end do
         end do
@@ -532,7 +468,7 @@ contains
         ! Production and transfer with OPENMP
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, &
+        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
         !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_hp, ac_ht, ac_qt, pn, en) &
         !$OMP& private(row, col, k, time_step_returns, pr, perc, l, prr, prd, qr, qd)
 #endif
@@ -543,9 +479,29 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
-                call gr_production_transfer_mlp_alg(output_layer(:, k), pn(k), en(k), &
-                & ac_cp(k), beta, ac_ct(k), ac_kexc(k), 5._sp, ac_prcp(k), ac_hp(k), &
-                & ac_ht(k), ac_qt(k), pr, perc, l, prr, prd, qr, qd)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), ac_cp(k), &
+                    & beta, ac_hp(k), pr, perc)
+
+                    call gr_exchange(output_layer(4, k), ac_kexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
@@ -740,12 +696,15 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
-                input_layer(1) = ac_hp(k)
-                input_layer(2) = ac_ht(k)
-                input_layer(3) = pn(k)
-                input_layer(4) = en(k)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                call forward_mlp(weight_1, bias_1, weight_2, bias_2, input_layer, output_layer(:, k))
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, input_layer, output_layer(:, k))
+
+                else
+                    output_layer(:, k) = 0._sp
+
+                end if
 
             end do
         end do
@@ -842,7 +801,7 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_production(pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
+                    call gr_production(0._sp, 0._sp, pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
 
                     call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
@@ -937,7 +896,7 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_production(pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
+                    call gr_production(0._sp, 0._sp, pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
 
                     call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
@@ -1034,7 +993,7 @@ contains
 
                     en = ac_pet(k) - ei
 
-                    call gr_production(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr, perc)
+                    call gr_production(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr, perc)
 
                 else
 
@@ -1125,7 +1084,7 @@ contains
 
                     en = ac_pet(k) - ei
 
-                    call gr_production(pn, en, ac_ca(k), beta, ac_ha(k), pr, perc)
+                    call gr_production(0._sp, 0._sp, pn, en, ac_ca(k), beta, ac_ha(k), pr, perc)
 
                 else
 
