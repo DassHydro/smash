@@ -45,18 +45,17 @@ contains
 
         integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
         integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
+        integer, dimension(8) :: opposite_dir = (/5, 6, 7, 8, 1, 2, 3, 4/)
         integer :: i, row_imd, col_imd
 
         mask(row, col) = 1
-
+        
         do i = 1, 8
 
             row_imd = row + drow(i)
             col_imd = col + dcol(i)
 
             if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
-
-            if (abs(flwdir(row, col) - flwdir(row_imd, col_imd)) .eq. 4) cycle
 
             if (flwdir(row_imd, col_imd) .eq. i) call mask_upstream_cells(nrow, ncol, flwdir, row_imd, col_imd, mask)
 
@@ -76,16 +75,20 @@ contains
         real(4), intent(in) :: area
         integer, intent(in) :: max_depth
         integer, dimension(nrow, ncol), intent(out) :: mask_dln
+        !integer, dimension(nrow, ncol), intent(out) :: mask_well
         integer, intent(out) :: col_dln, row_dln
 
         integer, dimension(nrow, ncol) :: mask_dln_imd
+        !integer, dimension(nrow, ncol) :: mask_well_imd
         integer :: i, j, row_imd, col_imd
         real(4) :: min_tol, tol
 
         !% Transform from Python to FORTRAN index
         row = row + 1
         col = col + 1
-
+        
+        !mask_well_imd=0
+        
         min_tol = huge(0._4)
 
         do i = -max_depth, max_depth
@@ -100,7 +103,7 @@ contains
 
                 call mask_upstream_cells(nrow, ncol, flwdir, row_imd, &
                 & col_imd, mask_dln_imd)
-
+                
                 tol = abs(area - sum(mask_dln_imd*dx*dy))/area
 
                 if (tol .ge. min_tol) cycle
@@ -112,6 +115,7 @@ contains
                 col_dln = col_imd - 1
 
                 mask_dln = mask_dln_imd
+                !mask_well = mask_well_imd
 
             end do
 
@@ -350,7 +354,7 @@ contains
             if (flwdir(row_imd, col_imd) .ne. i) cycle
             
             !% Check if well
-            if ( flwdir(row_imd, col_imd) .eq. i .and. flwdir(row, col) .eq. opposite_dir(i) ) cycle
+!~             if ( flwdir(row_imd, col_imd) .eq. i .and. flwdir(row, col) .eq. opposite_dir(i) ) cycle
 
             !% Check for nested catchment and set flag
             do j = 1, ng
@@ -487,7 +491,6 @@ contains
         integer, dimension(3) :: dir = (/3, 4, 5/)
         integer, dimension(3) :: opposite_dir = (/7, 8, 1/)
         
-        write(*,*) "hello"
         well = 0
         
         do i=1,nrow-1
@@ -496,21 +499,18 @@ contains
 
                 do k = 1, 3
                     
-                    row_imd = i + drow(i)
-                    col_imd = j + dcol(i)
+                    row_imd = i + drow(k)
+                    col_imd = j + dcol(k)
                     
-                    if ( flwdir(row_imd, col_imd) .eq. dir(k) .and. flwdir(i, j) .eq. opposite_dir(k) ) then
+                    if ( flwdir(row_imd, col_imd) .eq. opposite_dir(k) .and. flwdir(i, j) .eq. dir(k) ) then
                         
                         well(i,j) = 1
-                        well(row_imd,col_imd) = 1
-                        
-                        write(*,*) '</> A well is detected at row/col',i,j
                         
                     end if
                 
                 end do
             
-            end do
+            end do  
         
         end do
 

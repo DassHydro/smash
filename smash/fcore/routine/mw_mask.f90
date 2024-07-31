@@ -35,14 +35,14 @@ contains
             
             if (row_imd .lt. 1 .or. row_imd .gt. mesh%nrow .or. col_imd .lt. 1 .or. col_imd .gt. mesh%ncol) cycle
             
-            if ( mesh%flwdir(row_imd, col_imd) .eq. i .and. mesh%flwdir(row, col) .eq. opposite_dir(i) ) then
+!~             if ( mesh%flwdir(row_imd, col_imd) .eq. i .and. mesh%flwdir(row, col) .eq. opposite_dir(i) ) then
                 
-                write(*,*) 'A well is detected at row/col',row,col,&
-                &' Xcoord=', mesh%xmin+col*mesh%xres, 'Ycoord=', mesh%ymax-row*mesh%yres
+!~                 write(*,*) 'A well is detected at row/col',row,col,&
+!~                 &' Xcoord=', mesh%xmin+col*mesh%xres, 'Ycoord=', mesh%ymax-row*mesh%yres
                 
-                cycle
+!~                 cycle
                 
-            end if
+!~             end if
             
             if (mesh%flwdir(row_imd, col_imd) .eq. i) call mask_upstream_cells(mesh, row_imd, col_imd, mask)
 
