@@ -338,35 +338,10 @@ def _standardize_simulation_optimize_options_net(
 
         n_neurons = round(np.sqrt(ntrain * nd) * 2 / 3)
 
-        net.add(
-            layer="dense",
-            options={
-                "input_shape": (nd,),
-                "neurons": n_neurons,
-                "kernel_initializer": "glorot_uniform",
-            },
-        )
-        net.add(layer="activation", options={"name": "relu"})
-
-        net.add(
-            layer="dense",
-            options={
-                "neurons": round(n_neurons / 2),
-                "kernel_initializer": "glorot_uniform",
-            },
-        )
-        net.add(layer="activation", options={"name": "relu"})
-
-        net.add(
-            layer="dense",
-            options={"neurons": ncv, "kernel_initializer": "glorot_uniform"},
-        )
-        net.add(layer="activation", options={"name": "sigmoid"})
-
-        net.add(
-            layer="scale",
-            options={"bounds": bound_values},
-        )
+        net.add_dense(n_neurons, input_shape=nd, activation="relu", kernel_initializer="glorot_uniform")
+        net.add_dense(round(n_neurons / 2), activation="relu", kernel_initializer="glorot_uniform")
+        net.add_dense(ncv, activation="sigmoid", kernel_initializer="glorot_uniform")
+        net.add_scale(bound_values)
 
     elif not isinstance(net, Net):
         raise TypeError(f"net optimize_options: Unknown network {net}")
@@ -378,24 +353,24 @@ def _standardize_simulation_optimize_options_net(
         # % check input shape
         ips = net.layers[0].input_shape
 
-        if ips[0] != nd:
+        if ips[-1] != nd:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of input layer ({ips[0]}) and "
-                f"the number of descriptors ({nd}): {ips[0]} != {nd}"
+                f"net optimize_options: Inconsistent value between the number of input layer ({ips[-1]}) "
+                f"and the number of descriptors ({nd}): {ips[-1]} != {nd}"
             )
 
         # % check output shape
         ios = net.layers[-1].output_shape()
 
-        if ios[0] != ncv:
+        if ios[-1] != ncv:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of output layer ({ios[0]}) and "
-                f"the number of parameters ({ncv}): {ios[0]} != {ncv}"
+                f"net optimize_options: Inconsistent value between the number of output layer ({ios[-1]}) "
+                f"and the number of parameters ({ncv}): {ios[-1]} != {ncv}"
             )
 
         # % check bounds constraints
         if hasattr(net.layers[-1], "_scale_func"):
-            net_bounds = net.layers[-1]._scale_func._bounds
+            net_bounds = np.transpose([net.layers[-1]._scale_func.lower, net.layers[-1]._scale_func.upper])
 
             diff = np.not_equal(net_bounds, bound_values)
 

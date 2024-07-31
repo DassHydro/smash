@@ -16,7 +16,7 @@ class SGD:
         The momentum used to smooth the gradient updates.
     """
 
-    def __init__(self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options):
+    def __init__(self, learning_rate: float = 0.01, momentum: float = 0):
         self.learning_rate = learning_rate
 
         self.momentum = momentum
@@ -26,7 +26,6 @@ class SGD:
         if self.w_updt is None:
             self.w_updt = np.zeros(np.shape(w))
 
-        # Use momentum if set
         self.w_updt = self.momentum * self.w_updt + (1 - self.momentum) * grad_wrt_w
 
         return w - self.learning_rate * self.w_updt
@@ -48,14 +47,12 @@ class Adam:
         Exponential decay rate for the second moment estimate.
     """
 
-    # TODO: Add function check_unknown_options
     def __init__(
         self,
         learning_rate: float = 0.001,
         b1: float = 0.9,
         b2: float = 0.999,
         eps=1e-8,
-        **unknown_options,
     ):
         self.learning_rate = learning_rate
 
@@ -78,9 +75,9 @@ class Adam:
         m_hat = self.m / (1 - self.b1)
         v_hat = self.v / (1 - self.b2)
 
-        self.w_updt = self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
+        w_updt = self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
 
-        return w - self.w_updt
+        return w - w_updt
 
 
 class Adagrad:
@@ -94,22 +91,23 @@ class Adagrad:
 
     """
 
-    # TODO: Add function check_unknown_options
-    def __init__(self, learning_rate: float = 0.01, eps=1e-8, **unknown_options):
+    def __init__(self, learning_rate: float = 0.01, eps=1e-8):
         self.learning_rate = learning_rate
 
-        self.G = None  # Sum of squares of the gradients
+        self.g = None  # Sum of squares of the gradients
         self.eps = eps
 
     def update(self, w: np.ndarray, grad_wrt_w: np.ndarray):
-        if self.G is None:
-            self.G = np.zeros(np.shape(w))
+        if self.g is None:
+            self.g = np.zeros(np.shape(w))
 
         # Add the square of the gradient of the loss function at w
-        self.G += np.power(grad_wrt_w, 2)
+        self.g += np.power(grad_wrt_w, 2)
 
         # Adaptive gradient with higher learning rate for sparse data
-        return w - self.learning_rate * grad_wrt_w / np.sqrt(self.G + self.eps)
+        w_updt = self.learning_rate * grad_wrt_w / np.sqrt(self.g + self.eps)
+
+        return w - w_updt
 
 
 class RMSprop:
@@ -125,26 +123,26 @@ class RMSprop:
         The decay rate for the running average of the squared gradients.
     """
 
-    # TODO: Add function check_unknown_options
     def __init__(
         self,
         learning_rate: float = 0.001,
         rho: float = 0.9,
         eps=1e-8,
-        **unknown_options,
     ):
         self.learning_rate = learning_rate
 
-        self.Eg = None  # Running average of the square gradients at w
+        self.eg = None  # Running average of the square gradients at w
         self.eps = eps
         self.rho = rho
 
     def update(self, w: np.ndarray, grad_wrt_w: np.ndarray):
-        if self.Eg is None:
-            self.Eg = np.zeros(np.shape(grad_wrt_w))
+        if self.eg is None:
+            self.eg = np.zeros(np.shape(grad_wrt_w))
 
-        self.Eg = self.rho * self.Eg + (1 - self.rho) * np.power(grad_wrt_w, 2)
+        self.eg = self.rho * self.eg + (1 - self.rho) * np.power(grad_wrt_w, 2)
 
-        # Divide the learning rate for a weight by a running average of the magnitudes of recent gradients for
-        # that weight
-        return w - self.learning_rate * grad_wrt_w / np.sqrt(self.Eg + self.eps)
+        # Divide the learning rate for a weight by a running average of
+        # the magnitudes of recent gradients for that weight
+        w_updt = self.learning_rate * grad_wrt_w / np.sqrt(self.eg + self.eps)
+
+        return w - w_updt
