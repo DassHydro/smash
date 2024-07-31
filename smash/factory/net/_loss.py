@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from smash._constant import OPTIMIZABLE_NN_PARAMETERS
+from smash._constant import NN_PARAMETERS_KEYS
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,
@@ -102,7 +102,7 @@ def _hcost_prime(
         grad_reg = np.reshape(grad_reg, (len(grad_reg), -1)).T
 
     # % Get the gradient of parameterization NN if used
-    grad_par = [getattr(parameters_b.nn_parameters, key).copy() for key in OPTIMIZABLE_NN_PARAMETERS]
+    grad_par = [getattr(parameters_b.nn_parameters, key).copy() for key in NN_PARAMETERS_KEYS]
 
     return grad_reg, grad_par
 

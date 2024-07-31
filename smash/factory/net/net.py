@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import OPTIMIZABLE_NN_PARAMETERS, PY_OPTIMIZER, PY_OPTIMIZER_CLASS
+from smash._constant import NN_PARAMETERS_KEYS, PY_OPTIMIZER, PY_OPTIMIZER_CLASS
 from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
 
@@ -567,7 +567,7 @@ class Net(object):
 
             # backpropagation and weights update
             if epo < epochs - 1:
-                for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS):
+                for i, key in enumerate(NN_PARAMETERS_KEYS):
                     if key in parameters:  # update trainable parameters of the parameterization NN if used
                         setattr(
                             instance.nn_parameters,
