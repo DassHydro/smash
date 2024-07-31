@@ -165,7 +165,9 @@ def _standardize_set_weight_bias_value(
                             f"from shape {arr.shape} into shape {kind_shape}"
                         )
                 else:
-                    raise TypeError("Each element of value argument must be float or a Numpy array")
+                    raise TypeError(
+                        "Each element of value argument must be of Numeric type (int, float) or np.ndarray"
+                    )
 
     else:
         raise TypeError("value argument must be a list of a same size with layers")
