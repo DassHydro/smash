@@ -1377,15 +1377,6 @@ cost_options : `dict[str, Any]` or None, default None
           ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
           position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
 
-    - x_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background values of the control vector.
-
-    - l_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background lower bounds of the control vector.
-
-    - u_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background upper bounds of the control vector.
-
 Examples
 --------
 >>> from smash.factory import load_dataset
