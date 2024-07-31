@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import ADAPTIVE_OPTIMIZER, OPTIMIZABLE_NN_PARAMETERS, OPTIMIZER_CLASS
+from smash._constant import ADAPTIVE_OPTIMIZER, NN_PARAMETERS_KEYS, OPTIMIZER_CLASS
 from smash.core.simulation.optimize._tools import _inf_norm
 from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
 from smash.factory.net._loss import _hcost, _hcost_prime
@@ -570,7 +570,7 @@ class Net(object):
 
             # backpropagation and weights update
             if ite < maxiter:
-                for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS):
+                for i, key in enumerate(NN_PARAMETERS_KEYS):
                     if (
                         key in model_params_states
                     ):  # update trainable parameters of the parameterization NN if used
@@ -627,13 +627,13 @@ class Net(object):
 
     def set_weight(self, value: list[Any]):
         """
-        Set the weights of the trainable layers of the neural network `Net`.
+        Set the values of the weight in the neural network `Net`.
 
         Parameters
         ----------
         value : list[`float` or `numpy.ndarray`]
-            The list of value(s) to set to the weights of the neural network.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the weight shape.
+            The list of values to set to the weights of all layers. If an element of the list is
+            a `numpy.ndarray`, its shape must be broadcastable into the weight shape of that layer.
 
         See Also
         --------
@@ -675,13 +675,13 @@ class Net(object):
 
     def set_bias(self, value: list[Any]):
         """
-        Set the biases of the trainable layers of the neural network `Net`.
+        Set the values of the bias in the neural network `Net`.
 
         Parameters
         ----------
         value : list[`float` or `numpy.ndarray`]
-            The list of value(s) to set to the biases of the neural network.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the bias shape.
+            The list of values to set to the biases of all layers. If an element of the list is
+            a `numpy.ndarray`, its shape must be broadcastable into the bias shape of that layer.
 
         See Also
         --------
@@ -730,7 +730,7 @@ class Net(object):
 
         See Also
         --------
-        Net.set_weight : Set the weights of the trainable layers of the neural network `Net`.
+        Net.set_weight : Set the values of the weight in the neural network `Net`.
 
         Examples
         --------
@@ -772,7 +772,7 @@ class Net(object):
 
         See Also
         --------
-        Net.set_bias : Set the biases of the trainable layers of the neural network `Net`.
+        Net.set_bias : Set the values of the bias in the neural network `Net`.
 
         Examples
         --------

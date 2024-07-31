@@ -589,7 +589,7 @@ OPTIMIZABLE_SERR_SIGMA_PARAMETERS = dict(
 ### OPTIMIZABLE NN PARAMETERS ###
 #################################
 
-OPTIMIZABLE_NN_PARAMETERS = ["weight_1", "bias_1", "weight_2", "bias_2"]
+NN_PARAMETERS_KEYS = ["weight_1", "bias_1", "weight_2", "bias_2"]
 
 ### SETUP ###
 #############
@@ -1027,7 +1027,7 @@ MODEL_DDT_IO_ATTR_KEYS = {
     "atmos_data": ["mean_prcp", "mean_pet", "mean_snow", "mean_temp"],
     "rr_parameters": ["keys", "values"],
     "rr_initial_states": ["keys", "values"],
-    "nn_parameters": OPTIMIZABLE_NN_PARAMETERS,
+    "nn_parameters": NN_PARAMETERS_KEYS,
     "serr_mu_parameters": ["keys", "values"],
     "serr_sigma_parameters": ["keys", "values"],
     "response": ["q"],

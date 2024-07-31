@@ -1372,6 +1372,19 @@ cost_options : `dict[str, Any]` or None, default None
         - ``<key>-<code>``: Structural error parameter where ``<key>`` is the name of any structural error mu
           or sigma parameters and ``<code>``, the corresponding gauge (``'sg0-V3524010'``, ``'sg1-V3524010'``,
           etc).
+        - ``<key>-<row>-<col>``: Weights and biases of the parameterization neural network where ``<key>``
+          indicates the layer and type of parameter (e.g., ``'weight_1'`` for the first layer weights,
+          ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
+          position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
+
+    - x_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background values of the control vector.
+
+    - l_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background lower bounds of the control vector.
+
+    - u_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background upper bounds of the control vector.
 
 Examples
 --------
@@ -1533,11 +1546,12 @@ _bayesian_optimize_doc_appender = DocAppender(_bayesian_optimize_doc, indents=0)
 _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="",
-    parameters_note_nn_parameters="",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
     model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
@@ -1548,11 +1562,12 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
 _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="",
-    parameters_note_nn_parameters="",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
     model_return="",
@@ -1578,11 +1593,12 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
 _bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_control_info_doc, indents=0)
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="",
-    parameters_note_nn_parameters="",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
 )

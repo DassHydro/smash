@@ -99,8 +99,7 @@ contains
         allocate (this%rr_parameters_descriptor(setup%nd, setup%nrrp))
         this%rr_parameters_descriptor = -99
 
-        !% contain 4 matrices/vectors: weight_1, bias_1, weight_2, bias_2
-        allocate (this%nn_parameters(4))
+        allocate (this%nn_parameters((size(setup%neurons) - 1)*2))
         this%nn_parameters = -99
 
         allocate (this%rr_initial_states(setup%nrrs))

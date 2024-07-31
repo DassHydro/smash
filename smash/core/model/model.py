@@ -1145,7 +1145,7 @@ class Model:
         >>> setup["hydrological_module"] = "gr4_mlp_alg"
         >>> model = smash.Model(setup, mesh)
 
-        By default, the weights and biases of the parameterization neural network is set to zero.
+        By default, the weight and bias of the parameterization neural network are set to zero.
         Access to their values with the getter method
         `get_nn_parameters_weight <Model.get_nn_parameters_weight>` or
         `get_nn_parameters_bias <Model.get_nn_parameters_bias>`
@@ -2394,7 +2394,7 @@ class Model:
         Returns
         -------
         value : list[`numpy.ndarray`]
-            A list of arrays representing the weights for each layer of the parameterization neural network.
+            A list of arrays representing the weights of all layers.
 
         See Also
         --------
@@ -2416,7 +2416,7 @@ class Model:
         >>> setup["hidden_neuron"] = 3
         >>> model = smash.Model(setup, mesh)
 
-        By default, the weights of the parameterization neural network is set to zero.
+        By default, the weights of all layers are set to zero.
         Access to their values with the getter methods
         `get_nn_parameters_weight <Model.get_nn_parameters_weight>`
 
@@ -2440,7 +2440,7 @@ class Model:
         Returns
         -------
         value : list[`numpy.ndarray`]
-            A list of arrays representing the biases for each layer of the parameterization neural network.
+            A list of arrays representing the biases of all layers.
 
         See Also
         --------
@@ -2462,7 +2462,7 @@ class Model:
         >>> setup["hidden_neuron"] = 6
         >>> model = smash.Model(setup, mesh)
 
-        By default, the biases of the parameterization neural network is set to zero.
+        By default, the biases of all layers are set to zero.
         Access to their values with the getter methods
         `get_nn_parameters_bias <Model.get_nn_parameters_bias>`
 
@@ -2486,8 +2486,8 @@ class Model:
         Parameters
         ----------
         value : list[`float` or `numpy.ndarray`] or None, default None
-            The list of value(s) to set to the weights of the neural network.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the weight shape.
+            The list of values to set to the weights of all layers. If an element of the list is
+            a `numpy.ndarray`, its shape must be broadcastable into the weight shape of that layer.
             If not used, a default or specified initialization method will be used.
 
         initializer : str, default 'glorot_uniform'
@@ -2580,8 +2580,8 @@ class Model:
         Parameters
         ----------
         value : list[`float` or `numpy.ndarray`] or None, default None
-            The list of value(s) to set to the biases of the neural network.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the bias shape.
+            The list of values to set to the biases of all layers. If an element of the list is
+            a `numpy.ndarray`, its shape must be broadcastable into the bias shape of that layer.
             If not used, a default or specified initialization method will be used.
 
         initializer : str, default 'zeros'

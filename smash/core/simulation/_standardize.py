@@ -27,7 +27,7 @@ from smash._constant import (
     MAPPING,
     MAPPING_OPTIMIZER,
     METRICS,
-    OPTIMIZABLE_NN_PARAMETERS,
+    NN_PARAMETERS_KEYS,
     OPTIMIZABLE_RR_INITIAL_STATES,
     OPTIMIZABLE_RR_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
@@ -146,24 +146,21 @@ def _standardize_simulation_optimize_options_parameters(
     available_parameters = available_rr_parameters + available_rr_initial_states
 
     if is_hybrid_structure:
-        available_parameters.extend(OPTIMIZABLE_NN_PARAMETERS)
+        available_parameters.extend(NN_PARAMETERS_KEYS)
 
     if is_bayesian:
         available_parameters.extend(available_serr_mu_parameters + available_serr_sigma_parameters)
 
     if parameters is None:
-        if is_bayesian:
-            parameters = np.array(
-                available_rr_parameters + available_serr_mu_parameters + available_serr_sigma_parameters,
-                ndmin=1,
-            )
-        elif (
-            is_hybrid_structure
-        ):  # hybrid structure is currently not working with bayes optim. TODO for later versions
-            parameters = np.array(available_rr_parameters + OPTIMIZABLE_NN_PARAMETERS, ndmin=1)
+        default_parameters = available_rr_parameters
 
-        else:
-            parameters = np.array(available_rr_parameters, ndmin=1)
+        if is_bayesian:
+            default_parameters += available_serr_mu_parameters + available_serr_sigma_parameters
+
+        if is_hybrid_structure:
+            default_parameters += NN_PARAMETERS_KEYS
+
+        parameters = np.array(default_parameters, ndmin=1)
 
     else:
         if isinstance(parameters, (str, list, tuple, np.ndarray)):
@@ -192,7 +189,7 @@ def _standardize_simulation_optimize_options_parameters(
 def _standardize_simulation_optimize_options_bounds(
     model: Model, parameters: np.ndarray, bounds: dict | None, **kwargs
 ) -> dict:
-    bounded_parameters = [p for p in parameters if p not in OPTIMIZABLE_NN_PARAMETERS]
+    bounded_parameters = [p for p in parameters if p not in NN_PARAMETERS_KEYS]
 
     if bounds is None:
         bounds = {}
@@ -1196,9 +1193,9 @@ def _standardize_simulation_optimize_options_finalize(
                         optimize_options["rr_initial_states_descriptor"][j, i] = 1
 
     # % nn parameters
-    optimize_options["nn_parameters"] = np.zeros(shape=len(OPTIMIZABLE_NN_PARAMETERS), dtype=np.int32)
+    optimize_options["nn_parameters"] = np.zeros(shape=len(NN_PARAMETERS_KEYS), dtype=np.int32)
 
-    for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS):
+    for i, key in enumerate(NN_PARAMETERS_KEYS):
         if key in optimize_options["parameters"]:
             optimize_options["nn_parameters"][i] = 1
 

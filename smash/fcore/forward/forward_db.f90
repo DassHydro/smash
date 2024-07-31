@@ -12589,7 +12589,7 @@ CONTAINS
   END SUBROUTINE DOT_PRODUCT_2D_1D_D
 
 !  Differentiation of dot_product_2d_1d in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: x a b
+!   gradient     of useful results: a b
 !   with respect to varying inputs: x a
   SUBROUTINE DOT_PRODUCT_2D_1D_B(a, a_b, x, x_b, b, b_b)
     IMPLICIT NONE
@@ -12610,6 +12610,7 @@ CONTAINS
       CALL PUSHINTEGER4(i - 1)
     END DO
     ad_to0 = j - 1
+    x_b = 0.0_4
     DO j=ad_to0,1,-1
       CALL POPINTEGER4(ad_to)
       DO i=ad_to,1,-1
@@ -12700,7 +12701,7 @@ CONTAINS
 
 !  Differentiation of forward_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: output_layer bias_1 bias_2
-!                input_layer weight_1 weight_2
+!                weight_1 weight_2
 !   with respect to varying inputs: bias_1 bias_2 input_layer weight_1
 !                weight_2
   SUBROUTINE FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
@@ -12752,7 +12753,6 @@ CONTAINS
       output_layer_b(i) = temp_b
       bias_2_b(i) = bias_2_b(i) + temp_b
     END DO
-    inter_layer_b = 0.0_4
     CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer, &
 &                      inter_layer_b, output_layer, output_layer_b)
     CALL POPINTEGER4(ad_to)
@@ -12807,7 +12807,6 @@ END MODULE MD_NEURAL_NETWORK_DIFF
 !%      - gr_exchange
 !%      - gr_threshold_exchange
 !%      - gr_transfer
-!%      - gr_production_transfer_mlp_alg
 !%      - gr_production_transfer_ode
 !%      - gr_production_transfer_mlp_ode
 !%      - gr4_time_step
@@ -12959,12 +12958,12 @@ CONTAINS
 
 !  Differentiation of gr_production in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: hp perc pr
-!   with respect to varying inputs: hp en cp pn
-  SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, hp, &
-&   hp_d, pr, pr_d, perc, perc_d)
+!   with respect to varying inputs: fq_ps hp en fq_es cp pn
+  SUBROUTINE GR_PRODUCTION_D(fq_ps, fq_ps_d, fq_es, fq_es_d, pn, pn_d, &
+&   en, en_d, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, perc_d)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
+    REAL(sp), INTENT(IN) :: fq_ps_d, fq_es_d, pn_d, en_d, cp_d
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
     REAL(sp), INTENT(OUT) :: pr, perc
@@ -12991,6 +12990,8 @@ CONTAINS
 &     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
 &     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
     ps = temp2
+    ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
+    ps = (1._sp+fq_ps)*ps
     temp2 = TANH(en*inv_cp)
     temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
@@ -13000,6 +13001,8 @@ CONTAINS
 &     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
 &     1._sp-hp)*temp2+1._sp)
     es = temp
+    es_d = es*fq_es_d + (fq_es+1._sp)*es_d
+    es = (1._sp+fq_es)*es
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
@@ -13019,13 +13022,14 @@ CONTAINS
   END SUBROUTINE GR_PRODUCTION_D
 
 !  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: hp cp perc pr
-!   with respect to varying inputs: hp en cp pn
-  SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, hp, &
-&   hp_b, pr, pr_b, perc, perc_b)
+!   gradient     of useful results: fq_ps hp en fq_es cp pn perc
+!                pr
+!   with respect to varying inputs: fq_ps hp en fq_es cp pn
+  SUBROUTINE GR_PRODUCTION_B(fq_ps, fq_ps_b, fq_es, fq_es_b, pn, pn_b, &
+&   en, en_b, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, perc_b)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp) :: pn_b, en_b, cp_b
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
+    REAL(sp) :: fq_ps_b, fq_es_b, pn_b, en_b, cp_b
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
     REAL(sp) :: pr, perc
@@ -13053,8 +13057,12 @@ CONTAINS
     INTEGER :: branch
     inv_cp = 1._sp/cp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+    CALL PUSHREAL4(ps)
+    ps = (1._sp+fq_ps)*ps
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+    CALL PUSHREAL4(es)
+    es = (1._sp+fq_es)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13063,12 +13071,14 @@ CONTAINS
     END IF
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
+    CALL PUSHREAL4(perc)
     perc = hp_imd*cp*(1._sp-pwr1)
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
     inv_cp = 1._sp/cp
     perc_b = perc_b - inv_cp*hp_b
     inv_cp_b = -(perc*hp_b)
+    CALL POPREAL4(perc)
     cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
@@ -13076,15 +13086,18 @@ CONTAINS
 &     4
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      pn_b = pr_b
+      pn_b = pn_b + pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
       cp_b = cp_b - (hp_imd-hp)*pr_b
     ELSE
       hp_b = 0.0_4
-      pn_b = 0.0_4
     END IF
     es_b = -(inv_cp*hp_imd_b)
+    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
+    CALL POPREAL4(es)
+    fq_es_b = fq_es_b + es*es_b
+    es_b = (fq_es+1._sp)*es_b
     temp4 = TANH(en*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
     temp1 = TANH(en*inv_cp)
@@ -13097,8 +13110,11 @@ CONTAINS
     ps_b = inv_cp*hp_imd_b
     temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
-    en_b = inv_cp*temp_b5 + inv_cp*temp_b4
+    en_b = en_b + inv_cp*temp_b5 + inv_cp*temp_b4
     cp_b = cp_b + hp*temp_b
+    CALL POPREAL4(ps)
+    fq_ps_b = fq_ps_b + ps*ps_b
+    ps_b = (fq_ps+1._sp)*ps_b
     temp = TANH(pn*inv_cp)
     temp0 = hp*temp + 1._sp
     temp1 = TANH(pn*inv_cp)
@@ -13108,15 +13124,15 @@ CONTAINS
     temp_b1 = -(temp2*temp1*temp_b/temp0)
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b4 + &
-&     pn*temp_b2 + pn*temp_b0
+    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4 + pn*temp_b2 + pn*&
+&     temp_b0
     cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
   END SUBROUTINE GR_PRODUCTION_B
 
-  SUBROUTINE GR_PRODUCTION(pn, en, cp, beta, hp, pr, perc)
+  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(OUT) :: pr, perc
     REAL(sp) :: inv_cp, ps, es, hp_imd
@@ -13126,8 +13142,10 @@ CONTAINS
     inv_cp = 1._sp/cp
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+    ps = (1._sp+fq_ps)*ps
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+    es = (1._sp+fq_es)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
     pwx1 = 1._sp + (hp_imd/beta)**4
@@ -13138,42 +13156,46 @@ CONTAINS
 
 !  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: l
-!   with respect to varying inputs: kexc ht
-  SUBROUTINE GR_EXCHANGE_D(kexc, kexc_d, ht, ht_d, l, l_d)
+!   with respect to varying inputs: kexc fq_l ht
+  SUBROUTINE GR_EXCHANGE_D(fq_l, fq_l_d, kexc, kexc_d, ht, ht_d, l, l_d)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc
-    REAL(sp), INTENT(IN) :: kexc_d
+    REAL(sp), INTENT(IN) :: fq_l, kexc
+    REAL(sp), INTENT(IN) :: fq_l_d, kexc_d
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(INOUT) :: ht_d
     REAL(sp), INTENT(OUT) :: l
     REAL(sp), INTENT(OUT) :: l_d
     REAL(sp) :: temp
     temp = ht**3.5_sp
-    l_d = temp*kexc_d + kexc*3.5_sp*ht**2.5*ht_d
-    l = kexc*temp
+    l_d = temp*(kexc*fq_l_d+(fq_l+1._sp)*kexc_d) + (fq_l+1._sp)*kexc*&
+&     3.5_sp*ht**2.5*ht_d
+    l = (fq_l+1._sp)*kexc*temp
   END SUBROUTINE GR_EXCHANGE_D
 
 !  Differentiation of gr_exchange in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: l kexc ht
-!   with respect to varying inputs: kexc ht
-  SUBROUTINE GR_EXCHANGE_B(kexc, kexc_b, ht, ht_b, l, l_b)
+!   gradient     of useful results: l kexc fq_l ht
+!   with respect to varying inputs: kexc fq_l ht
+  SUBROUTINE GR_EXCHANGE_B(fq_l, fq_l_b, kexc, kexc_b, ht, ht_b, l, l_b)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc
-    REAL(sp) :: kexc_b
+    REAL(sp), INTENT(IN) :: fq_l, kexc
+    REAL(sp) :: fq_l_b, kexc_b
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
-    kexc_b = kexc_b + ht**3.5_sp*l_b
-    ht_b = ht_b + 3.5_sp*ht**2.5*kexc*l_b
+    REAL(sp) :: temp_b
+    temp_b = ht**3.5_sp*l_b
+    ht_b = ht_b + 3.5_sp*ht**2.5*(fq_l+1._sp)*kexc*l_b
+    fq_l_b = fq_l_b + kexc*temp_b
+    kexc_b = kexc_b + (fq_l+1._sp)*temp_b
   END SUBROUTINE GR_EXCHANGE_B
 
-  SUBROUTINE GR_EXCHANGE(kexc, ht, l)
+  SUBROUTINE GR_EXCHANGE(fq_l, kexc, ht, l)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc
+    REAL(sp), INTENT(IN) :: fq_l, kexc
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(OUT) :: l
-    l = kexc*ht**3.5_sp
+    l = (1._sp+fq_l)*kexc*ht**3.5_sp
   END SUBROUTINE GR_EXCHANGE
 
 !  Differentiation of gr_threshold_exchange in forward (tangent) mode (with options fixinterface noISIZE context):
@@ -13630,538 +13652,6 @@ CONTAINS
     he = he_star - qe
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER
 
-!  Differentiation of gr_production_transfer_mlp_alg in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: q hp ht
-!   with respect to varying inputs: kexc hp ht en f_q cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG_D(f_q, f_q_d, pn, pn_d, en, &
-&   en_d, cp, cp_d, beta, ct, ct_d, kexc, kexc_d, n, prcp, hp, hp_d, ht&
-&   , ht_d, q, q_d, pr, perc, l, prr, prd, qr, qd)
-    IMPLICIT NONE
-! fixed NN output size
-    REAL(sp), DIMENSION(4), INTENT(IN) :: f_q
-    REAL(sp), DIMENSION(4), INTENT(IN) :: f_q_d
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, ct, kexc, n, prcp
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, ct_d, kexc_d
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
-    REAL(sp), INTENT(INOUT) :: hp_d, ht_d, q_d
-    REAL(sp), INTENT(OUT) :: pr, perc, l, prr, prd, qr, qd
-    REAL(sp) :: pr_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pr_imd_d, ht_imd_d
-    INTRINSIC TANH
-    INTRINSIC MAX
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_d
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_d
-    REAL(sp) :: pwy1
-    REAL(sp) :: pwy2
-    REAL(sp) :: pwr2
-    REAL(sp) :: pwr2_d
-    REAL(sp) :: pwx3
-    REAL(sp) :: pwx3_d
-    REAL(sp) :: pwy3
-    REAL(sp) :: pwr3
-    REAL(sp) :: pwr3_d
-    REAL(sp) :: temp
-    REAL(sp) :: temp0
-    REAL(sp) :: temp1
-    REAL(sp) :: temp2
-    REAL(sp) :: perc_d
-    REAL(sp) :: qr_d
-    REAL(sp) :: prd_d
-    REAL(sp) :: l_d
-    REAL(sp) :: qd_d
-    REAL(sp) :: prr_d
-!% Production
-    inv_cp_d = -(cp_d/cp**2)
-    inv_cp = 1._sp/cp
-    pr = 0._sp
-    temp = TANH(pn*inv_cp)
-    temp0 = TANH(pn*inv_cp)
-    temp1 = cp*(-(hp*hp)+1._sp)
-    temp2 = temp1*temp0/(hp*temp+1._sp)
-    ps_d = (temp0*((1._sp-hp**2)*cp_d-cp*2*hp*hp_d)+temp1*(1.0-TANH(pn*&
-&     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
-&     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
-    ps = temp2
-    ps_d = ps*f_q_d(1) + (f_q(1)+1._sp)*ps_d
-    ps = (1._sp+f_q(1))*ps
-    temp2 = TANH(en*inv_cp)
-    temp1 = TANH(en*inv_cp)
-    temp0 = hp*cp*(-hp+2._sp)
-    temp = temp0*temp1/((-hp+1._sp)*temp2+1._sp)
-    es_d = (temp1*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp0*(1.0-&
-&     TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp*((1._sp-hp)*(&
-&     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
-&     1._sp-hp)*temp2+1._sp)
-    es = temp
-    es_d = es*f_q_d(2) + (f_q(2)+1._sp)*es_d
-    es = (1._sp+f_q(2))*es
-    hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) THEN
-      pr_d = pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d
-      pr = pn - (hp_imd-hp)*cp
-    ELSE
-      pr_d = 0.0_4
-    END IF
-    pwx1_d = 4*hp_imd**3*hp_imd_d/beta**4
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1_d = -(0.25_sp*pwx1**(-1.25)*pwx1_d)
-    pwr1 = pwx1**(-0.25_sp)
-    perc_d = (1._sp-pwr1)*(cp*hp_imd_d+hp_imd*cp_d) - hp_imd*cp*pwr1_d
-    perc = hp_imd*cp*(1._sp-pwr1)
-    hp_d = hp_imd_d - inv_cp*perc_d - perc*inv_cp_d
-    hp = hp_imd - perc*inv_cp
-!% Transfer
-    nm1 = n - 1._sp
-    d1pnm1 = 1._sp/nm1
-    temp2 = ht**3.5_sp
-    l_d = temp2*(kexc*f_q_d(4)+(f_q(4)+1._sp)*kexc_d) + (f_q(4)+1._sp)*&
-&     kexc*3.5_sp*ht**2.5*ht_d
-    l = (f_q(4)+1._sp)*kexc*temp2
-    prr_d = 0.9_sp*((1._sp-f_q(3)**2)*(pr_d+perc_d)-(pr+perc)*2*f_q(3)*&
-&     f_q_d(3)) + l_d
-    prr = 0.9_sp*(1._sp-f_q(3)**2)*(pr+perc) + l
-    temp2 = 0.9_sp*(f_q(3)*f_q(3)) + 0.1_sp
-    prd_d = (pr+perc)*0.9_sp*2*f_q(3)*f_q_d(3) + temp2*(pr_d+perc_d)
-    prd = temp2*(pr+perc)
-    IF (prcp .LT. 0._sp) THEN
-      pwx1_d = ct*ht_d + ht*ct_d
-      pwx1 = ht*ct
-      pwy1 = -nm1
-      IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&     THEN
-        pwr1_d = 0.0_4
-      ELSE
-        pwr1_d = pwy1*pwx1**(pwy1-1)*pwx1_d
-      END IF
-      pwr1 = pwx1**pwy1
-      pwy2 = -nm1
-      IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
-&     THEN
-        pwr2_d = 0.0_4
-      ELSE
-        pwr2_d = pwy2*ct**(pwy2-1)*ct_d
-      END IF
-      pwr2 = ct**pwy2
-      pwx3_d = pwr1_d - pwr2_d
-      pwx3 = pwr1 - pwr2
-      pwy3 = -d1pnm1
-      IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&     THEN
-        pwr3_d = 0.0_4
-      ELSE
-        pwr3_d = pwy3*pwx3**(pwy3-1)*pwx3_d
-      END IF
-      pwr3 = pwx3**pwy3
-      pr_imd_d = pwr3_d - ct*ht_d - ht*ct_d
-      pr_imd = pwr3 - ht*ct
-    ELSE
-      pr_imd_d = prr_d
-      pr_imd = prr
-    END IF
-    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
-      ht_imd_d = ht_d + (pr_imd_d-pr_imd*ct_d/ct)/ct
-      ht_imd = ht + pr_imd/ct
-    ELSE
-      ht_imd = 1.e-6_sp
-      ht_imd_d = 0.0_4
-    END IF
-    pwx1_d = ct*ht_imd_d + ht_imd*ct_d
-    pwx1 = ht_imd*ct
-    pwy1 = -nm1
-    IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&   THEN
-      pwr1_d = 0.0_4
-    ELSE
-      pwr1_d = pwy1*pwx1**(pwy1-1)*pwx1_d
-    END IF
-    pwr1 = pwx1**pwy1
-    pwy2 = -nm1
-    IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
-      pwr2_d = 0.0_4
-    ELSE
-      pwr2_d = pwy2*ct**(pwy2-1)*ct_d
-    END IF
-    pwr2 = ct**pwy2
-    pwx3_d = pwr1_d + pwr2_d
-    pwx3 = pwr1 + pwr2
-    pwy3 = -d1pnm1
-    IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&   THEN
-      pwr3_d = 0.0_4
-    ELSE
-      pwr3_d = pwy3*pwx3**(pwy3-1)*pwx3_d
-    END IF
-    pwr3 = pwx3**pwy3
-    ht_d = (pwr3_d-pwr3*ct_d/ct)/ct
-    ht = pwr3/ct
-    IF (0._sp .LT. prd + l) THEN
-      qd_d = prd_d + l_d
-      qd = prd + l
-    ELSE
-      qd = 0._sp
-      qd_d = 0.0_4
-    END IF
-    qr_d = ct*(ht_imd_d-ht_d) + (ht_imd-ht)*ct_d
-    qr = (ht_imd-ht)*ct
-    q_d = qr_d + qd_d
-    q = qr + qd
-  END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG_D
-
-!  Differentiation of gr_production_transfer_mlp_alg in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: q kexc hp ht en f_q cp pn ct
-!   with respect to varying inputs: kexc hp ht en f_q cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG_B(f_q, f_q_b, pn, pn_b, en, &
-&   en_b, cp, cp_b, beta, ct, ct_b, kexc, kexc_b, n, prcp, hp, hp_b, ht&
-&   , ht_b, q, q_b, pr, perc, l, prr, prd, qr, qd)
-    IMPLICIT NONE
-! fixed NN output size
-    REAL(sp), DIMENSION(4), INTENT(IN) :: f_q
-    REAL(sp), DIMENSION(4) :: f_q_b
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, ct, kexc, n, prcp
-    REAL(sp) :: pn_b, en_b, cp_b, ct_b, kexc_b
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
-    REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
-    REAL(sp) :: pr, perc, l, prr, prd, qr, qd
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pr_imd_b, ht_imd_b
-    INTRINSIC TANH
-    INTRINSIC MAX
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_b
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_b
-    REAL(sp) :: pwy1
-    REAL(sp) :: pwy2
-    REAL(sp) :: pwr2
-    REAL(sp) :: pwr2_b
-    REAL(sp) :: pwx3
-    REAL(sp) :: pwx3_b
-    REAL(sp) :: pwy3
-    REAL(sp) :: pwr3
-    REAL(sp) :: pwr3_b
-    REAL(sp) :: temp
-    REAL(sp) :: temp0
-    REAL(sp) :: temp_b
-    REAL(sp) :: temp1
-    REAL(sp) :: temp2
-    REAL(sp) :: temp3
-    REAL(sp) :: temp_b0
-    REAL(sp) :: temp_b1
-    REAL(sp) :: temp4
-    REAL(sp) :: temp_b2
-    REAL(sp) :: temp_b3
-    REAL(sp) :: temp_b4
-    REAL(sp) :: temp_b5
-    INTEGER :: branch
-    REAL(sp) :: perc_b
-    REAL(sp) :: pr_b
-    REAL(sp) :: qr_b
-    REAL(sp) :: prd_b
-    REAL(sp) :: l_b
-    REAL(sp) :: qd_b
-    REAL(sp) :: prr_b
-!% Production
-    inv_cp = 1._sp/cp
-    pr = 0._sp
-    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-    CALL PUSHREAL4(ps)
-    ps = (1._sp+f_q(1))*ps
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
-&     inv_cp))
-    CALL PUSHREAL4(es)
-    es = (1._sp+f_q(2))*es
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) THEN
-      pr = pn - (hp_imd-hp)*cp
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    perc = hp_imd*cp*(1._sp-pwr1)
-!% Transfer
-    nm1 = n - 1._sp
-    d1pnm1 = 1._sp/nm1
-    l = (1._sp+f_q(4))*kexc*ht**3.5_sp
-    prr = 0.9_sp*(1._sp-f_q(3)**2)*(pr+perc) + l
-    prd = (0.1_sp+0.9_sp*f_q(3)**2)*(pr+perc)
-    IF (prcp .LT. 0._sp) THEN
-      pwx1 = ht*ct
-      pwy1 = -nm1
-      CALL PUSHREAL4(pwr1)
-      pwr1 = pwx1**pwy1
-      pwy2 = -nm1
-      pwr2 = ct**pwy2
-      pwx3 = pwr1 - pwr2
-      pwy3 = -d1pnm1
-      pwr3 = pwx3**pwy3
-      pr_imd = pwr3 - ht*ct
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      pr_imd = prr
-      CALL PUSHCONTROL1B(0)
-    END IF
-    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
-      ht_imd = ht + pr_imd/ct
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      ht_imd = 1.e-6_sp
-      CALL PUSHCONTROL1B(1)
-    END IF
-    CALL PUSHREAL4(pwx1)
-    pwx1 = ht_imd*ct
-    CALL PUSHREAL4(pwy1)
-    pwy1 = -nm1
-    CALL PUSHREAL4(pwr1)
-    pwr1 = pwx1**pwy1
-    CALL PUSHREAL4(pwy2)
-    pwy2 = -nm1
-    pwr2 = ct**pwy2
-    CALL PUSHREAL4(pwx3)
-    pwx3 = pwr1 + pwr2
-    CALL PUSHREAL4(pwy3)
-    pwy3 = -d1pnm1
-    pwr3 = pwx3**pwy3
-    CALL PUSHREAL4(ht)
-    ht = pwr3/ct
-    IF (0._sp .LT. prd + l) THEN
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    pwx1 = ht_imd*ct
-    nm1 = n - 1._sp
-    pwy1 = -nm1
-    pwy2 = -nm1
-    d1pnm1 = 1._sp/nm1
-    pwy3 = -d1pnm1
-    inv_cp = 1._sp/cp
-    qr_b = q_b
-    qd_b = q_b
-    ht_imd_b = ct*qr_b
-    ht_b = ht_b - ct*qr_b
-    ct_b = ct_b + (ht_imd-ht)*qr_b
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      prd_b = qd_b
-      l_b = qd_b
-    ELSE
-      l_b = 0.0_4
-      prd_b = 0.0_4
-    END IF
-    CALL POPREAL4(ht)
-    pwr3_b = ht_b/ct
-    IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&   THEN
-      pwx3_b = 0.0_4
-    ELSE
-      pwx3_b = pwy3*pwx3**(pwy3-1)*pwr3_b
-    END IF
-    CALL POPREAL4(pwy3)
-    CALL POPREAL4(pwx3)
-    pwr1_b = pwx3_b
-    pwr2_b = pwx3_b
-    IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&   THEN
-      pwx1_b = 0.0_4
-    ELSE
-      pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
-    END IF
-    IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
-      ct_b = ct_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
-    ELSE
-      ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*ht_b/ct**2 + ht_imd*&
-&       pwx1_b
-    END IF
-    CALL POPREAL4(pwy2)
-    CALL POPREAL4(pwr1)
-    CALL POPREAL4(pwy1)
-    CALL POPREAL4(pwx1)
-    ht_imd_b = ht_imd_b + ct*pwx1_b
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      ht_b = ht_imd_b
-      pr_imd_b = ht_imd_b/ct
-      ct_b = ct_b - pr_imd*ht_imd_b/ct**2
-    ELSE
-      ht_b = 0.0_4
-      pr_imd_b = 0.0_4
-    END IF
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      prr_b = pr_imd_b
-    ELSE
-      pwr3_b = pr_imd_b
-      IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&     THEN
-        pwx3_b = 0.0_4
-      ELSE
-        pwx3_b = pwy3*pwx3**(pwy3-1)*pwr3_b
-      END IF
-      pwr1_b = pwx3_b
-      pwr2_b = -pwx3_b
-      CALL POPREAL4(pwr1)
-      IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&     THEN
-        pwx1_b = 0.0_4
-      ELSE
-        pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
-      END IF
-      ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
-      IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
-&     THEN
-        ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
-      ELSE
-        ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
-      END IF
-      pwx1 = 1._sp + (hp_imd/beta)**4
-      prr_b = 0.0_4
-    END IF
-    f_q_b(3) = f_q_b(3) + 2*f_q(3)*0.9_sp*(pr+perc)*prd_b - 2*f_q(3)*(pr&
-&     +perc)*0.9_sp*prr_b
-    temp_b5 = (0.9_sp*f_q(3)**2+0.1_sp)*prd_b
-    pr_b = temp_b5
-    perc_b = temp_b5
-    temp_b5 = (1._sp-f_q(3)**2)*0.9_sp*prr_b
-    l_b = l_b + prr_b
-    pr_b = pr_b + temp_b5
-    perc_b = perc_b + temp_b5 - inv_cp*hp_b
-    temp_b5 = ht**3.5_sp*l_b
-    ht_b = ht_b + 3.5_sp*ht**2.5*(f_q(4)+1._sp)*kexc*l_b
-    f_q_b(4) = f_q_b(4) + kexc*temp_b5
-    kexc_b = kexc_b + (f_q(4)+1._sp)*temp_b5
-    inv_cp_b = -(perc*hp_b)
-    cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
-    pwr1_b = -(hp_imd*cp*perc_b)
-    pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
-    hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
-&     4
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      pn_b = pn_b + pr_b
-      hp_imd_b = hp_imd_b - cp*pr_b
-      hp_b = cp*pr_b
-      cp_b = cp_b - (hp_imd-hp)*pr_b
-    ELSE
-      hp_b = 0.0_4
-    END IF
-    es_b = -(inv_cp*hp_imd_b)
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
-    CALL POPREAL4(es)
-    f_q_b(2) = f_q_b(2) + es*es_b
-    es_b = (f_q(2)+1._sp)*es_b
-    temp4 = TANH(en*inv_cp)
-    temp3 = (-hp+1._sp)*temp4 + 1._sp
-    temp1 = TANH(en*inv_cp)
-    temp0 = hp*cp*(-hp+2._sp)
-    temp_b3 = es_b/temp3
-    temp_b = (2._sp-hp)*temp1*temp_b3
-    temp_b0 = -(temp0*temp1*temp_b3/temp3)
-    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
-&     temp_b0
-    ps_b = inv_cp*hp_imd_b
-    temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
-    temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
-    en_b = en_b + inv_cp*temp_b5 + inv_cp*temp_b4
-    cp_b = cp_b + hp*temp_b
-    CALL POPREAL4(ps)
-    f_q_b(1) = f_q_b(1) + ps*ps_b
-    ps_b = (f_q(1)+1._sp)*ps_b
-    temp = TANH(pn*inv_cp)
-    temp0 = hp*temp + 1._sp
-    temp1 = TANH(pn*inv_cp)
-    temp2 = cp*(-(hp*hp)+1._sp)
-    temp_b = ps_b/temp0
-    temp_b0 = (1.0-TANH(pn*inv_cp)**2)*temp2*temp_b
-    temp_b1 = -(temp2*temp1*temp_b/temp0)
-    hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
-    temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4 + pn*temp_b2 + pn*&
-&     temp_b0
-    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
-    pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
-  END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG_B
-
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG(f_q, pn, en, cp, beta, ct, &
-&   kexc, n, prcp, hp, ht, q, pr, perc, l, prr, prd, qr, qd)
-    IMPLICIT NONE
-! fixed NN output size
-    REAL(sp), DIMENSION(4), INTENT(IN) :: f_q
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, ct, kexc, n, prcp
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
-    REAL(sp), INTENT(OUT) :: pr, perc, l, prr, prd, qr, qd
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1
-    INTRINSIC TANH
-    INTRINSIC MAX
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwy1
-    REAL(sp) :: pwy2
-    REAL(sp) :: pwr2
-    REAL(sp) :: pwx3
-    REAL(sp) :: pwy3
-    REAL(sp) :: pwr3
-!% Production
-    inv_cp = 1._sp/cp
-    pr = 0._sp
-    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-    ps = (1._sp+f_q(1))*ps
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
-&     inv_cp))
-    es = (1._sp+f_q(2))*es
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    perc = hp_imd*cp*(1._sp-pwr1)
-    hp = hp_imd - perc*inv_cp
-!% Transfer
-    nm1 = n - 1._sp
-    d1pnm1 = 1._sp/nm1
-    l = (1._sp+f_q(4))*kexc*ht**3.5_sp
-    prr = 0.9_sp*(1._sp-f_q(3)**2)*(pr+perc) + l
-    prd = (0.1_sp+0.9_sp*f_q(3)**2)*(pr+perc)
-    IF (prcp .LT. 0._sp) THEN
-      pwx1 = ht*ct
-      pwy1 = -nm1
-      pwr1 = pwx1**pwy1
-      pwy2 = -nm1
-      pwr2 = ct**pwy2
-      pwx3 = pwr1 - pwr2
-      pwy3 = -d1pnm1
-      pwr3 = pwx3**pwy3
-      pr_imd = pwr3 - ht*ct
-    ELSE
-      pr_imd = prr
-    END IF
-    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
-      ht_imd = ht + pr_imd/ct
-    ELSE
-      ht_imd = 1.e-6_sp
-    END IF
-    pwx1 = ht_imd*ct
-    pwy1 = -nm1
-    pwr1 = pwx1**pwy1
-    pwy2 = -nm1
-    pwr2 = ct**pwy2
-    pwx3 = pwr1 + pwr2
-    pwy3 = -d1pnm1
-    pwr3 = pwx3**pwy3
-    ht = pwr3/ct
-    IF (0._sp .LT. prd + l) THEN
-      qd = prd + l
-    ELSE
-      qd = 0._sp
-    END IF
-    qr = (ht_imd-ht)*ct
-    q = qr + qd
-  END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG
-
 !  Differentiation of gr_production_transfer_ode in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: q hp ht
 !   with respect to varying inputs: kexc hp ht en cp pn ct
@@ -14492,14 +13982,14 @@ CONTAINS
 
 !  Differentiation of gr_production_transfer_mlp_ode in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: q hp ht
-!   with respect to varying inputs: kexc hp ht en f_q cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_D(f_q, f_q_d, pn, pn_d, en, &
+!   with respect to varying inputs: kexc hp ht en fq cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_D(fq, fq_d, pn, pn_d, en, &
 &   en_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, &
 &   l)
     IMPLICIT NONE
 ! fixed NN output size
-    REAL(sp), DIMENSION(5), INTENT(IN) :: f_q
-    REAL(sp), DIMENSION(5), INTENT(IN) :: f_q_d
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq_d
     REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
     REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, ct_d, kexc_d
     REAL(sp), INTENT(INOUT) :: hp, ht, q
@@ -14518,11 +14008,11 @@ CONTAINS
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
-    temp = (f_q(2)+1._sp)*(-hp+2._sp)
-    fhp_d = (1._sp-hp**2)*(pn*f_q_d(1)+(f_q(1)+1._sp)*pn_d) - (f_q(1)+&
-&     1._sp)*pn*2*hp*hp_d - en*hp*((2._sp-hp)*f_q_d(2)-(f_q(2)+1._sp)*&
-&     hp_d) - temp*(hp*en_d+en*hp_d)
-    fhp = (f_q(1)+1._sp)*pn*(1._sp-hp*hp) - temp*(en*hp)
+    temp = (fq(2)+1._sp)*(-hp+2._sp)
+    fhp_d = (1._sp-hp**2)*(pn*fq_d(1)+(fq(1)+1._sp)*pn_d) - (fq(1)+1._sp&
+&     )*pn*2*hp*hp_d - en*hp*((2._sp-hp)*fq_d(2)-(fq(2)+1._sp)*hp_d) - &
+&     temp*(hp*en_d+en*hp_d)
+    fhp = (fq(1)+1._sp)*pn*(1._sp-hp*hp) - temp*(en*hp)
     hp_d = hp_d + dt*(inv_cp*fhp_d+fhp*inv_cp_d)
     hp = hp + dt*fhp*inv_cp
     IF (hp .LE. 0._sp) THEN
@@ -14533,16 +14023,16 @@ CONTAINS
       hp = 1._sp - 1.e-6_sp
       hp_d = 0.0_4
     END IF
-    temp = (-(f_q(3)*f_q(3))+1._sp)*(hp*hp)
+    temp = (-(fq(3)*fq(3))+1._sp)*(hp*hp)
     temp0 = ht**3.5_sp
     temp1 = ht**5
-    fht_d = 0.9_sp*((f_q(1)+1._sp)*pn*((1._sp-f_q(3)**2)*2*hp*hp_d-hp**2&
-&     *2*f_q(3)*f_q_d(3))+temp*(pn*f_q_d(1)+(f_q(1)+1._sp)*pn_d)) + &
-&     temp0*(kexc*f_q_d(4)+(f_q(4)+1._sp)*kexc_d) + ((f_q(4)+1._sp)*kexc&
-&     *3.5_sp*ht**2.5-(f_q(5)+1._sp)*ct*5*ht**4)*ht_d - temp1*(ct*f_q_d(&
-&     5)+(f_q(5)+1._sp)*ct_d)
-    fht = 0.9_sp*(temp*((f_q(1)+1._sp)*pn)) + (f_q(4)+1._sp)*kexc*temp0 &
-&     - (f_q(5)+1._sp)*ct*temp1
+    fht_d = 0.9_sp*((fq(1)+1._sp)*pn*((1._sp-fq(3)**2)*2*hp*hp_d-hp**2*2&
+&     *fq(3)*fq_d(3))+temp*(pn*fq_d(1)+(fq(1)+1._sp)*pn_d)) + temp0*(&
+&     kexc*fq_d(4)+(fq(4)+1._sp)*kexc_d) + ((fq(4)+1._sp)*kexc*3.5_sp*ht&
+&     **2.5-(fq(5)+1._sp)*ct*5*ht**4)*ht_d - temp1*(ct*fq_d(5)+(fq(5)+&
+&     1._sp)*ct_d)
+    fht = 0.9_sp*(temp*((fq(1)+1._sp)*pn)) + (fq(4)+1._sp)*kexc*temp0 - &
+&     (fq(5)+1._sp)*ct*temp1
     ht_d = ht_d + dt*(fht_d-fht*ct_d/ct)/ct
     ht = ht + dt*fht/ct
     IF (ht .LE. 0._sp) THEN
@@ -14555,28 +14045,28 @@ CONTAINS
     END IF
 !end do
     temp1 = ht**3.5_sp
-    l_d = temp1*(kexc*f_q_d(4)+(f_q(4)+1._sp)*kexc_d) + (f_q(4)+1._sp)*&
-&     kexc*3.5_sp*ht**2.5*ht_d
-    l = (f_q(4)+1._sp)*kexc*temp1
+    l_d = temp1*(kexc*fq_d(4)+(fq(4)+1._sp)*kexc_d) + (fq(4)+1._sp)*kexc&
+&     *3.5_sp*ht**2.5*ht_d
+    l = (fq(4)+1._sp)*kexc*temp1
     temp1 = ht**5
-    temp0 = (f_q(1)+1._sp)*pn*(hp*hp)
-    temp = 0.9_sp*(f_q(3)*f_q(3)) + 0.1_sp
-    q_d = temp1*(ct*f_q_d(5)+(f_q(5)+1._sp)*ct_d) + (f_q(5)+1._sp)*ct*5*&
-&     ht**4*ht_d + temp0*0.9_sp*2*f_q(3)*f_q_d(3) + temp*(hp**2*(pn*&
-&     f_q_d(1)+(f_q(1)+1._sp)*pn_d)+(f_q(1)+1._sp)*pn*2*hp*hp_d) + l_d
-    q = (f_q(5)+1._sp)*ct*temp1 + temp*temp0 + l
+    temp0 = (fq(1)+1._sp)*pn*(hp*hp)
+    temp = 0.9_sp*(fq(3)*fq(3)) + 0.1_sp
+    q_d = temp1*(ct*fq_d(5)+(fq(5)+1._sp)*ct_d) + (fq(5)+1._sp)*ct*5*ht&
+&     **4*ht_d + temp0*0.9_sp*2*fq(3)*fq_d(3) + temp*(hp**2*(pn*fq_d(1)+&
+&     (fq(1)+1._sp)*pn_d)+(fq(1)+1._sp)*pn*2*hp*hp_d) + l_d
+    q = (fq(5)+1._sp)*ct*temp1 + temp*temp0 + l
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_D
 
 !  Differentiation of gr_production_transfer_mlp_ode in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: q kexc hp ht en f_q cp pn ct
-!   with respect to varying inputs: kexc hp ht en f_q cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B(f_q, f_q_b, pn, pn_b, en, &
+!   gradient     of useful results: q kexc hp ht en fq cp pn ct
+!   with respect to varying inputs: kexc hp ht en fq cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B(fq, fq_b, pn, pn_b, en, &
 &   en_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, &
 &   l)
     IMPLICIT NONE
 ! fixed NN output size
-    REAL(sp), DIMENSION(5), INTENT(IN) :: f_q
-    REAL(sp), DIMENSION(5) :: f_q_b
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
+    REAL(sp), DIMENSION(5) :: fq_b
     REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
     REAL(sp) :: pn_b, en_b, cp_b, ct_b, kexc_b
     REAL(sp), INTENT(INOUT) :: hp, ht, q
@@ -14596,8 +14086,8 @@ CONTAINS
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
-    fhp = (1._sp+f_q(1))*pn*(1._sp-hp**2) - (1._sp+f_q(2))*en*hp*(2._sp-&
-&     hp)
+    fhp = (1._sp+fq(1))*pn*(1._sp-hp**2) - (1._sp+fq(2))*en*hp*(2._sp-hp&
+&     )
     CALL PUSHREAL4(hp)
     hp = hp + dt*fhp*inv_cp
     IF (hp .LE. 0._sp) THEN
@@ -14612,8 +14102,8 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
-    fht = 0.9_sp*(1._sp-f_q(3)**2)*(1._sp+f_q(1))*pn*hp**2 + (1._sp+f_q(&
-&     4))*kexc*ht**3.5_sp - (1._sp+f_q(5))*ct*ht**5
+    fht = 0.9_sp*(1._sp-fq(3)**2)*(1._sp+fq(1))*pn*hp**2 + (1._sp+fq(4))&
+&     *kexc*ht**3.5_sp - (1._sp+fq(5))*ct*ht**5
     CALL PUSHREAL4(ht)
     ht = ht + dt*fht/ct
     IF (ht .LE. 0._sp) THEN
@@ -14630,19 +14120,19 @@ CONTAINS
     END IF
     l_b = q_b
     temp_b2 = ht**5*q_b
-    ht_b = ht_b + 5*ht**4*(f_q(5)+1._sp)*ct*q_b + 3.5_sp*ht**2.5*(f_q(4)&
-&     +1._sp)*kexc*l_b
-    f_q_b(3) = f_q_b(3) + 2*f_q(3)*0.9_sp*(f_q(1)+1._sp)*pn*hp**2*q_b
-    temp_b1 = (0.9_sp*f_q(3)**2+0.1_sp)*q_b
+    ht_b = ht_b + 5*ht**4*(fq(5)+1._sp)*ct*q_b + 3.5_sp*ht**2.5*(fq(4)+&
+&     1._sp)*kexc*l_b
+    fq_b(3) = fq_b(3) + 2*fq(3)*0.9_sp*(fq(1)+1._sp)*pn*hp**2*q_b
+    temp_b1 = (0.9_sp*fq(3)**2+0.1_sp)*q_b
     temp_b0 = hp**2*temp_b1
-    hp_b = hp_b + 2*hp*(f_q(1)+1._sp)*pn*temp_b1
-    f_q_b(1) = f_q_b(1) + pn*temp_b0
-    pn_b = pn_b + (f_q(1)+1._sp)*temp_b0
-    f_q_b(5) = f_q_b(5) + ct*temp_b2
-    ct_b = ct_b + (f_q(5)+1._sp)*temp_b2
+    hp_b = hp_b + 2*hp*(fq(1)+1._sp)*pn*temp_b1
+    fq_b(1) = fq_b(1) + pn*temp_b0
+    pn_b = pn_b + (fq(1)+1._sp)*temp_b0
+    fq_b(5) = fq_b(5) + ct*temp_b2
+    ct_b = ct_b + (fq(5)+1._sp)*temp_b2
     temp_b2 = ht**3.5_sp*l_b
-    f_q_b(4) = f_q_b(4) + kexc*temp_b2
-    kexc_b = kexc_b + (f_q(4)+1._sp)*temp_b2
+    fq_b(4) = fq_b(4) + kexc*temp_b2
+    kexc_b = kexc_b + (fq(4)+1._sp)*temp_b2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) ht_b = 0.0_4
     CALL POPCONTROL1B(branch)
@@ -14652,20 +14142,20 @@ CONTAINS
     temp_b2 = dt*ht_b/ct
     fht_b = temp_b2
     ct_b = ct_b - fht*temp_b2/ct
-    temp_b1 = (f_q(1)+1._sp)*pn*0.9_sp*fht_b
-    temp_b0 = (1._sp-f_q(3)**2)*hp**2*0.9_sp*fht_b
+    temp_b1 = (fq(1)+1._sp)*pn*0.9_sp*fht_b
+    temp_b0 = (1._sp-fq(3)**2)*hp**2*0.9_sp*fht_b
     temp_b = ht**3.5_sp*fht_b
-    ht_b = ht_b + (3.5_sp*ht**2.5*(f_q(4)+1._sp)*kexc-5*ht**4*(f_q(5)+&
+    ht_b = ht_b + (3.5_sp*ht**2.5*(fq(4)+1._sp)*kexc-5*ht**4*(fq(5)+&
 &     1._sp)*ct)*fht_b
     temp_b2 = -(ht**5*fht_b)
-    f_q_b(5) = f_q_b(5) + ct*temp_b2
-    ct_b = ct_b + (f_q(5)+1._sp)*temp_b2
-    f_q_b(4) = f_q_b(4) + kexc*temp_b
-    kexc_b = kexc_b + (f_q(4)+1._sp)*temp_b
-    f_q_b(1) = f_q_b(1) + pn*temp_b0
-    pn_b = pn_b + (f_q(1)+1._sp)*temp_b0
-    f_q_b(3) = f_q_b(3) - 2*f_q(3)*hp**2*temp_b1
-    hp_b = hp_b + 2*hp*(1._sp-f_q(3)**2)*temp_b1
+    fq_b(5) = fq_b(5) + ct*temp_b2
+    ct_b = ct_b + (fq(5)+1._sp)*temp_b2
+    fq_b(4) = fq_b(4) + kexc*temp_b
+    kexc_b = kexc_b + (fq(4)+1._sp)*temp_b
+    fq_b(1) = fq_b(1) + pn*temp_b0
+    pn_b = pn_b + (fq(1)+1._sp)*temp_b0
+    fq_b(3) = fq_b(3) - 2*fq(3)*hp**2*temp_b1
+    hp_b = hp_b + 2*hp*(1._sp-fq(3)**2)*temp_b1
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) hp_b = 0.0_4
     CALL POPCONTROL1B(branch)
@@ -14676,21 +14166,21 @@ CONTAINS
     inv_cp_b = fhp*dt*hp_b
     temp_b = (1._sp-hp**2)*fhp_b
     temp_b0 = -(en*hp*fhp_b)
-    temp_b1 = -((f_q(2)+1._sp)*(2._sp-hp)*fhp_b)
-    hp_b = hp_b + en*temp_b1 - 2*hp*(f_q(1)+1._sp)*pn*fhp_b - (f_q(2)+&
+    temp_b1 = -((fq(2)+1._sp)*(2._sp-hp)*fhp_b)
+    hp_b = hp_b + en*temp_b1 - 2*hp*(fq(1)+1._sp)*pn*fhp_b - (fq(2)+&
 &     1._sp)*temp_b0
     en_b = en_b + hp*temp_b1
-    f_q_b(2) = f_q_b(2) + (2._sp-hp)*temp_b0
-    f_q_b(1) = f_q_b(1) + pn*temp_b
-    pn_b = pn_b + (f_q(1)+1._sp)*temp_b
+    fq_b(2) = fq_b(2) + (2._sp-hp)*temp_b0
+    fq_b(1) = fq_b(1) + pn*temp_b
+    pn_b = pn_b + (fq(1)+1._sp)*temp_b
     cp_b = cp_b - inv_cp_b/cp**2
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B
 
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE(f_q, pn, en, cp, ct, kexc, &
-&   hp, ht, q, l)
+  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE(fq, pn, en, cp, ct, kexc, hp&
+&   , ht, q, l)
     IMPLICIT NONE
 ! fixed NN output size
-    REAL(sp), DIMENSION(5), INTENT(IN) :: f_q
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
     REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
     REAL(sp), INTENT(INOUT) :: hp, ht, q
     REAL(sp), INTENT(OUT) :: l
@@ -14701,20 +14191,20 @@ CONTAINS
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
-    fhp = (1._sp+f_q(1))*pn*(1._sp-hp**2) - (1._sp+f_q(2))*en*hp*(2._sp-&
-&     hp)
+    fhp = (1._sp+fq(1))*pn*(1._sp-hp**2) - (1._sp+fq(2))*en*hp*(2._sp-hp&
+&     )
     hp = hp + dt*fhp*inv_cp
     IF (hp .LE. 0._sp) hp = 1.e-6_sp
     IF (hp .GE. 1._sp) hp = 1._sp - 1.e-6_sp
-    fht = 0.9_sp*(1._sp-f_q(3)**2)*(1._sp+f_q(1))*pn*hp**2 + (1._sp+f_q(&
-&     4))*kexc*ht**3.5_sp - (1._sp+f_q(5))*ct*ht**5
+    fht = 0.9_sp*(1._sp-fq(3)**2)*(1._sp+fq(1))*pn*hp**2 + (1._sp+fq(4))&
+&     *kexc*ht**3.5_sp - (1._sp+fq(5))*ct*ht**5
     ht = ht + dt*fht/ct
     IF (ht .LE. 0._sp) ht = 1.e-6_sp
     IF (ht .GE. 1._sp) ht = 1._sp - 1.e-6_sp
 !end do
-    l = (1._sp+f_q(4))*kexc*ht**3.5_sp
-    q = (1._sp+f_q(5))*ct*ht**5 + (0.1_sp+0.9_sp*f_q(3)**2)*(1._sp+f_q(1&
-&     ))*pn*hp**2 + l
+    l = (1._sp+fq(4))*kexc*ht**3.5_sp
+    q = (1._sp+fq(5))*ct*ht**5 + (0.1_sp+0.9_sp*fq(3)**2)*(1._sp+fq(1))*&
+&     pn*hp**2 + l
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE
 
 !  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
@@ -14767,11 +14257,11 @@ CONTAINS
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
-&                          , perc_d)
-            CALL GR_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), ac_ht(k), &
-&                        ac_ht_d(k), l, l_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+            CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
+&                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -14837,6 +14327,9 @@ CONTAINS
     REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
+    REAL(sp) :: dummydiff_b1
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -14859,9 +14352,9 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
-            CALL GR_EXCHANGE(ac_kexc(k), ac_ht(k), l)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
+            CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -14912,12 +14405,15 @@ CONTAINS
           l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            CALL GR_EXCHANGE_B(ac_kexc(k), ac_kexc_b(k), ac_ht(k), &
-&                        ac_ht_b(k), l, l_b)
+            CALL GR_EXCHANGE_B(0._sp, dummydiff_b1, ac_kexc(k), &
+&                        ac_kexc_b(k), ac_ht(k), ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -14965,9 +14461,9 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
-            CALL GR_EXCHANGE(ac_kexc(k), ac_ht(k), l)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
+            CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -15041,6 +14537,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
+    INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15072,25 +14570,24 @@ CONTAINS
       END DO
     END DO
     output_layer_d = 0.0_4
-    input_layer_d = 0.0_4
 ! Forward MLP without OPENMP
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          input_layer_d(1) = ac_hp_d(k)
-          input_layer(1) = ac_hp(k)
-          input_layer_d(2) = ac_ht_d(k)
-          input_layer(2) = ac_ht(k)
-          input_layer_d(3) = pn_d(k)
-          input_layer(3) = pn(k)
-          input_layer_d(4) = en_d(k)
-          input_layer(4) = en(k)
-          CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
-&                      weight_2, weight_2_d, bias_2, bias_2_d, &
-&                      input_layer, input_layer_d, output_layer(:, k), &
-&                      output_layer_d(:, k))
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d(k), en_d(k&
+&             )/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
+&                        weight_2, weight_2_d, bias_2, bias_2_d, &
+&                        input_layer, input_layer_d, output_layer(:, k)&
+&                        , output_layer_d(:, k))
+          ELSE
+            output_layer_d(:, k) = 0.0_4
+            output_layer(:, k) = 0._sp
+          END IF
         END IF
       END DO
     END DO
@@ -15100,16 +14597,42 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL GR_PRODUCTION_TRANSFER_MLP_ALG_D(output_layer(:, k), &
-&                                         output_layer_d(:, k), pn(k), &
-&                                         pn_d(k), en(k), en_d(k), ac_cp&
-&                                         (k), ac_cp_d(k), beta, ac_ct(k&
-&                                         ), ac_ct_d(k), ac_kexc(k), &
-&                                         ac_kexc_d(k), 5._sp, ac_prcp(k&
-&                                         ), ac_hp(k), ac_hp_d(k), ac_ht&
-&                                         (k), ac_ht_d(k), ac_qt(k), &
-&                                         ac_qt_d(k), pr, perc, l, prr, &
-&                                         prd, qr, qd)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
+&                          ), output_layer(2, k), output_layer_d(2, k), &
+&                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
+&                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
+&                          pr_d, perc, perc_d)
+            CALL GR_EXCHANGE_D(output_layer(4, k), output_layer_d(4, k)&
+&                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
+&                        ), l, l_d)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
+            l_d = 0.0_4
+            perc_d = 0.0_4
+            pr_d = 0.0_4
+          END IF
+          temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
+          prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
+&           , k)*output_layer_d(3, k)) + l_d
+          prr = 0.9_sp*(temp*(pr+perc)) + l
+          temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
+          prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
+&           , k) + temp*(pr_d+perc_d)
+          prd = temp*(pr+perc)
+          CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
+&                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
+          IF (0._sp .LT. prd + l) THEN
+            qd_d = prd_d + l_d
+            qd = prd + l
+          ELSE
+            qd = 0._sp
+            qd_d = 0.0_4
+          END IF
+          ac_qt_d(k) = qr_d + qd_d
+          ac_qt(k) = qr + qd
 ! Transform from mm/dt to m3/s
           temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
           ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
@@ -15171,6 +14694,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
+    INTRINSIC MAX
+    REAL(sp) :: temp_b
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15205,20 +14731,19 @@ CONTAINS
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL1B(0)
+          CALL PUSHCONTROL2B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL PUSHREAL4(input_layer(1))
-          input_layer(1) = ac_hp(k)
-          CALL PUSHREAL4(input_layer(2))
-          input_layer(2) = ac_ht(k)
-          CALL PUSHREAL4(input_layer(3))
-          input_layer(3) = pn(k)
-          CALL PUSHREAL4(input_layer(4))
-          input_layer(4) = en(k)
-          CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                    input_layer, output_layer(:, k))
-          CALL PUSHCONTROL1B(1)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4ARRAY(input_layer, 4)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      input_layer, output_layer(:, k))
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            output_layer(:, k) = 0._sp
+            CALL PUSHCONTROL2B(1)
+          END IF
         END IF
       END DO
     END DO
@@ -15229,16 +14754,37 @@ CONTAINS
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
+          CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL PUSHREAL4(ac_qt(k))
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4(perc)
+            CALL PUSHREAL4(pr)
+            CALL PUSHREAL4(ac_hp(k))
+            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
+&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
+            CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
+&                     )
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHREAL4(pr)
+            pr = 0._sp
+            CALL PUSHREAL4(perc)
+            perc = 0._sp
+            l = 0._sp
+            CALL PUSHCONTROL1B(0)
+          END IF
+          CALL PUSHREAL4(prr)
+          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
-          CALL PUSHREAL4(ac_hp(k))
-          CALL GR_PRODUCTION_TRANSFER_MLP_ALG(output_layer(:, k), pn(k)&
-&                                       , en(k), ac_cp(k), beta, ac_ct(k&
-&                                       ), ac_kexc(k), 5._sp, ac_prcp(k)&
-&                                       , ac_hp(k), ac_ht(k), ac_qt(k), &
-&                                       pr, perc, l, prr, prd, qr, qd)
-! Transform from mm/dt to m3/s
+          CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
+&                    qr)
+          IF (0._sp .LT. prd + l) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
@@ -15250,49 +14796,74 @@ CONTAINS
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
-          CALL POPREAL4(ac_hp(k))
-          CALL POPREAL4(ac_ht(k))
-          CALL POPREAL4(ac_qt(k))
-          CALL GR_PRODUCTION_TRANSFER_MLP_ALG_B(output_layer(:, k), &
-&                                         output_layer_b(:, k), pn(k), &
-&                                         pn_b(k), en(k), en_b(k), ac_cp&
-&                                         (k), ac_cp_b(k), beta, ac_ct(k&
-&                                         ), ac_ct_b(k), ac_kexc(k), &
-&                                         ac_kexc_b(k), 5._sp, ac_prcp(k&
-&                                         ), ac_hp(k), ac_hp_b(k), ac_ht&
-&                                         (k), ac_ht_b(k), ac_qt(k), &
-&                                         ac_qt_b(k), pr, perc, l, prr, &
-&                                         prd, qr, qd)
+          qr_b = ac_qt_b(k)
+          qd_b = ac_qt_b(k)
           ac_qt_b(k) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            prd_b = qd_b
+            l_b = qd_b
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+          CALL POPREAL4(ac_ht(k))
+          CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
+&                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
+          output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
+&           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(pr+perc)&
+&           *0.9_sp*prr_b
+          temp_b = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
+          pr_b = temp_b
+          perc_b = temp_b
+          CALL POPREAL4(prr)
+          temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
+          l_b = l_b + prr_b
+          pr_b = pr_b + temp_b
+          perc_b = perc_b + temp_b
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(perc)
+            CALL POPREAL4(pr)
+          ELSE
+            CALL GR_EXCHANGE_B(output_layer(4, k), output_layer_b(4, k)&
+&                        , ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k&
+&                        ), l, l_b)
+            CALL POPREAL4(ac_hp(k))
+            CALL POPREAL4(pr)
+            CALL POPREAL4(perc)
+            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
+&                          ), output_layer(2, k), output_layer_b(2, k), &
+&                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
+&                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
+&                          pr_b, perc, perc_b)
+          END IF
+          CALL POPINTEGER4(k)
         END IF
       END DO
     END DO
-    input_layer_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
-        CALL POPCONTROL1B(branch)
+        CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
-&                      weight_2, weight_2_b, bias_2, bias_2_b, &
-&                      input_layer, input_layer_b, output_layer(:, k), &
-&                      output_layer_b(:, k))
-          output_layer_b(:, k) = 0.0_4
-          CALL POPREAL4(input_layer(4))
-          en_b(k) = en_b(k) + input_layer_b(4)
-          input_layer_b(4) = 0.0_4
-          CALL POPREAL4(input_layer(3))
-          pn_b(k) = pn_b(k) + input_layer_b(3)
-          input_layer_b(3) = 0.0_4
-          CALL POPREAL4(input_layer(2))
-          ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
-          input_layer_b(2) = 0.0_4
-          CALL POPREAL4(input_layer(1))
-          ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
-          input_layer_b(1) = 0.0_4
+          IF (branch .EQ. 1) THEN
+            k = mesh%rowcol_to_ind_ac(row, col)
+            output_layer_b(:, k) = 0.0_4
+          ELSE
+            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
+&                        weight_2, weight_2_b, bias_2, bias_2_b, &
+&                        input_layer, input_layer_b, output_layer(:, k)&
+&                        , output_layer_b(:, k))
+            output_layer_b(:, k) = 0.0_4
+            CALL POPREAL4ARRAY(input_layer, 4)
+            ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
+            ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
+            pn_b(k) = pn_b(k) + input_layer_b(3)
+            en_b(k) = en_b(k) + input_layer_b(4)
+          END IF
         END IF
       END DO
     END DO
@@ -15348,6 +14919,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15377,12 +14949,13 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          input_layer(1) = ac_hp(k)
-          input_layer(2) = ac_ht(k)
-          input_layer(3) = pn(k)
-          input_layer(4) = en(k)
-          CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                    input_layer, output_layer(:, k))
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      input_layer, output_layer(:, k))
+          ELSE
+            output_layer(:, k) = 0._sp
+          END IF
         END IF
       END DO
     END DO
@@ -15392,11 +14965,27 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL GR_PRODUCTION_TRANSFER_MLP_ALG(output_layer(:, k), pn(k)&
-&                                       , en(k), ac_cp(k), beta, ac_ct(k&
-&                                       ), ac_kexc(k), 5._sp, ac_prcp(k)&
-&                                       , ac_hp(k), ac_ht(k), ac_qt(k), &
-&                                       pr, perc, l, prr, prd, qr, qd)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
+&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
+            CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
+&                     )
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
+          END IF
+          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
+&                    qr)
+          IF (0._sp .LT. prd + l) THEN
+            qd = prd + l
+          ELSE
+            qd = 0._sp
+          END IF
+          ac_qt(k) = qr + qd
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt
@@ -15742,25 +15331,24 @@ CONTAINS
       END DO
     END DO
     output_layer_d = 0.0_4
-    input_layer_d = 0.0_4
 ! Forward MLP without OPENMP
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          input_layer_d(1) = ac_hp_d(k)
-          input_layer(1) = ac_hp(k)
-          input_layer_d(2) = ac_ht_d(k)
-          input_layer(2) = ac_ht(k)
-          input_layer_d(3) = pn_d(k)
-          input_layer(3) = pn(k)
-          input_layer_d(4) = en_d(k)
-          input_layer(4) = en(k)
-          CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
-&                      weight_2, weight_2_d, bias_2, bias_2_d, &
-&                      input_layer, input_layer_d, output_layer(:, k), &
-&                      output_layer_d(:, k))
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d(k), en_d(k&
+&             )/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
+&                        weight_2, weight_2_d, bias_2, bias_2_d, &
+&                        input_layer, input_layer_d, output_layer(:, k)&
+&                        , output_layer_d(:, k))
+          ELSE
+            output_layer_d(:, k) = 0.0_4
+            output_layer(:, k) = 0._sp
+          END IF
         END IF
       END DO
     END DO
@@ -15871,20 +15459,19 @@ CONTAINS
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL1B(0)
+          CALL PUSHCONTROL2B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL PUSHREAL4(input_layer(1))
-          input_layer(1) = ac_hp(k)
-          CALL PUSHREAL4(input_layer(2))
-          input_layer(2) = ac_ht(k)
-          CALL PUSHREAL4(input_layer(3))
-          input_layer(3) = pn(k)
-          CALL PUSHREAL4(input_layer(4))
-          input_layer(4) = en(k)
-          CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                    input_layer, output_layer(:, k))
-          CALL PUSHCONTROL1B(1)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4ARRAY(input_layer, 4)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      input_layer, output_layer(:, k))
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            output_layer(:, k) = 0._sp
+            CALL PUSHCONTROL2B(1)
+          END IF
         END IF
       END DO
     END DO
@@ -15933,29 +15520,26 @@ CONTAINS
         END IF
       END DO
     END DO
-    input_layer_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
-        CALL POPCONTROL1B(branch)
+        CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
-&                      weight_2, weight_2_b, bias_2, bias_2_b, &
-&                      input_layer, input_layer_b, output_layer(:, k), &
-&                      output_layer_b(:, k))
-          output_layer_b(:, k) = 0.0_4
-          CALL POPREAL4(input_layer(4))
-          en_b(k) = en_b(k) + input_layer_b(4)
-          input_layer_b(4) = 0.0_4
-          CALL POPREAL4(input_layer(3))
-          pn_b(k) = pn_b(k) + input_layer_b(3)
-          input_layer_b(3) = 0.0_4
-          CALL POPREAL4(input_layer(2))
-          ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
-          input_layer_b(2) = 0.0_4
-          CALL POPREAL4(input_layer(1))
-          ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
-          input_layer_b(1) = 0.0_4
+          IF (branch .EQ. 1) THEN
+            k = mesh%rowcol_to_ind_ac(row, col)
+            output_layer_b(:, k) = 0.0_4
+          ELSE
+            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
+&                        weight_2, weight_2_b, bias_2, bias_2_b, &
+&                        input_layer, input_layer_b, output_layer(:, k)&
+&                        , output_layer_b(:, k))
+            output_layer_b(:, k) = 0.0_4
+            CALL POPREAL4ARRAY(input_layer, 4)
+            ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
+            ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
+            pn_b(k) = pn_b(k) + input_layer_b(3)
+            en_b(k) = en_b(k) + input_layer_b(4)
+          END IF
         END IF
       END DO
     END DO
@@ -16038,12 +15622,13 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          input_layer(1) = ac_hp(k)
-          input_layer(2) = ac_ht(k)
-          input_layer(3) = pn(k)
-          input_layer(4) = en(k)
-          CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                    input_layer, output_layer(:, k))
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      input_layer, output_layer(:, k))
+          ELSE
+            output_layer(:, k) = 0._sp
+          END IF
         END IF
       END DO
     END DO
@@ -16115,9 +15700,9 @@ CONTAINS
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
-&                          , perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
             CALL GR_THRESHOLD_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), &
 &                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
 &                                  ac_ht_d(k), l, l_d)
@@ -16186,6 +15771,8 @@ CONTAINS
     REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16208,8 +15795,8 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
             CALL PUSHCONTROL1B(1)
@@ -16266,9 +15853,12 @@ CONTAINS
 &                                  ac_aexc(k), ac_aexc_b(k), ac_ht(k), &
 &                                  ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -16316,8 +15906,8 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
           ELSE
@@ -16396,9 +15986,9 @@ CONTAINS
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
-&                          , perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
             CALL GR_THRESHOLD_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), &
 &                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
 &                                  ac_ht_d(k), l, l_d)
@@ -16474,6 +16064,8 @@ CONTAINS
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
 &   , qd_b, qe_b
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     REAL(sp) :: temp_b
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16497,8 +16089,8 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
             CALL PUSHCONTROL1B(1)
@@ -16568,9 +16160,12 @@ CONTAINS
 &                                  ac_aexc(k), ac_aexc_b(k), ac_ht(k), &
 &                                  ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -16619,8 +16214,8 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
           ELSE
@@ -16706,9 +16301,9 @@ CONTAINS
             END IF
             en_d = -ei_d
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), 1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
-&                          perc, perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -16760,6 +16355,8 @@ CONTAINS
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16793,8 +16390,8 @@ CONTAINS
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
+&                        , ac_hp(k), pr, perc)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -16830,8 +16427,11 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), 1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
 &                          perc, perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
@@ -16892,8 +16492,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
+&                        , ac_hp(k), pr, perc)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -16971,9 +16571,9 @@ CONTAINS
             END IF
             en_d = -ei_d
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_ca(k), ac_ca_d(k&
-&                          ), beta, ac_ha(k), ac_ha_d(k), pr, pr_d, perc&
-&                          , perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_ca(k), ac_ca_d(k), beta, ac_ha(k&
+&                          ), ac_ha_d(k), pr, pr_d, perc, perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -17034,6 +16634,8 @@ CONTAINS
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17069,8 +16671,8 @@ CONTAINS
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_ha(k))
-            CALL GR_PRODUCTION(pn, en, ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
+&                        ac_ha(k), pr, perc)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -17127,9 +16729,12 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
             CALL POPREAL4(ac_ha(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k&
-&                          ), beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k), &
+&                          beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -17191,8 +16796,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(pn, en, ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
+&                        ac_ha(k), pr, perc)
           ELSE
             pr = 0._sp
             perc = 0._sp

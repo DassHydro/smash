@@ -101,12 +101,6 @@ def _standardize_bayesian_optimize_args(
 ) -> AnyTuple:
     func_name = "bayesian_optimize"
 
-    if "mlp" in model.setup.hydrological_module:
-        raise ValueError(
-            f"Bayesian optimization method is currently not working with the hybrid model structure "
-            f"'{model.setup.hydrological_module}'"
-        )
-
     # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
