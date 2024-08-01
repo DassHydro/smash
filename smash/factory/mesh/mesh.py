@@ -470,7 +470,7 @@ def _generate_mesh(
             print(r"<\> Error: Well(s) detected in the flow directions.")
             flwdir_dataset.close()
             return well
-        
+
     print(r"<\> Generate the mesh ...")
 
     if bbox is not None:
