@@ -30,6 +30,7 @@ To install `smash` follow the commands:
 .. code-block:: none
 
     conda create -n smash python 
+    conda activate smash
     pip install hydro-smash
 
 ------
