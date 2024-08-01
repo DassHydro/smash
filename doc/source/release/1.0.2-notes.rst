@@ -28,6 +28,7 @@ This release was made possible thanks to the contributions of:
 - François Colleoni (`<https://github.com/inoelloc>`__)
 - Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
 - Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+- Apolline El Baz (`<https://github.com/asjeb>`__)
 
 --------------------
 Pull requests merged
@@ -45,3 +46,4 @@ Pull requests merged
 - `#281 <https://github.com/DassHydro/smash/pull/281>`__: Fix crash in generate mesh if a well is present at a cell : infinite recursive loop. Just test if it is a well and cycle
 - `#284 <https://github.com/DassHydro/smash/pull/284>`__: DOC: add note to contributor guide for test-baseline
 - `#288 <https://github.com/DassHydro/smash/pull/288>`__: ENH: set parameters condition outside active cell
+- `#297 <https://github.com/DassHydro/smash/pull/297>`__: manage kernel pip
