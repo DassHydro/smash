@@ -182,6 +182,7 @@ def _standardize_generate_mesh_args(
     code: str | ListLike | None,
     max_depth: Numeric,
     epsg: AlphaNumeric | None,
+    check_well: bool,
 ) -> AnyTuple:
     flwdir_path = _standardize_generate_mesh_flwdir_path(flwdir_path)
 
@@ -202,4 +203,4 @@ def _standardize_generate_mesh_args(
 
     epsg = _standardize_generate_mesh_epsg(epsg)
 
-    return (flwdir_dataset, bbox, x, y, area, code, max_depth, epsg)
+    return (flwdir_dataset, bbox, x, y, area, code, max_depth, epsg, check_well)

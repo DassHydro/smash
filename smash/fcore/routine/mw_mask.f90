@@ -24,6 +24,7 @@ contains
         integer :: i, row_imd, col_imd
         integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
         integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
+        integer, dimension(8) :: opposite_dir = (/5, 6, 7, 8, 1, 2, 3, 4/)
 
         mask(row, col) = .true.
 
