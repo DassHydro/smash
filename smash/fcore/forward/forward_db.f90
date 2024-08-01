@@ -12804,11 +12804,11 @@ END MODULE MD_NEURAL_NETWORK_DIFF
 !%      - gr_threshold_exchange
 !%      - gr_transfer
 !%      - gr_production_transfer_ode
-!%      - gr_production_transfer_mlp_ode
+!%      - gr_production_transfer_ode_mlp
 !%      - gr4_time_step
-!%      - gr4_mlp_alg_time_step
+!%      - gr4_mlp_time_step
 !%      - gr4_ode_time_step
-!%      - gr4_mlp_ode_time_step
+!%      - gr4_ode_mlp_time_step
 !%      - gr5_time_step
 !%      - gr6_time_step
 !%      - grd_time_step
@@ -13976,10 +13976,10 @@ CONTAINS
     q = ct*ht**5 + 0.1_sp*pn*hp**2 + l
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE
 
-!  Differentiation of gr_production_transfer_mlp_ode in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_ode_mlp in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: q hp ht
 !   with respect to varying inputs: kexc hp ht en fq cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_D(fq, fq_d, pn, pn_d, en, &
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D(fq, fq_d, pn, pn_d, en, &
 &   en_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, &
 &   l)
     IMPLICIT NONE
@@ -14051,12 +14051,12 @@ CONTAINS
 &     **4*ht_d + temp0*0.9_sp*2*fq(3)*fq_d(3) + temp*(hp**2*(pn*fq_d(1)+&
 &     (fq(1)+1._sp)*pn_d)+(fq(1)+1._sp)*pn*2*hp*hp_d) + l_d
     q = (fq(5)+1._sp)*ct*temp1 + temp*temp0 + l
-  END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_D
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D
 
-!  Differentiation of gr_production_transfer_mlp_ode in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_ode_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: q kexc hp ht en fq cp pn ct
 !   with respect to varying inputs: kexc hp ht en fq cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B(fq, fq_b, pn, pn_b, en, &
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B(fq, fq_b, pn, pn_b, en, &
 &   en_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, &
 &   l)
     IMPLICIT NONE
@@ -14170,9 +14170,9 @@ CONTAINS
     fq_b(1) = fq_b(1) + pn*temp_b
     pn_b = pn_b + (fq(1)+1._sp)*temp_b
     cp_b = cp_b - inv_cp_b/cp**2
-  END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B
 
-  SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE(fq, pn, en, cp, ct, kexc, hp&
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP(fq, pn, en, cp, ct, kexc, hp&
 &   , ht, q, l)
     IMPLICIT NONE
 ! fixed NN output size
@@ -14201,7 +14201,7 @@ CONTAINS
     l = (1._sp+fq(4))*kexc*ht**3.5_sp
     q = (1._sp+fq(5))*ct*ht**5 + (0.1_sp+0.9_sp*fq(3)**2)*(1._sp+fq(1))*&
 &     pn*hp**2 + l
-  END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP
 
 !  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
@@ -14483,12 +14483,12 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_TIME_STEP
 
-!  Differentiation of gr4_mlp_alg_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_mlp_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
 !                bias_2 ac_qt ac_hi ac_hp weight_1 weight_2 ac_ht
 !                ac_mlt
-  SUBROUTINE GR4_MLP_ALG_TIME_STEP_D(setup, mesh, input_data, options, &
+  SUBROUTINE GR4_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
 &   returns, time_step, weight_1, weight_1_d, bias_1, bias_1_d, weight_2&
 &   , weight_2_d, bias_2, bias_2_d, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, &
 &   ac_cp, ac_cp_d, ac_ct, ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, &
@@ -14636,16 +14636,16 @@ CONTAINS
         END IF
       END DO
     END DO
-  END SUBROUTINE GR4_MLP_ALG_TIME_STEP_D
+  END SUBROUTINE GR4_MLP_TIME_STEP_D
 
-!  Differentiation of gr4_mlp_alg_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_mlp_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct bias_1
 !                bias_2 ac_qt ac_hi ac_hp weight_1 weight_2 ac_ht
 !                ac_mlt
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
 !                bias_2 ac_qt ac_hi ac_hp weight_1 weight_2 ac_ht
 !                ac_mlt
-  SUBROUTINE GR4_MLP_ALG_TIME_STEP_B(setup, mesh, input_data, options, &
+  SUBROUTINE GR4_MLP_TIME_STEP_B(setup, mesh, input_data, options, &
 &   returns, time_step, weight_1, weight_1_b, bias_1, bias_1_b, weight_2&
 &   , weight_2_b, bias_2, bias_2_b, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, &
 &   ac_cp, ac_cp_b, ac_ct, ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, &
@@ -14885,11 +14885,11 @@ CONTAINS
       END DO
     END DO
     ac_mlt_b = ac_mlt_b + ac_prcp_b
-  END SUBROUTINE GR4_MLP_ALG_TIME_STEP_B
+  END SUBROUTINE GR4_MLP_TIME_STEP_B
 
-  SUBROUTINE GR4_MLP_ALG_TIME_STEP(setup, mesh, input_data, options, &
-&   returns, time_step, weight_1, bias_1, weight_2, bias_2, ac_mlt, &
-&   ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
+  SUBROUTINE GR4_MLP_TIME_STEP(setup, mesh, input_data, options, returns&
+&   , time_step, weight_1, bias_1, weight_2, bias_2, ac_mlt, ac_ci, &
+&   ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -14988,7 +14988,7 @@ CONTAINS
         END IF
       END DO
     END DO
-  END SUBROUTINE GR4_MLP_ALG_TIME_STEP
+  END SUBROUTINE GR4_MLP_TIME_STEP
 
 !  Differentiation of gr4_ode_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
@@ -15248,12 +15248,12 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_ODE_TIME_STEP
 
-!  Differentiation of gr4_mlp_ode_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_ode_mlp_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
 !                bias_2 ac_qt ac_hi ac_hp weight_1 weight_2 ac_ht
 !                ac_mlt
-  SUBROUTINE GR4_MLP_ODE_TIME_STEP_D(setup, mesh, input_data, options, &
+  SUBROUTINE GR4_ODE_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
 &   returns, time_step, weight_1, weight_1_d, bias_1, bias_1_d, weight_2&
 &   , weight_2_d, bias_2, bias_2_d, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, &
 &   ac_cp, ac_cp_d, ac_ct, ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, &
@@ -15354,7 +15354,7 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL GR_PRODUCTION_TRANSFER_MLP_ODE_D(output_layer(:, k), &
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP_D(output_layer(:, k), &
 &                                         output_layer_d(:, k), pn(k), &
 &                                         pn_d(k), en(k), en_d(k), ac_cp&
 &                                         (k), ac_cp_d(k), ac_ct(k), &
@@ -15369,16 +15369,16 @@ CONTAINS
         END IF
       END DO
     END DO
-  END SUBROUTINE GR4_MLP_ODE_TIME_STEP_D
+  END SUBROUTINE GR4_ODE_MLP_TIME_STEP_D
 
-!  Differentiation of gr4_mlp_ode_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_ode_mlp_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct bias_1
 !                bias_2 ac_qt ac_hi ac_hp weight_1 weight_2 ac_ht
 !                ac_mlt
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
 !                bias_2 ac_qt ac_hi ac_hp weight_1 weight_2 ac_ht
 !                ac_mlt
-  SUBROUTINE GR4_MLP_ODE_TIME_STEP_B(setup, mesh, input_data, options, &
+  SUBROUTINE GR4_ODE_MLP_TIME_STEP_B(setup, mesh, input_data, options, &
 &   returns, time_step, weight_1, weight_1_b, bias_1, bias_1_b, weight_2&
 &   , weight_2_b, bias_2, bias_2_b, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, &
 &   ac_cp, ac_cp_b, ac_ct, ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, &
@@ -15482,7 +15482,7 @@ CONTAINS
           CALL PUSHREAL4(ac_qt(k))
           CALL PUSHREAL4(ac_ht(k))
           CALL PUSHREAL4(ac_hp(k))
-          CALL GR_PRODUCTION_TRANSFER_MLP_ODE(output_layer(:, k), pn(k)&
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), pn(k)&
 &                                       , en(k), ac_cp(k), ac_ct(k), &
 &                                       ac_kexc(k), ac_hp(k), ac_ht(k), &
 &                                       ac_qt(k), l)
@@ -15504,7 +15504,7 @@ CONTAINS
           CALL POPREAL4(ac_hp(k))
           CALL POPREAL4(ac_ht(k))
           CALL POPREAL4(ac_qt(k))
-          CALL GR_PRODUCTION_TRANSFER_MLP_ODE_B(output_layer(:, k), &
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP_B(output_layer(:, k), &
 &                                         output_layer_b(:, k), pn(k), &
 &                                         pn_b(k), en(k), en_b(k), ac_cp&
 &                                         (k), ac_cp_b(k), ac_ct(k), &
@@ -15561,9 +15561,9 @@ CONTAINS
       END DO
     END DO
     ac_mlt_b = ac_mlt_b + ac_prcp_b
-  END SUBROUTINE GR4_MLP_ODE_TIME_STEP_B
+  END SUBROUTINE GR4_ODE_MLP_TIME_STEP_B
 
-  SUBROUTINE GR4_MLP_ODE_TIME_STEP(setup, mesh, input_data, options, &
+  SUBROUTINE GR4_ODE_MLP_TIME_STEP(setup, mesh, input_data, options, &
 &   returns, time_step, weight_1, bias_1, weight_2, bias_2, ac_mlt, &
 &   ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
     IMPLICIT NONE
@@ -15634,7 +15634,7 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL GR_PRODUCTION_TRANSFER_MLP_ODE(output_layer(:, k), pn(k)&
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), pn(k)&
 &                                       , en(k), ac_cp(k), ac_ct(k), &
 &                                       ac_kexc(k), ac_hp(k), ac_ht(k), &
 &                                       ac_qt(k), l)
@@ -15644,7 +15644,7 @@ CONTAINS
         END IF
       END DO
     END DO
-  END SUBROUTINE GR4_MLP_ODE_TIME_STEP
+  END SUBROUTINE GR4_ODE_MLP_TIME_STEP
 
 !  Differentiation of gr5_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
@@ -19734,9 +19734,9 @@ MODULE MD_SIMULATION_DIFF
   USE MD_CHECKPOINT_VARIABLE_DIFF
 !% only: ssn_time_step
   USE MD_SNOW_OPERATOR_DIFF
-!% only: gr4_time_step, gr4_mlp_alg_time_step, gr4_ode_time_step, &
+!% only: gr4_time_step, gr4_mlp_time_step, gr4_ode_time_step, &
   USE MD_GR_OPERATOR_DIFF
-!% & gr4_mlp_ode_time_step, gr5_time_step, gr6_time_step, grd_time_step, loieau_time_step
+!% & gr4_ode_mlp_time_step, gr5_time_step, gr6_time_step, grd_time_step, loieau_time_step
 !% only: vic3l_time_step
   USE MD_VIC3L_OPERATOR_DIFF
 !% only: lag0_time_step, lr_time_step, kw_time_step
@@ -20002,8 +20002,8 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         rr_parameters_inc = rr_parameters_inc + 4
         rr_states_inc = rr_states_inc + 3
-      CASE ('gr4_mlp_alg') 
-! 'gr4_mlp_alg' module
+      CASE ('gr4_mlp') 
+! 'gr4_mlp' module
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1)
@@ -20021,37 +20021,31 @@ CONTAINS
 ! % hi
 ! % hp
 ! % ht
-        CALL GR4_MLP_ALG_TIME_STEP_D(setup, mesh, input_data, options, &
-&                              returns, t, parameters%nn_parameters%&
-&                              weight_1, parameters_d%nn_parameters%&
-&                              weight_1, parameters%nn_parameters%bias_1&
-&                              , parameters_d%nn_parameters%bias_1, &
-&                              parameters%nn_parameters%weight_2, &
-&                              parameters_d%nn_parameters%weight_2, &
-&                              parameters%nn_parameters%bias_2, &
-&                              parameters_d%nn_parameters%bias_2, &
-&                              checkpoint_variable%ac_mlt, &
-&                              checkpoint_variable_d%ac_mlt, &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+1), &
-&                              checkpoint_variable_d%ac_rr_parameters(:&
-&                              , rr_parameters_inc+1), &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+2), &
-&                              checkpoint_variable_d%ac_rr_parameters(:&
-&                              , rr_parameters_inc+2), &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+3), &
-&                              checkpoint_variable_d%ac_rr_parameters(:&
-&                              , rr_parameters_inc+3), &
-&                              checkpoint_variable%ac_rr_parameters(:, &
-&                              rr_parameters_inc+4), &
-&                              checkpoint_variable_d%ac_rr_parameters(:&
-&                              , rr_parameters_inc+4), h1, h1_d, h2, &
-&                              h2_d, h3, h3_d, checkpoint_variable%&
-&                              ac_qtz(:, setup%nqz), &
-&                              checkpoint_variable_d%ac_qtz(:, setup%nqz&
-&                              ))
+        CALL GR4_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
+&                          returns, t, parameters%nn_parameters%weight_1&
+&                          , parameters_d%nn_parameters%weight_1, &
+&                          parameters%nn_parameters%bias_1, parameters_d&
+&                          %nn_parameters%bias_1, parameters%&
+&                          nn_parameters%weight_2, parameters_d%&
+&                          nn_parameters%weight_2, parameters%&
+&                          nn_parameters%bias_2, parameters_d%&
+&                          nn_parameters%bias_2, checkpoint_variable%&
+&                          ac_mlt, checkpoint_variable_d%ac_mlt, &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+1), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+1), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+2), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+2), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+3), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+3), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+4), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+4), h1&
+&                          , h1_d, h2, h2_d, h3, h3_d, &
+&                          checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                          checkpoint_variable_d%ac_qtz(:, setup%nqz))
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -20105,8 +20099,8 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         rr_parameters_inc = rr_parameters_inc + 4
         rr_states_inc = rr_states_inc + 3
-      CASE ('gr4_mlp_ode') 
-! 'gr4_mlp_ode' module
+      CASE ('gr4_ode_mlp') 
+! 'gr4_ode_mlp' module
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1)
@@ -20124,7 +20118,7 @@ CONTAINS
 ! % hi
 ! % hp
 ! % ht
-        CALL GR4_MLP_ODE_TIME_STEP_D(setup, mesh, input_data, options, &
+        CALL GR4_ODE_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
 &                              returns, t, parameters%nn_parameters%&
 &                              weight_1, parameters_d%nn_parameters%&
 &                              weight_1, parameters%nn_parameters%bias_1&
@@ -20577,8 +20571,8 @@ CONTAINS
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 3
         CALL PUSHCONTROL4B(1)
-      CASE ('gr4_mlp_alg') 
-! 'gr4_mlp_alg' module
+      CASE ('gr4_mlp') 
+! 'gr4_mlp' module
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
@@ -20598,20 +20592,19 @@ CONTAINS
         CALL PUSHREAL4ARRAY(h3, mesh%nac)
         CALL PUSHREAL4ARRAY(h2, mesh%nac)
         CALL PUSHREAL4ARRAY(h1, mesh%nac)
-        CALL GR4_MLP_ALG_TIME_STEP(setup, mesh, input_data, options, &
-&                            returns, t, parameters%nn_parameters%&
-&                            weight_1, parameters%nn_parameters%bias_1, &
-&                            parameters%nn_parameters%weight_2, &
-&                            parameters%nn_parameters%bias_2, &
-&                            checkpoint_variable%ac_mlt, &
-&                            checkpoint_variable%ac_rr_parameters(:, &
-&                            rr_parameters_inc+1), checkpoint_variable%&
-&                            ac_rr_parameters(:, rr_parameters_inc+2), &
-&                            checkpoint_variable%ac_rr_parameters(:, &
-&                            rr_parameters_inc+3), checkpoint_variable%&
-&                            ac_rr_parameters(:, rr_parameters_inc+4), &
-&                            h1, h2, h3, checkpoint_variable%ac_qtz(:, &
-&                            setup%nqz))
+        CALL GR4_MLP_TIME_STEP(setup, mesh, input_data, options, returns&
+&                        , t, parameters%nn_parameters%weight_1, &
+&                        parameters%nn_parameters%bias_1, parameters%&
+&                        nn_parameters%weight_2, parameters%&
+&                        nn_parameters%bias_2, checkpoint_variable%&
+&                        ac_mlt, checkpoint_variable%ac_rr_parameters(:&
+&                        , rr_parameters_inc+1), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+2), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+3), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+4), h1, &
+&                        h2, h3, checkpoint_variable%ac_qtz(:, setup%nqz&
+&                        ))
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -20659,8 +20652,8 @@ CONTAINS
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 3
         CALL PUSHCONTROL4B(3)
-      CASE ('gr4_mlp_ode') 
-! 'gr4_mlp_ode' module
+      CASE ('gr4_ode_mlp') 
+! 'gr4_ode_mlp' module
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
@@ -20680,7 +20673,7 @@ CONTAINS
         CALL PUSHREAL4ARRAY(h3, mesh%nac)
         CALL PUSHREAL4ARRAY(h2, mesh%nac)
         CALL PUSHREAL4ARRAY(h1, mesh%nac)
-        CALL GR4_MLP_ODE_TIME_STEP(setup, mesh, input_data, options, &
+        CALL GR4_ODE_MLP_TIME_STEP(setup, mesh, input_data, options, &
 &                            returns, t, parameters%nn_parameters%&
 &                            weight_1, parameters%nn_parameters%bias_1, &
 &                            parameters%nn_parameters%weight_2, &
@@ -21071,37 +21064,32 @@ CONTAINS
           CALL POPREAL4ARRAY(h3, mesh%nac)
           CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
 &                      SIZE(checkpoint_variable%ac_qtz, 1))
-          CALL GR4_MLP_ALG_TIME_STEP_B(setup, mesh, input_data, options&
-&                                , returns, t, parameters%nn_parameters%&
-&                                weight_1, parameters_b%nn_parameters%&
-&                                weight_1, parameters%nn_parameters%&
-&                                bias_1, parameters_b%nn_parameters%&
-&                                bias_1, parameters%nn_parameters%&
-&                                weight_2, parameters_b%nn_parameters%&
-&                                weight_2, parameters%nn_parameters%&
-&                                bias_2, parameters_b%nn_parameters%&
-&                                bias_2, checkpoint_variable%ac_mlt, &
-&                                checkpoint_variable_b%ac_mlt, &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+1), &
-&                                checkpoint_variable_b%ac_rr_parameters(&
-&                                :, rr_parameters_inc+1), &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+2), &
-&                                checkpoint_variable_b%ac_rr_parameters(&
-&                                :, rr_parameters_inc+2), &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+3), &
-&                                checkpoint_variable_b%ac_rr_parameters(&
-&                                :, rr_parameters_inc+3), &
-&                                checkpoint_variable%ac_rr_parameters(:&
-&                                , rr_parameters_inc+4), &
-&                                checkpoint_variable_b%ac_rr_parameters(&
-&                                :, rr_parameters_inc+4), h1, h1_b, h2, &
-&                                h2_b, h3, h3_b, checkpoint_variable%&
-&                                ac_qtz(:, setup%nqz), &
-&                                checkpoint_variable_b%ac_qtz(:, setup%&
-&                                nqz))
+          CALL GR4_MLP_TIME_STEP_B(setup, mesh, input_data, options, &
+&                            returns, t, parameters%nn_parameters%&
+&                            weight_1, parameters_b%nn_parameters%&
+&                            weight_1, parameters%nn_parameters%bias_1, &
+&                            parameters_b%nn_parameters%bias_1, &
+&                            parameters%nn_parameters%weight_2, &
+&                            parameters_b%nn_parameters%weight_2, &
+&                            parameters%nn_parameters%bias_2, &
+&                            parameters_b%nn_parameters%bias_2, &
+&                            checkpoint_variable%ac_mlt, &
+&                            checkpoint_variable_b%ac_mlt, &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+1), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+2), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+2), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+3), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+3), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+4), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+4), &
+&                            h1, h1_b, h2, h2_b, h3, h3_b, &
+&                            checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                            checkpoint_variable_b%ac_qtz(:, setup%nqz))
           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
 &           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
 &           h3_b
@@ -21172,7 +21160,7 @@ CONTAINS
           CALL POPREAL4ARRAY(h3, mesh%nac)
           CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
 &                      SIZE(checkpoint_variable%ac_qtz, 1))
-          CALL GR4_MLP_ODE_TIME_STEP_B(setup, mesh, input_data, options&
+          CALL GR4_ODE_MLP_TIME_STEP_B(setup, mesh, input_data, options&
 &                                , returns, t, parameters%nn_parameters%&
 &                                weight_1, parameters_b%nn_parameters%&
 &                                weight_1, parameters%nn_parameters%&
@@ -21549,8 +21537,8 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         rr_parameters_inc = rr_parameters_inc + 4
         rr_states_inc = rr_states_inc + 3
-      CASE ('gr4_mlp_alg') 
-! 'gr4_mlp_alg' module
+      CASE ('gr4_mlp') 
+! 'gr4_mlp' module
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
@@ -21565,20 +21553,19 @@ CONTAINS
 ! % hi
 ! % hp
 ! % ht
-        CALL GR4_MLP_ALG_TIME_STEP(setup, mesh, input_data, options, &
-&                            returns, t, parameters%nn_parameters%&
-&                            weight_1, parameters%nn_parameters%bias_1, &
-&                            parameters%nn_parameters%weight_2, &
-&                            parameters%nn_parameters%bias_2, &
-&                            checkpoint_variable%ac_mlt, &
-&                            checkpoint_variable%ac_rr_parameters(:, &
-&                            rr_parameters_inc+1), checkpoint_variable%&
-&                            ac_rr_parameters(:, rr_parameters_inc+2), &
-&                            checkpoint_variable%ac_rr_parameters(:, &
-&                            rr_parameters_inc+3), checkpoint_variable%&
-&                            ac_rr_parameters(:, rr_parameters_inc+4), &
-&                            h1, h2, h3, checkpoint_variable%ac_qtz(:, &
-&                            setup%nqz))
+        CALL GR4_MLP_TIME_STEP(setup, mesh, input_data, options, returns&
+&                        , t, parameters%nn_parameters%weight_1, &
+&                        parameters%nn_parameters%bias_1, parameters%&
+&                        nn_parameters%weight_2, parameters%&
+&                        nn_parameters%bias_2, checkpoint_variable%&
+&                        ac_mlt, checkpoint_variable%ac_rr_parameters(:&
+&                        , rr_parameters_inc+1), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+2), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+3), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+4), h1, &
+&                        h2, h3, checkpoint_variable%ac_qtz(:, setup%nqz&
+&                        ))
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -21615,8 +21602,8 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         rr_parameters_inc = rr_parameters_inc + 4
         rr_states_inc = rr_states_inc + 3
-      CASE ('gr4_mlp_ode') 
-! 'gr4_mlp_ode' module
+      CASE ('gr4_ode_mlp') 
+! 'gr4_ode_mlp' module
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hi
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
@@ -21631,7 +21618,7 @@ CONTAINS
 ! % hi
 ! % hp
 ! % ht
-        CALL GR4_MLP_ODE_TIME_STEP(setup, mesh, input_data, options, &
+        CALL GR4_ODE_MLP_TIME_STEP(setup, mesh, input_data, options, &
 &                            returns, t, parameters%nn_parameters%&
 &                            weight_1, parameters%nn_parameters%bias_1, &
 &                            parameters%nn_parameters%weight_2, &

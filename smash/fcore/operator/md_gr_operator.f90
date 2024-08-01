@@ -9,11 +9,11 @@
 !%      - gr_threshold_exchange
 !%      - gr_transfer
 !%      - gr_production_transfer_ode
-!%      - gr_production_transfer_mlp_ode
+!%      - gr_production_transfer_ode_mlp
 !%      - gr4_time_step
-!%      - gr4_mlp_alg_time_step
+!%      - gr4_mlp_time_step
 !%      - gr4_ode_time_step
-!%      - gr4_mlp_ode_time_step
+!%      - gr4_ode_mlp_time_step
 !%      - gr5_time_step
 !%      - gr6_time_step
 !%      - grd_time_step
@@ -238,7 +238,7 @@ contains
 
     end subroutine gr_production_transfer_ode
 
-    subroutine gr_production_transfer_mlp_ode(fq, pn, en, cp, ct, kexc, hp, ht, q, l)
+    subroutine gr_production_transfer_ode_mlp(fq, pn, en, cp, ct, kexc, hp, ht, q, l)
         !% Solve state-space ODE system with explicit Euler and MLP
 
         implicit none
@@ -283,7 +283,7 @@ contains
         q = (1._sp + fq(5))*ct*ht**5 &
         & + (0.1_sp + 0.9_sp*fq(3)**2)*(1._sp + fq(1))*pn*hp**2 + l
 
-    end subroutine gr_production_transfer_mlp_ode
+    end subroutine gr_production_transfer_ode_mlp
 
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -380,7 +380,7 @@ contains
 #endif
     end subroutine gr4_time_step
 
-    subroutine gr4_mlp_alg_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
+    subroutine gr4_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
     & weight_2, bias_2, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
@@ -531,7 +531,7 @@ contains
         !$OMP end parallel do
 #endif
 
-    end subroutine gr4_mlp_alg_time_step
+    end subroutine gr4_mlp_time_step
 
     subroutine gr4_ode_time_step(setup, mesh, input_data, options, returns, time_step, &
     & ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -626,7 +626,7 @@ contains
 
     end subroutine gr4_ode_time_step
 
-    subroutine gr4_mlp_ode_time_step(setup, mesh, input_data, options, returns, time_step, &
+    subroutine gr4_ode_mlp_time_step(setup, mesh, input_data, options, returns, time_step, &
     & weight_1, bias_1, weight_2, bias_2, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, &
     & ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -723,7 +723,7 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
-                call gr_production_transfer_mlp_ode(output_layer(:, k), pn(k), en(k), &
+                call gr_production_transfer_ode_mlp(output_layer(:, k), pn(k), en(k), &
                 & ac_cp(k), ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
 
                 ! Transform from mm/dt to m3/s
@@ -754,7 +754,7 @@ contains
         !$OMP end parallel do
 #endif
 
-    end subroutine gr4_mlp_ode_time_step
+    end subroutine gr4_ode_mlp_time_step
 
     subroutine gr5_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
