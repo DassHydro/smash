@@ -25,13 +25,13 @@ If you already have Python, you can install `smash` with:
     
     If you have any incompatibility issue with your system, we recommand using a virtual environment such a `Anaconda <https://www.anaconda.com/>`__.
 
-To install `smash` follow the commands:
+    To install `smash` follow the commands:
 
-.. code-block:: none
+    .. code-block:: none
 
-    conda create -n smash python 
-    conda activate smash
-    pip install hydro-smash
+        conda create -n smash python 
+        conda activate smash
+        pip install hydro-smash
 
 ------
 Import
