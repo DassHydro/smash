@@ -463,7 +463,7 @@ def _generate_mesh(
         well=_check_well_in_flowdir(flwdir_dataset)
             
         if np.sum(well["well"])!=0:
-            print("<\> Error: Well(s) detected in the flow dir direction.")
+            print("<\> Error: Well(s) detected in the flow directions.")
             flwdir_dataset.close()
             return well
     

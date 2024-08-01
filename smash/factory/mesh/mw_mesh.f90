@@ -75,19 +75,15 @@ contains
         real(4), intent(in) :: area
         integer, intent(in) :: max_depth
         integer, dimension(nrow, ncol), intent(out) :: mask_dln
-        !integer, dimension(nrow, ncol), intent(out) :: mask_well
         integer, intent(out) :: col_dln, row_dln
 
         integer, dimension(nrow, ncol) :: mask_dln_imd
-        !integer, dimension(nrow, ncol) :: mask_well_imd
         integer :: i, j, row_imd, col_imd
         real(4) :: min_tol, tol
 
         !% Transform from Python to FORTRAN index
         row = row + 1
         col = col + 1
-        
-        !mask_well_imd=0
         
         min_tol = huge(0._4)
 
@@ -115,7 +111,6 @@ contains
                 col_dln = col_imd - 1
 
                 mask_dln = mask_dln_imd
-                !mask_well = mask_well_imd
 
             end do
 
@@ -352,9 +347,6 @@ contains
             if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
 
             if (flwdir(row_imd, col_imd) .ne. i) cycle
-            
-            !% Check if well
-!~             if ( flwdir(row_imd, col_imd) .eq. i .and. flwdir(row, col) .eq. opposite_dir(i) ) cycle
 
             !% Check for nested catchment and set flag
             do j = 1, ng
