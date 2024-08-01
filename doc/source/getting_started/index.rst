@@ -21,6 +21,18 @@ If you already have Python, you can install `smash` with:
 
     pip install hydro-smash
 
+.. note::
+    
+    If you have any incompatibility issue with your system, we recommand using a virtual environment such a `Anaconda <https://www.anaconda.com/>`__.
+
+    To install `smash` follow the commands:
+
+    .. code-block:: none
+
+        conda create -n smash python=3.11 
+        conda activate smash
+        pip install hydro-smash
+
 ------
 Import
 ------
