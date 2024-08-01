@@ -49,7 +49,7 @@ contains
         integer :: i, row_imd, col_imd
 
         mask(row, col) = 1
-        
+
         do i = 1, 8
 
             row_imd = row + drow(i)
@@ -84,7 +84,7 @@ contains
         !% Transform from Python to FORTRAN index
         row = row + 1
         col = col + 1
-        
+
         min_tol = huge(0._4)
 
         do i = -max_depth, max_depth
@@ -99,7 +99,7 @@ contains
 
                 call mask_upstream_cells(nrow, ncol, flwdir, row_imd, &
                 & col_imd, mask_dln_imd)
-                
+
                 tol = abs(area - sum(mask_dln_imd*dx*dy))/area
 
                 if (tol .ge. min_tol) cycle
@@ -468,7 +468,6 @@ contains
 
     end subroutine flow_partition_variable
 
-
     subroutine check_well_in_flowdir(nrow, ncol, flwdir, well)
 
         implicit none
@@ -476,34 +475,34 @@ contains
         integer, intent(in) :: nrow, ncol
         integer, dimension(nrow, ncol), intent(in) :: flwdir
         integer, dimension(nrow, ncol), intent(out) :: well
-        
+
         integer :: i, j, k, row_imd, col_imd
         integer, dimension(3) :: drow = (/0, 1, 1/)
         integer, dimension(3) :: dcol = (/1, 1, 0/)
         integer, dimension(3) :: dir = (/3, 4, 5/)
         integer, dimension(3) :: opposite_dir = (/7, 8, 1/)
-        
+
         well = 0
-        
-        do i=1,nrow-1
-            
-            do j=1,ncol-1
+
+        do i = 1, nrow - 1
+
+            do j = 1, ncol - 1
 
                 do k = 1, 3
-                    
+
                     row_imd = i + drow(k)
                     col_imd = j + dcol(k)
-                    
-                    if ( flwdir(row_imd, col_imd) .eq. opposite_dir(k) .and. flwdir(i, j) .eq. dir(k) ) then
-                        
-                        well(i,j) = 1
-                        
+
+                    if (flwdir(row_imd, col_imd) .eq. opposite_dir(k) .and. flwdir(i, j) .eq. dir(k)) then
+
+                        well(i, j) = 1
+
                     end if
-                
+
                 end do
-            
-            end do  
-        
+
+            end do
+
         end do
 
     end subroutine check_well_in_flowdir

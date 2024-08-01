@@ -98,6 +98,12 @@ def generate_mesh(
         the ``EPSG``. On the other hand, if the projection is not well defined in the flow directions file
         (i.e. in ``ASCII`` file). The **epsg** argument must be filled in.
 
+    check_well: `bool`, default True
+        If True, check the consistency of the flow directions. If some well(s) are detected,
+        the function will print an error and return a dictionnary with all necessary informations
+        to identify the well(s). If False, this check is disabled. Notice that the presence of well(s)
+        could lead to unexpected behaviours such as crashs and inconsistent hydrological results.
+
     Returns
     -------
     mesh : dict[str, Any]
@@ -298,15 +304,14 @@ def _generate_mesh_from_xy(
         dx_win = dx[slice_win]
         dy_win = dy[slice_win]
         flwdir_win = flwdir[slice_win]
-        
+
         mask_dln_win, row_dln_win, col_dln_win = mw_mesh.catchment_dln(
             flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
         )
-        
+
         row_dln[ind] = row_dln_win + slice_win[0].start  # % srow
         col_dln[ind] = col_dln_win + slice_win[1].start  # % scol
-        
-        
+
         area_dln[ind] = np.sum(mask_dln_win * dx_win * dy_win)
 
         mask_dln[slice_win] = np.where(mask_dln_win == 1, 1, mask_dln[slice_win])
@@ -425,25 +430,24 @@ def _generate_mesh_from_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: np.nd
 
 
 def _check_well_in_flowdir(
-        flwdir_dataset: rasterio.DatasetReader,
-    ):
-    
+    flwdir_dataset: rasterio.DatasetReader,
+):
     (xmin, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
     flwdir = _get_array(flwdir_dataset)
-    
-    well=mw_mesh.check_well_in_flowdir(flwdir)
-    
-    well_coord_x=xmin+np.where(well>0)[0]*xres
-    well_coord_y=ymax-np.where(well>0)[1]*yres
-    
-    well_location={
-            "meta":flwdir_dataset.meta,
-            "flwdir":flwdir,
-            "well":well,
-            "well_coord_x":well_coord_x,
-            "well_coord_y":well_coord_y,
+
+    well = mw_mesh.check_well_in_flowdir(flwdir)
+
+    well_coord_x = xmin + np.where(well > 0)[0] * xres
+    well_coord_y = ymax - np.where(well > 0)[1] * yres
+
+    well_location = {
+        "meta": flwdir_dataset.meta,
+        "flwdir": flwdir,
+        "well": well,
+        "well_coord_x": well_coord_x,
+        "well_coord_y": well_coord_y,
     }
-    
+
     return well_location
 
 
@@ -458,17 +462,18 @@ def _generate_mesh(
     epsg: int | None,
     check_well: bool,
 ) -> dict:
-    
     if check_well:
-        well=_check_well_in_flowdir(flwdir_dataset)
-            
-        if np.sum(well["well"])!=0:
-            print("<\> Error: Well(s) detected in the flow directions.")
+        print(r"<\> Checking the consistency of the flow directions ...")
+        well = _check_well_in_flowdir(flwdir_dataset)
+
+        if np.sum(well["well"]) != 0:
+            print(r"<\> Error: Well(s) detected in the flow directions.")
             flwdir_dataset.close()
             return well
-    
+        
+    print(r"<\> Generate the mesh ...")
+
     if bbox is not None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
         return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
-
