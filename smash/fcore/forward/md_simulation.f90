@@ -21,8 +21,8 @@ module md_simulation
     use mwd_returns !% only: ReturnsDT
     use md_checkpoint_variable !% only: Checkpoint_VariableDT
     use md_snow_operator !% only: ssn_time_step
-    use md_gr_operator !% only: gr4_time_step, gr4_mlp_alg_time_step, gr4_ode_time_step, &
-    !% & gr4_mlp_ode_time_step, gr5_time_step, gr6_time_step, grd_time_step, loieau_time_step
+    use md_gr_operator !% only: gr4_time_step, gr4_mlp_time_step, gr4_ode_time_step, &
+    !% & gr4_ode_mlp_time_step, gr5_time_step, gr6_time_step, grd_time_step, loieau_time_step
     use md_vic3l_operator !% only: vic3l_time_step
     use md_routing_operator !% only: lag0_time_step, lr_time_step, kw_time_step
     use mwd_sparse_matrix_manipulation !% only: matrix_to_ac_vector, &
@@ -199,15 +199,15 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 4
                 rr_states_inc = rr_states_inc + 3
 
-                ! 'gr4_mlp_alg' module
-            case ("gr4_mlp_alg")
+                ! 'gr4_mlp' module
+            case ("gr4_mlp")
 
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
                 h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
                 h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
 
-                call gr4_mlp_alg_time_step( &
+                call gr4_mlp_time_step( &
                     setup, &
                     mesh, &
                     input_data, &
@@ -267,15 +267,15 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 4
                 rr_states_inc = rr_states_inc + 3
 
-                ! 'gr4_mlp_ode' module
-            case ("gr4_mlp_ode")
+                ! 'gr4_ode_mlp' module
+            case ("gr4_ode_mlp")
 
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
                 h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
                 h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
 
-                call gr4_mlp_ode_time_step( &
+                call gr4_ode_mlp_time_step( &
                     setup, &
                     mesh, &
                     input_data, &

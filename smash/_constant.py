@@ -45,9 +45,9 @@ SNOW_MODULE = ["zero", "ssn"]
 
 HYDROLOGICAL_MODULE = [
     "gr4",
-    "gr4_mlp_alg",
+    "gr4_mlp",
     "gr4_ode",
-    "gr4_mlp_ode",
+    "gr4_ode_mlp",
     "gr5",
     "gr6",
     "grd",
@@ -77,9 +77,9 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         HYDROLOGICAL_MODULE,
         [
             ["ci", "cp", "ct", "kexc"],  # % gr4
-            ["ci", "cp", "ct", "kexc"],  # % gr4_mlp_alg
+            ["ci", "cp", "ct", "kexc"],  # % gr4_mlp
             ["ci", "cp", "ct", "kexc"],  # % gr4_ode
-            ["ci", "cp", "ct", "kexc"],  # % gr4_mlp_ode
+            ["ci", "cp", "ct", "kexc"],  # % gr4_ode_mlp
             ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
             ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
             ["cp", "ct"],  # % grd
@@ -118,9 +118,9 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
         HYDROLOGICAL_MODULE,
         [
             ["hi", "hp", "ht"],  # % gr4
-            ["hi", "hp", "ht"],  # % gr4_mlp_alg
+            ["hi", "hp", "ht"],  # % gr4_mlp
             ["hi", "hp", "ht"],  # % gr4_ode
-            ["hi", "hp", "ht"],  # % gr4_mlp_ode
+            ["hi", "hp", "ht"],  # % gr4_ode_mlp
             ["hi", "hp", "ht"],  # % gr5
             ["hi", "hp", "ht", "he"],  # % gr6
             ["hp", "ht"],  # % grd
@@ -161,9 +161,9 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
         HYDROLOGICAL_MODULE,
         [
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4_mlp_alg
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4_mlp
             ["pn", "en", "lexc", "qt"],  # % gr4_ode
-            ["pn", "en", "lexc", "qt"],  # % gr4_mlp_ode
+            ["pn", "en", "lexc", "qt"],  # % gr4_ode_mlp
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
             ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
@@ -227,11 +227,11 @@ STRUCTURE_RR_INTERNAL_FLUXES = dict(
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % (gr4, gr4_mlp_alg, gr4_ode, gr4_mlp_ode, gr5, gr6)
-    "cp",  # % (gr4, gr4_mlp_alg, gr4_ode, gr4_mlp_ode, gr5, gr6, grd)
-    "ct",  # % (gr4, gr4_mlp_alg, gr4_ode, gr4_mlp_ode, gr5, gr6, grd)
+    "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
+    "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
+    "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
     "be",  # % (gr6)
-    "kexc",  # % (gr4, gr4_mlp_alg, gr4_ode, gr4_mlp_ode, gr5, gr6)
+    "kexc",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
     "aexc",  # % (gr5, gr6)
     "ca",  # % loieau
     "cc",  # % loieau
@@ -252,9 +252,9 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % (gr4, gr4_mlp_alg, gr4_ode, gr4_mlp_ode, gr5, gr6)
-    "hp",  # % (gr4, gr4_mlp_alg, gr4_ode, gr4_mlp_ode, gr5, gr6, grd)
-    "ht",  # % (gr4, gr4_mlp_alg, gr4_ode, gr4_mlp_ode, gr5, gr6, grd)
+    "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
+    "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
+    "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
     "he",  # % (gr6)
     "ha",  # % loieau
     "hc",  # % loieau
