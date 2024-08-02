@@ -121,9 +121,9 @@ class Model:
             Name of hydrological module. Should be one of:
 
             - ``'gr4'``
-            - ``'gr4_mlp_alg'``
+            - ``'gr4_mlp'``
             - ``'gr4_ode'``
-            - ``'gr4_mlp_ode'``
+            - ``'gr4_ode_mlp'``
             - ``'gr5'``
             - ``'gr6'``
             - ``'grd'``
@@ -1139,10 +1139,10 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
         perceptron)
 
-        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+        >>> setup["hydrological_module"] = "gr4_mlp"
         >>> model = smash.Model(setup, mesh)
 
         By default, the weight and bias of the parameterization neural network are set to zero.
@@ -2406,10 +2406,10 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
         perceptron)
 
-        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+        >>> setup["hydrological_module"] = "gr4_mlp"
 
         Set the number of neurons in the hidden layer to 3 (the default value is 16, if not set)
 
@@ -2452,10 +2452,10 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
         perceptron)
 
-        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+        >>> setup["hydrological_module"] = "gr4_mlp"
 
         Set the number of neurons in the hidden layer to 6 (the default value is 16, if not set)
 
@@ -2511,10 +2511,10 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
         perceptron)
 
-        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+        >>> setup["hydrological_module"] = "gr4_mlp"
 
         Set the number of neurons in the hidden layer to 3 (the default value is 16, if not set)
 
@@ -2605,10 +2605,10 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the hydrological module to ``'gr4_mlp_alg'`` (hybrid hydrological model with multilayer
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
         perceptron)
 
-        >>> setup["hydrological_module"] = "gr4_mlp_alg"
+        >>> setup["hydrological_module"] = "gr4_mlp"
 
         Set the number of neurons in the hidden layer to 6 (the default value is 16, if not set)
 
