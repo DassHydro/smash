@@ -145,9 +145,11 @@ class Model:
                 See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>`
                 section
 
-        hidden_neuron : `int`, default 16
-            Number of neurons in the hidden layer of the parameterization neural network
+        hidden_neuron : `int` or `list[int]`, default 16
+            Number of neurons in hidden layer(s) of the parameterization neural network
             used to correct internal fluxes, if used (depending on **hydrological_module**).
+            If it is a list, the maximum length is 2,
+            which means the neural network can have up to 2 hidden layers.
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of the mapping used for :math:`\\mu`, the mean of structural errors. Should be one of:
@@ -519,30 +521,34 @@ class Model:
         If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.setup.<TAB>
-        model.setup.adjust_interception     model.setup.prcp_format
-        model.setup.compute_mean_atmos      model.setup.prcp_partitioning
-        model.setup.copy()                  model.setup.qobs_directory
-        model.setup.daily_interannual_pet   model.setup.read_descriptor
-        model.setup.descriptor_directory    model.setup.read_pet
-        model.setup.descriptor_format       model.setup.read_prcp
-        model.setup.descriptor_name         model.setup.read_qobs
-        model.setup.dt                      model.setup.read_snow
-        model.setup.end_time                model.setup.read_temp
-        model.setup.from_handle(            model.setup.routing_module
-        model.setup.hydrological_module     model.setup.serr_mu_mapping
-        model.setup.nd                      model.setup.serr_sigma_mapping
-        model.setup.nrrp                    model.setup.snow_access
-        model.setup.nrrs                    model.setup.snow_conversion_factor
-        model.setup.nsep_mu                 model.setup.snow_directory
-        model.setup.nsep_sigma              model.setup.snow_format
-        model.setup.ntime_step              model.setup.snow_module
-        model.setup.pet_access              model.setup.snow_module_present
-        model.setup.pet_conversion_factor   model.setup.sparse_storage
-        model.setup.pet_directory           model.setup.start_time
-        model.setup.pet_format              model.setup.structure
-        model.setup.prcp_access             model.setup.temp_access
-        model.setup.prcp_conversion_factor  model.setup.temp_directory
-        model.setup.prcp_directory          model.setup.temp_format
+        model.setup.adjust_interception     model.setup.pet_format
+        model.setup.compute_mean_atmos      model.setup.prcp_access
+        model.setup.copy()                  model.setup.prcp_conversion_factor
+        model.setup.daily_interannual_pet   model.setup.prcp_directory
+        model.setup.descriptor_directory    model.setup.prcp_format
+        model.setup.descriptor_format       model.setup.prcp_partitioning
+        model.setup.descriptor_name         model.setup.qobs_directory
+        model.setup.dt                      model.setup.read_descriptor
+        model.setup.end_time                model.setup.read_pet
+        model.setup.from_handle(            model.setup.read_prcp
+        model.setup.hidden_neuron           model.setup.read_qobs
+        model.setup.hydrological_module     model.setup.read_snow
+        model.setup.n_hydro_fluxes          model.setup.read_temp
+        model.setup.n_internal_fluxes       model.setup.routing_module
+        model.setup.n_layers                model.setup.serr_mu_mapping
+        model.setup.n_routing_fluxes        model.setup.serr_sigma_mapping
+        model.setup.n_snow_fluxes           model.setup.snow_access
+        model.setup.nd                      model.setup.snow_conversion_factor
+        model.setup.neurons                 model.setup.snow_directory
+        model.setup.nqz                     model.setup.snow_format
+        model.setup.nrrp                    model.setup.snow_module
+        model.setup.nrrs                    model.setup.snow_module_present
+        model.setup.nsep_mu                 model.setup.sparse_storage
+        model.setup.nsep_sigma              model.setup.start_time
+        model.setup.ntime_step              model.setup.structure
+        model.setup.pet_access              model.setup.temp_access
+        model.setup.pet_conversion_factor   model.setup.temp_directory
+        model.setup.pet_directory           model.setup.temp_format
         """
 
         return self._setup
@@ -1154,7 +1160,7 @@ class Model:
         [array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
                 dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
 
-        The output contains a list of weight or bias values for all layers.
+        The output contains a list of weight or bias values for trainable layers.
 
         Set random values with the setter methods
         `set_nn_parameters_weight <Model.set_nn_parameters_weight>` or
@@ -1173,7 +1179,30 @@ class Model:
         >>> model.nn_parameters.<TAB>
         model.nn_parameters.bias_1                  model.nn_parameters.from_handle(
         model.nn_parameters.bias_2                  model.nn_parameters.weight_1
-        model.nn_parameters.copy()                  model.nn_parameters.weight_2
+        model.nn_parameters.bias_3                  model.nn_parameters.weight_2
+        model.nn_parameters.copy()                  model.nn_parameters.weight_3
+
+        .. note::
+            Not all layer weights and biases are used in the neural network.
+            The default network only uses 2 layers, which means that ``weight_3`` and ``bias_3``
+            are not used and are empty arrays in this case
+
+            >>> model.nn_parameters.weight_3.size, model.nn_parameters.bias_3.size
+            (0, 0)
+
+        To set another neural network structure
+
+        >>> setup["hidden_neuron"] = (32, 16)
+        >>> model_2 = smash.Model(setup, mesh)
+
+        In this case, the number of layers is 3 instead of 2
+
+        >>> weights = model_2.get_nn_parameters_weight()
+        >>> len(weights)
+        3
+
+        >>> weights[2].size
+        64
         """
 
         return self._parameters.nn_parameters
@@ -2394,7 +2423,7 @@ class Model:
         Returns
         -------
         value : list[`numpy.ndarray`]
-            A list of arrays representing the weights of all layers.
+            A list of arrays representing the weights of trainable layers.
 
         See Also
         --------
@@ -2416,7 +2445,7 @@ class Model:
         >>> setup["hidden_neuron"] = 3
         >>> model = smash.Model(setup, mesh)
 
-        By default, the weights of all layers are set to zero.
+        By default, the weights of trainable layers are set to zero.
         Access to their values with the getter methods
         `get_nn_parameters_weight <Model.get_nn_parameters_weight>`
 
@@ -2428,10 +2457,10 @@ class Model:
                 [0., 0., 0.],
                 [0., 0., 0.]], dtype=float32)]
 
-        The output contains a list of weight values for all layers.
+        The output contains a list of weight values for trainable layers.
         """
 
-        return [self._parameters.nn_parameters.weight_1, self._parameters.nn_parameters.weight_2]
+        return [getattr(self._parameters.nn_parameters, f"weight_{i+1}") for i in range(self.setup.n_layers)]
 
     def get_nn_parameters_bias(self) -> list[NDArray[np.float32]]:
         """
@@ -2440,7 +2469,7 @@ class Model:
         Returns
         -------
         value : list[`numpy.ndarray`]
-            A list of arrays representing the biases of all layers.
+            A list of arrays representing the biases of trainable layers.
 
         See Also
         --------
@@ -2462,17 +2491,17 @@ class Model:
         >>> setup["hidden_neuron"] = 6
         >>> model = smash.Model(setup, mesh)
 
-        By default, the biases of all layers are set to zero.
+        By default, the biases of trainable layers are set to zero.
         Access to their values with the getter methods
         `get_nn_parameters_bias <Model.get_nn_parameters_bias>`
 
         >>> model.get_nn_parameters_bias()
         [array([0., 0., 0., 0., 0., 0.], dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
 
-        The output contains a list of bias values for all layers.
+        The output contains a list of bias values for trainable layers.
         """
 
-        return [self._parameters.nn_parameters.bias_1, self._parameters.nn_parameters.bias_2]
+        return [getattr(self._parameters.nn_parameters, f"bias_{i+1}") for i in range(self.setup.n_layers)]
 
     def set_nn_parameters_weight(
         self,
@@ -2486,7 +2515,7 @@ class Model:
         Parameters
         ----------
         value : list[`float` or `numpy.ndarray`] or None, default None
-            The list of values to set to the weights of all layers. If an element of the list is
+            The list of values to set to the weights of trainable layers. If an element of the list is
             a `numpy.ndarray`, its shape must be broadcastable into the weight shape of that layer.
             If not used, a default or specified initialization method will be used.
 
@@ -2533,7 +2562,7 @@ class Model:
                 [ 0.51504624,  0.68512934,  0.886229  ],
                 [ 0.55393404, -0.07132636,  0.5194391 ]], dtype=float32)]
 
-        The output contains a list of weight values for all layers.
+        The output contains a list of weight values for trainable layers.
 
         Set weights with specified values
 
@@ -2558,15 +2587,17 @@ class Model:
             np.random.seed(random_state)
 
         if value is None:
-            (n_neuron, n_in) = self._parameters.nn_parameters.weight_1.shape
-            self._parameters.nn_parameters.weight_1 = _initialize_nn_parameter(n_in, n_neuron, initializer)
+            for i in range(self.setup.n_layers):
+                (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i+1}").shape
+                setattr(
+                    self._parameters.nn_parameters,
+                    f"weight_{i+1}",
+                    _initialize_nn_parameter(n_in, n_neuron, initializer),
+                )
 
-            (n_neuron, n_in) = self._parameters.nn_parameters.weight_2.shape
-            self._parameters.nn_parameters.weight_2 = _initialize_nn_parameter(n_in, n_neuron, initializer)
         else:
-            self._parameters.nn_parameters.weight_1 = value[0]
-
-            self._parameters.nn_parameters.weight_2 = value[1]
+            for i, val in enumerate(value):
+                setattr(self._parameters.nn_parameters, f"weight_{i+1}", val)
 
     def set_nn_parameters_bias(
         self,
@@ -2580,7 +2611,7 @@ class Model:
         Parameters
         ----------
         value : list[`float` or `numpy.ndarray`] or None, default None
-            The list of values to set to the biases of all layers. If an element of the list is
+            The list of values to set to the biases of trainable layers. If an element of the list is
             a `numpy.ndarray`, its shape must be broadcastable into the bias shape of that layer.
             If not used, a default or specified initialization method will be used.
 
@@ -2624,7 +2655,7 @@ class Model:
         array([ 0.60088867, -0.09572671, -0.06528133,  0.2596853 ],
             dtype=float32)]
 
-        The output contains a list of bias values for all layers.
+        The output contains a list of bias values for trainable layers.
 
         Set biases with specified values
 
@@ -2644,19 +2675,17 @@ class Model:
             np.random.seed(random_state)
 
         if value is None:
-            n_neuron = self._parameters.nn_parameters.bias_1.shape[0]
-            self._parameters.nn_parameters.bias_1 = _initialize_nn_parameter(
-                1, n_neuron, initializer
-            ).flatten()
+            for i in range(self.setup.n_layers):
+                n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i+1}").shape[0]
+                setattr(
+                    self._parameters.nn_parameters,
+                    f"bias_{i+1}",
+                    _initialize_nn_parameter(1, n_neuron, initializer).flatten(),
+                )
 
-            n_neuron = self._parameters.nn_parameters.bias_2.shape[0]
-            self._parameters.nn_parameters.bias_2 = _initialize_nn_parameter(
-                1, n_neuron, initializer
-            ).flatten()
         else:
-            self._parameters.nn_parameters.bias_1 = value[0]
-
-            self._parameters.nn_parameters.bias_2 = value[1]
+            for i, val in enumerate(value):
+                setattr(self._parameters.nn_parameters, f"bias_{i+1}", val)
 
     @_model_forward_run_doc_substitution
     @_forward_run_doc_appender

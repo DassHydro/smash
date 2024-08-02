@@ -35,6 +35,25 @@ def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     return rr_internal_fluxes
 
 
+def get_neurons_from_hydrological_module(hydrological_module: str, hidden_neuron: np.ndarray) -> np.ndarray:
+    neurons = np.zeros(len(hidden_neuron) + 2, dtype=np.int32)
+
+    if "mlp" in hydrological_module:
+        if hydrological_module == "gr4_mlp":
+            # % fixed NN input size = 4 and fixed NN output size 4
+            n_in, n_out = (4, 4)
+        elif hydrological_module == "gr4_ode_mlp":
+            # % fixed NN input size = 4 and fixed NN output size 5
+            n_in, n_out = (4, 5)
+
+        neurons[0] = n_in
+        non_zero_hidden_neurons = [val for val in hidden_neuron if val > 0]
+        neurons[1 : 1 + len(non_zero_hidden_neurons)] = non_zero_hidden_neurons
+        neurons[1 + len(non_zero_hidden_neurons)] = n_out
+
+    return neurons
+
+
 ### FLOAT PRECISION FOR FLOAT COMPARISON ###
 F_PRECISION = 1.0e-5
 
@@ -589,7 +608,13 @@ OPTIMIZABLE_SERR_SIGMA_PARAMETERS = dict(
 ### OPTIMIZABLE NN PARAMETERS ###
 #################################
 
-NN_PARAMETERS_KEYS = ["weight_1", "bias_1", "weight_2", "bias_2"]
+NN_PARAMETERS_KEYS = ["weight_1", "bias_1", "weight_2", "bias_2", "weight_3", "bias_3"]
+
+OPTIMIZABLE_NN_PARAMETERS = [
+    [],  # without hybrid structure
+    NN_PARAMETERS_KEYS[:-2],  # minimal hybrid structure with 2 layers
+    NN_PARAMETERS_KEYS,  # maximal hybrid structure with 3 layers
+]
 
 ### SETUP ###
 #############
@@ -970,7 +995,6 @@ MODEL_DDT_IO_ATTR_KEYS = {
         "snow_module",
         "hydrological_module",
         "routing_module",
-        "hidden_neuron",
         "serr_mu_mapping",
         "serr_sigma_mapping",
         "start_time",

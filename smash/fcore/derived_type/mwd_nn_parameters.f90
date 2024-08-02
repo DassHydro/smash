@@ -13,6 +13,8 @@
 !%          ``bias_1``               Bias at the first layer of the neural network
 !%          ``weight_2``             Transposed weight at the second layer of the neural network
 !%          ``bias_2``               Bias at the second layer of the neural network
+!%          ``weight_3``             Transposed weight at the third layer of the neural network
+!%          ``bias_3``               Bias at the third layer of the neural network
 !%          ======================== ===========================================================
 !%
 !%      Subroutine
@@ -35,6 +37,9 @@ module mwd_nn_parameters
 
         real(sp), dimension(:, :), allocatable :: weight_2
         real(sp), dimension(:), allocatable :: bias_2
+
+        real(sp), dimension(:, :), allocatable :: weight_3
+        real(sp), dimension(:), allocatable :: bias_3
 
     end type NN_ParametersDT
 
@@ -60,6 +65,13 @@ contains
 
         allocate (this%bias_2(setup%neurons(3)))
         this%bias_2 = -99._sp
+
+        !% Third layer
+        allocate (this%weight_3(setup%neurons(4), setup%neurons(3)))
+        this%weight_3 = -99._sp
+
+        allocate (this%bias_3(setup%neurons(4)))
+        this%bias_3 = -99._sp
 
     end subroutine NN_ParametersDT_initialise
 

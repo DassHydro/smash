@@ -1,8 +1,8 @@
-commit 14af763dedb54b46657fd77b32f10403ae563ebf
+commit 419df9f683d646fb271c8cf783871fb34407a72a
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Wed Jul 31 23:32:26 2024 +0200
+Date:   Thu Aug 1 12:10:36 2024 +0200
 
-    Fix PR from FC first review
+    Change structures name: gr4_mlp_alg -> gr4_mlp, gr4_mlp_ode -> gr4_ode_mlp
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -527,8 +527,10 @@ model_ddt_io.mesh.ymax                                         |NON MODIFIED
 model_ddt_io.mesh.yres                                         |NON MODIFIED
 model_ddt_io.nn_parameters.bias_1                              |ADDED
 model_ddt_io.nn_parameters.bias_2                              |ADDED
+model_ddt_io.nn_parameters.bias_3                              |ADDED
 model_ddt_io.nn_parameters.weight_1                            |ADDED
 model_ddt_io.nn_parameters.weight_2                            |ADDED
+model_ddt_io.nn_parameters.weight_3                            |ADDED
 model_ddt_io.physio_data.descriptor                            |NON MODIFIED
 model_ddt_io.response.q                                        |NON MODIFIED
 model_ddt_io.response_data.q                                   |NON MODIFIED
@@ -545,7 +547,6 @@ model_ddt_io.serr_sigma_parameters.values                      |NON MODIFIED
 model_ddt_io.setup.descriptor_name                             |NON MODIFIED
 model_ddt_io.setup.dt                                          |NON MODIFIED
 model_ddt_io.setup.end_time                                    |NON MODIFIED
-model_ddt_io.setup.hidden_neuron                               |ADDED
 model_ddt_io.setup.hydrological_module                         |NON MODIFIED
 model_ddt_io.setup.routing_module                              |NON MODIFIED
 model_ddt_io.setup.serr_mu_mapping                             |NON MODIFIED

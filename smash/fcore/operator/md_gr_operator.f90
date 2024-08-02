@@ -381,7 +381,7 @@ contains
     end subroutine gr4_time_step
 
     subroutine gr4_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
-    & weight_2, bias_2, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
+    & weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
 
@@ -395,13 +395,15 @@ contains
         real(sp), dimension(setup%neurons(2)), intent(in) :: bias_1
         real(sp), dimension(setup%neurons(3), setup%neurons(2)), intent(in) :: weight_2
         real(sp), dimension(setup%neurons(3)), intent(in) :: bias_2
+        real(sp), dimension(setup%neurons(4), setup%neurons(3)), intent(in) :: weight_3
+        real(sp), dimension(setup%neurons(4)), intent(in) :: bias_3
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        real(sp), dimension(4) :: input_layer  ! fixed NN input size
-        real(sp), dimension(4, mesh%nac) :: output_layer  ! fixed NN output size
+        real(sp), dimension(setup%neurons(1)) :: input_layer
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
         real(sp) :: beta, pr, perc, l, prr, prd, qr, qd
@@ -455,7 +457,8 @@ contains
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
                     input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
-                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, input_layer, output_layer(:, k))
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+                    & input_layer, output_layer(:, k))
 
                 else
                     output_layer(:, k) = 0._sp
@@ -627,7 +630,7 @@ contains
     end subroutine gr4_ode_time_step
 
     subroutine gr4_ode_mlp_time_step(setup, mesh, input_data, options, returns, time_step, &
-    & weight_1, bias_1, weight_2, bias_2, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, &
+    & weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, &
     & ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
@@ -642,13 +645,15 @@ contains
         real(sp), dimension(setup%neurons(2)), intent(in) :: bias_1
         real(sp), dimension(setup%neurons(3), setup%neurons(2)), intent(in) :: weight_2
         real(sp), dimension(setup%neurons(3)), intent(in) :: bias_2
+        real(sp), dimension(setup%neurons(4), setup%neurons(3)), intent(in) :: weight_3
+        real(sp), dimension(setup%neurons(4)), intent(in) :: bias_3
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        real(sp), dimension(4) :: input_layer  ! fixed NN input size
-        real(sp), dimension(5, mesh%nac) :: output_layer  ! fixed NN output size
+        real(sp), dimension(setup%neurons(1)) :: input_layer
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
         real(sp) :: l
@@ -699,7 +704,8 @@ contains
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
                     input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
-                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, input_layer, output_layer(:, k))
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+                    & input_layer, output_layer(:, k))
 
                 else
                     output_layer(:, k) = 0._sp

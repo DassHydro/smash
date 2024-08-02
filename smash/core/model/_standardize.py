@@ -18,6 +18,7 @@ from smash._constant import (
     HYDROLOGICAL_MODULE,
     HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
+    NN_PARAMETERS_KEYS,
     ROUTING_MODULE,
     ROUTING_MODULE_NQZ,
     ROUTING_MODULE_RR_INTERNAL_FLUXES,
@@ -30,6 +31,7 @@ from smash._constant import (
     STRUCTURE_RR_INTERNAL_FLUXES,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    get_neurons_from_hydrological_module,
 )
 
 if TYPE_CHECKING:
@@ -415,15 +417,32 @@ def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, *
     return descriptor_name
 
 
-def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric, **kwargs) -> int:
-    if isinstance(hidden_neuron, (int, float)):
-        hidden_neuron = int(hidden_neuron)
-        if hidden_neuron <= 0:
-            raise ValueError("hidden_neuron model setup must be a positive number")
-    else:
-        raise TypeError("hidden_neuron model setup must be of Numeric type (int, float)")
+def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **kwargs) -> np.ndarray:
+    standardized_hidden_neuron = np.zeros(int(len(NN_PARAMETERS_KEYS) / 2) - 1, dtype=np.int32)
 
-    return hidden_neuron
+    if isinstance(hidden_neuron, (int, float)):
+        standardized_hidden_neuron[0] = int(hidden_neuron)
+
+    elif isinstance(hidden_neuron, (list, tuple, np.ndarray)):
+        if len(hidden_neuron) == 0:
+            raise ValueError("hidden_neuron model setup cannot be an empty list")
+
+        elif len(hidden_neuron) > len(standardized_hidden_neuron):
+            raise ValueError(
+                f"Cannot set hidden_neuron model setup with {len(hidden_neuron)} layers. "
+                f"The maximum allowable number of hidden layers is {len(standardized_hidden_neuron)}"
+            )
+
+        else:
+            standardized_hidden_neuron[: len(hidden_neuron)] = hidden_neuron
+
+    else:
+        raise TypeError(
+            "hidden_neuron model setup must be of Numeric or ListLike type "
+            "(int, float, List, Tuple, np.ndarray)"
+        )
+
+    return standardized_hidden_neuron
 
 
 def _standardize_model_setup(setup: dict) -> dict:
@@ -462,14 +481,10 @@ def _standardize_model_setup_finalize(setup: dict):
 
     setup["snow_module_present"] = setup["snow_module"] != "zero"
 
-    if setup["hydrological_module"] == "gr4_mlp":
-        # % fixed NN input size = 4 and fixed NN output size 4
-        setup["neurons"] = np.array([4, setup["hidden_neuron"], 4], dtype=np.int32)
-    elif setup["hydrological_module"] == "gr4_ode_mlp":
-        # % fixed NN input size = 4 and fixed NN output size 5
-        setup["neurons"] = np.array([4, setup["hidden_neuron"], 5], dtype=np.int32)
-    else:
-        setup["neurons"] = np.zeros(3, dtype=np.int32)
+    setup["neurons"] = get_neurons_from_hydrological_module(
+        setup["hydrological_module"], setup["hidden_neuron"]
+    )
+    setup["n_layers"] = max(0, np.count_nonzero(setup["neurons"]) - 1)
 
     setup["ntime_step"] = int((setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"])
     setup["nd"] = setup["descriptor_name"].size
@@ -744,7 +759,9 @@ def _standardize_set_nn_parameters_weight_value(
         pass
 
     elif isinstance(value, list):
-        weights = [model._parameters.nn_parameters.weight_1, model._parameters.nn_parameters.weight_2]
+        weights = [
+            getattr(model._parameters.nn_parameters, f"weight_{i+1}") for i in range(model.setup.n_layers)
+        ]
 
         if len(value) != len(weights):
             raise ValueError(
@@ -780,7 +797,9 @@ def _standardize_set_nn_parameters_bias_value(
         pass
 
     elif isinstance(value, list):
-        biases = [model._parameters.nn_parameters.bias_1, model._parameters.nn_parameters.bias_2]
+        biases = [
+            getattr(model._parameters.nn_parameters, f"bias_{i+1}") for i in range(model.setup.n_layers)
+        ]
 
         if len(value) != len(biases):
             raise ValueError(

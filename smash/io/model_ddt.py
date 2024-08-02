@@ -31,7 +31,7 @@ def save_model_ddt(model: Model, path: FilePath):
 
     The following data are stored into the `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file:
 
-    - ``snow_module``, ``hydrological_module``, ``routing_module``, ``hidden_neuron``, ``serr_mu_mapping``,
+    - ``snow_module``, ``hydrological_module``, ``routing_module``, ``serr_mu_mapping``,
       ``serr_sigma_mapping``, ``start_time``, ``end_time``, ``dt``, ``descriptor_name`` from
       `Model.setup <smash.Model.setup>`
     - ``xres``, ``yres``, ``xmin``, ``ymax``, ``dx``, ``dy``, ``active_cell``, ``gauge_pos``, ``code``,
@@ -43,7 +43,7 @@ def save_model_ddt(model: Model, path: FilePath):
       are only stored if a snow module has been selected)
     - ``keys``, ``values`` from `Model.rr_parameters <smash.Model.rr_parameters>`
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
-    - ``weight_1``, ``bias_1``, ``weight_2``, ``bias_2`` from
+    - ``weight_1``, ``bias_1``, ``weight_2``, ``bias_2``, ``weight_3``, ``bias_3`` from
       `Model.nn_parameters <smash.Model.nn_parameters>` (depending on the hydrological module)
     - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
     - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
@@ -142,10 +142,10 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
     Access to setup variables
 
     >>> model_ddt["setup"]
-    {'descriptor_name': array(['slope', 'dd'], dtype='<U5'),
-    'hidden_neuron': 16, 'dt': 3600.0, 'end_time': '2014-11-14 00:00',
-    'hydrological_module': 'gr4', 'routing_module': 'lr', 'serr_mu_mapping': 'Zero',
-    'serr_sigma_mapping': 'Linear', 'snow_module': 'zero', 'start_time': '2014-09-15 00:00'}
+    {'descriptor_name': array(['slope', 'dd'], dtype='<U5'), 'dt': 3600.0,
+    'end_time': '2014-11-14 00:00', 'hydrological_module': 'gr4', 'routing_module': 'lr',
+    'serr_mu_mapping': 'Zero', 'serr_sigma_mapping': 'Linear', 'snow_module': 'zero',
+    'start_time': '2014-09-15 00:00'}
 
     Access to rainfall-runoff parameter keys
 
