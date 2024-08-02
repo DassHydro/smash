@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 from smash._constant import MAPPING
@@ -39,7 +40,9 @@ def _standardize_optimize_optimizer(mapping: str, optimizer: str, setup: SetupDT
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     if setup.n_layers > 0 and optimizer == "sbs":
-        raise ValueError(f"The SBS optimizer is not suitable for the {setup.hydrological_module} module")
+        warnings.warn(
+            f"The SBS optimizer may not be suitable for the {setup.hydrological_module} module", stacklevel=2
+        )
 
     return optimizer
 
