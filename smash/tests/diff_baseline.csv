@@ -1,7 +1,10 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 commit 0d66bb225b0f61c83aee8b5348c849fc17e9e91a
 Merge: d0d2fe3 016e853
 =======
+=======
+>>>>>>> enh-net-forward-pass
 <<<<<<< HEAD
 commit 4951e299bbaf8b896a8e0b5f9dd1bd8396aa49d8
 Merge: 71b3148 371f9c0
@@ -15,10 +18,20 @@ Date:   Tue Jul 30 00:14:42 2024 +0200
     Merge branch 'enh-hybrid-models' into enh-net-forward-pass
 =======
 commit 14af763dedb54b46657fd77b32f10403ae563ebf
+=======
+commit 419df9f683d646fb271c8cf783871fb34407a72a
+>>>>>>> enh-hybrid-models
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Wed Jul 31 23:32:26 2024 +0200
+Date:   Thu Aug 1 12:10:36 2024 +0200
 
+<<<<<<< HEAD
     Fix PR from FC first review
+>>>>>>> enh-hybrid-models
+<<<<<<< HEAD
+>>>>>>> enh-net-forward-pass
+=======
+=======
+    Change structures name: gr4_mlp_alg -> gr4_mlp, gr4_mlp_ode -> gr4_ode_mlp
 >>>>>>> enh-hybrid-models
 >>>>>>> enh-net-forward-pass
 
@@ -682,10 +695,19 @@ model_ddt_io.mesh.xmin                                         |NON MODIFIED
 model_ddt_io.mesh.xres                                         |NON MODIFIED
 model_ddt_io.mesh.ymax                                         |NON MODIFIED
 model_ddt_io.mesh.yres                                         |NON MODIFIED
+<<<<<<< HEAD
 model_ddt_io.nn_parameters.bias_1                              |NON MODIFIED
 model_ddt_io.nn_parameters.bias_2                              |NON MODIFIED
 model_ddt_io.nn_parameters.weight_1                            |NON MODIFIED
 model_ddt_io.nn_parameters.weight_2                            |NON MODIFIED
+=======
+model_ddt_io.nn_parameters.bias_1                              |ADDED
+model_ddt_io.nn_parameters.bias_2                              |ADDED
+model_ddt_io.nn_parameters.bias_3                              |ADDED
+model_ddt_io.nn_parameters.weight_1                            |ADDED
+model_ddt_io.nn_parameters.weight_2                            |ADDED
+model_ddt_io.nn_parameters.weight_3                            |ADDED
+>>>>>>> enh-hybrid-models
 model_ddt_io.physio_data.descriptor                            |NON MODIFIED
 model_ddt_io.response.q                                        |NON MODIFIED
 model_ddt_io.response_data.q                                   |NON MODIFIED
@@ -702,7 +724,10 @@ model_ddt_io.serr_sigma_parameters.values                      |NON MODIFIED
 model_ddt_io.setup.descriptor_name                             |NON MODIFIED
 model_ddt_io.setup.dt                                          |NON MODIFIED
 model_ddt_io.setup.end_time                                    |NON MODIFIED
+<<<<<<< HEAD
 model_ddt_io.setup.hidden_neuron                               |NON MODIFIED
+=======
+>>>>>>> enh-hybrid-models
 model_ddt_io.setup.hydrological_module                         |NON MODIFIED
 model_ddt_io.setup.routing_module                              |NON MODIFIED
 model_ddt_io.setup.serr_mu_mapping                             |NON MODIFIED

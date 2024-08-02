@@ -218,6 +218,8 @@ contains
                     parameters%nn_parameters%bias_1, &
                     parameters%nn_parameters%weight_2, &
                     parameters%nn_parameters%bias_2, &
+                    parameters%nn_parameters%weight_3, &
+                    parameters%nn_parameters%bias_3, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
@@ -286,6 +288,8 @@ contains
                     parameters%nn_parameters%bias_1, &
                     parameters%nn_parameters%weight_2, &
                     parameters%nn_parameters%bias_2, &
+                    parameters%nn_parameters%weight_3, &
+                    parameters%nn_parameters%bias_3, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp

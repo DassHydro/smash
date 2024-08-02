@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import ADAPTIVE_OPTIMIZER, NN_PARAMETERS_KEYS, OPTIMIZER_CLASS
+from smash._constant import ADAPTIVE_OPTIMIZER, OPTIMIZABLE_NN_PARAMETERS, OPTIMIZER_CLASS
 from smash.core.simulation.optimize._tools import _inf_norm
 from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
 from smash.factory.net._loss import _hcost, _hcost_prime
@@ -520,8 +520,7 @@ class Net(object):
         ind = ADAPTIVE_OPTIMIZER.index(optimizer)
         func = eval(OPTIMIZER_CLASS[ind])
 
-        n_layers = 2 if sum(instance.setup.neurons) > 0 else 0
-        opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * n_layers)]
+        opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * instance.setup.n_layers)]
 
         early_stopped = False
 
@@ -570,7 +569,7 @@ class Net(object):
 
             # backpropagation and weights update
             if ite < maxiter:
-                for i, key in enumerate(NN_PARAMETERS_KEYS):
+                for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS[max(0, instance.setup.n_layers - 1)]):
                     if (
                         key in model_params_states
                     ):  # update trainable parameters of the parameterization NN if used

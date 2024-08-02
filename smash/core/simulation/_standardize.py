@@ -28,6 +28,7 @@ from smash._constant import (
     MAPPING_OPTIMIZER,
     METRICS,
     NN_PARAMETERS_KEYS,
+    OPTIMIZABLE_NN_PARAMETERS,
     OPTIMIZABLE_RR_INITIAL_STATES,
     OPTIMIZABLE_RR_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
@@ -123,8 +124,6 @@ def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
 def _standardize_simulation_optimize_options_parameters(
     model: Model, func_name: str, parameters: str | ListLike | None, **kwargs
 ) -> np.ndarray:
-    is_hybrid_structure = sum(model.setup.neurons) > 0
-
     is_bayesian = "bayesian" in func_name
 
     available_rr_parameters = [
@@ -143,22 +142,18 @@ def _standardize_simulation_optimize_options_parameters(
         for key in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]
         if OPTIMIZABLE_SERR_SIGMA_PARAMETERS[key]
     ]
-    available_parameters = available_rr_parameters + available_rr_initial_states
+    available_nn_parameters = OPTIMIZABLE_NN_PARAMETERS[max(0, model.setup.n_layers - 1)]
 
-    if is_hybrid_structure:
-        available_parameters.extend(NN_PARAMETERS_KEYS)
+    available_parameters = available_rr_parameters + available_rr_initial_states + available_nn_parameters
 
     if is_bayesian:
         available_parameters.extend(available_serr_mu_parameters + available_serr_sigma_parameters)
 
     if parameters is None:
-        default_parameters = available_rr_parameters
+        default_parameters = available_rr_parameters + available_nn_parameters
 
         if is_bayesian:
             default_parameters += available_serr_mu_parameters + available_serr_sigma_parameters
-
-        if is_hybrid_structure:
-            default_parameters += NN_PARAMETERS_KEYS
 
         parameters = np.array(default_parameters, ndmin=1)
 

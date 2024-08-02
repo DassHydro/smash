@@ -751,7 +751,9 @@ contains
         n = options%optimize%nn_parameters(1)*setup%neurons(2)*setup%neurons(1) &
         & + options%optimize%nn_parameters(2)*setup%neurons(2) &
         & + options%optimize%nn_parameters(3)*setup%neurons(3)*setup%neurons(2) &
-        & + options%optimize%nn_parameters(4)*setup%neurons(3)
+        & + options%optimize%nn_parameters(4)*setup%neurons(3) &
+        & + options%optimize%nn_parameters(5)*setup%neurons(4)*setup%neurons(3) &
+        & + options%optimize%nn_parameters(6)*setup%neurons(4)
 
     end subroutine nn_parameters_get_control_size
 
@@ -1303,6 +1305,34 @@ contains
             end do
         end if
 
+        if (options%optimize%nn_parameters(5) .eq. 1) then
+            do k = 1, setup%neurons(3)
+
+                do l = 1, setup%neurons(4)
+
+                    j = j + 1
+                    parameters%control%x(j) = parameters%nn_parameters%weight_3(l, k)
+                    parameters%control%nbd(j) = 0
+                    write (name, '(a,i0,a,i0)') "weight_3-", l, "-", k
+                    parameters%control%name(j) = name
+
+                end do
+
+            end do
+        end if
+
+        if (options%optimize%nn_parameters(6) .eq. 1) then
+            do k = 1, setup%neurons(4)
+
+                j = j + 1
+                parameters%control%x(j) = parameters%nn_parameters%bias_3(k)
+                parameters%control%nbd(j) = 0
+                write (name, '(a,i0)') "bias_3-", k
+                parameters%control%name(j) = name
+
+            end do
+        end if
+
     end subroutine nn_parameters_fill_control
 
     subroutine fill_control(setup, mesh, input_data, parameters, options)
@@ -1798,6 +1828,28 @@ contains
 
                 j = j + 1
                 parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
+
+            end do
+        end if
+
+        if (options%optimize%nn_parameters(5) .eq. 1) then
+            do k = 1, setup%neurons(3)
+
+                do l = 1, setup%neurons(4)
+
+                    j = j + 1
+                    parameters%nn_parameters%weight_3(l, k) = parameters%control%x(j)
+
+                end do
+
+            end do
+        end if
+
+        if (options%optimize%nn_parameters(6) .eq. 1) then
+            do k = 1, setup%neurons(4)
+
+                j = j + 1
+                parameters%nn_parameters%bias_3(k) = parameters%control%x(j)
 
             end do
         end if
