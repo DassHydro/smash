@@ -838,6 +838,7 @@ def _lbfgsb_optimize(
     x0 = parameters.control.x.copy()
 
     # % Set None values for unbounded/semi-unbounded controls to pass to scipy l-bfgs-b
+    # which requires None to identify unbounded values
     l_control = np.where(np.isin(parameters.control.nbd, [0, 3]), None, parameters.control.l)
     u_control = np.where(np.isin(parameters.control.nbd, [0, 1]), None, parameters.control.u)
 
@@ -916,8 +917,9 @@ def _sbs_optimize(
     y_wa = parameters.control.x.copy()
     z_wa = np.copy(y_wa)
 
-    l_wa = parameters.control.l.copy()
-    u_wa = parameters.control.u.copy()
+    # % Set np.inf values for unbounded/semi-unbounded controls
+    l_wa = np.where(np.isin(parameters.control.nbd, [0, 3]), -np.inf, parameters.control.l)
+    u_wa = np.where(np.isin(parameters.control.nbd, [0, 1]), np.inf, parameters.control.u)
 
     wrap_forward_run(
         model.setup,
@@ -935,7 +937,7 @@ def _sbs_optimize(
     ddx = 0.64
     dxn = ddx
     ia = iaa = iam = -1
-    jfaa = 0
+    jfa = jfaa = 0
     nfg = 1
 
     ret = {}
@@ -973,8 +975,6 @@ def _sbs_optimize(
                 x_wa[i] = max(min(x_wa[i], u_wa[i]), l_wa[i])
 
                 parameters.control.x = x_wa
-                parameters.control.l = l_wa
-                parameters.control.u = u_wa
 
                 wrap_forward_run(
                     model.setup,
@@ -1020,8 +1020,6 @@ def _sbs_optimize(
                 x_wa[i] = max(min(x_wa[i], u_wa[i]), l_wa[i])
 
             parameters.control.x = x_wa
-            parameters.control.l = l_wa
-            parameters.control.u = u_wa
 
             wrap_forward_run(
                 model.setup,
@@ -1060,8 +1058,6 @@ def _sbs_optimize(
             break
 
     parameters.control.x = z_wa
-    parameters.control.l = l_wa
-    parameters.control.u = u_wa
 
     wrap_forward_run(
         model.setup,
