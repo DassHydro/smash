@@ -147,7 +147,7 @@ def _standardize_set_weight_bias_value(
     net: Net,
     value: list[Any] | None,
     kind: str,
-) -> list[np.ndarray]:
+) -> list[np.ndarray] | None:
     if not net.layers:
         raise ValueError("The graph of the neural network has not been set yet")
 
