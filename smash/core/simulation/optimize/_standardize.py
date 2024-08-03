@@ -3,7 +3,7 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-from smash._constant import GRADIENT_BASED_OPTIMIZER, MAPPING
+from smash._constant import GRADIENT_BASED_OPTIMIZER, HEURISTIC_OPTIMIZER, MAPPING
 from smash.core.simulation._standardize import (
     _standardize_simulation_common_options,
     _standardize_simulation_cost_options,
@@ -39,10 +39,11 @@ def _standardize_bayesian_optimize_mapping(mapping: str) -> str:
 def _standardize_optimize_optimizer(mapping: str, optimizer: str, setup: SetupDT) -> str:
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
-    if setup.n_layers > 0 and optimizer == "sbs":
+    if setup.n_layers > 0 and optimizer in HEURISTIC_OPTIMIZER:
         warnings.warn(
-            f"The SBS optimizer may not be suitable for the {setup.hydrological_module} module. "
-            f"Other optimizers would be more suitable: {GRADIENT_BASED_OPTIMIZER}", stacklevel=2
+            f"{optimizer} optimizer may not be suitable for the {setup.hydrological_module} module. "
+            f"Other choices might be more appropriate: {GRADIENT_BASED_OPTIMIZER}",
+            stacklevel=2,
         )
 
     return optimizer
