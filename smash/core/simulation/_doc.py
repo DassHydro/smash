@@ -31,10 +31,10 @@ optimizer : `str` or None, default None
 
     - ``'sbs'`` (only for ``'uniform'`` **mapping**)
     - ``'lbfgsb'`` (for all mappings except ``'ann'``)
-    - ``'sgd'`` (for all mappings)
     - ``'adam'`` (for all mappings)
     - ``'adagrad'`` (for all mappings)
     - ``'rmsprop'`` (for all mappings)
+    - ``'sgd'`` (for all mappings)
 
     .. note::
         If not given, a default optimizer will be set as follows:
@@ -171,8 +171,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `str` or None, default None
         """,
         """
-        Transformation method applied to the bounded control vector. Not used with ``'ann'`` **mapping**.
-        Should be one of:
+        Transformation method applied to bounded parameters of the control vector. Should be one of
 
         - ``'keep'``
         - ``'normalize'``
@@ -180,7 +179,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         .. note::
             If not given, the default control vector transformation is **control_tfm** = ``'normalize'``
-            except for the ``'sbs'`` optimizer, where **control_tfm** = ``'sbs'``.
+            except for the ``'sbs'`` optimizer, where **control_tfm** = ``'sbs'``. This options is not used
+            when **mapping** is ``'ann'``.
         """,
     ),
     "descriptor": (
@@ -224,8 +224,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `float` or None, default None
         """,
         """
-        The learning rate used for updating trainable parameters when using adaptive optimizers (i.e., all
-        optimizers except ``'sbs'`` and ``'lbfgsb'``).
+        The learning rate used for updating trainable parameters when using adaptive optimizers
+        (i.e., ``'adam'``, ``'adagrad'``, ``'rmsprop'``, ``'sgd'``).
 
         .. note::
             If not given, a default learning rate for each optimizer will be used.
@@ -255,10 +255,10 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
           is ``'lbfgsb'``.
         - ``'pgtol'``: An additional termination criterion based on the projected gradient of the cost
           function. Only used when **optimizer** is ``'lbfgsb'``.
-        - ``'early_stopping'``: A positive number to stop training when the loss function does not decrease
+        - ``'early_stopping'``: A positive number to stop training when the cost function does not decrease
           below the current optimal value for **early_stopping** consecutive iterations. When set to zero,
           early stopping is disabled, and the training continues for the full number of iterations.
-          Not used with ``'sbs'`` and ``'lbfgsb'`` optimizers.
+          Only used for adaptive optimizers (i.e., ``'adam'``, ``'adagrad'``, ``'rmsprop'``, ``'sgd'``).
 
         >>> optimize_options = {
             "termination_crit": {
