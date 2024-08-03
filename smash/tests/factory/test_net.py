@@ -75,18 +75,14 @@ def generic_net_forward_pass(**kwargs):
     net.add_dense(neurons=4, activation="softplus")
 
     # % Set random weights
-    np.random.seed(0)
-    net.set_weight(
-        [
-            np.random.uniform(size=(64, 144)),
-            np.random.normal(0, 0.005, size=(32, 1024)),
-            np.random.uniform(size=(16, 32)),
-            np.random.uniform(size=(4, 16)),
-        ]
-    )
-    net.set_bias([0, 0, 0, np.random.uniform(size=(1, 4))])
+    net.set_weight(random_state=0)
+
+    # % Set random biases
+    np.random.seed(1)
+    net.set_bias([0.01, 0, 0.02, np.random.uniform(size=(1, 4))])
 
     # % Forward pass
+    np.random.seed(2)
     x = np.random.normal(0, 0.01, size=(12, 11, 3))
     y = net.forward_pass(x)
 

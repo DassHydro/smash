@@ -3,7 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from smash._constant import OPTIMIZABLE_NN_PARAMETERS, PY_OPTIMIZER, PY_OPTIMIZER_CLASS
-from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
+from smash.factory.net._layers import (
+    Activation,
+    Conv2D,
+    Dense,
+    Dropout,
+    Flatten,
+    Scale,
+    _set_initialized_wb_to_layer,
+)
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
 
 # Used inside eval statement
@@ -168,6 +176,9 @@ class Net(object):
         """
         Add a fully-connected layer to the neural network.
 
+        This method adds a dense layer into the neural network graph but does not initialize its weight
+        and bias values.
+
         Parameters
         ----------
         neurons : int
@@ -241,6 +252,9 @@ class Net(object):
     ):
         """
         Add a 2D convolutional layer (with same padding and a stride of one) to the neural network.
+
+        This method adds a 2D convolutional layer into the neural network graph but does not initialize
+        its weight and bias values.
 
         Parameters
         ----------
@@ -359,6 +373,7 @@ class Net(object):
         >>> net.add_conv2d(64, filter_shape=5, input_shape=(30, 32, 6))
         >>> net.add_flatten()
         >>> net.add_dense(16)
+        >>> net
         +------------------------------------------------------+
         | Layer Type  Input/Output Shape        Num Parameters |
         +------------------------------------------------------+
@@ -606,15 +621,24 @@ class Net(object):
                     del layer._weight
                     del layer._bias
 
-    def set_weight(self, value: list[Any]):
+    def set_weight(self, value: list[Any] | None = None, random_state: int | None = None):
         """
         Set the values of the weight in the neural network `Net`.
 
         Parameters
         ----------
-        value : list[`float` or `numpy.ndarray`]
+        value : list[`float` or `numpy.ndarray`] or None, default None
             The list of values to set to the weights of all layers. If an element of the list is
             a `numpy.ndarray`, its shape must be broadcastable into the weight shape of that layer.
+            If not used, initialization methods defined in trainable layers will be used with
+            a random or specified seed depending on **random_state**.
+
+        random_state : `int` or None, default None
+            Random seed used for the initialization method defined in each trainable layer.
+            Only used if **value** is not set.
+
+            .. note::
+                If not given, the parameters will be initialized with a random seed.
 
         See Also
         --------
@@ -624,17 +648,17 @@ class Net(object):
         --------
         >>> from smash.factory import Net
         >>> net = Net()
-        >>> net.add_dense(2, input_shape=3, activation="tanh")
+        >>> net.add_dense(2, input_shape=3, kernel_initializer="uniform")
+        >>> net
         +-------------------------------------------------------+
         | Layer Type         Input/Output Shape  Num Parameters |
         +-------------------------------------------------------+
         | Dense              (3,)/(2,)           8              |
-        | Activation (TanH)  (2,)/(2,)           0              |
         +-------------------------------------------------------+
         Total parameters: 8
         Trainable parameters: 8
 
-        Set weights of the neural network
+        Set weights with specified values
 
         >>> import numpy as np
         >>> net.set_weight([np.array([[1, 2, 3], [4, 5, 6]])])
@@ -644,25 +668,48 @@ class Net(object):
         >>> net.get_weight()
         [array([[1, 2, 3],
                 [4, 5, 6]])]
+
+        Set random weights
+
+        >>> net.set_weight(random_state=0)
+        >>> net.get_weight()
+        [array([[ 0.05636498,  0.24847928,  0.11866093],
+                [ 0.05182664, -0.08815584,  0.16846401]])]
         """
 
-        value = _standardize_set_weight_args(self, value)
+        value, random_state = _standardize_set_weight_args(self, value, random_state)
+
+        if (random_state is not None) and (value is None):
+            np.random.seed(random_state)
 
         i = 0
         for layer in self.layers:
             if hasattr(layer, "weight"):
-                layer.weight = value[i]
-                i += 1
+                if value is None:
+                    _set_initialized_wb_to_layer(layer, "weight")
 
-    def set_bias(self, value: list[Any]):
+                else:
+                    layer.weight = value[i]
+                    i += 1
+
+    def set_bias(self, value: list[Any] | None = None, random_state: int | None = None):
         """
         Set the values of the bias in the neural network `Net`.
 
         Parameters
         ----------
-        value : list[`float` or `numpy.ndarray`]
+        value : list[`float` or `numpy.ndarray`] or None, default None
             The list of values to set to the biases of all layers. If an element of the list is
             a `numpy.ndarray`, its shape must be broadcastable into the bias shape of that layer.
+            If not used, initialization methods defined in trainable layers will be used with
+            a random or specified seed depending on **random_state**.
+
+        random_state : `int` or None, default None
+            Random seed used for the initialization method defined in each trainable layer.
+            Only used if **value** is not set.
+
+            .. note::
+                If not given, the parameters will be initialized with a random seed.
 
         See Also
         --------
@@ -672,33 +719,49 @@ class Net(object):
         --------
         >>> from smash.factory import Net
         >>> net = Net()
-        >>> net.add_dense(2, input_shape=3, activation="tanh")
+        >>> net.add_dense(4, input_shape=3, activation="tanh")
+        >>> net.add_dense(2, bias_initializer="he_normal")
+        >>> net
         +-------------------------------------------------------+
         | Layer Type         Input/Output Shape  Num Parameters |
         +-------------------------------------------------------+
-        | Dense              (3,)/(2,)           8              |
-        | Activation (TanH)  (2,)/(2,)           0              |
+        | Dense              (3,)/(4,)           16             |
+        | Activation (TanH)  (4,)/(4,)           0              |
+        | Dense              (4,)/(2,)           10             |
         +-------------------------------------------------------+
-        Total parameters: 8
-        Trainable parameters: 8
+        Total parameters: 26
+        Trainable parameters: 26
 
-        Set biases of the neural network
+        Set biases with specified values
 
-        >>> net.set_bias([0])
+        >>> net.set_bias([1.2, 1.3])
 
         Get the bias values
 
         >>> net.get_bias()
-        [array([[0., 0.]])]
+        [array([[1.2, 1.2, 1.2, 1.2]]), array([[1.3, 1.3]])]
+
+        Set random biases
+
+        >>> net.set_bias(random_state=0)
+        >>> net.get_bias()  # default bias initializer is zeros
+        [array([[0., 0., 0., 0.]]), array([[2.49474675, 0.56590775]])]
         """
 
-        value = _standardize_set_bias_args(self, value)
+        value, random_state = _standardize_set_bias_args(self, value, random_state)
+
+        if (random_state is not None) and (value is None):
+            np.random.seed(random_state)
 
         i = 0
         for layer in self.layers:
             if hasattr(layer, "bias"):
-                layer.bias = value[i]
-                i += 1
+                if value is None:
+                    _set_initialized_wb_to_layer(layer, "bias")
+
+                else:
+                    layer.bias = value[i]
+                    i += 1
 
     def get_weight(self) -> list[np.ndarray]:
         """
@@ -718,6 +781,7 @@ class Net(object):
         >>> from smash.factory import Net
         >>> net = Net()
         >>> net.add_dense(2, input_shape=3, activation="tanh")
+        >>> net
         +-------------------------------------------------------+
         | Layer Type         Input/Output Shape  Num Parameters |
         +-------------------------------------------------------+
@@ -727,17 +791,15 @@ class Net(object):
         Total parameters: 8
         Trainable parameters: 8
 
-        Set random weights of the neural network
+        Set random weights
 
-        >>> import numpy as np
-        >>> np.random.seed(0)  # Set a random seed
-        >>> net.set_weight([np.random.uniform(size=(2,3))])
+        >>> net.set_weight(random_state=0)
 
         Get the weight values
 
         >>> net.get_weight()
-        [array([[0.5488135 , 0.71518937, 0.60276338],
-                [0.54488318, 0.4236548 , 0.64589411]])]
+        [array([[ 0.10694503,  0.47145628,  0.22514328],
+            [ 0.09833413, -0.16726395,  0.31963799]])]
         """
 
         return [layer.weight for layer in self.layers if hasattr(layer, "weight")]
@@ -759,26 +821,24 @@ class Net(object):
         --------
         >>> from smash.factory import Net
         >>> net = Net()
-        >>> net.add_dense(2, input_shape=3, activation="tanh")
-        +-------------------------------------------------------+
-        | Layer Type         Input/Output Shape  Num Parameters |
-        +-------------------------------------------------------+
-        | Dense              (3,)/(2,)           8              |
-        | Activation (TanH)  (2,)/(2,)           0              |
-        +-------------------------------------------------------+
+        >>> net.add_dense(2, input_shape=3, bias_initializer="normal")
+        >>> net
+        +----------------------------------------------------------+
+        | Layer Type            Input/Output Shape  Num Parameters |
+        +----------------------------------------------------------+
+        | Dense                 (3,)/(2,)           8              |
+        +----------------------------------------------------------+
         Total parameters: 8
         Trainable parameters: 8
 
-        Set random biases of the neural network
+        Set random biases
 
-        >>> import numpy as np
-        >>> np.random.seed(0)  # Set a random seed
-        >>> net.set_bias([np.random.uniform(size=(1, 2))])
+        >>> net.set_bias(random_state=0)
 
         Get the bias values
 
         >>> net.get_bias()
-        [array([[0.60276338, 0.54488318]])]
+        [array([[0.01764052, 0.00400157]])]
         """
 
         return [layer.bias for layer in self.layers if hasattr(layer, "bias")]
@@ -818,16 +878,15 @@ class Net(object):
 
         Set weights and biases of the neural network
 
-        >>> import numpy as np
-        >>> np.random.seed(0)  # Set a random seed
-        >>> net.set_weight([1, np.random.uniform(size=(3, 12))])
-        >>> net.set_bias([0, 0])
+        >>> net.set_weight(random_state=1)
+        >>> net.set_bias()
 
         Run the forward pass
 
-        >>> x = np.random.uniform(size=5)
+        >>> import numpy as np
+        >>> x = np.array([0.1, 0.11, 0.12, 0.13, 0.14])
         >>> net.forward_pass(x)
-        array([[0.53357954, 0.39343288, 0.07298759]])
+        array([[0.31315546, 0.37666753, 0.31017701]])
         """
 
         x = _standardize_forward_pass_args(self, x)

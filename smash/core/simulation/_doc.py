@@ -137,11 +137,11 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `int` or None, default None
         """,
         """
-        A random seed used to initialize neural network weights.
+        A random seed used to initialize neural network parameters.
 
         .. note::
-            If not given, the weights will be initialized with a random seed. This options is only used when
-            **mapping** is ``'ann'``.
+            If not given, the parameters will be initialized with a random seed. This options is only used
+            when **mapping** is ``'ann'``, and the weights and biases of **net** are not yet initialized.
         """,
     ),
     "termination_crit": (
