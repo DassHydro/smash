@@ -279,13 +279,6 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
     ]
 
     for i, inner_kwargs in enumerate(custom_sets):
-        optimizer = inner_kwargs.get(
-            "optimizer",
-            "sbs" if inner_kwargs.get("mapping", "uniform") == "uniform" else "...",
-        )
-        if model.setup.n_layers > 0 and optimizer == "sbs":
-            continue  # ignore SBS optimizer if the forward model uses NN
-
         instance = smash.optimize(model, **inner_kwargs)
 
         qsim = instance.response.q[:].flatten()
