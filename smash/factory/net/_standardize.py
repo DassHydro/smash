@@ -10,6 +10,10 @@ if TYPE_CHECKING:
     from smash.factory.net.net import Net
     from smash.util._typing import Any, AnyTuple, ListLike, Numeric
 
+from smash.factory.samples._standardize import (
+    _standardize_generate_samples_random_state,
+)
+
 
 def _standardize_add_dense_args(
     net: Net,
@@ -108,43 +112,52 @@ def _standardize_set_trainable_args(net: Net, trainable: tuple | list) -> list:
     return trainable
 
 
-def _standardize_set_weight_args(net: Net, value: list[Any]) -> list[np.ndarray]:
-    return _standardize_set_weight_bias_value(net, value, "weight")
+def _standardize_set_weight_args(
+    net: Net, value: list[Any] | None, random_state: int | None
+) -> list[np.ndarray]:
+    value = _standardize_set_weight_bias_value(net, value, "weight")
+    random_state = _standardize_generate_samples_random_state(random_state)
+
+    return value, random_state
 
 
-def _standardize_set_bias_args(net: Net, value: list[Any]) -> list[np.ndarray]:
-    return _standardize_set_weight_bias_value(net, value, "bias")
+def _standardize_set_bias_args(
+    net: Net, value: list[Any] | None, random_state: int | None
+) -> list[np.ndarray]:
+    value = _standardize_set_weight_bias_value(net, value, "bias")
+    random_state = _standardize_generate_samples_random_state(random_state)
+
+    return value, random_state
 
 
 def _standardize_forward_pass_args(net: Net, x: np.ndarray) -> np.ndarray:
     if not net.layers:
         raise ValueError("The graph of the neural network has not been set yet")
 
-    for i, layer in enumerate(net.layers):
-        if hasattr(layer, "weight"):
-            if layer.weight is None:
-                raise ValueError(f"The weight at layer {i+1} is not set yet")
+    if any(layer.weight is None for layer in net.layers if hasattr(layer, "weight")):
+        raise ValueError("The neural network weight is not set yet")
 
-        if hasattr(layer, "bias"):
-            if layer.bias is None:
-                raise ValueError(f"The bias at layer {i+1} is not set yet")
+    if any(layer.bias is None for layer in net.layers if hasattr(layer, "bias")):
+        raise ValueError("The neural network bias is not set yet")
 
     return _standardize_forward_pass_x(net.layers[0].input_shape, x)
 
 
 def _standardize_set_weight_bias_value(
     net: Net,
-    value: list[Any],
+    value: list[Any] | None,
     kind: str,
-) -> list[np.ndarray]:
+) -> list[np.ndarray] | None:
     if not net.layers:
         raise ValueError("The graph of the neural network has not been set yet")
 
     else:
         trainable_layers = [layer for layer in net.layers if hasattr(layer, kind)]
 
-    # % Check the shape of values to set for each trainable layer
-    if isinstance(value, list):
+    if value is None:
+        pass
+
+    elif isinstance(value, list):
         if len(value) != len(trainable_layers):
             raise ValueError(
                 f"Inconsistent size between value argument and the number of trainable layers: "
