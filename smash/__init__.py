@@ -20,7 +20,12 @@ from smash.core.simulation.options import (
     default_bayesian_optimize_options,
     default_optimize_options,
 )
-from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun, forward_run, multiple_forward_run
+from smash.core.simulation.run.run import (
+    ForwardRun,
+    MultipleForwardRun,
+    forward_run,
+    multiple_forward_run,
+)
 from smash.factory.samples.samples import Samples
 
 

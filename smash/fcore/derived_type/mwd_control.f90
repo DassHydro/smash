@@ -32,8 +32,8 @@ module mwd_control
     type ControlDT
 
         integer :: n
-        ! Four kinds of parameters (rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters)
-        integer, dimension(4) :: nbk
+        ! Kinds: rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters, nn_parameters
+        integer, dimension(5) :: nbk
         real(sp), dimension(:), allocatable :: x
         real(sp), dimension(:), allocatable :: l
         real(sp), dimension(:), allocatable :: u

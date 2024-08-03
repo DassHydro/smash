@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from smash._constant import OPTIMIZABLE_NN_PARAMETERS
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,
@@ -47,6 +48,9 @@ def _hcost_prime(
 
             instance.rr_initial_states.values[..., ind] = y[..., i]
 
+        else:  # nn_parameters excluded from descriptors-to-parameters mapping
+            pass
+
     # % Run adjoint model
     wrap_parameters_to_control(
         instance.setup,
@@ -89,13 +93,37 @@ def _hcost_prime(
 
             grad_reg.append(parameters_b.rr_initial_states.values[..., ind])
 
+        else:  # nn_parameters excluded from descriptors-to-parameters mapping
+            pass
+
     if return_3d_grad:  # in case of CNN
         grad_reg = np.transpose(grad_reg, (1, 2, 0))
     else:
         grad_reg = np.reshape(grad_reg, (len(grad_reg), -1)).T
 
-    return grad_reg
+    # % Get the gradient of parameterization NN if used
+    grad_par = [
+        getattr(parameters_b.nn_parameters, key).copy()
+        for key in OPTIMIZABLE_NN_PARAMETERS[max(0, instance.setup.n_layers - 1)]
+    ]
+
+    return grad_reg, grad_par
 
 
-def _inf_norm(grad: np.ndarray):
-    return np.amax(np.abs(grad))
+def _inf_norm(grad: np.ndarray | list) -> float:
+    if isinstance(grad, list):
+        if grad:  # If not an empty list
+            return max(_inf_norm(g) for g in grad)
+
+        else:
+            return 0
+
+    elif isinstance(grad, np.ndarray):
+        if grad.size > 0:
+            return np.amax(np.abs(grad))
+
+        else:
+            return 0
+
+    else:  # Should be unreachable
+        pass

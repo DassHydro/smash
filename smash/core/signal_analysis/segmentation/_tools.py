@@ -220,7 +220,8 @@ def _mask_event(
 
         if (prcp < 0).all() or (qobs < 0).all():
             warnings.warn(
-                f"Catchment {catchment} has no observed precipitation or/and discharge data", stacklevel=2
+                f"Catchment {catchment} has no observed precipitation or/and discharge data",
+                stacklevel=2,
             )
 
         else:

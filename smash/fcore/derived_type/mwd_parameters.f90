@@ -32,6 +32,7 @@ module mwd_parameters
     use mwd_rr_states !% only: RR_StatesDT, RR_StatesDT_initialise
     use mwd_serr_mu_parameters !% only: SErr_Mu_ParametersDT, SErr_Mu_ParametersDT_initialise
     use mwd_serr_sigma_parameters !% only: SErr_Sigma_ParametersDT, SErr_Sigma_ParametersDT_initialise
+    use mwd_nn_parameters !% only: NN_ParametersDT, NN_ParametersDT_initialise
 
     implicit none
 
@@ -42,6 +43,7 @@ module mwd_parameters
         type(RR_StatesDT) :: rr_initial_states
         type(SErr_Mu_ParametersDT) :: serr_mu_parameters
         type(SErr_Sigma_ParametersDT) :: serr_sigma_parameters
+        type(NN_ParametersDT) :: nn_parameters
 
     end type ParametersDT
 
@@ -59,6 +61,7 @@ contains
         call RR_StatesDT_initialise(this%rr_initial_states, setup, mesh)
         call SErr_Mu_ParametersDT_initialise(this%serr_mu_parameters, setup, mesh)
         call SErr_Sigma_ParametersDT_initialise(this%serr_sigma_parameters, setup, mesh)
+        call NN_ParametersDT_initialise(this%nn_parameters, setup)
 
     end subroutine ParametersDT_initialise
 

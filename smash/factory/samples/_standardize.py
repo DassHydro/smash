@@ -53,7 +53,9 @@ def _standardize_generate_samples_n(n: Numeric) -> int:
     return n
 
 
-def _standardize_generate_samples_random_state(random_state: Numeric | None) -> int:
+def _standardize_generate_samples_random_state(
+    random_state: Numeric | None,
+) -> int | None:
     if random_state is None:
         pass
 

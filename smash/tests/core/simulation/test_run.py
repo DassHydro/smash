@@ -19,6 +19,10 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
         if model.setup.snow_module_present:
             continue
 
+        # % Hybrid forward hydrological model with NN
+        if model.setup.n_layers > 0:
+            model.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
+
         instance, ret = smash.forward_run(
             model,
             common_options={"verbose": False, "ncpu": ncpu},

@@ -58,8 +58,8 @@ def generic_custom_bayesian_optimize(model: smash.Model, **kwargs) -> dict:
             "cost_options": {
                 "gauge": "all",
                 "control_prior": {
-                    "cp0": ["Gaussian", [200, 100]],
-                    "kexc0": ["Gaussian", [0, 5]],
+                    "cp-0": ["Gaussian", [200, 100]],
+                    "kexc-0": ["Gaussian", [0, 5]],
                 },
             },
             "optimize_options": {

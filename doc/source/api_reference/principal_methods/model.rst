@@ -29,6 +29,7 @@ Attributes
    Model.rr_initial_states
    Model.serr_mu_parameters
    Model.serr_sigma_parameters
+   Model.nn_parameters
    Model.response
    Model.rr_final_states
    
@@ -62,3 +63,7 @@ Parameters/States
    Model.get_serr_sigma_parameters_bounds
    Model.get_serr_mu
    Model.get_serr_sigma
+   Model.get_nn_parameters_weight
+   Model.get_nn_parameters_bias
+   Model.set_nn_parameters_weight
+   Model.set_nn_parameters_bias

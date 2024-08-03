@@ -25,6 +25,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         - `Model.rr_parameters`
         - `Model.rr_initial_states`
+        %(parameters_nn_parameters)s
         %(parameters_serr_mu_parameters)s
         %(parameters_serr_sigma_parameters)s
 
@@ -36,8 +37,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If not given, all parameters in `Model.rr_parameters`%(parameters_note_serr_parameters)s will be
-            optimized.
+            If not given, all parameters in `Model.rr_parameters`%(parameters_note_nn_parameters)s
+            %(parameters_note_serr_parameters)s will be optimized.
         """,
     ),
     "bounds": (
@@ -111,7 +112,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `Net <factory.Net>` or None, default None
         """,
         """
-        The neural network used to learn the descriptors-to-parameters mapping.
+        The regionalization neural network used to learn the descriptors-to-parameters mapping.
 
         .. note::
             If not given, a default neural network will be used. This option is only used when **mapping** is
@@ -383,7 +384,7 @@ COST_OPTIONS_BASE_DOC = {
         """
         Prior applied to the control vector.
         A dictionary containing the type of prior to link to control vector. The keys are any control
-        parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc.), see
+        parameter name (i.e. ``'cp-0'``, ``'cp-1-1'``, ``'cp-slope-a'``, etc.), see
         `bayesian_optimize_control_info` to retrieve control parameters
         names. The values are list of length 2 containing distribution information (i.e. distribution name and
         parameters). Below, the set of available distributions and the associated number of parameters:
@@ -397,8 +398,8 @@ COST_OPTIONS_BASE_DOC = {
 
         >>> cost_options = {
             control_prior: {
-                "cp0": ["Gaussian", [200, 100]],
-                "kexc0": ["Gaussian", [0, 5]],
+                "cp-0": ["Gaussian", [200, 100]],
+                "kexc-0": ["Gaussian", [0, 5]],
             }
         }
 
@@ -1218,9 +1219,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
-        vector (``sum(nbk) = n``).
+        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
+        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
         An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
@@ -1242,15 +1243,19 @@ control_info : `dict[str, Any]`
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
-        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
-          name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
-        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
+        - ``<key>-0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
+          name of any rainfall-runoff parameters or initial_states (``'cp-0'``, ``'llr-0'``, ``'ht-0'``, etc).
+        - ``<key>-<row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
           rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in
-          the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
+          the spatial domain (``'cp-1-1'``, ``'llr-20-2'``, ``'ht-3-12'``, etc). It's one based indexing.
         - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the
           name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor
           and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``,
           ``'llr-slope-b'``, ``'ht-dd-a'``).
+        - ``<key>-<row>-<col>``: Weights and biases of the parameterization neural network where ``<key>``
+          indicates the layer and type of parameter (e.g., ``'weight_1'`` for the first layer weights,
+          ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
+          position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
 
     - x_bkg : `numpy.ndarray`
         An array of shape *(n,)* containing the background values of the control vector.
@@ -1394,9 +1399,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
-        vector (``sum(nbk) = n``).
+        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
+        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
         An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
@@ -1418,18 +1423,22 @@ control_info : `dict[str, Any]`
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
-        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
-          name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
-        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
+        - ``<key>-0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
+          name of any rainfall-runoff parameters or initial_states (``'cp-0'``, ``'llr-0'``, ``'ht-0'``, etc).
+        - ``<key>-<row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
           rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in
-          the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
+          the spatial domain (``'cp-1-1'``, ``'llr-20-2'``, ``'ht-3-12'``, etc). It's one based indexing.
         - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the
           name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor
           and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``,
           ``'llr-slope-b'``, ``'ht-dd-a'``).
         - ``<key>-<code>``: Structural error parameter where ``<key>`` is the name of any structural error mu
           or sigma parameters and ``<code>``, the corresponding gauge (``'sg0-V3524010'``, ``'sg1-V3524010'``,
-          etc)
+          etc).
+        - ``<key>-<row>-<col>``: Weights and biases of the parameterization neural network where ``<key>``
+          indicates the layer and type of parameter (e.g., ``'weight_1'`` for the first layer weights,
+          ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
+          position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
 
     - x_bkg : `numpy.ndarray`
         An array of shape *(n,)* containing the background values of the control vector.
@@ -1552,6 +1561,9 @@ _optimize_doc_appender = DocAppender(_optimize_doc, indents=0)
 _smash_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
     default_optimize_options_func="default_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1564,6 +1576,9 @@ _smash_optimize_doc_substitution = DocSubstitution(
 _model_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1594,9 +1609,12 @@ _bayesian_optimize_doc_appender = DocAppender(_bayesian_optimize_doc, indents=0)
 _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
     default_optimize_options_func="default_bayesian_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
     model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
@@ -1607,9 +1625,12 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
 _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_bayesian_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
     model_return="",
@@ -1623,6 +1644,9 @@ _multiple_forward_run_doc_appender = DocAppender(_multiple_forward_run_doc, inde
 _optimize_control_info_doc_appender = DocAppender(_optimize_control_info_doc, indents=0)
 _smash_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1632,9 +1656,12 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
 _bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_control_info_doc, indents=0)
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_bayesian_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
 )

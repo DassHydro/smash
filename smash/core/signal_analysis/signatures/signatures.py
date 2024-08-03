@@ -239,7 +239,8 @@ def _signatures(
 
             if (prcp < 0).all() or (q < 0).all():
                 warnings.warn(
-                    f"Catchment {catchment} has no precipitation or/and discharge data", stacklevel=2
+                    f"Catchment {catchment} has no precipitation or/and discharge data",
+                    stacklevel=2,
                 )
 
                 row_cs = pd.DataFrame([[catchment] + [np.nan] * (len(col_cs) - 1)], columns=col_cs)

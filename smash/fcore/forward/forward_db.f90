@@ -2219,11 +2219,11 @@ MODULE MWD_CONTROL_DIFF
 !% only: sp
   USE MD_CONSTANT
   IMPLICIT NONE
-! Four kinds of parameters (rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters)
+! Kinds: rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters, nn_parameters
 !$F90W char-array
   TYPE CONTROLDT
       INTEGER :: n
-      INTEGER, DIMENSION(4) :: nbk
+      INTEGER, DIMENSION(5) :: nbk
       REAL(sp), DIMENSION(:), ALLOCATABLE :: x
       REAL(sp), DIMENSION(:), ALLOCATABLE :: l
       REAL(sp), DIMENSION(:), ALLOCATABLE :: u
@@ -2302,6 +2302,76 @@ CONTAINS
   END SUBROUTINE CONTROLDT_DEALLOC
 
 END MODULE MWD_CONTROL_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%      - NN_ParametersDT
+!%          Contain weights and biases of the neural network
+!%
+!%          ======================== ===========================================================
+!%          `Variables`              Description
+!%          ======================== ===========================================================
+!%          ``weight_1``             Transposed weight at the first layer of the neural network
+!%          ``bias_1``               Bias at the first layer of the neural network
+!%          ``weight_2``             Transposed weight at the second layer of the neural network
+!%          ``bias_2``               Bias at the second layer of the neural network
+!%          ``weight_3``             Transposed weight at the third layer of the neural network
+!%          ``bias_3``               Bias at the third layer of the neural network
+!%          ======================== ===========================================================
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - NN_ParametersDT_initialise
+!%      - NN_ParametersDT_copy
+MODULE MWD_NN_PARAMETERS_DIFF
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+  IMPLICIT NONE
+  TYPE NN_PARAMETERSDT
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: weight_1
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: bias_1
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: weight_2
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: bias_2
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: weight_3
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: bias_3
+  END TYPE NN_PARAMETERSDT
+
+CONTAINS
+  SUBROUTINE NN_PARAMETERSDT_INITIALISE(this, setup)
+    IMPLICIT NONE
+    TYPE(NN_PARAMETERSDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+!% First layer
+    ALLOCATE(this%weight_1(setup%neurons(2), setup%neurons(1)))
+    this%weight_1 = -99._sp
+    ALLOCATE(this%bias_1(setup%neurons(2)))
+    this%bias_1 = -99._sp
+!% Second layer
+    ALLOCATE(this%weight_2(setup%neurons(3), setup%neurons(2)))
+    this%weight_2 = -99._sp
+    ALLOCATE(this%bias_2(setup%neurons(3)))
+    this%bias_2 = -99._sp
+!% Third layer
+    ALLOCATE(this%weight_3(setup%neurons(4), setup%neurons(3)))
+    this%weight_3 = -99._sp
+    ALLOCATE(this%bias_3(setup%neurons(4)))
+    this%bias_3 = -99._sp
+  END SUBROUTINE NN_PARAMETERSDT_INITIALISE
+
+  SUBROUTINE NN_PARAMETERSDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(NN_PARAMETERSDT), INTENT(IN) :: this
+    TYPE(NN_PARAMETERSDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE NN_PARAMETERSDT_COPY
+
+END MODULE MWD_NN_PARAMETERS_DIFF
 
 !%      (MWD) Module Wrapped and Differentiated.
 !%
@@ -2522,6 +2592,8 @@ MODULE MWD_PARAMETERS_DIFF
   USE MWD_SERR_MU_PARAMETERS_DIFF
 !% only: SErr_Sigma_ParametersDT, SErr_Sigma_ParametersDT_initialise
   USE MWD_SERR_SIGMA_PARAMETERS_DIFF
+!% only: NN_ParametersDT, NN_ParametersDT_initialise
+  USE MWD_NN_PARAMETERS_DIFF
   IMPLICIT NONE
   TYPE PARAMETERSDT
       TYPE(CONTROLDT) :: control
@@ -2529,6 +2601,7 @@ MODULE MWD_PARAMETERS_DIFF
       TYPE(RR_STATESDT) :: rr_initial_states
       TYPE(SERR_MU_PARAMETERSDT) :: serr_mu_parameters
       TYPE(SERR_SIGMA_PARAMETERSDT) :: serr_sigma_parameters
+      TYPE(NN_PARAMETERSDT) :: nn_parameters
   END TYPE PARAMETERSDT
   TYPE PARAMETERSDT_DIFF
       TYPE(CONTROLDT_DIFF) :: control
@@ -2536,6 +2609,7 @@ MODULE MWD_PARAMETERS_DIFF
       TYPE(RR_STATESDT) :: rr_initial_states
       TYPE(SERR_MU_PARAMETERSDT_DIFF) :: serr_mu_parameters
       TYPE(SERR_SIGMA_PARAMETERSDT_DIFF) :: serr_sigma_parameters
+      TYPE(NN_PARAMETERSDT) :: nn_parameters
   END TYPE PARAMETERSDT_DIFF
 
 CONTAINS
@@ -2550,6 +2624,7 @@ CONTAINS
 &                                  , mesh)
     CALL SERR_SIGMA_PARAMETERSDT_INITIALISE(this%serr_sigma_parameters, &
 &                                     setup, mesh)
+    CALL NN_PARAMETERSDT_INITIALISE(this%nn_parameters, setup)
   END SUBROUTINE PARAMETERSDT_INITIALISE
 
   SUBROUTINE PARAMETERSDT_COPY(this, this_copy)
@@ -5371,6 +5446,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - multi_polynomial_rr_parameters_get_control_size
 !%      - multi_polynomial_rr_initial_states_get_control_size
 !%      - serr_mu_parameters_get_control_size
+!%      - nn_parameters_get_control_size
 !%      - get_control_sizes
 !%      - uniform_rr_parameters_fill_control
 !%      - uniform_rr_initial_states_fill_control
@@ -5382,6 +5458,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - multi_polynomial_rr_initial_states_fill_control
 !%      - serr_mu_parameters_fill_control
 !%      - serr_sigma_parameters_fill_control
+!%      - nn_parameters_fill_control
 !%      - fill_control
 !%      - uniform_rr_parameters_fill_parameters
 !%      - uniform_rr_initial_states_fill_parameters
@@ -5393,6 +5470,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - multi_polynomial_rr_initial_states_fill_parameters
 !%      - serr_mu_parameters_fill_parameters
 !%      - serr_sigma_parameters_fill_parameters
+!%      - nn_parameters_fill_parameters
 !%      - fill_parameters
 MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 !% only: MuFunk_vect, SigmaFunk_vect
@@ -6294,6 +6372,19 @@ CONTAINS
     n = SUM(options%optimize%serr_sigma_parameters)*options%cost%nog
   END SUBROUTINE SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE
 
+  SUBROUTINE NN_PARAMETERS_GET_CONTROL_SIZE(setup, options, n)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    n = options%optimize%nn_parameters(1)*setup%neurons(2)*setup%neurons&
+&     (1) + options%optimize%nn_parameters(2)*setup%neurons(2) + options&
+&     %optimize%nn_parameters(3)*setup%neurons(3)*setup%neurons(2) + &
+&     options%optimize%nn_parameters(4)*setup%neurons(3) + options%&
+&     optimize%nn_parameters(5)*setup%neurons(4)*setup%neurons(3) + &
+&     options%optimize%nn_parameters(6)*setup%neurons(4)
+  END SUBROUTINE NN_PARAMETERS_GET_CONTROL_SIZE
+
   SUBROUTINE GET_CONTROL_SIZES(setup, mesh, options, nbk)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6324,6 +6415,7 @@ CONTAINS
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, nbk(3))
     CALL SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE(options, nbk(4))
+    CALL NN_PARAMETERS_GET_CONTROL_SIZE(setup, options, nbk(5))
   END SUBROUTINE GET_CONTROL_SIZES
 
   SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
@@ -6349,7 +6441,7 @@ CONTAINS
         parameters%control%u(j) = options%optimize%u_rr_parameters(i)
         parameters%control%nbd(j) = 2
         parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
-&         i))//'0'
+&         i))//'-0'
       END IF
     END DO
   END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_CONTROL
@@ -6379,7 +6471,7 @@ CONTAINS
 &         )
         parameters%control%nbd(j) = 2
         parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
-&         keys(i))//'0'
+&         keys(i))//'-0'
       END IF
     END DO
   END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_CONTROL
@@ -6409,8 +6501,8 @@ CONTAINS
               parameters%control%u(j) = options%optimize%u_rr_parameters&
 &               (i)
               parameters%control%nbd(j) = 2
-              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%rr_parameters%&
-&             keys(i)), row, '-', col
+              WRITE(name, '(a,a,i0,a,i0)') TRIM(parameters%rr_parameters&
+&             %keys(i)), '-', row, '-', col
               parameters%control%name(j) = name
             END IF
           END DO
@@ -6444,8 +6536,8 @@ CONTAINS
               parameters%control%u(j) = options%optimize%&
 &               u_rr_initial_states(i)
               parameters%control%nbd(j) = 2
-              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%&
-&             rr_initial_states%keys(i)), row, '-', col
+              WRITE(name, '(a,a,i0,a,i0)') TRIM(parameters%&
+&             rr_initial_states%keys(i)), '-', row, '-', col
               parameters%control%name(j) = name
             END IF
           END DO
@@ -6479,7 +6571,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
-&         i))//'0'
+&         i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
@@ -6519,7 +6611,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
-&         keys(i))//'0'
+&         keys(i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
@@ -6560,7 +6652,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
-&         i))//'0'
+&         i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
@@ -6606,7 +6698,7 @@ CONTAINS
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
         parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
-&         keys(i))//'0'
+&         keys(i))//'-0'
         DO k=1,setup%nd
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
@@ -6693,6 +6785,80 @@ CONTAINS
     END DO
   END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_CONTROL
 
+  SUBROUTINE NN_PARAMETERS_FILL_CONTROL(setup, options, parameters)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    CHARACTER(len=lchar) :: name
+    INTEGER :: j, k, l
+    INTRINSIC SUM
+    j = SUM(parameters%control%nbk(1:4))
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          j = j + 1
+          parameters%control%x(j) = parameters%nn_parameters%weight_1(l&
+&           , k)
+          parameters%control%nbd(j) = 0
+          WRITE(name, '(a,i0,a,i0)') 'weight_1-', l, '-', k
+          parameters%control%name(j) = name
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters%control%x(j) = parameters%nn_parameters%bias_1(k)
+        parameters%control%nbd(j) = 0
+        WRITE(name, '(a,i0)') 'bias_1-', k
+        parameters%control%name(j) = name
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          j = j + 1
+          parameters%control%x(j) = parameters%nn_parameters%weight_2(l&
+&           , k)
+          parameters%control%nbd(j) = 0
+          WRITE(name, '(a,i0,a,i0)') 'weight_2-', l, '-', k
+          parameters%control%name(j) = name
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
+        j = j + 1
+        parameters%control%x(j) = parameters%nn_parameters%bias_2(k)
+        parameters%control%nbd(j) = 0
+        WRITE(name, '(a,i0)') 'bias_2-', k
+        parameters%control%name(j) = name
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(5) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
+        DO l=1,setup%neurons(4)
+          j = j + 1
+          parameters%control%x(j) = parameters%nn_parameters%weight_3(l&
+&           , k)
+          parameters%control%nbd(j) = 0
+          WRITE(name, '(a,i0,a,i0)') 'weight_3-', l, '-', k
+          parameters%control%name(j) = name
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(6) .EQ. 1) THEN
+      DO k=1,setup%neurons(4)
+        j = j + 1
+        parameters%control%x(j) = parameters%nn_parameters%bias_3(k)
+        parameters%control%nbd(j) = 0
+        WRITE(name, '(a,i0)') 'bias_3-', k
+        parameters%control%name(j) = name
+      END DO
+    END IF
+  END SUBROUTINE NN_PARAMETERS_FILL_CONTROL
+
   SUBROUTINE FILL_CONTROL(setup, mesh, input_data, parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6728,6 +6894,7 @@ CONTAINS
 &                                  options)
     CALL SERR_SIGMA_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
 &                                     options)
+    CALL NN_PARAMETERS_FILL_CONTROL(setup, options, parameters)
 ! Store background
     parameters%control%x_bkg = parameters%control%x
     parameters%control%l_bkg = parameters%control%l
@@ -8062,15 +8229,307 @@ CONTAINS
     END DO
   END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS
 
+!  Differentiation of nn_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
+  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_D(setup, options, parameters&
+&   , parameters_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    INTEGER :: j, k, l
+    INTRINSIC SUM
+    j = SUM(parameters%control%nbk(1:4))
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      parameters_d%nn_parameters%weight_1 = 0.0_4
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          j = j + 1
+          parameters_d%nn_parameters%weight_1(l, k) = parameters_d%&
+&           control%x(j)
+          parameters%nn_parameters%weight_1(l, k) = parameters%control%x&
+&           (j)
+        END DO
+      END DO
+    ELSE
+      parameters_d%nn_parameters%weight_1 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      parameters_d%nn_parameters%bias_1 = 0.0_4
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters_d%nn_parameters%bias_1(k) = parameters_d%control%x(j)
+        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+      END DO
+    ELSE
+      parameters_d%nn_parameters%bias_1 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      parameters_d%nn_parameters%weight_2 = 0.0_4
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          j = j + 1
+          parameters_d%nn_parameters%weight_2(l, k) = parameters_d%&
+&           control%x(j)
+          parameters%nn_parameters%weight_2(l, k) = parameters%control%x&
+&           (j)
+        END DO
+      END DO
+    ELSE
+      parameters_d%nn_parameters%weight_2 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      parameters_d%nn_parameters%bias_2 = 0.0_4
+      DO k=1,setup%neurons(3)
+        j = j + 1
+        parameters_d%nn_parameters%bias_2(k) = parameters_d%control%x(j)
+        parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
+      END DO
+    ELSE
+      parameters_d%nn_parameters%bias_2 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(5) .EQ. 1) THEN
+      parameters_d%nn_parameters%weight_3 = 0.0_4
+      DO k=1,setup%neurons(3)
+        DO l=1,setup%neurons(4)
+          j = j + 1
+          parameters_d%nn_parameters%weight_3(l, k) = parameters_d%&
+&           control%x(j)
+          parameters%nn_parameters%weight_3(l, k) = parameters%control%x&
+&           (j)
+        END DO
+      END DO
+    ELSE
+      parameters_d%nn_parameters%weight_3 = 0.0_4
+    END IF
+    IF (options%optimize%nn_parameters(6) .EQ. 1) THEN
+      parameters_d%nn_parameters%bias_3 = 0.0_4
+      DO k=1,setup%neurons(4)
+        j = j + 1
+        parameters_d%nn_parameters%bias_3(k) = parameters_d%control%x(j)
+        parameters%nn_parameters%bias_3(k) = parameters%control%x(j)
+      END DO
+    ELSE
+      parameters_d%nn_parameters%bias_3 = 0.0_4
+    END IF
+  END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_D
+
+!  Differentiation of nn_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
+  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_B(setup, options, parameters&
+&   , parameters_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    INTEGER :: j, k, l
+    INTRINSIC SUM
+    INTEGER :: branch
+    j = SUM(parameters%control%nbk(1:4))
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          CALL PUSHINTEGER4(j)
+          j = j + 1
+        END DO
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          CALL PUSHINTEGER4(j)
+          j = j + 1
+        END DO
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(5) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
+        DO l=1,setup%neurons(4)
+          CALL PUSHINTEGER4(j)
+          j = j + 1
+        END DO
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (options%optimize%nn_parameters(6) .EQ. 1) THEN
+      DO k=1,setup%neurons(4)
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+      END DO
+      DO k=setup%neurons(4),1,-1
+        parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&         parameters_b%nn_parameters%bias_3(k)
+        parameters_b%nn_parameters%bias_3(k) = 0.0_4
+        CALL POPINTEGER4(j)
+      END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(3),1,-1
+        DO l=setup%neurons(4),1,-1
+          parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&           parameters_b%nn_parameters%weight_3(l, k)
+          parameters_b%nn_parameters%weight_3(l, k) = 0.0_4
+          CALL POPINTEGER4(j)
+        END DO
+      END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(3),1,-1
+        parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&         parameters_b%nn_parameters%bias_2(k)
+        parameters_b%nn_parameters%bias_2(k) = 0.0_4
+        CALL POPINTEGER4(j)
+      END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(2),1,-1
+        DO l=setup%neurons(3),1,-1
+          parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&           parameters_b%nn_parameters%weight_2(l, k)
+          parameters_b%nn_parameters%weight_2(l, k) = 0.0_4
+          CALL POPINTEGER4(j)
+        END DO
+      END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(2),1,-1
+        parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&         parameters_b%nn_parameters%bias_1(k)
+        parameters_b%nn_parameters%bias_1(k) = 0.0_4
+        CALL POPINTEGER4(j)
+      END DO
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO k=setup%neurons(1),1,-1
+        DO l=setup%neurons(2),1,-1
+          parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&           parameters_b%nn_parameters%weight_1(l, k)
+          parameters_b%nn_parameters%weight_1(l, k) = 0.0_4
+          CALL POPINTEGER4(j)
+        END DO
+      END DO
+    END IF
+  END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_B
+
+  SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS(setup, options, parameters)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    INTEGER :: j, k, l
+    INTRINSIC SUM
+    j = SUM(parameters%control%nbk(1:4))
+    IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
+      DO k=1,setup%neurons(1)
+        DO l=1,setup%neurons(2)
+          j = j + 1
+          parameters%nn_parameters%weight_1(l, k) = parameters%control%x&
+&           (j)
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(2) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        j = j + 1
+        parameters%nn_parameters%bias_1(k) = parameters%control%x(j)
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(3) .EQ. 1) THEN
+      DO k=1,setup%neurons(2)
+        DO l=1,setup%neurons(3)
+          j = j + 1
+          parameters%nn_parameters%weight_2(l, k) = parameters%control%x&
+&           (j)
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(4) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
+        j = j + 1
+        parameters%nn_parameters%bias_2(k) = parameters%control%x(j)
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(5) .EQ. 1) THEN
+      DO k=1,setup%neurons(3)
+        DO l=1,setup%neurons(4)
+          j = j + 1
+          parameters%nn_parameters%weight_3(l, k) = parameters%control%x&
+&           (j)
+        END DO
+      END DO
+    END IF
+    IF (options%optimize%nn_parameters(6) .EQ. 1) THEN
+      DO k=1,setup%neurons(4)
+        j = j + 1
+        parameters%nn_parameters%bias_3(k) = parameters%control%x(j)
+      END DO
+    END IF
+  END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS
+
 !  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
+!                *(parameters.serr_sigma_parameters.values) *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
   SUBROUTINE FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
 &   parameters_d, options)
     IMPLICIT NONE
@@ -8124,17 +8583,25 @@ CONTAINS
 &                                       parameters_d, options)
     CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters&
 &                                          , parameters_d, options)
+    CALL NN_PARAMETERS_FILL_PARAMETERS_D(setup, options, parameters, &
+&                                  parameters_d)
   END SUBROUTINE FILL_PARAMETERS_D
 
 !  Differentiation of fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
+!                *(parameters.serr_sigma_parameters.values) *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
   SUBROUTINE FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
 &   parameters_b, options)
     IMPLICIT NONE
@@ -8215,6 +8682,39 @@ CONTAINS
 &                                     options)
     CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
 &                                        options)
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                 parameters%nn_parameters%weight_1, 1)*SIZE(parameters%&
+&                 nn_parameters%weight_1, 2))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(parameters&
+&                 %nn_parameters%bias_1, 1))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                 parameters%nn_parameters%weight_2, 1)*SIZE(parameters%&
+&                 nn_parameters%weight_2, 2))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters&
+&                 %nn_parameters%bias_2, 1))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                 parameters%nn_parameters%weight_3, 1)*SIZE(parameters%&
+&                 nn_parameters%weight_3, 2))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(parameters&
+&                 %nn_parameters%bias_3, 1))
+    CALL NN_PARAMETERS_FILL_PARAMETERS(setup, options, parameters)
+    CALL POPREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(parameters%&
+&                nn_parameters%bias_3, 1))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                parameters%nn_parameters%weight_3, 1)*SIZE(parameters%&
+&                nn_parameters%weight_3, 2))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters%&
+&                nn_parameters%bias_2, 1))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                parameters%nn_parameters%weight_2, 1)*SIZE(parameters%&
+&                nn_parameters%weight_2, 2))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(parameters%&
+&                nn_parameters%bias_1, 1))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                parameters%nn_parameters%weight_1, 1)*SIZE(parameters%&
+&                nn_parameters%weight_1, 2))
+    CALL NN_PARAMETERS_FILL_PARAMETERS_B(setup, options, parameters, &
+&                                  parameters_b)
     CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters&
 &                                          , parameters_b, options)
     CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters, &
@@ -8335,6 +8835,7 @@ CONTAINS
 &                                     options)
     CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
 &                                        options)
+    CALL NN_PARAMETERS_FILL_PARAMETERS(setup, options, parameters)
   END SUBROUTINE FILL_PARAMETERS
 
   SUBROUTINE PARAMETERS_TO_CONTROL(setup, mesh, input_data, parameters, &
@@ -8356,14 +8857,20 @@ CONTAINS
 !  Differentiation of control_to_parameters in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
+!                *(parameters.serr_sigma_parameters.values) *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
   SUBROUTINE CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters&
 &   , parameters_d, options)
     IMPLICIT NONE
@@ -8377,6 +8884,12 @@ CONTAINS
     IF (.NOT.ALLOCATED(parameters%control%x)) THEN
       parameters_d%serr_mu_parameters%values = 0.0_4
       parameters_d%serr_sigma_parameters%values = 0.0_4
+      parameters_d%nn_parameters%weight_1 = 0.0_4
+      parameters_d%nn_parameters%bias_1 = 0.0_4
+      parameters_d%nn_parameters%weight_2 = 0.0_4
+      parameters_d%nn_parameters%bias_2 = 0.0_4
+      parameters_d%nn_parameters%weight_3 = 0.0_4
+      parameters_d%nn_parameters%bias_3 = 0.0_4
     ELSE
       CALL INV_CONTROL_TFM_D(parameters, parameters_d, options)
       CALL FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
@@ -8387,14 +8900,20 @@ CONTAINS
 !  Differentiation of control_to_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
+!                *(parameters.serr_sigma_parameters.values) *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
   SUBROUTINE CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters&
 &   , parameters_b, options)
     IMPLICIT NONE
@@ -8417,7 +8936,37 @@ CONTAINS
 &                   parameters%rr_initial_states%values, 1)*SIZE(&
 &                   parameters%rr_initial_states%values, 2)*SIZE(&
 &                   parameters%rr_initial_states%values, 3))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                   parameters%nn_parameters%weight_1, 1)*SIZE(&
+&                   parameters%nn_parameters%weight_1, 2))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                   parameters%nn_parameters%bias_1, 1))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                   parameters%nn_parameters%weight_2, 1)*SIZE(&
+&                   parameters%nn_parameters%weight_2, 2))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                   parameters%nn_parameters%bias_2, 1))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                   parameters%nn_parameters%weight_3, 1)*SIZE(&
+&                   parameters%nn_parameters%weight_3, 2))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                   parameters%nn_parameters%bias_3, 1))
       CALL FILL_PARAMETERS(setup, mesh, input_data, parameters, options)
+      CALL POPREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                  parameters%nn_parameters%bias_3, 1))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                  parameters%nn_parameters%weight_3, 1)*SIZE(parameters&
+&                  %nn_parameters%weight_3, 2))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                  parameters%nn_parameters%bias_2, 1))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                  parameters%nn_parameters%weight_2, 1)*SIZE(parameters&
+&                  %nn_parameters%weight_2, 2))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                  parameters%nn_parameters%bias_1, 1))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                  parameters%nn_parameters%weight_1, 1)*SIZE(parameters&
+&                  %nn_parameters%weight_1, 2))
       CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
 &                  parameters%rr_initial_states%values, 1)*SIZE(&
 &                  parameters%rr_initial_states%values, 2)*SIZE(&
@@ -8754,7 +9303,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
   FUNCTION SMOOTHING_REGULARIZATION_D(setup, mesh, input_data, &
 &   parameters, parameters_d, options, hard, res) RESULT (RES_D)
     IMPLICIT NONE
@@ -8831,7 +9383,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in
   SUBROUTINE SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
 &   parameters, parameters_b, options, hard, res_b1)
     IMPLICIT NONE
@@ -8875,6 +9430,21 @@ CONTAINS
 &                 parameters_bkg%rr_initial_states%values, 1)*SIZE(&
 &                 parameters_bkg%rr_initial_states%values, 2)*SIZE(&
 &                 parameters_bkg%rr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters_bkg%nn_parameters%weight_1, SIZE(&
+&                 parameters_bkg%nn_parameters%weight_1, 1)*SIZE(&
+&                 parameters_bkg%nn_parameters%weight_1, 2))
+    CALL PUSHREAL4ARRAY(parameters_bkg%nn_parameters%bias_1, SIZE(&
+&                 parameters_bkg%nn_parameters%bias_1, 1))
+    CALL PUSHREAL4ARRAY(parameters_bkg%nn_parameters%weight_2, SIZE(&
+&                 parameters_bkg%nn_parameters%weight_2, 1)*SIZE(&
+&                 parameters_bkg%nn_parameters%weight_2, 2))
+    CALL PUSHREAL4ARRAY(parameters_bkg%nn_parameters%bias_2, SIZE(&
+&                 parameters_bkg%nn_parameters%bias_2, 1))
+    CALL PUSHREAL4ARRAY(parameters_bkg%nn_parameters%weight_3, SIZE(&
+&                 parameters_bkg%nn_parameters%weight_3, 1)*SIZE(&
+&                 parameters_bkg%nn_parameters%weight_3, 2))
+    CALL PUSHREAL4ARRAY(parameters_bkg%nn_parameters%bias_3, SIZE(&
+&                 parameters_bkg%nn_parameters%bias_3, 1))
     CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters_bkg, &
 &                        options)
 ! Loop on rr_parameters
@@ -8960,6 +9530,21 @@ CONTAINS
         END IF
       END IF
     END DO
+    CALL POPREAL4ARRAY(parameters_bkg%nn_parameters%bias_3, SIZE(&
+&                parameters_bkg%nn_parameters%bias_3, 1))
+    CALL POPREAL4ARRAY(parameters_bkg%nn_parameters%weight_3, SIZE(&
+&                parameters_bkg%nn_parameters%weight_3, 1)*SIZE(&
+&                parameters_bkg%nn_parameters%weight_3, 2))
+    CALL POPREAL4ARRAY(parameters_bkg%nn_parameters%bias_2, SIZE(&
+&                parameters_bkg%nn_parameters%bias_2, 1))
+    CALL POPREAL4ARRAY(parameters_bkg%nn_parameters%weight_2, SIZE(&
+&                parameters_bkg%nn_parameters%weight_2, 1)*SIZE(&
+&                parameters_bkg%nn_parameters%weight_2, 2))
+    CALL POPREAL4ARRAY(parameters_bkg%nn_parameters%bias_1, SIZE(&
+&                parameters_bkg%nn_parameters%bias_1, 1))
+    CALL POPREAL4ARRAY(parameters_bkg%nn_parameters%weight_1, SIZE(&
+&                parameters_bkg%nn_parameters%weight_1, 1)*SIZE(&
+&                parameters_bkg%nn_parameters%weight_1, 2))
     CALL POPREAL4ARRAY(parameters_bkg%rr_initial_states%values, SIZE(&
 &                parameters_bkg%rr_initial_states%values, 1)*SIZE(&
 &                parameters_bkg%rr_initial_states%values, 2)*SIZE(&
@@ -8972,6 +9557,12 @@ CONTAINS
 &                control%x, 1))
     parameters_b%serr_mu_parameters%values = 0.0_4
     parameters_b%serr_sigma_parameters%values = 0.0_4
+    parameters_b%nn_parameters%weight_1 = 0.0_4
+    parameters_b%nn_parameters%bias_1 = 0.0_4
+    parameters_b%nn_parameters%weight_2 = 0.0_4
+    parameters_b%nn_parameters%bias_2 = 0.0_4
+    parameters_b%nn_parameters%weight_3 = 0.0_4
+    parameters_b%nn_parameters%bias_3 = 0.0_4
     CALL CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters_bkg&
 &                          , parameters_bkg_b, options)
     CALL POPREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
@@ -10971,7 +11562,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, &
 &   parameters, parameters_d, options, options_d, jreg, jreg_d)
     IMPLICIT NONE
@@ -11026,7 +11620,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, &
 &   parameters, parameters_b, options, options_b, jreg, jreg_b)
     IMPLICIT NONE
@@ -11070,6 +11667,21 @@ CONTAINS
 &                       parameters%rr_initial_states%values, 1)*SIZE(&
 &                       parameters%rr_initial_states%values, 2)*SIZE(&
 &                       parameters%rr_initial_states%values, 3))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                       parameters%nn_parameters%weight_1, 1)*SIZE(&
+&                       parameters%nn_parameters%weight_1, 2))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                       parameters%nn_parameters%bias_1, 1))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                       parameters%nn_parameters%weight_2, 1)*SIZE(&
+&                       parameters%nn_parameters%weight_2, 2))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                       parameters%nn_parameters%bias_2, 1))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                       parameters%nn_parameters%weight_3, 1)*SIZE(&
+&                       parameters%nn_parameters%weight_3, 2))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                       parameters%nn_parameters%bias_3, 1))
           jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
 &           input_data, parameters, options, .false.)
           CALL PUSHCONTROL2B(1)
@@ -11085,6 +11697,21 @@ CONTAINS
 &                       parameters%rr_initial_states%values, 1)*SIZE(&
 &                       parameters%rr_initial_states%values, 2)*SIZE(&
 &                       parameters%rr_initial_states%values, 3))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                       parameters%nn_parameters%weight_1, 1)*SIZE(&
+&                       parameters%nn_parameters%weight_1, 2))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                       parameters%nn_parameters%bias_1, 1))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                       parameters%nn_parameters%weight_2, 1)*SIZE(&
+&                       parameters%nn_parameters%weight_2, 2))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                       parameters%nn_parameters%bias_2, 1))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                       parameters%nn_parameters%weight_3, 1)*SIZE(&
+&                       parameters%nn_parameters%weight_3, 2))
+          CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                       parameters%nn_parameters%bias_3, 1))
           jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
 &           input_data, parameters, options, .true.)
           CALL PUSHCONTROL2B(0)
@@ -11101,6 +11728,21 @@ CONTAINS
         CALL POPCONTROL2B(branch)
         IF (branch .LT. 2) THEN
           IF (branch .EQ. 0) THEN
+            CALL POPREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                        parameters%nn_parameters%bias_3, 1))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                        parameters%nn_parameters%weight_3, 1)*SIZE(&
+&                        parameters%nn_parameters%weight_3, 2))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                        parameters%nn_parameters%bias_2, 1))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                        parameters%nn_parameters%weight_2, 1)*SIZE(&
+&                        parameters%nn_parameters%weight_2, 2))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                        parameters%nn_parameters%bias_1, 1))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                        parameters%nn_parameters%weight_1, 1)*SIZE(&
+&                        parameters%nn_parameters%weight_1, 2))
             CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE&
 &                        (parameters%rr_initial_states%values, 1)*SIZE(&
 &                        parameters%rr_initial_states%values, 2)*SIZE(&
@@ -11116,6 +11758,21 @@ CONTAINS
 &                                     , .true., jreg_cmpt_values_b(i))
             jreg_cmpt_values_b(i) = 0.0_4
           ELSE
+            CALL POPREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                        parameters%nn_parameters%bias_3, 1))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                        parameters%nn_parameters%weight_3, 1)*SIZE(&
+&                        parameters%nn_parameters%weight_3, 2))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                        parameters%nn_parameters%bias_2, 1))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                        parameters%nn_parameters%weight_2, 1)*SIZE(&
+&                        parameters%nn_parameters%weight_2, 2))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                        parameters%nn_parameters%bias_1, 1))
+            CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                        parameters%nn_parameters%weight_1, 1)*SIZE(&
+&                        parameters%nn_parameters%weight_1, 2))
             CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE&
 &                        (parameters%rr_initial_states%values, 1)*SIZE(&
 &                        parameters%rr_initial_states%values, 2)*SIZE(&
@@ -11185,7 +11842,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_D(setup, mesh, input_data, &
 &   parameters, parameters_d, output, output_d, options, options_d, &
@@ -11219,7 +11879,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_B(setup, mesh, input_data, &
 &   parameters, parameters_b, output, output_b, options, options_b, &
@@ -11249,10 +11912,40 @@ CONTAINS
 &                 parameters%rr_initial_states%values, 1)*SIZE(&
 &                 parameters%rr_initial_states%values, 2)*SIZE(&
 &                 parameters%rr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                 parameters%nn_parameters%weight_1, 1)*SIZE(parameters%&
+&                 nn_parameters%weight_1, 2))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(parameters&
+&                 %nn_parameters%bias_1, 1))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                 parameters%nn_parameters%weight_2, 1)*SIZE(parameters%&
+&                 nn_parameters%weight_2, 2))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters&
+&                 %nn_parameters%bias_2, 1))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                 parameters%nn_parameters%weight_3, 1)*SIZE(parameters%&
+&                 nn_parameters%weight_3, 2))
+    CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(parameters&
+&                 %nn_parameters%bias_3, 1))
     CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
 &                         options, jreg)
     jobs_b = output_b%cost
     jreg_b = options%cost%wjreg*output_b%cost
+    CALL POPREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(parameters%&
+&                nn_parameters%bias_3, 1))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                parameters%nn_parameters%weight_3, 1)*SIZE(parameters%&
+&                nn_parameters%weight_3, 2))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters%&
+&                nn_parameters%bias_2, 1))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                parameters%nn_parameters%weight_2, 1)*SIZE(parameters%&
+&                nn_parameters%weight_2, 2))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(parameters%&
+&                nn_parameters%bias_1, 1))
+    CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                parameters%nn_parameters%weight_1, 1)*SIZE(parameters%&
+&                nn_parameters%weight_1, 2))
     CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
 &                parameters%rr_initial_states%values, 1)*SIZE(parameters&
 &                %rr_initial_states%values, 2)*SIZE(parameters%&
@@ -11298,7 +11991,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, options_d, returns)
@@ -11333,7 +12029,10 @@ CONTAINS
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, options_b, returns)
@@ -11367,8 +12066,38 @@ CONTAINS
 &                   parameters%rr_initial_states%values, 1)*SIZE(&
 &                   parameters%rr_initial_states%values, 2)*SIZE(&
 &                   parameters%rr_initial_states%values, 3))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                   parameters%nn_parameters%weight_1, 1)*SIZE(&
+&                   parameters%nn_parameters%weight_1, 2))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                   parameters%nn_parameters%bias_1, 1))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                   parameters%nn_parameters%weight_2, 1)*SIZE(&
+&                   parameters%nn_parameters%weight_2, 2))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                   parameters%nn_parameters%bias_2, 1))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                   parameters%nn_parameters%weight_3, 1)*SIZE(&
+&                   parameters%nn_parameters%weight_3, 2))
+      CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                   parameters%nn_parameters%bias_3, 1))
       CALL CLASSICAL_COMPUTE_COST(setup, mesh, input_data, parameters, &
 &                           output, options, returns)
+      CALL POPREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(&
+&                  parameters%nn_parameters%bias_3, 1))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(&
+&                  parameters%nn_parameters%weight_3, 1)*SIZE(parameters&
+&                  %nn_parameters%weight_3, 2))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(&
+&                  parameters%nn_parameters%bias_2, 1))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(&
+&                  parameters%nn_parameters%weight_2, 1)*SIZE(parameters&
+&                  %nn_parameters%weight_2, 2))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(&
+&                  parameters%nn_parameters%bias_1, 1))
+      CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(&
+&                  parameters%nn_parameters%weight_1, 1)*SIZE(parameters&
+&                  %nn_parameters%weight_1, 2))
       CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
 &                  parameters%rr_initial_states%values, 1)*SIZE(&
 &                  parameters%rr_initial_states%values, 2)*SIZE(&
@@ -11920,12 +12649,475 @@ END MODULE MWD_ATMOS_MANIPULATION_DIFF
 !%      Subroutine
 !%      ----------
 !%
+!%      - solve_linear_system_2vars
+!%      - dot_product_2d_1d
+MODULE MD_ALGEBRA_DIFF
+!% only : sp
+  USE MD_CONSTANT
+  IMPLICIT NONE
+
+CONTAINS
+!  Differentiation of solve_linear_system_2vars in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: x
+!   with respect to varying inputs: x a b
+  SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS_D(a, a_d, x, x_d, b, b_d)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(2, 2), INTENT(IN) :: a
+    REAL(sp), DIMENSION(2, 2), INTENT(IN) :: a_d
+    REAL(sp), DIMENSION(2), INTENT(IN) :: b
+    REAL(sp), DIMENSION(2), INTENT(IN) :: b_d
+    REAL(sp), DIMENSION(2), INTENT(OUT) :: x
+    REAL(sp), DIMENSION(2), INTENT(OUT) :: x_d
+    REAL(sp) :: det_a
+    REAL(sp) :: det_a_d
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: temp
+    det_a_d = a(2, 2)*a_d(1, 1) + a(1, 1)*a_d(2, 2) - a(2, 1)*a_d(1, 2) &
+&     - a(1, 2)*a_d(2, 1)
+    det_a = a(1, 1)*a(2, 2) - a(1, 2)*a(2, 1)
+    IF (det_a .GE. 0.) THEN
+      abs0 = det_a
+    ELSE
+      abs0 = -det_a
+    END IF
+    IF (abs0 .GT. 0._sp) THEN
+      temp = (b(2)*a(1, 2)-b(1)*a(2, 2))/det_a
+      x_d(1) = (a(1, 2)*b_d(2)+b(2)*a_d(1, 2)-a(2, 2)*b_d(1)-b(1)*a_d(2&
+&       , 2)-temp*det_a_d)/det_a
+      x(1) = temp
+      temp = (b(1)*a(2, 1)-b(2)*a(1, 1))/det_a
+      x_d(2) = (a(2, 1)*b_d(1)+b(1)*a_d(2, 1)-a(1, 1)*b_d(2)-b(2)*a_d(1&
+&       , 1)-temp*det_a_d)/det_a
+      x(2) = temp
+    ELSE
+      x = 0._sp
+      x_d = 0.0_4
+    END IF
+  END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS_D
+
+!  Differentiation of solve_linear_system_2vars in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: x a b
+!   with respect to varying inputs: x a b
+  SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS_B(a, a_b, x, x_b, b, b_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(2, 2), INTENT(IN) :: a
+    REAL(sp), DIMENSION(2, 2) :: a_b
+    REAL(sp), DIMENSION(2), INTENT(IN) :: b
+    REAL(sp), DIMENSION(2) :: b_b
+    REAL(sp), DIMENSION(2) :: x
+    REAL(sp), DIMENSION(2) :: x_b
+    REAL(sp) :: det_a
+    REAL(sp) :: det_a_b
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: temp_b
+    det_a = a(1, 1)*a(2, 2) - a(1, 2)*a(2, 1)
+    IF (det_a .GE. 0.) THEN
+      abs0 = det_a
+    ELSE
+      abs0 = -det_a
+    END IF
+    IF (abs0 .GT. 0._sp) THEN
+      det_a = a(1, 1)*a(2, 2) - a(1, 2)*a(2, 1)
+      temp_b = x_b(2)/det_a
+      x_b(2) = 0.0_4
+      b_b(1) = b_b(1) + a(2, 1)*temp_b
+      a_b(2, 1) = a_b(2, 1) + b(1)*temp_b
+      b_b(2) = b_b(2) - a(1, 1)*temp_b
+      a_b(1, 1) = a_b(1, 1) - b(2)*temp_b
+      det_a_b = -((b(1)*a(2, 1)-b(2)*a(1, 1))*temp_b/det_a)
+      temp_b = x_b(1)/det_a
+      x_b(1) = 0.0_4
+      b_b(2) = b_b(2) + a(1, 2)*temp_b
+      a_b(1, 2) = a_b(1, 2) + b(2)*temp_b
+      b_b(1) = b_b(1) - a(2, 2)*temp_b
+      a_b(2, 2) = a_b(2, 2) - b(1)*temp_b
+      det_a_b = det_a_b - (b(2)*a(1, 2)-b(1)*a(2, 2))*temp_b/det_a
+    ELSE
+      x_b = 0.0_4
+      det_a_b = 0.0_4
+    END IF
+    a_b(1, 1) = a_b(1, 1) + a(2, 2)*det_a_b
+    a_b(2, 2) = a_b(2, 2) + a(1, 1)*det_a_b
+    a_b(1, 2) = a_b(1, 2) - a(2, 1)*det_a_b
+    a_b(2, 1) = a_b(2, 1) - a(1, 2)*det_a_b
+  END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS_B
+
+  SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS(a, x, b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(2, 2), INTENT(IN) :: a
+    REAL(sp), DIMENSION(2), INTENT(IN) :: b
+    REAL(sp), DIMENSION(2), INTENT(OUT) :: x
+    REAL(sp) :: det_a
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    det_a = a(1, 1)*a(2, 2) - a(1, 2)*a(2, 1)
+    IF (det_a .GE. 0.) THEN
+      abs0 = det_a
+    ELSE
+      abs0 = -det_a
+    END IF
+    IF (abs0 .GT. 0._sp) THEN
+      x(1) = (b(2)*a(1, 2)-b(1)*a(2, 2))/det_a
+      x(2) = (b(1)*a(2, 1)-b(2)*a(1, 1))/det_a
+    ELSE
+      x = 0._sp
+    END IF
+  END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS
+
+!  Differentiation of dot_product_2d_1d in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: b
+!   with respect to varying inputs: x a
+  SUBROUTINE DOT_PRODUCT_2D_1D_D(a, a_d, x, x_d, b, b_d)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: a_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x_d
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: b
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: b_d
+    INTEGER :: i, j
+    INTRINSIC SIZE
+    b = 0._sp
+    b_d = 0.0_4
+    DO j=1,SIZE(a, 2)
+      DO i=1,SIZE(a, 1)
+        b_d(i) = b_d(i) + x(j)*a_d(i, j) + a(i, j)*x_d(j)
+        b(i) = b(i) + a(i, j)*x(j)
+      END DO
+    END DO
+  END SUBROUTINE DOT_PRODUCT_2D_1D_D
+
+!  Differentiation of dot_product_2d_1d in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: a b
+!   with respect to varying inputs: x a
+  SUBROUTINE DOT_PRODUCT_2D_1D_B(a, a_b, x, x_b, b, b_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:, :) :: a_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:) :: x_b
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: b
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: b_b
+    INTEGER :: i, j
+    INTRINSIC SIZE
+    INTEGER :: ad_to
+    INTEGER :: ad_to0
+    DO j=1,SIZE(a, 2)
+      DO i=1,SIZE(a, 1)
+
+      END DO
+      CALL PUSHINTEGER4(i - 1)
+    END DO
+    ad_to0 = j - 1
+    x_b = 0.0_4
+    DO j=ad_to0,1,-1
+      CALL POPINTEGER4(ad_to)
+      DO i=ad_to,1,-1
+        a_b(i, j) = a_b(i, j) + x(j)*b_b(i)
+        x_b(j) = x_b(j) + a(i, j)*b_b(i)
+      END DO
+    END DO
+  END SUBROUTINE DOT_PRODUCT_2D_1D_B
+
+  SUBROUTINE DOT_PRODUCT_2D_1D(a, x, b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: b
+    INTEGER :: i, j
+    INTRINSIC SIZE
+    b = 0._sp
+    DO j=1,SIZE(a, 2)
+      DO i=1,SIZE(a, 1)
+        b(i) = b(i) + a(i, j)*x(j)
+      END DO
+    END DO
+  END SUBROUTINE DOT_PRODUCT_2D_1D
+
+END MODULE MD_ALGEBRA_DIFF
+
+!%      (MD) Module Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - forward_mlp
+MODULE MD_NEURAL_NETWORK_DIFF
+!% only : sp
+  USE MD_CONSTANT
+!% only: dot_product_2d_1d
+  USE MD_ALGEBRA_DIFF
+  IMPLICIT NONE
+
+CONTAINS
+!  Differentiation of forward_mlp in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: output_layer
+!   with respect to varying inputs: bias_1 bias_2 bias_3 input_layer
+!                weight_1 weight_2 weight_3
+  SUBROUTINE FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
+&   weight_2, weight_2_d, bias_2, bias_2_d, weight_3, weight_3_d, bias_3&
+&   , bias_3_d, input_layer, input_layer_d, output_layer, output_layer_d&
+& )
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_1_d
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_2
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_2_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_2_d
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_3
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_3_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_3_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: input_layer
+    REAL(sp), DIMENSION(:), INTENT(IN) :: input_layer_d
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_layer
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_layer_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1
+    REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_d
+    REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
+    REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_d
+    INTEGER :: i
+    INTRINSIC MAX
+    INTRINSIC TANH
+    CALL DOT_PRODUCT_2D_1D_D(weight_1, weight_1_d, input_layer, &
+&                      input_layer_d, inter_layer_1, inter_layer_1_d)
+    DO i=1,SIZE(inter_layer_1)
+      inter_layer_1_d(i) = inter_layer_1_d(i) + bias_1_d(i)
+      inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
+      IF (0.01_sp*inter_layer_1(i) .LT. inter_layer_1(i)) THEN
+        inter_layer_1(i) = inter_layer_1(i)
+      ELSE
+        inter_layer_1_d(i) = 0.01_sp*inter_layer_1_d(i)
+        inter_layer_1(i) = 0.01_sp*inter_layer_1(i)
+      END IF
+    END DO
+    IF (SIZE(bias_3) .GT. 0) THEN
+! in case of having 3 layers
+      CALL DOT_PRODUCT_2D_1D_D(weight_2, weight_2_d, inter_layer_1, &
+&                        inter_layer_1_d, inter_layer_2, inter_layer_2_d&
+&                       )
+      DO i=1,SIZE(inter_layer_2)
+        inter_layer_2_d(i) = inter_layer_2_d(i) + bias_2_d(i)
+        inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
+        IF (0.01_sp*inter_layer_2(i) .LT. inter_layer_2(i)) THEN
+          inter_layer_2(i) = inter_layer_2(i)
+        ELSE
+          inter_layer_2_d(i) = 0.01_sp*inter_layer_2_d(i)
+          inter_layer_2(i) = 0.01_sp*inter_layer_2(i)
+        END IF
+      END DO
+      CALL DOT_PRODUCT_2D_1D_D(weight_3, weight_3_d, inter_layer_2, &
+&                        inter_layer_2_d, output_layer, output_layer_d)
+      DO i=1,SIZE(output_layer)
+! TanH
+        output_layer_d(i) = (1.0-TANH(output_layer(i)+bias_3(i))**2)*(&
+&         output_layer_d(i)+bias_3_d(i))
+        output_layer(i) = TANH(output_layer(i) + bias_3(i))
+      END DO
+    ELSE
+! in case of having 2 layers
+      CALL DOT_PRODUCT_2D_1D_D(weight_2, weight_2_d, inter_layer_1, &
+&                        inter_layer_1_d, output_layer, output_layer_d)
+      DO i=1,SIZE(output_layer)
+! TanH
+        output_layer_d(i) = (1.0-TANH(output_layer(i)+bias_2(i))**2)*(&
+&         output_layer_d(i)+bias_2_d(i))
+        output_layer(i) = TANH(output_layer(i) + bias_2(i))
+      END DO
+    END IF
+  END SUBROUTINE FORWARD_MLP_D
+
+!  Differentiation of forward_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: output_layer bias_1 bias_2
+!                bias_3 weight_1 weight_2 weight_3
+!   with respect to varying inputs: bias_1 bias_2 bias_3 input_layer
+!                weight_1 weight_2 weight_3
+  SUBROUTINE FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
+&   weight_2, weight_2_b, bias_2, bias_2_b, weight_3, weight_3_b, bias_3&
+&   , bias_3_b, input_layer, input_layer_b, output_layer, output_layer_b&
+& )
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1
+    REAL(sp), DIMENSION(:, :) :: weight_1_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(:) :: bias_1_b
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_2
+    REAL(sp), DIMENSION(:, :) :: weight_2_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(:) :: bias_2_b
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_3
+    REAL(sp), DIMENSION(:, :) :: weight_3_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(:) :: bias_3_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: input_layer
+    REAL(sp), DIMENSION(:) :: input_layer_b
+    REAL(sp), DIMENSION(:) :: output_layer
+    REAL(sp), DIMENSION(:) :: output_layer_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1
+    REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_b
+    REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
+    REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_b
+    INTEGER :: i
+    INTRINSIC MAX
+    INTRINSIC TANH
+    REAL(sp) :: temp_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+    INTEGER :: ad_to0
+    INTEGER :: ad_to1
+    INTEGER :: ad_to2
+    CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
+    DO i=1,SIZE(inter_layer_1)
+      inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
+      IF (0.01_sp*inter_layer_1(i) .LT. inter_layer_1(i)) THEN
+        CALL PUSHCONTROL1B(0)
+        inter_layer_1(i) = inter_layer_1(i)
+      ELSE
+        inter_layer_1(i) = 0.01_sp*inter_layer_1(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    IF (SIZE(bias_3) .GT. 0) THEN
+! in case of having 3 layers
+      CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, inter_layer_2)
+      DO i=1,SIZE(inter_layer_2)
+        inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
+        IF (0.01_sp*inter_layer_2(i) .LT. inter_layer_2(i)) THEN
+          CALL PUSHCONTROL1B(0)
+          inter_layer_2(i) = inter_layer_2(i)
+        ELSE
+          inter_layer_2(i) = 0.01_sp*inter_layer_2(i)
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+      CALL PUSHINTEGER4(i - 1)
+      CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2, output_layer)
+      DO i=1,SIZE(output_layer)
+
+      END DO
+      ad_to1 = i - 1
+      DO i=ad_to1,1,-1
+        temp_b = (1.0-TANH(output_layer(i)+bias_3(i))**2)*output_layer_b&
+&         (i)
+        output_layer_b(i) = temp_b
+        bias_3_b(i) = bias_3_b(i) + temp_b
+      END DO
+      CALL DOT_PRODUCT_2D_1D_B(weight_3, weight_3_b, inter_layer_2, &
+&                        inter_layer_2_b, output_layer, output_layer_b)
+      CALL POPINTEGER4(ad_to0)
+      DO i=ad_to0,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) inter_layer_2_b(i) = 0.01_sp*inter_layer_2_b(&
+&           i)
+        bias_2_b(i) = bias_2_b(i) + inter_layer_2_b(i)
+      END DO
+      CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1, &
+&                        inter_layer_1_b, inter_layer_2, inter_layer_2_b&
+&                       )
+    ELSE
+! in case of having 2 layers
+      CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, output_layer)
+      DO i=1,SIZE(output_layer)
+
+      END DO
+      ad_to2 = i - 1
+      DO i=ad_to2,1,-1
+        temp_b = (1.0-TANH(output_layer(i)+bias_2(i))**2)*output_layer_b&
+&         (i)
+        output_layer_b(i) = temp_b
+        bias_2_b(i) = bias_2_b(i) + temp_b
+      END DO
+      CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1, &
+&                        inter_layer_1_b, output_layer, output_layer_b)
+    END IF
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) inter_layer_1_b(i) = 0.01_sp*inter_layer_1_b(i)
+      bias_1_b(i) = bias_1_b(i) + inter_layer_1_b(i)
+    END DO
+    CALL DOT_PRODUCT_2D_1D_B(weight_1, weight_1_b, input_layer, &
+&                      input_layer_b, inter_layer_1, inter_layer_1_b)
+  END SUBROUTINE FORWARD_MLP_B
+
+  SUBROUTINE FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, weight_3, &
+&   bias_3, input_layer, output_layer)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_2
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_3
+    REAL(sp), DIMENSION(:), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(:), INTENT(IN) :: input_layer
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_layer
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1
+    REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
+    INTEGER :: i
+    INTRINSIC MAX
+    INTRINSIC TANH
+    CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
+    DO i=1,SIZE(inter_layer_1)
+      inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
+      IF (0.01_sp*inter_layer_1(i) .LT. inter_layer_1(i)) THEN
+        inter_layer_1(i) = inter_layer_1(i)
+      ELSE
+        inter_layer_1(i) = 0.01_sp*inter_layer_1(i)
+      END IF
+    END DO
+    IF (SIZE(bias_3) .GT. 0) THEN
+! in case of having 3 layers
+      CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, inter_layer_2)
+      DO i=1,SIZE(inter_layer_2)
+        inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
+        IF (0.01_sp*inter_layer_2(i) .LT. inter_layer_2(i)) THEN
+          inter_layer_2(i) = inter_layer_2(i)
+        ELSE
+          inter_layer_2(i) = 0.01_sp*inter_layer_2(i)
+        END IF
+      END DO
+      CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2, output_layer)
+      DO i=1,SIZE(output_layer)
+! TanH
+        output_layer(i) = TANH(output_layer(i) + bias_3(i))
+      END DO
+    ELSE
+! in case of having 2 layers
+      CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, output_layer)
+      DO i=1,SIZE(output_layer)
+! TanH
+        output_layer(i) = TANH(output_layer(i) + bias_2(i))
+      END DO
+    END IF
+  END SUBROUTINE FORWARD_MLP
+
+END MODULE MD_NEURAL_NETWORK_DIFF
+
+!%      (MD) Module Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
 !%      - gr_interception
 !%      - gr_production
 !%      - gr_exchange
 !%      - gr_threshold_exchange
 !%      - gr_transfer
+!%      - gr_production_transfer_ode
+!%      - gr_production_transfer_ode_mlp
 !%      - gr4_time_step
+!%      - gr4_mlp_time_step
+!%      - gr4_ode_time_step
+!%      - gr4_ode_mlp_time_step
 !%      - gr5_time_step
 !%      - gr6_time_step
 !%      - grd_time_step
@@ -11945,6 +13137,10 @@ MODULE MD_GR_OPERATOR_DIFF
   USE MWD_RETURNS_DIFF
 !% get_ac_atmos_data_time_step
   USE MWD_ATMOS_MANIPULATION_DIFF
+!% only: solve_linear_system_2vars
+  USE MD_ALGEBRA_DIFF
+!% only: forward_mlp
+  USE MD_NEURAL_NETWORK_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -12067,12 +13263,12 @@ CONTAINS
 
 !  Differentiation of gr_production in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: hp perc pr
-!   with respect to varying inputs: hp en cp pn
-  SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, hp, &
-&   hp_d, pr, pr_d, perc, perc_d)
+!   with respect to varying inputs: fq_ps hp en fq_es cp pn
+  SUBROUTINE GR_PRODUCTION_D(fq_ps, fq_ps_d, fq_es, fq_es_d, pn, pn_d, &
+&   en, en_d, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, perc_d)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
+    REAL(sp), INTENT(IN) :: fq_ps_d, fq_es_d, pn_d, en_d, cp_d
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
     REAL(sp), INTENT(OUT) :: pr, perc
@@ -12099,6 +13295,8 @@ CONTAINS
 &     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
 &     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
     ps = temp2
+    ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
+    ps = (1._sp+fq_ps)*ps
     temp2 = TANH(en*inv_cp)
     temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
@@ -12108,6 +13306,8 @@ CONTAINS
 &     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
 &     1._sp-hp)*temp2+1._sp)
     es = temp
+    es_d = es*fq_es_d + (fq_es+1._sp)*es_d
+    es = (1._sp+fq_es)*es
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
@@ -12127,13 +13327,14 @@ CONTAINS
   END SUBROUTINE GR_PRODUCTION_D
 
 !  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: hp cp perc pr
-!   with respect to varying inputs: hp en cp pn
-  SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, hp, &
-&   hp_b, pr, pr_b, perc, perc_b)
+!   gradient     of useful results: fq_ps hp en fq_es cp pn perc
+!                pr
+!   with respect to varying inputs: fq_ps hp en fq_es cp pn
+  SUBROUTINE GR_PRODUCTION_B(fq_ps, fq_ps_b, fq_es, fq_es_b, pn, pn_b, &
+&   en, en_b, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, perc_b)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp) :: pn_b, en_b, cp_b
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
+    REAL(sp) :: fq_ps_b, fq_es_b, pn_b, en_b, cp_b
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
     REAL(sp) :: pr, perc
@@ -12161,8 +13362,12 @@ CONTAINS
     INTEGER :: branch
     inv_cp = 1._sp/cp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+    CALL PUSHREAL4(ps)
+    ps = (1._sp+fq_ps)*ps
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+    CALL PUSHREAL4(es)
+    es = (1._sp+fq_es)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -12171,12 +13376,14 @@ CONTAINS
     END IF
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
+    CALL PUSHREAL4(perc)
     perc = hp_imd*cp*(1._sp-pwr1)
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
     inv_cp = 1._sp/cp
     perc_b = perc_b - inv_cp*hp_b
     inv_cp_b = -(perc*hp_b)
+    CALL POPREAL4(perc)
     cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
@@ -12184,15 +13391,18 @@ CONTAINS
 &     4
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      pn_b = pr_b
+      pn_b = pn_b + pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
       cp_b = cp_b - (hp_imd-hp)*pr_b
     ELSE
       hp_b = 0.0_4
-      pn_b = 0.0_4
     END IF
     es_b = -(inv_cp*hp_imd_b)
+    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
+    CALL POPREAL4(es)
+    fq_es_b = fq_es_b + es*es_b
+    es_b = (fq_es+1._sp)*es_b
     temp4 = TANH(en*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
     temp1 = TANH(en*inv_cp)
@@ -12205,8 +13415,11 @@ CONTAINS
     ps_b = inv_cp*hp_imd_b
     temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
-    en_b = inv_cp*temp_b5 + inv_cp*temp_b4
+    en_b = en_b + inv_cp*temp_b5 + inv_cp*temp_b4
     cp_b = cp_b + hp*temp_b
+    CALL POPREAL4(ps)
+    fq_ps_b = fq_ps_b + ps*ps_b
+    ps_b = (fq_ps+1._sp)*ps_b
     temp = TANH(pn*inv_cp)
     temp0 = hp*temp + 1._sp
     temp1 = TANH(pn*inv_cp)
@@ -12216,15 +13429,15 @@ CONTAINS
     temp_b1 = -(temp2*temp1*temp_b/temp0)
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b4 + &
-&     pn*temp_b2 + pn*temp_b0
+    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4 + pn*temp_b2 + pn*&
+&     temp_b0
     cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
   END SUBROUTINE GR_PRODUCTION_B
 
-  SUBROUTINE GR_PRODUCTION(pn, en, cp, beta, hp, pr, perc)
+  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(OUT) :: pr, perc
     REAL(sp) :: inv_cp, ps, es, hp_imd
@@ -12234,8 +13447,10 @@ CONTAINS
     inv_cp = 1._sp/cp
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+    ps = (1._sp+fq_ps)*ps
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+    es = (1._sp+fq_es)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
     pwx1 = 1._sp + (hp_imd/beta)**4
@@ -12246,42 +13461,46 @@ CONTAINS
 
 !  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: l
-!   with respect to varying inputs: kexc ht
-  SUBROUTINE GR_EXCHANGE_D(kexc, kexc_d, ht, ht_d, l, l_d)
+!   with respect to varying inputs: kexc fq_l ht
+  SUBROUTINE GR_EXCHANGE_D(fq_l, fq_l_d, kexc, kexc_d, ht, ht_d, l, l_d)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc
-    REAL(sp), INTENT(IN) :: kexc_d
+    REAL(sp), INTENT(IN) :: fq_l, kexc
+    REAL(sp), INTENT(IN) :: fq_l_d, kexc_d
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(INOUT) :: ht_d
     REAL(sp), INTENT(OUT) :: l
     REAL(sp), INTENT(OUT) :: l_d
     REAL(sp) :: temp
     temp = ht**3.5_sp
-    l_d = temp*kexc_d + kexc*3.5_sp*ht**2.5*ht_d
-    l = kexc*temp
+    l_d = temp*(kexc*fq_l_d+(fq_l+1._sp)*kexc_d) + (fq_l+1._sp)*kexc*&
+&     3.5_sp*ht**2.5*ht_d
+    l = (fq_l+1._sp)*kexc*temp
   END SUBROUTINE GR_EXCHANGE_D
 
 !  Differentiation of gr_exchange in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: l kexc ht
-!   with respect to varying inputs: kexc ht
-  SUBROUTINE GR_EXCHANGE_B(kexc, kexc_b, ht, ht_b, l, l_b)
+!   gradient     of useful results: l kexc fq_l ht
+!   with respect to varying inputs: kexc fq_l ht
+  SUBROUTINE GR_EXCHANGE_B(fq_l, fq_l_b, kexc, kexc_b, ht, ht_b, l, l_b)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc
-    REAL(sp) :: kexc_b
+    REAL(sp), INTENT(IN) :: fq_l, kexc
+    REAL(sp) :: fq_l_b, kexc_b
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
-    kexc_b = kexc_b + ht**3.5_sp*l_b
-    ht_b = ht_b + 3.5_sp*ht**2.5*kexc*l_b
+    REAL(sp) :: temp_b
+    temp_b = ht**3.5_sp*l_b
+    ht_b = ht_b + 3.5_sp*ht**2.5*(fq_l+1._sp)*kexc*l_b
+    fq_l_b = fq_l_b + kexc*temp_b
+    kexc_b = kexc_b + (fq_l+1._sp)*temp_b
   END SUBROUTINE GR_EXCHANGE_B
 
-  SUBROUTINE GR_EXCHANGE(kexc, ht, l)
+  SUBROUTINE GR_EXCHANGE(fq_l, kexc, ht, l)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc
+    REAL(sp), INTENT(IN) :: fq_l, kexc
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(OUT) :: l
-    l = kexc*ht**3.5_sp
+    l = (1._sp+fq_l)*kexc*ht**3.5_sp
   END SUBROUTINE GR_EXCHANGE
 
 !  Differentiation of gr_threshold_exchange in forward (tangent) mode (with options fixinterface noISIZE context):
@@ -12738,6 +13957,561 @@ CONTAINS
     he = he_star - qe
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER
 
+!  Differentiation of gr_production_transfer_ode in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: q hp ht
+!   with respect to varying inputs: kexc hp ht en cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_D(pn, pn_d, en, en_d, cp, cp_d, &
+&   ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, l)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, ct_d, kexc_d
+    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(INOUT) :: hp_d, ht_d, q_d
+    REAL(sp), INTENT(OUT) :: l
+    REAL(sp) :: l_d
+    REAL(sp), DIMENSION(2, 2) :: jacob
+    REAL(sp), DIMENSION(2, 2) :: jacob_d
+    REAL(sp), DIMENSION(2) :: dh, delta_h
+    REAL(sp), DIMENSION(2) :: dh_d, delta_h_d
+    REAL(sp) :: inv_cp, hp0, ht0, dt, fhp, fht, tmp_j
+    REAL(sp) :: inv_cp_d, hp0_d, ht0_d, fhp_d, fht_d, tmp_j_d
+    LOGICAL :: converged
+    INTEGER :: j
+    INTEGER, SAVE :: maxiter=10
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: result1
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+! integer :: n_subtimesteps = 2
+    inv_cp_d = -(cp_d/cp**2)
+    inv_cp = 1._sp/cp
+! dt = 1._sp/real(n_subtimesteps, sp)
+    dt = 1._sp
+! do i = 1, n_subtimesteps
+    hp0_d = hp_d
+    hp0 = hp
+    ht0_d = ht_d
+    ht0 = ht
+    converged = .false.
+    j = 0
+    dh_d = 0.0_4
+    delta_h_d = 0.0_4
+    jacob_d = 0.0_4
+    DO WHILE (.NOT.converged .AND. j .LT. maxiter)
+      fhp_d = (1._sp-hp**2)*pn_d - (pn*2*hp-hp*en)*hp_d - (2._sp-hp)*(en&
+&       *hp_d+hp*en_d)
+      fhp = (1._sp-hp**2)*pn - hp*(2._sp-hp)*en
+      dh_d(1) = hp_d - hp0_d - dt*(inv_cp*fhp_d+fhp*inv_cp_d)
+      dh(1) = hp - hp0 - dt*fhp*inv_cp
+      temp = ht**5
+      temp0 = ht**3.5_sp
+      fht_d = temp*ct_d + (ct*5*ht**4-kexc*3.5_sp*ht**2.5)*ht_d - 0.9_sp&
+&       *(hp**2*pn_d+pn*2*hp*hp_d) - temp0*kexc_d
+      fht = ct*temp - 0.9_sp*(pn*(hp*hp)) - kexc*temp0
+! fht here is -fht
+      dh_d(2) = ht_d - ht0_d + dt*(fht_d-fht*ct_d/ct)/ct
+      dh(2) = ht - ht0 + dt*fht/ct
+      temp0 = hp*(pn-en) + en
+      jacob_d(1, 1) = dt*2._sp*(inv_cp*((pn-en)*hp_d+hp*(pn_d-en_d)+en_d&
+&       )+temp0*inv_cp_d)
+      jacob(1, 1) = dt*2._sp*(temp0*inv_cp) + 1._sp
+      jacob_d(1, 2) = 0.0_4
+      jacob(1, 2) = 0._sp
+      temp0 = pn*hp/ct
+      jacob_d(2, 1) = dt*1.8_sp*(hp*pn_d+pn*hp_d-temp0*ct_d)/ct
+      jacob(2, 1) = dt*1.8_sp*temp0
+      temp0 = kexc/ct
+      temp = ht**2.5_sp
+      tmp_j_d = 5._sp*4*ht**3*ht_d - 3.5_sp*(temp0*2.5_sp*ht**1.5*ht_d+&
+&       temp*(kexc_d-temp0*ct_d)/ct)
+      tmp_j = 5._sp*ht**4 - 3.5_sp*(temp*temp0)
+      jacob_d(2, 2) = dt*tmp_j_d
+      jacob(2, 2) = 1._sp + dt*tmp_j
+      CALL SOLVE_LINEAR_SYSTEM_2VARS_D(jacob, jacob_d, delta_h, &
+&                                delta_h_d, dh, dh_d)
+      hp_d = hp_d + delta_h_d(1)
+      hp = hp + delta_h(1)
+      IF (hp .LE. 0._sp) THEN
+        hp = 1.e-6_sp
+        hp_d = 0.0_4
+      END IF
+      IF (hp .GE. 1._sp) THEN
+        hp = 1._sp - 1.e-6_sp
+        hp_d = 0.0_4
+      END IF
+      ht_d = ht_d + delta_h_d(2)
+      ht = ht + delta_h(2)
+      IF (ht .LE. 0._sp) THEN
+        ht = 1.e-6_sp
+        ht_d = 0.0_4
+      END IF
+      IF (ht .GE. 1._sp) THEN
+        ht = 1._sp - 1.e-6_sp
+        ht_d = 0.0_4
+      END IF
+      arg1 = (delta_h(1)/hp)**2 + (delta_h(2)/ht)**2
+      result1 = SQRT(arg1)
+      converged = result1 .LT. 1.e-6_sp
+      j = j + 1
+    END DO
+! end do
+    temp0 = ht**3.5_sp
+    l_d = temp0*kexc_d + kexc*3.5_sp*ht**2.5*ht_d
+    l = kexc*temp0
+    temp0 = ht**5
+    q_d = temp0*ct_d + ct*5*ht**4*ht_d + 0.1_sp*(hp**2*pn_d+pn*2*hp*hp_d&
+&     ) + l_d
+    q = ct*temp0 + 0.1_sp*(pn*(hp*hp)) + l
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_D
+
+!  Differentiation of gr_production_transfer_ode in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: q kexc hp ht en cp pn ct
+!   with respect to varying inputs: kexc hp ht en cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B(pn, pn_b, en, en_b, cp, cp_b, &
+&   ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, l)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
+    REAL(sp) :: pn_b, en_b, cp_b, ct_b, kexc_b
+    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
+    REAL(sp) :: l
+    REAL(sp), DIMENSION(2, 2) :: jacob
+    REAL(sp), DIMENSION(2, 2) :: jacob_b
+    REAL(sp), DIMENSION(2) :: dh, delta_h
+    REAL(sp), DIMENSION(2) :: dh_b, delta_h_b
+    REAL(sp) :: inv_cp, hp0, ht0, dt, fhp, fht, tmp_j
+    REAL(sp) :: inv_cp_b, hp0_b, ht0_b, fhp_b, fht_b, tmp_j_b
+    LOGICAL :: converged
+    INTEGER :: j
+    INTEGER, SAVE :: maxiter=10
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: result1
+    REAL(sp) :: temp_b
+    REAL(sp) :: temp_b0
+    INTEGER :: branch
+    INTEGER :: ad_count
+    INTEGER :: i
+    REAL(sp) :: l_b
+! integer :: n_subtimesteps = 2
+    inv_cp = 1._sp/cp
+! dt = 1._sp/real(n_subtimesteps, sp)
+    dt = 1._sp
+! do i = 1, n_subtimesteps
+    hp0 = hp
+    ht0 = ht
+    converged = .false.
+    j = 0
+    ad_count = 0
+    DO WHILE (.NOT.converged .AND. j .LT. maxiter)
+      fhp = (1._sp-hp**2)*pn - hp*(2._sp-hp)*en
+      CALL PUSHREAL4(dh(1))
+      dh(1) = hp - hp0 - dt*fhp*inv_cp
+      CALL PUSHREAL4(fht)
+      fht = ct*ht**5 - 0.9_sp*pn*hp**2 - kexc*ht**3.5_sp
+! fht here is -fht
+      CALL PUSHREAL4(dh(2))
+      dh(2) = ht - ht0 + dt*fht/ct
+      CALL PUSHREAL4(jacob(1, 1))
+      jacob(1, 1) = 1._sp + dt*2._sp*(hp*(pn-en)+en)*inv_cp
+      CALL PUSHREAL4(jacob(1, 2))
+      jacob(1, 2) = 0._sp
+      CALL PUSHREAL4(jacob(2, 1))
+      jacob(2, 1) = dt*1.8_sp*pn*hp/ct
+      tmp_j = 5._sp*ht**4 - 3.5_sp*kexc*ht**2.5_sp/ct
+      CALL PUSHREAL4(jacob(2, 2))
+      jacob(2, 2) = 1._sp + dt*tmp_j
+      CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
+      CALL PUSHREAL4(hp)
+      hp = hp + delta_h(1)
+      IF (hp .LE. 0._sp) THEN
+        hp = 1.e-6_sp
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (hp .GE. 1._sp) THEN
+        hp = 1._sp - 1.e-6_sp
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      CALL PUSHREAL4(ht)
+      ht = ht + delta_h(2)
+      IF (ht .LE. 0._sp) THEN
+        ht = 1.e-6_sp
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (ht .GE. 1._sp) THEN
+        ht = 1._sp - 1.e-6_sp
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      arg1 = (delta_h(1)/hp)**2 + (delta_h(2)/ht)**2
+      result1 = SQRT(arg1)
+      converged = result1 .LT. 1.e-6_sp
+      j = j + 1
+      ad_count = ad_count + 1
+    END DO
+    CALL PUSHINTEGER4(ad_count)
+    l_b = q_b
+    ct_b = ct_b + ht**5*q_b
+    ht_b = ht_b + 5*ht**4*ct*q_b + 3.5_sp*ht**2.5*kexc*l_b
+    pn_b = pn_b + hp**2*0.1_sp*q_b
+    hp_b = hp_b + 2*hp*pn*0.1_sp*q_b
+    kexc_b = kexc_b + ht**3.5_sp*l_b
+    dt = 1._sp
+    inv_cp = 1._sp/cp
+    dh_b = 0.0_4
+    delta_h_b = 0.0_4
+    jacob_b = 0.0_4
+    hp0_b = 0.0_4
+    inv_cp_b = 0.0_4
+    ht0_b = 0.0_4
+    CALL POPINTEGER4(ad_count)
+    DO i=1,ad_count
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) ht_b = 0.0_4
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) ht_b = 0.0_4
+      CALL POPREAL4(ht)
+      delta_h_b(2) = delta_h_b(2) + ht_b
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) hp_b = 0.0_4
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) hp_b = 0.0_4
+      CALL POPREAL4(hp)
+      delta_h_b(1) = delta_h_b(1) + hp_b
+      CALL SOLVE_LINEAR_SYSTEM_2VARS_B(jacob, jacob_b, delta_h, &
+&                                delta_h_b, dh, dh_b)
+      CALL POPREAL4(jacob(2, 2))
+      tmp_j_b = dt*jacob_b(2, 2)
+      jacob_b(2, 2) = 0.0_4
+      temp_b0 = -(ht**2.5_sp*3.5_sp*tmp_j_b/ct)
+      kexc_b = kexc_b + temp_b0
+      ct_b = ct_b - kexc*temp_b0/ct
+      CALL POPREAL4(jacob(2, 1))
+      temp_b0 = dt*1.8_sp*jacob_b(2, 1)/ct
+      jacob_b(2, 1) = 0.0_4
+      pn_b = pn_b + hp*temp_b0
+      hp_b = hp_b + pn*temp_b0
+      ct_b = ct_b - pn*hp*temp_b0/ct
+      CALL POPREAL4(jacob(1, 2))
+      jacob_b(1, 2) = 0.0_4
+      CALL POPREAL4(jacob(1, 1))
+      temp_b = dt*2._sp*jacob_b(1, 1)
+      jacob_b(1, 1) = 0.0_4
+      temp_b0 = inv_cp*temp_b
+      CALL POPREAL4(dh(2))
+      ht0_b = ht0_b - dh_b(2)
+      fhp = (1._sp-hp**2)*pn - hp*(2._sp-hp)*en
+      inv_cp_b = inv_cp_b + (hp*(pn-en)+en)*temp_b - fhp*dt*dh_b(1)
+      temp_b = dt*dh_b(2)/ct
+      fht_b = temp_b
+      ht_b = ht_b + (4*ht**3*5._sp-2.5_sp*ht**1.5*kexc*3.5_sp/ct)*&
+&       tmp_j_b + dh_b(2) + (5*ht**4*ct-3.5_sp*ht**2.5*kexc)*fht_b
+      dh_b(2) = 0.0_4
+      ct_b = ct_b + ht**5*fht_b - fht*temp_b/ct
+      CALL POPREAL4(fht)
+      kexc_b = kexc_b - ht**3.5_sp*fht_b
+      CALL POPREAL4(dh(1))
+      hp0_b = hp0_b - dh_b(1)
+      fhp_b = -(inv_cp*dt*dh_b(1))
+      hp_b = hp_b + (pn-en)*temp_b0 + dh_b(1) - 2*hp*pn*0.9_sp*fht_b + (&
+&       hp*en-en*(2._sp-hp)-2*hp*pn)*fhp_b
+      pn_b = pn_b + hp*temp_b0 + (1._sp-hp**2)*fhp_b - hp**2*0.9_sp*&
+&       fht_b
+      en_b = en_b + (1.0-hp)*temp_b0 - hp*(2._sp-hp)*fhp_b
+      dh_b(1) = 0.0_4
+    END DO
+    ht_b = ht_b + ht0_b
+    hp_b = hp_b + hp0_b
+    cp_b = cp_b - inv_cp_b/cp**2
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B
+
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE(pn, en, cp, ct, kexc, hp, ht, q&
+&   , l)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
+    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(OUT) :: l
+    REAL(sp), DIMENSION(2, 2) :: jacob
+    REAL(sp), DIMENSION(2) :: dh, delta_h
+    REAL(sp) :: inv_cp, hp0, ht0, dt, fhp, fht, tmp_j
+    LOGICAL :: converged
+    INTEGER :: j
+    INTEGER, SAVE :: maxiter=10
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: result1
+! integer :: n_subtimesteps = 2
+    inv_cp = 1._sp/cp
+! dt = 1._sp/real(n_subtimesteps, sp)
+    dt = 1._sp
+! do i = 1, n_subtimesteps
+    hp0 = hp
+    ht0 = ht
+    converged = .false.
+    j = 0
+    DO WHILE (.NOT.converged .AND. j .LT. maxiter)
+      fhp = (1._sp-hp**2)*pn - hp*(2._sp-hp)*en
+      dh(1) = hp - hp0 - dt*fhp*inv_cp
+      fht = ct*ht**5 - 0.9_sp*pn*hp**2 - kexc*ht**3.5_sp
+! fht here is -fht
+      dh(2) = ht - ht0 + dt*fht/ct
+      jacob(1, 1) = 1._sp + dt*2._sp*(hp*(pn-en)+en)*inv_cp
+      jacob(1, 2) = 0._sp
+      jacob(2, 1) = dt*1.8_sp*pn*hp/ct
+      tmp_j = 5._sp*ht**4 - 3.5_sp*kexc*ht**2.5_sp/ct
+      jacob(2, 2) = 1._sp + dt*tmp_j
+      CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
+      hp = hp + delta_h(1)
+      IF (hp .LE. 0._sp) hp = 1.e-6_sp
+      IF (hp .GE. 1._sp) hp = 1._sp - 1.e-6_sp
+      ht = ht + delta_h(2)
+      IF (ht .LE. 0._sp) ht = 1.e-6_sp
+      IF (ht .GE. 1._sp) ht = 1._sp - 1.e-6_sp
+      arg1 = (delta_h(1)/hp)**2 + (delta_h(2)/ht)**2
+      result1 = SQRT(arg1)
+      converged = result1 .LT. 1.e-6_sp
+      j = j + 1
+    END DO
+! end do
+    l = kexc*ht**3.5_sp
+    q = ct*ht**5 + 0.1_sp*pn*hp**2 + l
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE
+
+!  Differentiation of gr_production_transfer_ode_mlp in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: q hp ht
+!   with respect to varying inputs: kexc hp ht en fq cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D(fq, fq_d, pn, pn_d, en, &
+&   en_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, &
+&   l)
+    IMPLICIT NONE
+! fixed NN output size
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq_d
+    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, ct_d, kexc_d
+    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(INOUT) :: hp_d, ht_d, q_d
+    REAL(sp), INTENT(OUT) :: l
+    REAL(sp) :: l_d
+    REAL(sp) :: inv_cp, dt, fhp, fht
+    REAL(sp) :: inv_cp_d, fhp_d, fht_d
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+    REAL(sp) :: temp1
+! integer :: i
+! integer :: n_subtimesteps = 4
+    inv_cp_d = -(cp_d/cp**2)
+    inv_cp = 1._sp/cp
+! dt = 1._sp/real(n_subtimesteps, sp)
+    dt = 1._sp
+!do i = 1, n_subtimesteps
+    temp = (fq(2)+1._sp)*(-hp+2._sp)
+    fhp_d = (1._sp-hp**2)*(pn*fq_d(1)+(fq(1)+1._sp)*pn_d) - (fq(1)+1._sp&
+&     )*pn*2*hp*hp_d - en*hp*((2._sp-hp)*fq_d(2)-(fq(2)+1._sp)*hp_d) - &
+&     temp*(hp*en_d+en*hp_d)
+    fhp = (fq(1)+1._sp)*pn*(1._sp-hp*hp) - temp*(en*hp)
+    hp_d = hp_d + dt*(inv_cp*fhp_d+fhp*inv_cp_d)
+    hp = hp + dt*fhp*inv_cp
+    IF (hp .LE. 0._sp) THEN
+      hp = 1.e-6_sp
+      hp_d = 0.0_4
+    END IF
+    IF (hp .GE. 1._sp) THEN
+      hp = 1._sp - 1.e-6_sp
+      hp_d = 0.0_4
+    END IF
+    temp = (-(fq(3)*fq(3))+1._sp)*(hp*hp)
+    temp0 = ht**3.5_sp
+    temp1 = ht**5
+    fht_d = 0.9_sp*((fq(1)+1._sp)*pn*((1._sp-fq(3)**2)*2*hp*hp_d-hp**2*2&
+&     *fq(3)*fq_d(3))+temp*(pn*fq_d(1)+(fq(1)+1._sp)*pn_d)) + temp0*(&
+&     kexc*fq_d(4)+(fq(4)+1._sp)*kexc_d) + ((fq(4)+1._sp)*kexc*3.5_sp*ht&
+&     **2.5-(fq(5)+1._sp)*ct*5*ht**4)*ht_d - temp1*(ct*fq_d(5)+(fq(5)+&
+&     1._sp)*ct_d)
+    fht = 0.9_sp*(temp*((fq(1)+1._sp)*pn)) + (fq(4)+1._sp)*kexc*temp0 - &
+&     (fq(5)+1._sp)*ct*temp1
+    ht_d = ht_d + dt*(fht_d-fht*ct_d/ct)/ct
+    ht = ht + dt*fht/ct
+    IF (ht .LE. 0._sp) THEN
+      ht = 1.e-6_sp
+      ht_d = 0.0_4
+    END IF
+    IF (ht .GE. 1._sp) THEN
+      ht = 1._sp - 1.e-6_sp
+      ht_d = 0.0_4
+    END IF
+!end do
+    temp1 = ht**3.5_sp
+    l_d = temp1*(kexc*fq_d(4)+(fq(4)+1._sp)*kexc_d) + (fq(4)+1._sp)*kexc&
+&     *3.5_sp*ht**2.5*ht_d
+    l = (fq(4)+1._sp)*kexc*temp1
+    temp1 = ht**5
+    temp0 = (fq(1)+1._sp)*pn*(hp*hp)
+    temp = 0.9_sp*(fq(3)*fq(3)) + 0.1_sp
+    q_d = temp1*(ct*fq_d(5)+(fq(5)+1._sp)*ct_d) + (fq(5)+1._sp)*ct*5*ht&
+&     **4*ht_d + temp0*0.9_sp*2*fq(3)*fq_d(3) + temp*(hp**2*(pn*fq_d(1)+&
+&     (fq(1)+1._sp)*pn_d)+(fq(1)+1._sp)*pn*2*hp*hp_d) + l_d
+    q = (fq(5)+1._sp)*ct*temp1 + temp*temp0 + l
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D
+
+!  Differentiation of gr_production_transfer_ode_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: q kexc hp ht en fq cp pn ct
+!   with respect to varying inputs: kexc hp ht en fq cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B(fq, fq_b, pn, pn_b, en, &
+&   en_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, &
+&   l)
+    IMPLICIT NONE
+! fixed NN output size
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
+    REAL(sp), DIMENSION(5) :: fq_b
+    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
+    REAL(sp) :: pn_b, en_b, cp_b, ct_b, kexc_b
+    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
+    REAL(sp) :: l
+    REAL(sp) :: inv_cp, dt, fhp, fht
+    REAL(sp) :: inv_cp_b, fhp_b, fht_b
+    REAL(sp) :: temp_b
+    REAL(sp) :: temp_b0
+    REAL(sp) :: temp_b1
+    REAL(sp) :: temp_b2
+    INTEGER :: branch
+    REAL(sp) :: l_b
+! integer :: i
+! integer :: n_subtimesteps = 4
+    inv_cp = 1._sp/cp
+! dt = 1._sp/real(n_subtimesteps, sp)
+    dt = 1._sp
+!do i = 1, n_subtimesteps
+    fhp = (1._sp+fq(1))*pn*(1._sp-hp**2) - (1._sp+fq(2))*en*hp*(2._sp-hp&
+&     )
+    CALL PUSHREAL4(hp)
+    hp = hp + dt*fhp*inv_cp
+    IF (hp .LE. 0._sp) THEN
+      hp = 1.e-6_sp
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (hp .GE. 1._sp) THEN
+      hp = 1._sp - 1.e-6_sp
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    fht = 0.9_sp*(1._sp-fq(3)**2)*(1._sp+fq(1))*pn*hp**2 + (1._sp+fq(4))&
+&     *kexc*ht**3.5_sp - (1._sp+fq(5))*ct*ht**5
+    CALL PUSHREAL4(ht)
+    ht = ht + dt*fht/ct
+    IF (ht .LE. 0._sp) THEN
+      ht = 1.e-6_sp
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (ht .GE. 1._sp) THEN
+      ht = 1._sp - 1.e-6_sp
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    l_b = q_b
+    temp_b2 = ht**5*q_b
+    ht_b = ht_b + 5*ht**4*(fq(5)+1._sp)*ct*q_b + 3.5_sp*ht**2.5*(fq(4)+&
+&     1._sp)*kexc*l_b
+    fq_b(3) = fq_b(3) + 2*fq(3)*0.9_sp*(fq(1)+1._sp)*pn*hp**2*q_b
+    temp_b1 = (0.9_sp*fq(3)**2+0.1_sp)*q_b
+    temp_b0 = hp**2*temp_b1
+    hp_b = hp_b + 2*hp*(fq(1)+1._sp)*pn*temp_b1
+    fq_b(1) = fq_b(1) + pn*temp_b0
+    pn_b = pn_b + (fq(1)+1._sp)*temp_b0
+    fq_b(5) = fq_b(5) + ct*temp_b2
+    ct_b = ct_b + (fq(5)+1._sp)*temp_b2
+    temp_b2 = ht**3.5_sp*l_b
+    fq_b(4) = fq_b(4) + kexc*temp_b2
+    kexc_b = kexc_b + (fq(4)+1._sp)*temp_b2
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) ht_b = 0.0_4
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) ht_b = 0.0_4
+    dt = 1._sp
+    CALL POPREAL4(ht)
+    temp_b2 = dt*ht_b/ct
+    fht_b = temp_b2
+    ct_b = ct_b - fht*temp_b2/ct
+    temp_b1 = (fq(1)+1._sp)*pn*0.9_sp*fht_b
+    temp_b0 = (1._sp-fq(3)**2)*hp**2*0.9_sp*fht_b
+    temp_b = ht**3.5_sp*fht_b
+    ht_b = ht_b + (3.5_sp*ht**2.5*(fq(4)+1._sp)*kexc-5*ht**4*(fq(5)+&
+&     1._sp)*ct)*fht_b
+    temp_b2 = -(ht**5*fht_b)
+    fq_b(5) = fq_b(5) + ct*temp_b2
+    ct_b = ct_b + (fq(5)+1._sp)*temp_b2
+    fq_b(4) = fq_b(4) + kexc*temp_b
+    kexc_b = kexc_b + (fq(4)+1._sp)*temp_b
+    fq_b(1) = fq_b(1) + pn*temp_b0
+    pn_b = pn_b + (fq(1)+1._sp)*temp_b0
+    fq_b(3) = fq_b(3) - 2*fq(3)*hp**2*temp_b1
+    hp_b = hp_b + 2*hp*(1._sp-fq(3)**2)*temp_b1
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) hp_b = 0.0_4
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) hp_b = 0.0_4
+    inv_cp = 1._sp/cp
+    CALL POPREAL4(hp)
+    fhp_b = inv_cp*dt*hp_b
+    inv_cp_b = fhp*dt*hp_b
+    temp_b = (1._sp-hp**2)*fhp_b
+    temp_b0 = -(en*hp*fhp_b)
+    temp_b1 = -((fq(2)+1._sp)*(2._sp-hp)*fhp_b)
+    hp_b = hp_b + en*temp_b1 - 2*hp*(fq(1)+1._sp)*pn*fhp_b - (fq(2)+&
+&     1._sp)*temp_b0
+    en_b = en_b + hp*temp_b1
+    fq_b(2) = fq_b(2) + (2._sp-hp)*temp_b0
+    fq_b(1) = fq_b(1) + pn*temp_b
+    pn_b = pn_b + (fq(1)+1._sp)*temp_b
+    cp_b = cp_b - inv_cp_b/cp**2
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B
+
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP(fq, pn, en, cp, ct, kexc, hp&
+&   , ht, q, l)
+    IMPLICIT NONE
+! fixed NN output size
+    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
+    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
+    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(OUT) :: l
+    REAL(sp) :: inv_cp, dt, fhp, fht
+! integer :: i
+! integer :: n_subtimesteps = 4
+    inv_cp = 1._sp/cp
+! dt = 1._sp/real(n_subtimesteps, sp)
+    dt = 1._sp
+!do i = 1, n_subtimesteps
+    fhp = (1._sp+fq(1))*pn*(1._sp-hp**2) - (1._sp+fq(2))*en*hp*(2._sp-hp&
+&     )
+    hp = hp + dt*fhp*inv_cp
+    IF (hp .LE. 0._sp) hp = 1.e-6_sp
+    IF (hp .GE. 1._sp) hp = 1._sp - 1.e-6_sp
+    fht = 0.9_sp*(1._sp-fq(3)**2)*(1._sp+fq(1))*pn*hp**2 + (1._sp+fq(4))&
+&     *kexc*ht**3.5_sp - (1._sp+fq(5))*ct*ht**5
+    ht = ht + dt*fht/ct
+    IF (ht .LE. 0._sp) ht = 1.e-6_sp
+    IF (ht .GE. 1._sp) ht = 1._sp - 1.e-6_sp
+!end do
+    l = (1._sp+fq(4))*kexc*ht**3.5_sp
+    q = (1._sp+fq(5))*ct*ht**5 + (0.1_sp+0.9_sp*fq(3)**2)*(1._sp+fq(1))*&
+&     pn*hp**2 + l
+  END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP
+
 !  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
@@ -12788,11 +14562,11 @@ CONTAINS
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
-&                          , perc_d)
-            CALL GR_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), ac_ht(k), &
-&                        ac_ht_d(k), l, l_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+            CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
+&                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -12858,6 +14632,9 @@ CONTAINS
     REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
+    REAL(sp) :: dummydiff_b1
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -12880,9 +14657,9 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
-            CALL GR_EXCHANGE(ac_kexc(k), ac_ht(k), l)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
+            CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -12933,12 +14710,15 @@ CONTAINS
           l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            CALL GR_EXCHANGE_B(ac_kexc(k), ac_kexc_b(k), ac_ht(k), &
-&                        ac_ht_b(k), l, l_b)
+            CALL GR_EXCHANGE_B(0._sp, dummydiff_b1, ac_kexc(k), &
+&                        ac_kexc_b(k), ac_ht(k), ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -12986,9 +14766,9 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
-            CALL GR_EXCHANGE(ac_kexc(k), ac_ht(k), l)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
+            CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -13011,6 +14791,1210 @@ CONTAINS
       END DO
     END DO
   END SUBROUTINE GR4_TIME_STEP
+
+!  Differentiation of gr4_mlp_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
+!                bias_2 bias_3 ac_qt ac_hi ac_hp weight_1 weight_2
+!                weight_3 ac_ht ac_mlt
+  SUBROUTINE GR4_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
+&   returns, time_step, weight_1, weight_1_d, bias_1, bias_1_d, weight_2&
+&   , weight_2_d, bias_2, bias_2_d, weight_3, weight_3_d, bias_3, &
+&   bias_3_d, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, &
+&   ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, ac_hp, ac_hp_d, ac_ht, &
+&   ac_ht_d, ac_qt, ac_qt_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1_d
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1_d
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2_d
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2_d
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3_d
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci_d, ac_cp_d, &
+&   ac_ct_d, ac_kexc_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_d, ac_hp_d, &
+&   ac_ht_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
+    INTRINSIC MAX
+    REAL(sp) :: temp
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp_d = ac_mlt_d
+    ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+    en_d = 0.0_4
+    pn_d = 0.0_4
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
+&                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
+&                            , pn(k), pn_d(k), en(k), en_d(k))
+          ELSE
+            pn_d(k) = 0.0_4
+            pn(k) = 0._sp
+            en_d(k) = 0.0_4
+            en(k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+    output_layer_d = 0.0_4
+! Forward MLP without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d(k), en_d(k&
+&             )/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
+&                        weight_2, weight_2_d, bias_2, bias_2_d, &
+&                        weight_3, weight_3_d, bias_3, bias_3_d, &
+&                        input_layer, input_layer_d, output_layer(:, k)&
+&                        , output_layer_d(:, k))
+          ELSE
+            output_layer_d(:, k) = 0.0_4
+            output_layer(:, k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
+&                          ), output_layer(2, k), output_layer_d(2, k), &
+&                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
+&                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
+&                          pr_d, perc, perc_d)
+            CALL GR_EXCHANGE_D(output_layer(4, k), output_layer_d(4, k)&
+&                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
+&                        ), l, l_d)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
+            l_d = 0.0_4
+            perc_d = 0.0_4
+            pr_d = 0.0_4
+          END IF
+          temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
+          prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
+&           , k)*output_layer_d(3, k)) + l_d
+          prr = 0.9_sp*(temp*(pr+perc)) + l
+          temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
+          prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
+&           , k) + temp*(pr_d+perc_d)
+          prd = temp*(pr+perc)
+          CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
+&                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
+          IF (0._sp .LT. prd + l) THEN
+            qd_d = prd_d + l_d
+            qd = prd + l
+          ELSE
+            qd = 0._sp
+            qd_d = 0.0_4
+          END IF
+          ac_qt_d(k) = qr_d + qd_d
+          ac_qt(k) = qr + qd
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
+          ac_qt(k) = temp*(ac_qt(k)/setup%dt)
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE GR4_MLP_TIME_STEP_D
+
+!  Differentiation of gr4_mlp_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct bias_1
+!                bias_2 bias_3 ac_qt ac_hi ac_hp weight_1 weight_2
+!                weight_3 ac_ht ac_mlt
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
+!                bias_2 bias_3 ac_qt ac_hi ac_hp weight_1 weight_2
+!                weight_3 ac_ht ac_mlt
+  SUBROUTINE GR4_MLP_TIME_STEP_B(setup, mesh, input_data, options, &
+&   returns, time_step, weight_1, weight_1_b, bias_1, bias_1_b, weight_2&
+&   , weight_2_b, bias_2, bias_2_b, weight_3, weight_3_b, bias_3, &
+&   bias_3_b, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, &
+&   ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, ac_hp, ac_hp_b, ac_ht, &
+&   ac_ht_b, ac_qt, ac_qt_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)) :: &
+&   weight_1_b
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(setup%neurons(2)) :: bias_1_b
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)) :: &
+&   weight_2_b
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(setup%neurons(3)) :: bias_2_b
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)) :: &
+&   weight_3_b
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(setup%neurons(4)) :: bias_3_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_ci_b, ac_cp_b, ac_ct_b, &
+&   ac_kexc_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_b, ac_hp_b, &
+&   ac_ht_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
+    INTRINSIC MAX
+    REAL(sp) :: temp_b
+    INTEGER :: branch
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL2B(0)
+        ELSE
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn(k), en(k))
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            pn(k) = 0._sp
+            en(k) = 0._sp
+            CALL PUSHCONTROL2B(1)
+          END IF
+        END IF
+      END DO
+    END DO
+! Forward MLP without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL2B(0)
+        ELSE
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer(:, k)&
+&                     )
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            output_layer(:, k) = 0._sp
+            CALL PUSHCONTROL2B(1)
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHINTEGER4(k)
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4(perc)
+            CALL PUSHREAL4(pr)
+            CALL PUSHREAL4(ac_hp(k))
+            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
+&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
+            CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
+&                     )
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHREAL4(pr)
+            pr = 0._sp
+            CALL PUSHREAL4(perc)
+            perc = 0._sp
+            l = 0._sp
+            CALL PUSHCONTROL1B(0)
+          END IF
+          CALL PUSHREAL4(prr)
+          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          CALL PUSHREAL4(ac_ht(k))
+          CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
+&                    qr)
+          IF (0._sp .LT. prd + l) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+    END DO
+    output_layer_b = 0.0_4
+    en_b = 0.0_4
+    pn_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           ac_qt_b(k)/setup%dt
+          qr_b = ac_qt_b(k)
+          qd_b = ac_qt_b(k)
+          ac_qt_b(k) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            prd_b = qd_b
+            l_b = qd_b
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+          CALL POPREAL4(ac_ht(k))
+          CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
+&                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
+          output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
+&           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(pr+perc)&
+&           *0.9_sp*prr_b
+          temp_b = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
+          pr_b = temp_b
+          perc_b = temp_b
+          CALL POPREAL4(prr)
+          temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
+          l_b = l_b + prr_b
+          pr_b = pr_b + temp_b
+          perc_b = perc_b + temp_b
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(perc)
+            CALL POPREAL4(pr)
+          ELSE
+            CALL GR_EXCHANGE_B(output_layer(4, k), output_layer_b(4, k)&
+&                        , ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k&
+&                        ), l, l_b)
+            CALL POPREAL4(ac_hp(k))
+            CALL POPREAL4(pr)
+            CALL POPREAL4(perc)
+            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
+&                          ), output_layer(2, k), output_layer_b(2, k), &
+&                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
+&                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
+&                          pr_b, perc, perc_b)
+          END IF
+          CALL POPINTEGER4(k)
+        END IF
+      END DO
+    END DO
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            k = mesh%rowcol_to_ind_ac(row, col)
+            output_layer_b(:, k) = 0.0_4
+          ELSE
+            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
+&                        weight_2, weight_2_b, bias_2, bias_2_b, &
+&                        weight_3, weight_3_b, bias_3, bias_3_b, &
+&                        input_layer, input_layer_b, output_layer(:, k)&
+&                        , output_layer_b(:, k))
+            output_layer_b(:, k) = 0.0_4
+            CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
+            ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
+            ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
+            pn_b(k) = pn_b(k) + input_layer_b(3)
+            en_b(k) = en_b(k) + input_layer_b(4)
+          END IF
+        END IF
+      END DO
+    END DO
+    ac_prcp_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            k = mesh%rowcol_to_ind_ac(row, col)
+            en_b(k) = 0.0_4
+            pn_b(k) = 0.0_4
+          ELSE
+            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL POPREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
+&                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
+&                            , pn(k), pn_b(k), en(k), en_b(k))
+            pn_b(k) = 0.0_4
+            en_b(k) = 0.0_4
+          END IF
+        END IF
+      END DO
+    END DO
+    ac_mlt_b = ac_mlt_b + ac_prcp_b
+  END SUBROUTINE GR4_MLP_TIME_STEP_B
+
+  SUBROUTINE GR4_MLP_TIME_STEP(setup, mesh, input_data, options, returns&
+&   , time_step, weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+&   ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    INTRINSIC MAX
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn(k), en(k))
+          ELSE
+            pn(k) = 0._sp
+            en(k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Forward MLP without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer(:, k)&
+&                     )
+          ELSE
+            output_layer(:, k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
+&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
+            CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
+&                     )
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
+          END IF
+          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
+&                    qr)
+          IF (0._sp .LT. prd + l) THEN
+            qd = prd + l
+          ELSE
+            qd = 0._sp
+          END IF
+          ac_qt(k) = qr + qd
+! Transform from mm/dt to m3/s
+          ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
+&           )/setup%dt
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE GR4_MLP_TIME_STEP
+
+!  Differentiation of gr4_ode_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
+!                ac_hi ac_hp ac_ht ac_mlt
+  SUBROUTINE GR4_ODE_TIME_STEP_D(setup, mesh, input_data, options, &
+&   returns, time_step, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d&
+&   , ac_ct, ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, ac_hp, ac_hp_d&
+&   , ac_ht, ac_ht_d, ac_qt, ac_qt_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci_d, ac_cp_d, &
+&   ac_ct_d, ac_kexc_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_d, ac_hp_d, &
+&   ac_ht_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: l
+    REAL(sp) :: temp
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp_d = ac_mlt_d
+    ac_prcp = ac_prcp + ac_mlt
+    en_d = 0.0_4
+    pn_d = 0.0_4
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
+&                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
+&                            , pn(k), pn_d(k), en(k), en_d(k))
+          ELSE
+            pn_d(k) = 0.0_4
+            pn(k) = 0._sp
+            en_d(k) = 0.0_4
+            en(k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          CALL GR_PRODUCTION_TRANSFER_ODE_D(pn(k), pn_d(k), en(k), en_d(&
+&                                     k), ac_cp(k), ac_cp_d(k), ac_ct(k)&
+&                                     , ac_ct_d(k), ac_kexc(k), &
+&                                     ac_kexc_d(k), ac_hp(k), ac_hp_d(k)&
+&                                     , ac_ht(k), ac_ht_d(k), ac_qt(k), &
+&                                     ac_qt_d(k), l)
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
+          ac_qt(k) = temp*(ac_qt(k)/setup%dt)
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE GR4_ODE_TIME_STEP_D
+
+!  Differentiation of gr4_ode_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
+!                ac_hi ac_hp ac_ht ac_mlt
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
+!                ac_hi ac_hp ac_ht ac_mlt
+  SUBROUTINE GR4_ODE_TIME_STEP_B(setup, mesh, input_data, options, &
+&   returns, time_step, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b&
+&   , ac_ct, ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, ac_hp, ac_hp_b&
+&   , ac_ht, ac_ht_b, ac_qt, ac_qt_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_ci_b, ac_cp_b, ac_ct_b, &
+&   ac_kexc_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_b, ac_hp_b, &
+&   ac_ht_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: l
+    INTEGER :: branch
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp = ac_prcp + ac_mlt
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL2B(0)
+        ELSE
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn(k), en(k))
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            pn(k) = 0._sp
+            en(k) = 0._sp
+            CALL PUSHCONTROL2B(1)
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          k = mesh%rowcol_to_ind_ac(row, col)
+          CALL PUSHREAL4(ac_qt(k))
+          CALL PUSHREAL4(ac_ht(k))
+          CALL PUSHREAL4(ac_hp(k))
+          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), ac_cp(k), ac_ct(&
+&                                   k), ac_kexc(k), ac_hp(k), ac_ht(k), &
+&                                   ac_qt(k), l)
+! Transform from mm/dt to m3/s
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+    END DO
+    en_b = 0.0_4
+    pn_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           ac_qt_b(k)/setup%dt
+          CALL POPREAL4(ac_hp(k))
+          CALL POPREAL4(ac_ht(k))
+          CALL POPREAL4(ac_qt(k))
+          CALL GR_PRODUCTION_TRANSFER_ODE_B(pn(k), pn_b(k), en(k), en_b(&
+&                                     k), ac_cp(k), ac_cp_b(k), ac_ct(k)&
+&                                     , ac_ct_b(k), ac_kexc(k), &
+&                                     ac_kexc_b(k), ac_hp(k), ac_hp_b(k)&
+&                                     , ac_ht(k), ac_ht_b(k), ac_qt(k), &
+&                                     ac_qt_b(k), l)
+          ac_qt_b(k) = 0.0_4
+        END IF
+      END DO
+    END DO
+    ac_prcp_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            k = mesh%rowcol_to_ind_ac(row, col)
+            en_b(k) = 0.0_4
+            pn_b(k) = 0.0_4
+          ELSE
+            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL POPREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
+&                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
+&                            , pn(k), pn_b(k), en(k), en_b(k))
+            pn_b(k) = 0.0_4
+            en_b(k) = 0.0_4
+          END IF
+        END IF
+      END DO
+    END DO
+    ac_mlt_b = ac_mlt_b + ac_prcp_b
+  END SUBROUTINE GR4_ODE_TIME_STEP_B
+
+  SUBROUTINE GR4_ODE_TIME_STEP(setup, mesh, input_data, options, returns&
+&   , time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, &
+&   ac_ht, ac_qt)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: l
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp = ac_prcp + ac_mlt
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn(k), en(k))
+          ELSE
+            pn(k) = 0._sp
+            en(k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), ac_cp(k), ac_ct(&
+&                                   k), ac_kexc(k), ac_hp(k), ac_ht(k), &
+&                                   ac_qt(k), l)
+! Transform from mm/dt to m3/s
+          ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
+&           )/setup%dt
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE GR4_ODE_TIME_STEP
+
+!  Differentiation of gr4_ode_mlp_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
+!                bias_2 bias_3 ac_qt ac_hi ac_hp weight_1 weight_2
+!                weight_3 ac_ht ac_mlt
+  SUBROUTINE GR4_ODE_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
+&   returns, time_step, weight_1, weight_1_d, bias_1, bias_1_d, weight_2&
+&   , weight_2_d, bias_2, bias_2_d, weight_3, weight_3_d, bias_3, &
+&   bias_3_d, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, &
+&   ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, ac_hp, ac_hp_d, ac_ht, &
+&   ac_ht_d, ac_qt, ac_qt_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1_d
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1_d
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2_d
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2_d
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3_d
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci_d, ac_cp_d, &
+&   ac_ct_d, ac_kexc_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_d, ac_hp_d, &
+&   ac_ht_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: l
+    REAL(sp) :: temp
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp_d = ac_mlt_d
+    ac_prcp = ac_prcp + ac_mlt
+    en_d = 0.0_4
+    pn_d = 0.0_4
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
+&                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
+&                            , pn(k), pn_d(k), en(k), en_d(k))
+          ELSE
+            pn_d(k) = 0.0_4
+            pn(k) = 0._sp
+            en_d(k) = 0.0_4
+            en(k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+    output_layer_d = 0.0_4
+! Forward MLP without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d(k), en_d(k&
+&             )/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
+&                        weight_2, weight_2_d, bias_2, bias_2_d, &
+&                        weight_3, weight_3_d, bias_3, bias_3_d, &
+&                        input_layer, input_layer_d, output_layer(:, k)&
+&                        , output_layer_d(:, k))
+          ELSE
+            output_layer_d(:, k) = 0.0_4
+            output_layer(:, k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP_D(output_layer(:, k), &
+&                                         output_layer_d(:, k), pn(k), &
+&                                         pn_d(k), en(k), en_d(k), ac_cp&
+&                                         (k), ac_cp_d(k), ac_ct(k), &
+&                                         ac_ct_d(k), ac_kexc(k), &
+&                                         ac_kexc_d(k), ac_hp(k), &
+&                                         ac_hp_d(k), ac_ht(k), ac_ht_d(&
+&                                         k), ac_qt(k), ac_qt_d(k), l)
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
+          ac_qt(k) = temp*(ac_qt(k)/setup%dt)
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE GR4_ODE_MLP_TIME_STEP_D
+
+!  Differentiation of gr4_ode_mlp_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct bias_1
+!                bias_2 bias_3 ac_qt ac_hi ac_hp weight_1 weight_2
+!                weight_3 ac_ht ac_mlt
+!   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct bias_1
+!                bias_2 bias_3 ac_qt ac_hi ac_hp weight_1 weight_2
+!                weight_3 ac_ht ac_mlt
+  SUBROUTINE GR4_ODE_MLP_TIME_STEP_B(setup, mesh, input_data, options, &
+&   returns, time_step, weight_1, weight_1_b, bias_1, bias_1_b, weight_2&
+&   , weight_2_b, bias_2, bias_2_b, weight_3, weight_3_b, bias_3, &
+&   bias_3_b, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, &
+&   ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, ac_hp, ac_hp_b, ac_ht, &
+&   ac_ht_b, ac_qt, ac_qt_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)) :: &
+&   weight_1_b
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(setup%neurons(2)) :: bias_1_b
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)) :: &
+&   weight_2_b
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(setup%neurons(3)) :: bias_2_b
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)) :: &
+&   weight_3_b
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(setup%neurons(4)) :: bias_3_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_ci_b, ac_cp_b, ac_ct_b, &
+&   ac_kexc_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi_b, ac_hp_b, &
+&   ac_ht_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: l
+    INTEGER :: branch
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp = ac_prcp + ac_mlt
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL2B(0)
+        ELSE
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn(k), en(k))
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            pn(k) = 0._sp
+            en(k) = 0._sp
+            CALL PUSHCONTROL2B(1)
+          END IF
+        END IF
+      END DO
+    END DO
+! Forward MLP without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL2B(0)
+        ELSE
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer(:, k)&
+&                     )
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            output_layer(:, k) = 0._sp
+            CALL PUSHCONTROL2B(1)
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          k = mesh%rowcol_to_ind_ac(row, col)
+          CALL PUSHREAL4(ac_qt(k))
+          CALL PUSHREAL4(ac_ht(k))
+          CALL PUSHREAL4(ac_hp(k))
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), pn(k)&
+&                                       , en(k), ac_cp(k), ac_ct(k), &
+&                                       ac_kexc(k), ac_hp(k), ac_ht(k), &
+&                                       ac_qt(k), l)
+! Transform from mm/dt to m3/s
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+    END DO
+    output_layer_b = 0.0_4
+    en_b = 0.0_4
+    pn_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           ac_qt_b(k)/setup%dt
+          CALL POPREAL4(ac_hp(k))
+          CALL POPREAL4(ac_ht(k))
+          CALL POPREAL4(ac_qt(k))
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP_B(output_layer(:, k), &
+&                                         output_layer_b(:, k), pn(k), &
+&                                         pn_b(k), en(k), en_b(k), ac_cp&
+&                                         (k), ac_cp_b(k), ac_ct(k), &
+&                                         ac_ct_b(k), ac_kexc(k), &
+&                                         ac_kexc_b(k), ac_hp(k), &
+&                                         ac_hp_b(k), ac_ht(k), ac_ht_b(&
+&                                         k), ac_qt(k), ac_qt_b(k), l)
+          ac_qt_b(k) = 0.0_4
+        END IF
+      END DO
+    END DO
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            k = mesh%rowcol_to_ind_ac(row, col)
+            output_layer_b(:, k) = 0.0_4
+          ELSE
+            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
+&                        weight_2, weight_2_b, bias_2, bias_2_b, &
+&                        weight_3, weight_3_b, bias_3, bias_3_b, &
+&                        input_layer, input_layer_b, output_layer(:, k)&
+&                        , output_layer_b(:, k))
+            output_layer_b(:, k) = 0.0_4
+            CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
+            ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
+            ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
+            pn_b(k) = pn_b(k) + input_layer_b(3)
+            en_b(k) = en_b(k) + input_layer_b(4)
+          END IF
+        END IF
+      END DO
+    END DO
+    ac_prcp_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            k = mesh%rowcol_to_ind_ac(row, col)
+            en_b(k) = 0.0_4
+            pn_b(k) = 0.0_4
+          ELSE
+            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL POPREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
+&                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
+&                            , pn(k), pn_b(k), en(k), en_b(k))
+            pn_b(k) = 0.0_4
+            en_b(k) = 0.0_4
+          END IF
+        END IF
+      END DO
+    END DO
+    ac_mlt_b = ac_mlt_b + ac_prcp_b
+  END SUBROUTINE GR4_ODE_MLP_TIME_STEP_B
+
+  SUBROUTINE GR4_ODE_MLP_TIME_STEP(setup, mesh, input_data, options, &
+&   returns, time_step, weight_1, bias_1, weight_2, bias_2, weight_3, &
+&   bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
+&   ac_qt)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(setup%neurons(2), setup%neurons(1)), INTENT(IN) &
+&   :: weight_1
+    REAL(sp), DIMENSION(setup%neurons(2)), INTENT(IN) :: bias_1
+    REAL(sp), DIMENSION(setup%neurons(3), setup%neurons(2)), INTENT(IN) &
+&   :: weight_2
+    REAL(sp), DIMENSION(setup%neurons(3)), INTENT(IN) :: bias_2
+    REAL(sp), DIMENSION(setup%neurons(4), setup%neurons(3)), INTENT(IN) &
+&   :: weight_3
+    REAL(sp), DIMENSION(setup%neurons(4)), INTENT(IN) :: bias_3
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
+&   ac_kexc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
+    REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    INTEGER :: row, col, k, time_step_returns
+    REAL(sp) :: l
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'prcp', ac_prcp)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    ac_prcp = ac_prcp + ac_mlt
+! Interception with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn(k), en(k))
+          ELSE
+            pn(k) = 0._sp
+            en(k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Forward MLP without OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer(:, k)&
+&                     )
+          ELSE
+            output_layer(:, k) = 0._sp
+          END IF
+        END IF
+      END DO
+    END DO
+! Production and transfer with OPENMP
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&           local_active_cell(row, col) .EQ. 0)) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), pn(k)&
+&                                       , en(k), ac_cp(k), ac_ct(k), &
+&                                       ac_kexc(k), ac_hp(k), ac_ht(k), &
+&                                       ac_qt(k), l)
+! Transform from mm/dt to m3/s
+          ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
+&           )/setup%dt
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE GR4_ODE_MLP_TIME_STEP
 
 !  Differentiation of gr5_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
@@ -13062,9 +16046,9 @@ CONTAINS
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
-&                          , perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
             CALL GR_THRESHOLD_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), &
 &                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
 &                                  ac_ht_d(k), l, l_d)
@@ -13133,6 +16117,8 @@ CONTAINS
     REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -13155,8 +16141,8 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
             CALL PUSHCONTROL1B(1)
@@ -13213,9 +16199,12 @@ CONTAINS
 &                                  ac_aexc(k), ac_aexc_b(k), ac_ht(k), &
 &                                  ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -13263,8 +16252,8 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
           ELSE
@@ -13343,9 +16332,9 @@ CONTAINS
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
-&                          , perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
             CALL GR_THRESHOLD_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), &
 &                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
 &                                  ac_ht_d(k), l, l_d)
@@ -13421,6 +16410,8 @@ CONTAINS
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
 &   , qd_b, qe_b
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     REAL(sp) :: temp_b
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -13444,8 +16435,8 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
             CALL PUSHCONTROL1B(1)
@@ -13515,9 +16506,12 @@ CONTAINS
 &                                  ac_aexc(k), ac_aexc_b(k), ac_ht(k), &
 &                                  ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -13566,8 +16560,8 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
           ELSE
@@ -13653,9 +16647,9 @@ CONTAINS
             END IF
             en_d = -ei_d
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), 1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
-&                          perc, perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -13707,6 +16701,8 @@ CONTAINS
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -13740,8 +16736,8 @@ CONTAINS
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
+&                        , ac_hp(k), pr, perc)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -13777,8 +16773,11 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), 1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
+&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
 &                          perc, perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
@@ -13839,8 +16838,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
+&                        , ac_hp(k), pr, perc)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -13918,9 +16917,9 @@ CONTAINS
             END IF
             en_d = -ei_d
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_ca(k), ac_ca_d(k&
-&                          ), beta, ac_ha(k), ac_ha_d(k), pr, pr_d, perc&
-&                          , perc_d)
+            CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
+&                          en, en_d, ac_ca(k), ac_ca_d(k), beta, ac_ha(k&
+&                          ), ac_ha_d(k), pr, pr_d, perc, perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -13981,6 +16980,8 @@ CONTAINS
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
+    REAL(sp) :: dummydiff_b
+    REAL(sp) :: dummydiff_b0
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -14016,8 +17017,8 @@ CONTAINS
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_ha(k))
-            CALL GR_PRODUCTION(pn, en, ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
+&                        ac_ha(k), pr, perc)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -14074,9 +17075,12 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
             CALL POPREAL4(ac_ha(k))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k&
-&                          ), beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc&
-&                          , perc_b)
+            pn_b = 0.0_4
+            en_b = 0.0_4
+            CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
+&                          , pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k), &
+&                          beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc, &
+&                          perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -14138,8 +17142,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(pn, en, ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
+&                        ac_ha(k), pr, perc)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -17080,8 +20084,9 @@ MODULE MD_SIMULATION_DIFF
   USE MD_CHECKPOINT_VARIABLE_DIFF
 !% only: ssn_time_step
   USE MD_SNOW_OPERATOR_DIFF
-!% only: gr4_time_step, gr5_time_step, gr6_time_step, grd_time_step, loieau_time_step
+!% only: gr4_time_step, gr4_mlp_time_step, gr4_ode_time_step, &
   USE MD_GR_OPERATOR_DIFF
+!% & gr4_ode_mlp_time_step, gr5_time_step, gr6_time_step, grd_time_step, loieau_time_step
 !% only: vic3l_time_step
   USE MD_VIC3L_OPERATOR_DIFF
 !% only: lag0_time_step, lr_time_step, kw_time_step
@@ -17232,22 +20237,30 @@ CONTAINS
 !   variations   of useful results: *(checkpoint_variable.ac_rr_states)
 !                *(checkpoint_variable.ac_mlt) *(checkpoint_variable.ac_qtz)
 !                *(checkpoint_variable.ac_qz) *(output.response.q)
-!   with respect to varying inputs: *(checkpoint_variable.ac_rr_parameters)
+!   with respect to varying inputs: *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
 !                *(output.response.q)
-!   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
+!   Plus diff mem management of: parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
 !                output.response.q:in
   SUBROUTINE SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters&
-&   , output, output_d, options, returns, checkpoint_variable, &
-&   checkpoint_variable_d, start_time_step, end_time_step)
+&   , parameters_d, output, output_d, options, returns, &
+&   checkpoint_variable, checkpoint_variable_d, start_time_step, &
+&   end_time_step)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -17333,6 +20346,169 @@ CONTAINS
 &                      rr_parameters_inc+4), h1, h1_d, h2, h2_d, h3, &
 &                      h3_d, checkpoint_variable%ac_qtz(:, setup%nqz), &
 &                      checkpoint_variable_d%ac_qtz(:, setup%nqz))
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3) = h3_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        rr_parameters_inc = rr_parameters_inc + 4
+        rr_states_inc = rr_states_inc + 3
+      CASE ('gr4_mlp') 
+! 'gr4_mlp' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1)
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2)
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3)
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL GR4_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
+&                          returns, t, parameters%nn_parameters%weight_1&
+&                          , parameters_d%nn_parameters%weight_1, &
+&                          parameters%nn_parameters%bias_1, parameters_d&
+&                          %nn_parameters%bias_1, parameters%&
+&                          nn_parameters%weight_2, parameters_d%&
+&                          nn_parameters%weight_2, parameters%&
+&                          nn_parameters%bias_2, parameters_d%&
+&                          nn_parameters%bias_2, parameters%&
+&                          nn_parameters%weight_3, parameters_d%&
+&                          nn_parameters%weight_3, parameters%&
+&                          nn_parameters%bias_3, parameters_d%&
+&                          nn_parameters%bias_3, checkpoint_variable%&
+&                          ac_mlt, checkpoint_variable_d%ac_mlt, &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+1), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+1), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+2), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+2), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+3), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+3), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+4), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+4), h1&
+&                          , h1_d, h2, h2_d, h3, h3_d, &
+&                          checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                          checkpoint_variable_d%ac_qtz(:, setup%nqz))
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3) = h3_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        rr_parameters_inc = rr_parameters_inc + 4
+        rr_states_inc = rr_states_inc + 3
+      CASE ('gr4_ode') 
+! 'gr4_ode' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1)
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2)
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3)
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL GR4_ODE_TIME_STEP_D(setup, mesh, input_data, options, &
+&                          returns, t, checkpoint_variable%ac_mlt, &
+&                          checkpoint_variable_d%ac_mlt, &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+1), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+1), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+2), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+2), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+3), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+3), &
+&                          checkpoint_variable%ac_rr_parameters(:, &
+&                          rr_parameters_inc+4), checkpoint_variable_d%&
+&                          ac_rr_parameters(:, rr_parameters_inc+4), h1&
+&                          , h1_d, h2, h2_d, h3, h3_d, &
+&                          checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                          checkpoint_variable_d%ac_qtz(:, setup%nqz))
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3) = h3_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        rr_parameters_inc = rr_parameters_inc + 4
+        rr_states_inc = rr_states_inc + 3
+      CASE ('gr4_ode_mlp') 
+! 'gr4_ode_mlp' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1)
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2)
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3)
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL GR4_ODE_MLP_TIME_STEP_D(setup, mesh, input_data, options, &
+&                              returns, t, parameters%nn_parameters%&
+&                              weight_1, parameters_d%nn_parameters%&
+&                              weight_1, parameters%nn_parameters%bias_1&
+&                              , parameters_d%nn_parameters%bias_1, &
+&                              parameters%nn_parameters%weight_2, &
+&                              parameters_d%nn_parameters%weight_2, &
+&                              parameters%nn_parameters%bias_2, &
+&                              parameters_d%nn_parameters%bias_2, &
+&                              parameters%nn_parameters%weight_3, &
+&                              parameters_d%nn_parameters%weight_3, &
+&                              parameters%nn_parameters%bias_3, &
+&                              parameters_d%nn_parameters%bias_3, &
+&                              checkpoint_variable%ac_mlt, &
+&                              checkpoint_variable_d%ac_mlt, &
+&                              checkpoint_variable%ac_rr_parameters(:, &
+&                              rr_parameters_inc+1), &
+&                              checkpoint_variable_d%ac_rr_parameters(:&
+&                              , rr_parameters_inc+1), &
+&                              checkpoint_variable%ac_rr_parameters(:, &
+&                              rr_parameters_inc+2), &
+&                              checkpoint_variable_d%ac_rr_parameters(:&
+&                              , rr_parameters_inc+2), &
+&                              checkpoint_variable%ac_rr_parameters(:, &
+&                              rr_parameters_inc+3), &
+&                              checkpoint_variable_d%ac_rr_parameters(:&
+&                              , rr_parameters_inc+3), &
+&                              checkpoint_variable%ac_rr_parameters(:, &
+&                              rr_parameters_inc+4), &
+&                              checkpoint_variable_d%ac_rr_parameters(:&
+&                              , rr_parameters_inc+4), h1, h1_d, h2, &
+&                              h2_d, h3, h3_d, checkpoint_variable%&
+&                              ac_qtz(:, setup%nqz), &
+&                              checkpoint_variable_d%ac_qtz(:, setup%nqz&
+&                              ))
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -17632,26 +20808,37 @@ CONTAINS
   END SUBROUTINE SIMULATION_CHECKPOINT_D
 
 !  Differentiation of simulation_checkpoint in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: *(checkpoint_variable.ac_rr_parameters)
+!   gradient     of useful results: *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
 !                *(output.response.q)
-!   with respect to varying inputs: *(checkpoint_variable.ac_rr_parameters)
+!   with respect to varying inputs: *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
 !                *(output.response.q)
-!   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
+!   Plus diff mem management of: parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
 !                output.response.q:in
   SUBROUTINE SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters&
-&   , output, output_b, options, returns, checkpoint_variable, &
-&   checkpoint_variable_b, start_time_step, end_time_step)
+&   , parameters_b, output, output_b, options, returns, &
+&   checkpoint_variable, checkpoint_variable_b, start_time_step, &
+&   end_time_step)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -17746,7 +20933,133 @@ CONTAINS
         rr_parameters_inc = rr_parameters_inc + 4
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 3
-        CALL PUSHCONTROL3B(1)
+        CALL PUSHCONTROL4B(1)
+      CASE ('gr4_mlp') 
+! 'gr4_mlp' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                     SIZE(checkpoint_variable%ac_qtz, 1))
+        CALL PUSHREAL4ARRAY(h3, mesh%nac)
+        CALL PUSHREAL4ARRAY(h2, mesh%nac)
+        CALL PUSHREAL4ARRAY(h1, mesh%nac)
+        CALL GR4_MLP_TIME_STEP(setup, mesh, input_data, options, returns&
+&                        , t, parameters%nn_parameters%weight_1, &
+&                        parameters%nn_parameters%bias_1, parameters%&
+&                        nn_parameters%weight_2, parameters%&
+&                        nn_parameters%bias_2, parameters%nn_parameters%&
+&                        weight_3, parameters%nn_parameters%bias_3, &
+&                        checkpoint_variable%ac_mlt, checkpoint_variable&
+&                        %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+2), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+3), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+4), h1, h2, h3, &
+&                        checkpoint_variable%ac_qtz(:, setup%nqz))
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        CALL PUSHINTEGER4(rr_parameters_inc)
+        rr_parameters_inc = rr_parameters_inc + 4
+        CALL PUSHINTEGER4(rr_states_inc)
+        rr_states_inc = rr_states_inc + 3
+        CALL PUSHCONTROL4B(2)
+      CASE ('gr4_ode') 
+! 'gr4_ode' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                     SIZE(checkpoint_variable%ac_qtz, 1))
+        CALL PUSHREAL4ARRAY(h3, mesh%nac)
+        CALL PUSHREAL4ARRAY(h2, mesh%nac)
+        CALL PUSHREAL4ARRAY(h1, mesh%nac)
+        CALL GR4_ODE_TIME_STEP(setup, mesh, input_data, options, returns&
+&                        , t, checkpoint_variable%ac_mlt, &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+1), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+2), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+3), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+4), h1, &
+&                        h2, h3, checkpoint_variable%ac_qtz(:, setup%nqz&
+&                        ))
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        CALL PUSHINTEGER4(rr_parameters_inc)
+        rr_parameters_inc = rr_parameters_inc + 4
+        CALL PUSHINTEGER4(rr_states_inc)
+        rr_states_inc = rr_states_inc + 3
+        CALL PUSHCONTROL4B(3)
+      CASE ('gr4_ode_mlp') 
+! 'gr4_ode_mlp' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                     SIZE(checkpoint_variable%ac_qtz, 1))
+        CALL PUSHREAL4ARRAY(h3, mesh%nac)
+        CALL PUSHREAL4ARRAY(h2, mesh%nac)
+        CALL PUSHREAL4ARRAY(h1, mesh%nac)
+        CALL GR4_ODE_MLP_TIME_STEP(setup, mesh, input_data, options, &
+&                            returns, t, parameters%nn_parameters%&
+&                            weight_1, parameters%nn_parameters%bias_1, &
+&                            parameters%nn_parameters%weight_2, &
+&                            parameters%nn_parameters%bias_2, parameters&
+&                            %nn_parameters%weight_3, parameters%&
+&                            nn_parameters%bias_3, checkpoint_variable%&
+&                            ac_mlt, checkpoint_variable%&
+&                            ac_rr_parameters(:, rr_parameters_inc+1), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+2), checkpoint_variable%&
+&                            ac_rr_parameters(:, rr_parameters_inc+3), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+4), h1, h2, h3, &
+&                            checkpoint_variable%ac_qtz(:, setup%nqz))
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        CALL PUSHINTEGER4(rr_parameters_inc)
+        rr_parameters_inc = rr_parameters_inc + 4
+        CALL PUSHINTEGER4(rr_states_inc)
+        rr_states_inc = rr_states_inc + 3
+        CALL PUSHCONTROL4B(4)
       CASE ('gr5') 
 ! 'gr5' module
 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -17786,7 +21099,7 @@ CONTAINS
         rr_parameters_inc = rr_parameters_inc + 5
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 3
-        CALL PUSHCONTROL3B(2)
+        CALL PUSHCONTROL4B(5)
       CASE ('gr6') 
 ! 'gr6' module
 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -17834,7 +21147,7 @@ CONTAINS
         rr_parameters_inc = rr_parameters_inc + 6
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 4
-        CALL PUSHCONTROL3B(3)
+        CALL PUSHCONTROL4B(6)
       CASE ('grd') 
 ! 'grd' module
 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -17862,7 +21175,7 @@ CONTAINS
         rr_parameters_inc = rr_parameters_inc + 2
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 2
-        CALL PUSHCONTROL3B(4)
+        CALL PUSHCONTROL4B(7)
       CASE ('loieau') 
 ! 'loieau' module
 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -17893,7 +21206,7 @@ CONTAINS
         rr_parameters_inc = rr_parameters_inc + 3
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 2
-        CALL PUSHCONTROL3B(5)
+        CALL PUSHCONTROL4B(8)
       CASE ('vic3l') 
 ! 'vic3l' module
 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -17949,9 +21262,9 @@ CONTAINS
         rr_parameters_inc = rr_parameters_inc + 9
         CALL PUSHINTEGER4(rr_states_inc)
         rr_states_inc = rr_states_inc + 4
-        CALL PUSHCONTROL3B(6)
+        CALL PUSHCONTROL4B(9)
       CASE DEFAULT
-        CALL PUSHCONTROL3B(0)
+        CALL PUSHCONTROL4B(0)
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
@@ -18045,10 +21358,10 @@ CONTAINS
 &                     checkpoint_variable%ac_qz, checkpoint_variable_b%&
 &                     ac_qz)
       END IF
-      CALL POPCONTROL3B(branch)
-      IF (branch .LT. 3) THEN
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
+      CALL POPCONTROL4B(branch)
+      IF (branch .LT. 5) THEN
+        IF (branch .LT. 2) THEN
+          IF (branch .NE. 0) THEN
             CALL POPINTEGER4(rr_states_inc)
             CALL POPINTEGER4(rr_parameters_inc)
             h3_b = 0.0_4
@@ -18098,63 +21411,218 @@ CONTAINS
             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
 &             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
 &             h1_b
-          ELSE
-            CALL POPINTEGER4(rr_states_inc)
-            CALL POPINTEGER4(rr_parameters_inc)
-            h3_b = 0.0_4
-            h3_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3&
-&             )
-            checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
-&             0.0_4
-            h2_b = 0.0_4
-            h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2&
-&             )
-            checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
-&             0.0_4
-            h1_b = 0.0_4
-            h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1&
-&             )
-            checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
-&             0.0_4
-            CALL POPREAL4ARRAY(h1, mesh%nac)
-            CALL POPREAL4ARRAY(h2, mesh%nac)
-            CALL POPREAL4ARRAY(h3, mesh%nac)
-            CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz)&
-&                        , SIZE(checkpoint_variable%ac_qtz, 1))
-            CALL GR5_TIME_STEP_B(setup, mesh, input_data, options, &
-&                          returns, t, checkpoint_variable%ac_mlt, &
-&                          checkpoint_variable_b%ac_mlt, &
-&                          checkpoint_variable%ac_rr_parameters(:, &
-&                          rr_parameters_inc+1), checkpoint_variable_b%&
-&                          ac_rr_parameters(:, rr_parameters_inc+1), &
-&                          checkpoint_variable%ac_rr_parameters(:, &
-&                          rr_parameters_inc+2), checkpoint_variable_b%&
-&                          ac_rr_parameters(:, rr_parameters_inc+2), &
-&                          checkpoint_variable%ac_rr_parameters(:, &
-&                          rr_parameters_inc+3), checkpoint_variable_b%&
-&                          ac_rr_parameters(:, rr_parameters_inc+3), &
-&                          checkpoint_variable%ac_rr_parameters(:, &
-&                          rr_parameters_inc+4), checkpoint_variable_b%&
-&                          ac_rr_parameters(:, rr_parameters_inc+4), &
-&                          checkpoint_variable%ac_rr_parameters(:, &
-&                          rr_parameters_inc+5), checkpoint_variable_b%&
-&                          ac_rr_parameters(:, rr_parameters_inc+5), h1&
-&                          , h1_b, h2, h2_b, h3, h3_b, &
-&                          checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                          checkpoint_variable_b%ac_qtz(:, setup%nqz))
-            checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
-&             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
-&             h3_b
-            checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
-&             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + &
-&             h2_b
-            checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
-&             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
-&             h1_b
           END IF
+        ELSE IF (branch .EQ. 2) THEN
+          CALL POPINTEGER4(rr_states_inc)
+          CALL POPINTEGER4(rr_parameters_inc)
+          h3_b = 0.0_4
+          h3_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = 0.0_4
+          h2_b = 0.0_4
+          h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
+          h1_b = 0.0_4
+          h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = 0.0_4
+          CALL POPREAL4ARRAY(h1, mesh%nac)
+          CALL POPREAL4ARRAY(h2, mesh%nac)
+          CALL POPREAL4ARRAY(h3, mesh%nac)
+          CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                      SIZE(checkpoint_variable%ac_qtz, 1))
+          CALL GR4_MLP_TIME_STEP_B(setup, mesh, input_data, options, &
+&                            returns, t, parameters%nn_parameters%&
+&                            weight_1, parameters_b%nn_parameters%&
+&                            weight_1, parameters%nn_parameters%bias_1, &
+&                            parameters_b%nn_parameters%bias_1, &
+&                            parameters%nn_parameters%weight_2, &
+&                            parameters_b%nn_parameters%weight_2, &
+&                            parameters%nn_parameters%bias_2, &
+&                            parameters_b%nn_parameters%bias_2, &
+&                            parameters%nn_parameters%weight_3, &
+&                            parameters_b%nn_parameters%weight_3, &
+&                            parameters%nn_parameters%bias_3, &
+&                            parameters_b%nn_parameters%bias_3, &
+&                            checkpoint_variable%ac_mlt, &
+&                            checkpoint_variable_b%ac_mlt, &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+1), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+2), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+2), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+3), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+3), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+4), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+4), &
+&                            h1, h1_b, h2, h2_b, h3, h3_b, &
+&                            checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                            checkpoint_variable_b%ac_qtz(:, setup%nqz))
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
+&           h3_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + &
+&           h2_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
+&           h1_b
+        ELSE IF (branch .EQ. 3) THEN
+          CALL POPINTEGER4(rr_states_inc)
+          CALL POPINTEGER4(rr_parameters_inc)
+          h3_b = 0.0_4
+          h3_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = 0.0_4
+          h2_b = 0.0_4
+          h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
+          h1_b = 0.0_4
+          h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = 0.0_4
+          CALL POPREAL4ARRAY(h1, mesh%nac)
+          CALL POPREAL4ARRAY(h2, mesh%nac)
+          CALL POPREAL4ARRAY(h3, mesh%nac)
+          CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                      SIZE(checkpoint_variable%ac_qtz, 1))
+          CALL GR4_ODE_TIME_STEP_B(setup, mesh, input_data, options, &
+&                            returns, t, checkpoint_variable%ac_mlt, &
+&                            checkpoint_variable_b%ac_mlt, &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+1), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+2), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+2), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+3), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+3), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+4), checkpoint_variable_b&
+&                            %ac_rr_parameters(:, rr_parameters_inc+4), &
+&                            h1, h1_b, h2, h2_b, h3, h3_b, &
+&                            checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                            checkpoint_variable_b%ac_qtz(:, setup%nqz))
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
+&           h3_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + &
+&           h2_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
+&           h1_b
+        ELSE
+          CALL POPINTEGER4(rr_states_inc)
+          CALL POPINTEGER4(rr_parameters_inc)
+          h3_b = 0.0_4
+          h3_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = 0.0_4
+          h2_b = 0.0_4
+          h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
+          h1_b = 0.0_4
+          h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = 0.0_4
+          CALL POPREAL4ARRAY(h1, mesh%nac)
+          CALL POPREAL4ARRAY(h2, mesh%nac)
+          CALL POPREAL4ARRAY(h3, mesh%nac)
+          CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                      SIZE(checkpoint_variable%ac_qtz, 1))
+          CALL GR4_ODE_MLP_TIME_STEP_B(setup, mesh, input_data, options&
+&                                , returns, t, parameters%nn_parameters%&
+&                                weight_1, parameters_b%nn_parameters%&
+&                                weight_1, parameters%nn_parameters%&
+&                                bias_1, parameters_b%nn_parameters%&
+&                                bias_1, parameters%nn_parameters%&
+&                                weight_2, parameters_b%nn_parameters%&
+&                                weight_2, parameters%nn_parameters%&
+&                                bias_2, parameters_b%nn_parameters%&
+&                                bias_2, parameters%nn_parameters%&
+&                                weight_3, parameters_b%nn_parameters%&
+&                                weight_3, parameters%nn_parameters%&
+&                                bias_3, parameters_b%nn_parameters%&
+&                                bias_3, checkpoint_variable%ac_mlt, &
+&                                checkpoint_variable_b%ac_mlt, &
+&                                checkpoint_variable%ac_rr_parameters(:&
+&                                , rr_parameters_inc+1), &
+&                                checkpoint_variable_b%ac_rr_parameters(&
+&                                :, rr_parameters_inc+1), &
+&                                checkpoint_variable%ac_rr_parameters(:&
+&                                , rr_parameters_inc+2), &
+&                                checkpoint_variable_b%ac_rr_parameters(&
+&                                :, rr_parameters_inc+2), &
+&                                checkpoint_variable%ac_rr_parameters(:&
+&                                , rr_parameters_inc+3), &
+&                                checkpoint_variable_b%ac_rr_parameters(&
+&                                :, rr_parameters_inc+3), &
+&                                checkpoint_variable%ac_rr_parameters(:&
+&                                , rr_parameters_inc+4), &
+&                                checkpoint_variable_b%ac_rr_parameters(&
+&                                :, rr_parameters_inc+4), h1, h1_b, h2, &
+&                                h2_b, h3, h3_b, checkpoint_variable%&
+&                                ac_qtz(:, setup%nqz), &
+&                                checkpoint_variable_b%ac_qtz(:, setup%&
+&                                nqz))
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
+&           h3_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + &
+&           h2_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
+&           h1_b
         END IF
-      ELSE IF (branch .LT. 5) THEN
-        IF (branch .EQ. 3) THEN
+      ELSE IF (branch .LT. 7) THEN
+        IF (branch .EQ. 5) THEN
+          CALL POPINTEGER4(rr_states_inc)
+          CALL POPINTEGER4(rr_parameters_inc)
+          h3_b = 0.0_4
+          h3_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = 0.0_4
+          h2_b = 0.0_4
+          h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
+          h1_b = 0.0_4
+          h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = 0.0_4
+          CALL POPREAL4ARRAY(h1, mesh%nac)
+          CALL POPREAL4ARRAY(h2, mesh%nac)
+          CALL POPREAL4ARRAY(h3, mesh%nac)
+          CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                      SIZE(checkpoint_variable%ac_qtz, 1))
+          CALL GR5_TIME_STEP_B(setup, mesh, input_data, options, returns&
+&                        , t, checkpoint_variable%ac_mlt, &
+&                        checkpoint_variable_b%ac_mlt, &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+1), checkpoint_variable_b%&
+&                        ac_rr_parameters(:, rr_parameters_inc+1), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+2), checkpoint_variable_b%&
+&                        ac_rr_parameters(:, rr_parameters_inc+2), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+3), checkpoint_variable_b%&
+&                        ac_rr_parameters(:, rr_parameters_inc+3), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+4), checkpoint_variable_b%&
+&                        ac_rr_parameters(:, rr_parameters_inc+4), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+5), checkpoint_variable_b%&
+&                        ac_rr_parameters(:, rr_parameters_inc+5), h1, &
+&                        h1_b, h2, h2_b, h3, h3_b, checkpoint_variable%&
+&                        ac_qtz(:, setup%nqz), checkpoint_variable_b%&
+&                        ac_qtz(:, setup%nqz))
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
+&           h3_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + &
+&           h2_b
+          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
+&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
+&           h1_b
+        ELSE
           CALL POPINTEGER4(rr_states_inc)
           CALL POPINTEGER4(rr_parameters_inc)
           h4_b = 0.0_4
@@ -18211,39 +21679,36 @@ CONTAINS
           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
 &           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
 &           h1_b
-        ELSE
-          CALL POPINTEGER4(rr_states_inc)
-          CALL POPINTEGER4(rr_parameters_inc)
-          h2_b = 0.0_4
-          h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
-          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
-          h1_b = 0.0_4
-          h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
-          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = 0.0_4
-          CALL POPREAL4ARRAY(h1, mesh%nac)
-          CALL POPREAL4ARRAY(h2, mesh%nac)
-          CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                      SIZE(checkpoint_variable%ac_qtz, 1))
-          CALL GRD_TIME_STEP_B(setup, mesh, input_data, options, returns&
-&                        , t, checkpoint_variable%ac_mlt, &
-&                        checkpoint_variable_b%ac_mlt, &
-&                        checkpoint_variable%ac_rr_parameters(:, &
-&                        rr_parameters_inc+1), checkpoint_variable_b%&
-&                        ac_rr_parameters(:, rr_parameters_inc+1), &
-&                        checkpoint_variable%ac_rr_parameters(:, &
-&                        rr_parameters_inc+2), checkpoint_variable_b%&
-&                        ac_rr_parameters(:, rr_parameters_inc+2), h1, &
-&                        h1_b, h2, h2_b, checkpoint_variable%ac_qtz(:, &
-&                        setup%nqz), checkpoint_variable_b%ac_qtz(:, &
-&                        setup%nqz))
-          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
-&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + &
-&           h2_b
-          checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
-&           checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + &
-&           h1_b
         END IF
-      ELSE IF (branch .EQ. 5) THEN
+      ELSE IF (branch .EQ. 7) THEN
+        CALL POPINTEGER4(rr_states_inc)
+        CALL POPINTEGER4(rr_parameters_inc)
+        h2_b = 0.0_4
+        h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
+        h1_b = 0.0_4
+        h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = 0.0_4
+        CALL POPREAL4ARRAY(h1, mesh%nac)
+        CALL POPREAL4ARRAY(h2, mesh%nac)
+        CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                    SIZE(checkpoint_variable%ac_qtz, 1))
+        CALL GRD_TIME_STEP_B(setup, mesh, input_data, options, returns, &
+&                      t, checkpoint_variable%ac_mlt, &
+&                      checkpoint_variable_b%ac_mlt, checkpoint_variable&
+&                      %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                      checkpoint_variable_b%ac_rr_parameters(:, &
+&                      rr_parameters_inc+1), checkpoint_variable%&
+&                      ac_rr_parameters(:, rr_parameters_inc+2), &
+&                      checkpoint_variable_b%ac_rr_parameters(:, &
+&                      rr_parameters_inc+2), h1, h1_b, h2, h2_b, &
+&                      checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                      checkpoint_variable_b%ac_qtz(:, setup%nqz))
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
+&         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + h2_b
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
+&         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + h1_b
+      ELSE IF (branch .EQ. 8) THEN
         CALL POPINTEGER4(rr_states_inc)
         CALL POPINTEGER4(rr_parameters_inc)
         h2_b = 0.0_4
@@ -18440,6 +21905,108 @@ CONTAINS
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+4), h1, h2, h3, &
 &                    checkpoint_variable%ac_qtz(:, setup%nqz))
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        rr_parameters_inc = rr_parameters_inc + 4
+        rr_states_inc = rr_states_inc + 3
+      CASE ('gr4_mlp') 
+! 'gr4_mlp' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL GR4_MLP_TIME_STEP(setup, mesh, input_data, options, returns&
+&                        , t, parameters%nn_parameters%weight_1, &
+&                        parameters%nn_parameters%bias_1, parameters%&
+&                        nn_parameters%weight_2, parameters%&
+&                        nn_parameters%bias_2, parameters%nn_parameters%&
+&                        weight_3, parameters%nn_parameters%bias_3, &
+&                        checkpoint_variable%ac_mlt, checkpoint_variable&
+&                        %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+2), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+3), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+4), h1, h2, h3, &
+&                        checkpoint_variable%ac_qtz(:, setup%nqz))
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        rr_parameters_inc = rr_parameters_inc + 4
+        rr_states_inc = rr_states_inc + 3
+      CASE ('gr4_ode') 
+! 'gr4_ode' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL GR4_ODE_TIME_STEP(setup, mesh, input_data, options, returns&
+&                        , t, checkpoint_variable%ac_mlt, &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+1), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+2), &
+&                        checkpoint_variable%ac_rr_parameters(:, &
+&                        rr_parameters_inc+3), checkpoint_variable%&
+&                        ac_rr_parameters(:, rr_parameters_inc+4), h1, &
+&                        h2, h3, checkpoint_variable%ac_qtz(:, setup%nqz&
+&                        ))
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+        rr_parameters_inc = rr_parameters_inc + 4
+        rr_states_inc = rr_states_inc + 3
+      CASE ('gr4_ode_mlp') 
+! 'gr4_ode_mlp' module
+! % To avoid potential aliasing tapenade warning (DF02)
+! % hi
+        h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hp
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
+! % ht
+        h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc+3)
+! % ci
+! % cp
+! % ct
+! % kexc
+! % hi
+! % hp
+! % ht
+        CALL GR4_ODE_MLP_TIME_STEP(setup, mesh, input_data, options, &
+&                            returns, t, parameters%nn_parameters%&
+&                            weight_1, parameters%nn_parameters%bias_1, &
+&                            parameters%nn_parameters%weight_2, &
+&                            parameters%nn_parameters%bias_2, parameters&
+&                            %nn_parameters%weight_3, parameters%&
+&                            nn_parameters%bias_3, checkpoint_variable%&
+&                            ac_mlt, checkpoint_variable%&
+&                            ac_rr_parameters(:, rr_parameters_inc+1), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+2), checkpoint_variable%&
+&                            ac_rr_parameters(:, rr_parameters_inc+3), &
+&                            checkpoint_variable%ac_rr_parameters(:, &
+&                            rr_parameters_inc+4), h1, h2, h3, &
+&                            checkpoint_variable%ac_qtz(:, setup%nqz))
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -18649,9 +22216,15 @@ CONTAINS
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
-!                *(parameters.rr_initial_states.values)
+!                *(parameters.rr_initial_states.values) *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
-!                parameters.rr_initial_states.values:in output.response.q:in
+!                parameters.rr_initial_states.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -18728,9 +22301,10 @@ CONTAINS
       end_time_step = i*checkpoint_size
       IF (i .EQ. ncheckpoint) end_time_step = setup%ntime_step
       CALL SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters, &
-&                            output, output_d, options, returns, &
-&                            checkpoint_variable, checkpoint_variable_d&
-&                            , start_time_step, end_time_step)
+&                            parameters_d, output, output_d, options, &
+&                            returns, checkpoint_variable, &
+&                            checkpoint_variable_d, start_time_step, &
+&                            end_time_step)
     END DO
   END SUBROUTINE SIMULATION_D
 
@@ -18738,9 +22312,15 @@ CONTAINS
 !   gradient     of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
-!                *(parameters.rr_initial_states.values)
+!                *(parameters.rr_initial_states.values) *(parameters.nn_parameters.weight_1)
+!                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
+!                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
+!                *(parameters.nn_parameters.bias_3)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
-!                parameters.rr_initial_states.values:in output.response.q:in
+!                parameters.rr_initial_states.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -18830,6 +22410,12 @@ CONTAINS
 &                          output, options, returns, checkpoint_variable&
 &                          , start_time_step, end_time_step)
     END DO
+    parameters_b%nn_parameters%weight_1 = 0.0_4
+    parameters_b%nn_parameters%bias_1 = 0.0_4
+    parameters_b%nn_parameters%weight_2 = 0.0_4
+    parameters_b%nn_parameters%bias_2 = 0.0_4
+    parameters_b%nn_parameters%weight_3 = 0.0_4
+    parameters_b%nn_parameters%bias_3 = 0.0_4
     DO i=ncheckpoint,1,-1
       CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                  checkpoint_variable%ac_qz, 1)*SIZE(&
@@ -18843,9 +22429,10 @@ CONTAINS
 &                  checkpoint_variable%ac_rr_states, 1)*SIZE(&
 &                  checkpoint_variable%ac_rr_states, 2))
       CALL SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters, &
-&                            output, output_b, options, returns, &
-&                            checkpoint_variable, checkpoint_variable_b&
-&                            , start_time_step, end_time_step)
+&                            parameters_b, output, output_b, options, &
+&                            returns, checkpoint_variable, &
+&                            checkpoint_variable_b, start_time_step, &
+&                            end_time_step)
       CALL POPINTEGER4(end_time_step)
       CALL POPINTEGER4(start_time_step)
     END DO
@@ -18948,12 +22535,18 @@ END MODULE MD_SIMULATION_DIFF
 !                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
 !                *(parameters.serr_mu_parameters.values):(loc)
 !                *(parameters.serr_sigma_parameters.values):(loc)
+!                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
+!                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
+!                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
 !                *(output.response.q):(loc) output.cost:out
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, options_d, returns)
@@ -19010,12 +22603,18 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
 !                *(parameters.serr_mu_parameters.values):(loc)
 !                *(parameters.serr_sigma_parameters.values):(loc)
+!                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
+!                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
+!                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
 !                *(output.response.q):(loc) output.cost:in-killed
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, options_b, returns)
@@ -19076,8 +22675,38 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   CALL PUSHREAL4ARRAY(parameters%serr_sigma_parameters%values, SIZE(&
 &               parameters%serr_sigma_parameters%values, 1)*SIZE(&
 &               parameters%serr_sigma_parameters%values, 2))
+  CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(parameters&
+&               %nn_parameters%weight_1, 1)*SIZE(parameters%&
+&               nn_parameters%weight_1, 2))
+  CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(parameters%&
+&               nn_parameters%bias_1, 1))
+  CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(parameters&
+&               %nn_parameters%weight_2, 1)*SIZE(parameters%&
+&               nn_parameters%weight_2, 2))
+  CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters%&
+&               nn_parameters%bias_2, 1))
+  CALL PUSHREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(parameters&
+&               %nn_parameters%weight_3, 1)*SIZE(parameters%&
+&               nn_parameters%weight_3, 2))
+  CALL PUSHREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(parameters%&
+&               nn_parameters%bias_3, 1))
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, output, options&
 &             , returns)
+  CALL POPREAL4ARRAY(parameters%nn_parameters%bias_3, SIZE(parameters%&
+&              nn_parameters%bias_3, 1))
+  CALL POPREAL4ARRAY(parameters%nn_parameters%weight_3, SIZE(parameters%&
+&              nn_parameters%weight_3, 1)*SIZE(parameters%nn_parameters%&
+&              weight_3, 2))
+  CALL POPREAL4ARRAY(parameters%nn_parameters%bias_2, SIZE(parameters%&
+&              nn_parameters%bias_2, 1))
+  CALL POPREAL4ARRAY(parameters%nn_parameters%weight_2, SIZE(parameters%&
+&              nn_parameters%weight_2, 1)*SIZE(parameters%nn_parameters%&
+&              weight_2, 2))
+  CALL POPREAL4ARRAY(parameters%nn_parameters%bias_1, SIZE(parameters%&
+&              nn_parameters%bias_1, 1))
+  CALL POPREAL4ARRAY(parameters%nn_parameters%weight_1, SIZE(parameters%&
+&              nn_parameters%weight_1, 1)*SIZE(parameters%nn_parameters%&
+&              weight_1, 2))
   CALL POPREAL4ARRAY(parameters%serr_sigma_parameters%values, SIZE(&
 &              parameters%serr_sigma_parameters%values, 1)*SIZE(&
 &              parameters%serr_sigma_parameters%values, 2))

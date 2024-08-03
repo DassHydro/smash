@@ -32,6 +32,8 @@ Derived Type
    fcore._mwd_serr_mu_parameters.SErr_Mu_ParametersDT.copy
    fcore._mwd_serr_sigma_parameters.SErr_Sigma_ParametersDT
    fcore._mwd_serr_sigma_parameters.SErr_Sigma_ParametersDT.copy
+   fcore._mwd_nn_parameters.NN_ParametersDT
+   fcore._mwd_nn_parameters.NN_ParametersDT.copy
    fcore._mwd_response.ResponseDT
    fcore._mwd_response.ResponseDT.copy
 

@@ -35,6 +35,25 @@ def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     return rr_internal_fluxes
 
 
+def get_neurons_from_hydrological_module(hydrological_module: str, hidden_neuron: np.ndarray) -> np.ndarray:
+    neurons = np.zeros(len(hidden_neuron) + 2, dtype=np.int32)
+
+    if "mlp" in hydrological_module:
+        if hydrological_module == "gr4_mlp":
+            # % fixed NN input size = 4 and fixed NN output size 4
+            n_in, n_out = (4, 4)
+        elif hydrological_module == "gr4_ode_mlp":
+            # % fixed NN input size = 4 and fixed NN output size 5
+            n_in, n_out = (4, 5)
+
+        neurons[0] = n_in
+        non_zero_hidden_neurons = [val for val in hidden_neuron if val > 0]
+        neurons[1 : 1 + len(non_zero_hidden_neurons)] = non_zero_hidden_neurons
+        neurons[1 + len(non_zero_hidden_neurons)] = n_out
+
+    return neurons
+
+
 ### FLOAT PRECISION FOR FLOAT COMPARISON ###
 F_PRECISION = 1.0e-5
 
@@ -43,7 +62,17 @@ F_PRECISION = 1.0e-5
 
 SNOW_MODULE = ["zero", "ssn"]
 
-HYDROLOGICAL_MODULE = ["gr4", "gr5", "gr6", "grd", "loieau", "vic3l"]
+HYDROLOGICAL_MODULE = [
+    "gr4",
+    "gr4_mlp",
+    "gr4_ode",
+    "gr4_ode_mlp",
+    "gr5",
+    "gr6",
+    "grd",
+    "loieau",
+    "vic3l",
+]
 
 ROUTING_MODULE = ["lag0", "lr", "kw"]
 
@@ -67,6 +96,9 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         HYDROLOGICAL_MODULE,
         [
             ["ci", "cp", "ct", "kexc"],  # % gr4
+            ["ci", "cp", "ct", "kexc"],  # % gr4_mlp
+            ["ci", "cp", "ct", "kexc"],  # % gr4_ode
+            ["ci", "cp", "ct", "kexc"],  # % gr4_ode_mlp
             ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
             ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
             ["cp", "ct"],  # % grd
@@ -105,6 +137,9 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
         HYDROLOGICAL_MODULE,
         [
             ["hi", "hp", "ht"],  # % gr4
+            ["hi", "hp", "ht"],  # % gr4_mlp
+            ["hi", "hp", "ht"],  # % gr4_ode
+            ["hi", "hp", "ht"],  # % gr4_ode_mlp
             ["hi", "hp", "ht"],  # % gr5
             ["hi", "hp", "ht", "he"],  # % gr6
             ["hp", "ht"],  # % grd
@@ -145,6 +180,9 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
         HYDROLOGICAL_MODULE,
         [
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4_mlp
+            ["pn", "en", "lexc", "qt"],  # % gr4_ode
+            ["pn", "en", "lexc", "qt"],  # % gr4_ode_mlp
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
             ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
@@ -208,11 +246,11 @@ STRUCTURE_RR_INTERNAL_FLUXES = dict(
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % (gr4, gr5, gr6)
-    "cp",  # % (gr4, gr5, gr6, grd)
-    "ct",  # % (gr4, gr5, gr6, grd)
+    "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
+    "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
+    "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
     "be",  # % (gr6)
-    "kexc",  # % (gr4, gr5, gr6)
+    "kexc",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
     "aexc",  # % (gr5, gr6)
     "ca",  # % loieau
     "cc",  # % loieau
@@ -233,9 +271,9 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % (gr4, gr5, gr6)
-    "hp",  # % (gr4, gr5, gr6, grd)
-    "ht",  # % (gr4, gr5, gr6, grd)
+    "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
+    "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
+    "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
     "he",  # % (gr6)
     "ha",  # % loieau
     "hc",  # % loieau
@@ -567,6 +605,17 @@ OPTIMIZABLE_SERR_SIGMA_PARAMETERS = dict(
     )
 )
 
+### OPTIMIZABLE NN PARAMETERS ###
+#################################
+
+NN_PARAMETERS_KEYS = ["weight_1", "bias_1", "weight_2", "bias_2", "weight_3", "bias_3"]
+
+OPTIMIZABLE_NN_PARAMETERS = [
+    [],  # without hybrid structure
+    NN_PARAMETERS_KEYS[:-2],  # minimal hybrid structure with 2 layers
+    NN_PARAMETERS_KEYS,  # maximal hybrid structure with 3 layers
+]
+
 ### SETUP ###
 #############
 
@@ -574,6 +623,7 @@ DEFAULT_MODEL_SETUP = {
     "snow_module": "zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
+    "hidden_neuron": 16,
     "serr_mu_mapping": "Zero",
     "serr_sigma_mapping": "Linear",
     "dt": 3_600,
@@ -694,8 +744,6 @@ WB_INITIALIZER = [
     "he_normal",
     "zeros",
 ]
-
-LAYER_NAME = ["Dense", "Activation", "Scale", "Dropout"]
 
 PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
 
@@ -971,6 +1019,7 @@ MODEL_DDT_IO_ATTR_KEYS = {
     "atmos_data": ["mean_prcp", "mean_pet", "mean_snow", "mean_temp"],
     "rr_parameters": ["keys", "values"],
     "rr_initial_states": ["keys", "values"],
+    "nn_parameters": NN_PARAMETERS_KEYS,
     "serr_mu_parameters": ["keys", "values"],
     "serr_sigma_parameters": ["keys", "values"],
     "response": ["q"],

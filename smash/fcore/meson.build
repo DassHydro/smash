@@ -20,6 +20,7 @@ m_f90_sources = [
 ]
 
 md_f90_sources = [
+    'common/md_algebra.f90',
     'common/md_constant.f90',
     'common/md_stats.f90',
 
@@ -28,6 +29,7 @@ md_f90_sources = [
     'forward/md_simulation.f90',
 
     'operator/md_gr_operator.f90',
+    'operator/md_neural_network.f90',
     'operator/md_routing_operator.f90',
     'operator/md_snow_operator.f90',
     'operator/md_vic3l_operator.f90',
@@ -52,6 +54,7 @@ mwd_f90_sources = [
     'derived_type/mwd_cost_options.f90',
     'derived_type/mwd_input_data.f90',
     'derived_type/mwd_mesh.f90',
+    'derived_type/mwd_nn_parameters.f90',
     'derived_type/mwd_optimize_options.f90',
     'derived_type/mwd_options.f90',
     'derived_type/mwd_output.f90',
