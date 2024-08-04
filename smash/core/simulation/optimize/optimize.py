@@ -243,8 +243,8 @@ class _OptimizeCallback:
         # % intermediate_result is required by callback function in scipy
         if self.verbose:
             print(
-                f"{' '*4}At iterate{str(self.iterations).rjust(7)}    nfg = {str(self.nfg).rjust(4)}"
-                f"{' '*4}J = {self.iter_cost[-1]:14.6f}    |proj g| = {self.projg:14.6f}"
+                f"{' '*4}At iterate {str(self.iterations).rjust(5)}    nfg = {str(self.nfg).rjust(5)}"
+                f"{' '*4}J = {self.iter_cost[-1]:11.6f}    |proj g| = {self.projg:11.6f}"
             )
 
         self.iterations += 1
@@ -259,8 +259,8 @@ class _OptimizeCallback:
     def termination(self, final_result: scipy_OptimizeResult):
         if self.verbose:
             print(
-                f"{' '*4}At iterate{str(self.iterations).rjust(7)}    nfg = {str(self.nfg).rjust(4)}"
-                f"{' '*4}J = {final_result.fun:14.6f}    |proj g| = {self.projg:14.6f}"
+                f"{' '*4}At iterate {str(self.iterations).rjust(5)}    nfg = {str(self.nfg).rjust(5)}"
+                f"{' '*4}J = {final_result.fun:11.6f}    |proj g| = {self.projg:11.6f}"
             )
             print(f"{' '*4}{final_result.message}")
 
@@ -680,8 +680,8 @@ def _adaptive_optimize(
 
         if wrap_options.comm.verbose:
             print(
-                f"{' '*4}At iterate{str(0).rjust(7)}    nfg = {str(1).rjust(4)}"
-                f"{' '*4}J = {model._output.cost:14.6f}    |proj g| = {projg:14.6f}"
+                f"{' '*4}At iterate {str(0).rjust(5)}    nfg = {str(1).rjust(5)}"
+                f"{' '*4}J = {model._output.cost:11.6f}    |proj g| = {projg:11.6f}"
             )
 
         for ite in range(1, maxiter + 1):
@@ -728,8 +728,8 @@ def _adaptive_optimize(
 
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}At iterate{str(ite).rjust(7)}    nfg = {str(ite+1).rjust(4)}"
-                    f"{' '*4}J = {model._output.cost:14.6f}    |proj g| = {projg:14.6f}"
+                    f"{' '*4}At iterate {str(ite).rjust(5)}    nfg = {str(ite+1).rjust(5)}"
+                    f"{' '*4}J = {model._output.cost:11.6f}    |proj g| = {projg:11.6f}"
                 )
 
                 if ite == maxiter:
@@ -896,8 +896,8 @@ def _sbs_optimize(
 
     if wrap_options.comm.verbose:
         print(
-            f"{' '*4}At iterate{str(0).rjust(7)}    nfg = {str(nfg).rjust(4)}"
-            f"{' '*4}J = {gx:14.6f}    ddx = {ddx:5.2f}"
+            f"{' '*4}At iterate {str(0).rjust(5)}    nfg = {str(nfg).rjust(5)}"
+            f"{' '*4}J = {gx:11.6f}    ddx = {ddx:4.2f}"
         )
 
     if "iter_cost" in return_options["keys"]:
@@ -996,8 +996,8 @@ def _sbs_optimize(
         if iter % n == 0:
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}At iterate{str(iter // n).rjust(7)}    nfg = {str(nfg).rjust(4)}"
-                    f"{' '*4}J = {gx:14.6f}    ddx = {ddx:5.2f}"
+                    f"{' '*4}At iterate {str(iter // n).rjust(5)}    nfg = {str(nfg).rjust(5)}"
+                    f"{' '*4}J = {gx:11.6f}    ddx = {ddx:4.2f}"
                 )
 
             if "iter_cost" in return_options["keys"]:
