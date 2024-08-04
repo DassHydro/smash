@@ -243,8 +243,8 @@ class _OptimizeCallback:
         # % intermediate_result is required by callback function in scipy
         if self.verbose:
             print(
-                f"{' '*4}At iterate {str(self.iterations).rjust(5)}    nfg = {str(self.nfg).rjust(5)}"
-                f"{' '*4}J = {self.iter_cost[-1]:11.6f}    |proj g| = {self.projg:11.6f}"
+                f"{' '*4}At iterate {self.iterations:>5}    nfg = {self.nfg:>5}    "
+                f"J = {self.iter_cost[-1]:>11.6g}    |proj g| = {self.projg:>11.6g}"
             )
 
         self.iterations += 1
@@ -259,8 +259,8 @@ class _OptimizeCallback:
     def termination(self, final_result: scipy_OptimizeResult):
         if self.verbose:
             print(
-                f"{' '*4}At iterate {str(self.iterations).rjust(5)}    nfg = {str(self.nfg).rjust(5)}"
-                f"{' '*4}J = {final_result.fun:11.6f}    |proj g| = {self.projg:11.6f}"
+                f"{' '*4}At iterate {self.iterations:>5}    nfg = {self.nfg:>5}    "
+                f"J = {final_result.fun:>11.6g}    |proj g| = {self.projg:>11.6g}"
             )
             print(f"{' '*4}{final_result.message}")
 
@@ -446,13 +446,13 @@ def _optimize(
             model, wrap_options, wrap_returns, optimize_options, return_options
         )
         if wrap_options.comm.verbose:
-            print(f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
+            print(f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6g}'.format(wrap_options.cost.wjreg)}")
     elif auto_wjreg == "lcurve":
         wrap_options.cost.wjreg, lcurve_wjreg = _optimize_lcurve_wjreg(
             model, wrap_options, wrap_returns, optimize_options, return_options
         )
         if wrap_options.comm.verbose:
-            print(f"{' '*4}L-CURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
+            print(f"{' '*4}L-CURVE WJREG LAST CYCLE. wjreg: {'{:.6g}'.format(wrap_options.cost.wjreg)}")
     else:
         pass
 
@@ -680,8 +680,8 @@ def _adaptive_optimize(
 
         if wrap_options.comm.verbose:
             print(
-                f"{' '*4}At iterate {str(0).rjust(5)}    nfg = {str(1).rjust(5)}"
-                f"{' '*4}J = {model._output.cost:11.6f}    |proj g| = {projg:11.6f}"
+                f"{' '*4}At iterate {0:>5}    nfg = {1:>5}    "
+                f"J = {model._output.cost:>11.6g}    |proj g| = {projg:>11.6g}"
             )
 
         for ite in range(1, maxiter + 1):
@@ -728,8 +728,8 @@ def _adaptive_optimize(
 
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}At iterate {str(ite).rjust(5)}    nfg = {str(ite+1).rjust(5)}"
-                    f"{' '*4}J = {model._output.cost:11.6f}    |proj g| = {projg:11.6f}"
+                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    "
+                    f"J = {model._output.cost:>11.6g}    |proj g| = {projg:>11.6g}"
                 )
 
                 if ite == maxiter:
@@ -740,7 +740,7 @@ def _adaptive_optimize(
                 if wrap_options.comm.verbose:
                     print(
                         f"{' '*4}Reverting to iteration {opt_info['ite']} with "
-                        f"J = {opt_info['value']:.6f} due to early stopping"
+                        f"J = {opt_info['value']:.6g} due to early stopping"
                     )
 
                 x = opt_info["control"]
@@ -895,10 +895,7 @@ def _sbs_optimize(
     message = "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT"
 
     if wrap_options.comm.verbose:
-        print(
-            f"{' '*4}At iterate {str(0).rjust(5)}    nfg = {str(nfg).rjust(5)}"
-            f"{' '*4}J = {gx:11.6f}    ddx = {ddx:4.2f}"
-        )
+        print(f"{' '*4}At iterate {0:>5}    nfg = {nfg:>5}    J = {gx:>11.6g}    ddx = {ddx:>4.2g}")
 
     if "iter_cost" in return_options["keys"]:
         ret["iter_cost"] = np.array([gx])
@@ -996,8 +993,8 @@ def _sbs_optimize(
         if iter % n == 0:
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}At iterate {str(iter // n).rjust(5)}    nfg = {str(nfg).rjust(5)}"
-                    f"{' '*4}J = {gx:11.6f}    ddx = {ddx:4.2f}"
+                    f"{' '*4}At iterate {iter//n:>5}    nfg = {nfg:>5}    J = {gx:>11.6g}    "
+                    f"ddx = {ddx:>4.2g}"
                 )
 
             if "iter_cost" in return_options["keys"]:

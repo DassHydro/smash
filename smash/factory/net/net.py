@@ -607,8 +607,8 @@ class Net(object):
 
             if verbose:
                 print(
-                    f"{' '*4}At iterate {str(ite).rjust(5)}    nfg = {str(ite+1).rjust(5)}"
-                    f"{' '*4}J = {loss:11.6f}    |proj g| = {projg:11.6f}"
+                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    J = {loss:>11.6g}    "
+                    f"|proj g| = {projg:>11.6g}"
                 )
 
                 if ite == maxiter:
@@ -619,7 +619,7 @@ class Net(object):
                 if verbose:
                     print(
                         f"{' '*4}Reverting to iteration {loss_opt['ite']} with "
-                        f"J = {loss_opt['value']:.6f} due to early stopping"
+                        f"J = {loss_opt['value']:.6g} due to early stopping"
                     )
 
                 parameters.nn_parameters = nn_parameters_bak  # revert nn_parameters
