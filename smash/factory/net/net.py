@@ -607,7 +607,7 @@ class Net(object):
 
             if verbose:
                 print(
-                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    J = {loss:>11.6f}    "
+                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    J = {loss:>.5e}    "
                     f"|proj g| = {projg:>10.5e}"
                 )
 
@@ -619,7 +619,7 @@ class Net(object):
                 if verbose:
                     print(
                         f"{' '*4}Reverting to iteration {loss_opt['ite']} with "
-                        f"J = {loss_opt['value']:.6f} due to early stopping"
+                        f"J = {loss_opt['value']:.5e} due to early stopping"
                     )
 
                 parameters.nn_parameters = nn_parameters_bak  # revert nn_parameters

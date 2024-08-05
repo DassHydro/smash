@@ -102,14 +102,14 @@ def default_optimize_options(
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
-        At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
-        At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
-        At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
-        At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
-        At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
-        At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
-        At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
+        At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+        At iterate     1    nfg =    30    J = 9.84107e-02    ddx = 0.64
+        At iterate     2    nfg =    59    J = 4.54087e-02    ddx = 0.32
+        At iterate     3    nfg =    88    J = 3.81818e-02    ddx = 0.16
+        At iterate     4    nfg =   117    J = 3.73617e-02    ddx = 0.08
+        At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
+        At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
+        At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
         CONVERGENCE: DDX < 0.01
 
     Customize the optimize options dictionary by removing ``'kexc'`` from the optimized parameters
@@ -160,16 +160,16 @@ def default_optimize_options(
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
-        At iterate      1    nfg =    17    J =      0.128863    ddx = 0.64
-        At iterate      2    nfg =    32    J =      0.069483    ddx = 0.32
-        At iterate      3    nfg =    49    J =      0.045072    ddx = 0.16
-        At iterate      4    nfg =    65    J =      0.044047    ddx = 0.08
-        At iterate      5    nfg =    84    J =      0.043528    ddx = 0.04
-        At iterate      6    nfg =   102    J =      0.042690    ddx = 0.02
-        At iterate      7    nfg =   122    J =      0.042665    ddx = 0.01
-        At iterate      8    nfg =   140    J =      0.042606    ddx = 0.00
-        CONVERGENCE: DDX < 0.0
+        At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+        At iterate     1    nfg =    17    J = 1.28863e-01    ddx = 0.64
+        At iterate     2    nfg =    32    J = 6.94838e-02    ddx = 0.32
+        At iterate     3    nfg =    49    J = 4.50720e-02    ddx = 0.16
+        At iterate     4    nfg =    65    J = 4.40468e-02    ddx = 0.08
+        At iterate     5    nfg =    84    J = 4.35278e-02    ddx = 0.04
+        At iterate     6    nfg =   102    J = 4.26906e-02    ddx = 0.02
+        At iterate     7    nfg =   122    J = 4.26645e-02    ddx = 0.01
+        At iterate     8    nfg =   140    J = 4.26062e-02    ddx = 0.01
+        CONVERGENCE: DDX < 0.01
 
     Get the default optimization options for a different mapping
 
@@ -210,18 +210,18 @@ def default_optimize_options(
     >>> opt_ann["random_state"] = 21
     >>> model.optimize(mapping="ann", optimize_options=opt_ann)
     </> Optimize
-        At iterate      0    nfg =    1    J =       1.222062    |proj g| =       0.000209
-        At iterate      1    nfg =    2    J =       1.219307    |proj g| =       0.000240
+        At iterate     0    nfg =     1    J = 1.22206e+00    |proj g| = 2.09135e-04
+        At iterate     1    nfg =     2    J = 1.21931e+00    |proj g| = 2.39937e-04
         ...
-        At iterate     40    nfg =   41    J =       0.052151    |proj g| =       0.013186
-        At iterate     41    nfg =   42    J =       0.051206    |proj g| =       0.003747
-        At iterate     42    nfg =   43    J =       0.057921    |proj g| =       0.005087
-        At iterate     43    nfg =   44    J =       0.063805    |proj g| =       0.010100
-        At iterate     44    nfg =   45    J =       0.065734    |proj g| =       0.013365
-        At iterate     45    nfg =   46    J =       0.064539    |proj g| =       0.015616
-        At iterate     46    nfg =   47    J =       0.063309    |proj g| =       0.017270
+        At iterate    40    nfg =    41    J = 5.21514e-02    |proj g| = 1.31863e-02
+        At iterate    41    nfg =    42    J = 5.12064e-02    |proj g| = 3.74748e-03
+        At iterate    42    nfg =    43    J = 5.79208e-02    |proj g| = 5.08674e-03
+        At iterate    43    nfg =    44    J = 6.38050e-02    |proj g| = 1.01001e-02
+        At iterate    44    nfg =    45    J = 6.57343e-02    |proj g| = 1.33649e-02
+        At iterate    45    nfg =    46    J = 6.45393e-02    |proj g| = 1.56155e-02
+        At iterate    46    nfg =    47    J = 6.33092e-02    |proj g| = 1.72698e-02
         EARLY STOPPING: NO IMPROVEMENT for 5 CONSECUTIVE ITERATIONS
-        Reverting to iteration 41 with J = 0.051206 due to early stopping
+        Reverting to iteration 41 with J = 5.12064e-02 due to early stopping
 
     The training process was terminated after 46 iterations, where the loss did not decrease below the minimal
     value at iteration 41 for 5 consecutive iterations. The optimal parameters are thus recorded at epoch 41.
@@ -310,13 +310,13 @@ def default_bayesian_optimize_options(
 
     >>> model_u = smash.bayesian_optimize(model, mapping="uniform", optimize_options=opt_u)
     </> Bayesian Optimize
-        At iterate      0    nfg =     1    J =     77.049133    ddx = 0.64
-        At iterate      1    nfg =    68    J =      2.584603    ddx = 0.64
-        At iterate      2    nfg =   135    J =      2.324317    ddx = 0.32
-        At iterate      3    nfg =   202    J =      2.304130    ddx = 0.08
-        At iterate      4    nfg =   269    J =      2.262191    ddx = 0.08
-        At iterate      5    nfg =   343    J =      2.260251    ddx = 0.01
-        At iterate      6    nfg =   416    J =      2.258220    ddx = 0.00
+        At iterate     0    nfg =     1    J = 7.70491e+01    ddx = 0.64
+        At iterate     1    nfg =    68    J = 2.58460e+00    ddx = 0.64
+        At iterate     2    nfg =   135    J = 2.32432e+00    ddx = 0.32
+        At iterate     3    nfg =   202    J = 2.30413e+00    ddx = 0.08
+        At iterate     4    nfg =   269    J = 2.26219e+00    ddx = 0.08
+        At iterate     5    nfg =   343    J = 2.26025e+00    ddx = 0.01
+        At iterate     6    nfg =   416    J = 2.25822e+00    ddx = 0.01
         CONVERGENCE: DDX < 0.01
 
     Get the default bayesian optimization options for a different mapping
@@ -351,18 +351,18 @@ def default_bayesian_optimize_options(
     >>> opt_ml["termination_crit"]["maxiter"] = 10
     >>> model.bayesian_optimize(mapping="multi-linear", optimize_options=opt_ml)
     </> Bayesian Optimize
-        At iterate      0    nfg =     1    J =     77.049095    |proj g| =    147.958771
-        At iterate      1    nfg =     2    J =      6.694370    |proj g| =      4.301311
-        At iterate      2    nfg =     3    J =      6.527157    |proj g| =      3.754591
-        At iterate      3    nfg =     4    J =      5.088758    |proj g| =      2.261085
-        At iterate      4    nfg =     5    J =      4.736641    |proj g| =      1.637916
-        At iterate      5    nfg =     6    J =      4.421250    |proj g| =      1.300914
-        At iterate      6    nfg =     7    J =      4.284939    |proj g| =      1.345769
-        At iterate      7    nfg =     8    J =      4.196455    |proj g| =      1.179024
-        At iterate      8    nfg =     9    J =      4.139528    |proj g| =      1.159659
-        At iterate      9    nfg =    10    J =      4.099973    |proj g| =      1.042880
-        At iterate     10    nfg =    11    J =      4.027408    |proj g| =      1.142047
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
+        At iterate     0    nfg =     1    J = 7.70491e+01    |proj g| = 1.05147e+04
+        At iterate     1    nfg =     2    J = 6.69437e+00    |proj g| = 2.15263e+02
+        At iterate     2    nfg =     3    J = 6.52716e+00    |proj g| = 2.03207e+02
+        At iterate     3    nfg =     4    J = 5.08876e+00    |proj g| = 6.83760e+01
+        At iterate     4    nfg =     5    J = 4.73664e+00    |proj g| = 4.19148e+01
+        At iterate     5    nfg =     6    J = 4.42125e+00    |proj g| = 1.94103e+01
+        At iterate     6    nfg =     7    J = 4.28494e+00    |proj g| = 9.39774e+00
+        At iterate     7    nfg =     8    J = 4.19646e+00    |proj g| = 4.74194e+00
+        At iterate     8    nfg =     9    J = 4.13953e+00    |proj g| = 1.74698e+00
+        At iterate     9    nfg =    10    J = 4.09997e+00    |proj g| = 1.04288e+00
+        At iterate    10    nfg =    11    J = 4.02741e+00    |proj g| = 4.41394e+00
+        STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
 
     The optimization process was terminated after 10 iterations, the maximal value we defined.
     """

@@ -79,14 +79,14 @@ def evaluation(
 
     >>> model.optimize()
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
-        At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
-        At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
-        At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
-        At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
-        At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
-        At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
-        At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
+        At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+        At iterate     1    nfg =    30    J = 9.84107e-02    ddx = 0.64
+        At iterate     2    nfg =    59    J = 4.54087e-02    ddx = 0.32
+        At iterate     3    nfg =    88    J = 3.81818e-02    ddx = 0.16
+        At iterate     4    nfg =   117    J = 3.73617e-02    ddx = 0.08
+        At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
+        At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
+        At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
         CONVERGENCE: DDX < 0.01
 
     Compute multiple evaluation metrics for all catchments

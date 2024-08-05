@@ -901,14 +901,14 @@ Optimize the Model
 
 >>> %(model_example_func)s
 </> Optimize
-    At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
-    At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
-    At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
-    At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
-    At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
-    At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
-    At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
-    At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
+    At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+    At iterate     1    nfg =    30    J = 9.84107e-02    ddx = 0.64
+    At iterate     2    nfg =    59    J = 4.54087e-02    ddx = 0.32
+    At iterate     3    nfg =    88    J = 3.81818e-02    ddx = 0.16
+    At iterate     4    nfg =   117    J = 3.73617e-02    ddx = 0.08
+    At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
+    At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
+    At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 Get the simulated discharges
@@ -1097,13 +1097,13 @@ Optimize the Model
 
 >>> %(model_example_func)s
 </> Bayesian Optimize
-    At iterate      0    nfg =     1    J =     77.049133    ddx = 0.64
-    At iterate      1    nfg =    68    J =      2.584603    ddx = 0.64
-    At iterate      2    nfg =   135    J =      2.324317    ddx = 0.32
-    At iterate      3    nfg =   202    J =      2.304130    ddx = 0.08
-    At iterate      4    nfg =   269    J =      2.262191    ddx = 0.08
-    At iterate      5    nfg =   343    J =      2.260251    ddx = 0.01
-    At iterate      6    nfg =   416    J =      2.258220    ddx = 0.00
+    At iterate     0    nfg =     1    J = 7.70491e+01    ddx = 0.64
+    At iterate     1    nfg =    68    J = 2.58460e+00    ddx = 0.64
+    At iterate     2    nfg =   135    J = 2.32432e+00    ddx = 0.32
+    At iterate     3    nfg =   202    J = 2.30413e+00    ddx = 0.08
+    At iterate     4    nfg =   269    J = 2.26219e+00    ddx = 0.08
+    At iterate     5    nfg =   343    J = 2.26025e+00    ddx = 0.01
+    At iterate     6    nfg =   416    J = 2.25822e+00    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 Get the simulated discharges:
@@ -1459,12 +1459,12 @@ a spatially uniform optimization
         },
     )
 </> Bayesian Optimize
-    At iterate      0    nfg =     1    J =     80.526947    ddx = 0.64
-    At iterate      1    nfg =    68    J =      3.029253    ddx = 0.64
-    At iterate      2    nfg =   135    J =      2.764919    ddx = 0.32
-    At iterate      3    nfg =   203    J =      2.760564    ddx = 0.04
-    At iterate      4    nfg =   271    J =      2.755039    ddx = 0.02
-    At iterate      5    nfg =   344    J =      2.754198    ddx = 0.01
+    At iterate     0    nfg =     1    J = 8.05269e+01    ddx = 0.64
+    At iterate     1    nfg =    68    J = 3.02925e+00    ddx = 0.64
+    At iterate     2    nfg =   135    J = 2.76492e+00    ddx = 0.32
+    At iterate     3    nfg =   203    J = 2.76056e+00    ddx = 0.04
+    At iterate     4    nfg =   271    J = 2.75504e+00    ddx = 0.02
+    At iterate     5    nfg =   344    J = 2.75420e+00    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 """
 )
