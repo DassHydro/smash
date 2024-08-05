@@ -608,7 +608,7 @@ class Net(object):
             if verbose:
                 print(
                     f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    J = {loss:>.5e}    "
-                    f"|proj g| = {projg:>10.5e}"
+                    f"|proj g| = {projg:>.5e}"
                 )
 
                 if ite == maxiter:
