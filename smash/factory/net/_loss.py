@@ -36,6 +36,9 @@ def _hcost_prime(
     # % Update rr_parameters and/or rr_initial_states using net
     y_reshaped = _net_to_parameters(net, x, model_params_states, parameters, instance.mesh.flwdir.shape)
 
+    # % Change the mapping to trigger distributed control to get distributed gradients
+    wrap_options.optimize.mapping = "distributed"
+
     # % Run adjoint model
     wrap_parameters_to_control(
         instance.setup,
@@ -49,6 +52,9 @@ def _hcost_prime(
     wrap_control_to_parameters(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
     )
+
+    # % Reset mapping to ann
+    wrap_options.optimize.mapping = "ann"
 
     # % Get the gradient of regionalization NN
     grad_reg = []

@@ -617,28 +617,12 @@ RETURN_OPTIONS_BASE_DOC = {
         the whole domain for specific time steps.
         """,
     ),
-    "iter_cost": (
-        """
-        `bool`, default False
-        """,
-        """
-        Whether to return cost iteration values.
-        """,
-    ),
-    "iter_projg": (
-        """
-        `bool`, default False
-        """,
-        """
-        Whether to return infinity norm of the projected gardient iteration values.
-        """,
-    ),
     "control_vector": (
         """
         `bool`, default False
         """,
         """
-        Whether to return control vector at the end of the optimization process.
+        Whether to return the control vector solution of the optimization (it can be transformed).
         """,
     ),
     "net": (
@@ -656,6 +640,14 @@ RETURN_OPTIONS_BASE_DOC = {
         """,
         """
         Whether to return cost value.
+        """,
+    ),
+    "projg": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return the projected gardient value (infinity norm of the Jacobian matrix).
         """,
     ),
     "jobs": (
@@ -909,17 +901,18 @@ Optimize the Model
     At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
     At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
     At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
+    At iterate     8    nfg =   240    J = 3.67277e-02    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
-array([[5.8217382e-04, 4.7552516e-04, 3.5390016e-04, ..., 1.9439360e+01,
-        1.9214035e+01, 1.8993553e+01],
-       [1.2144950e-04, 6.6219603e-05, 3.0706105e-05, ..., 4.8059664e+00,
-        4.7563825e+00, 4.7077618e+00],
-       [1.9631827e-05, 6.9778653e-06, 2.2202073e-06, ..., 1.2523955e+00,
-        1.2394531e+00, 1.2267693e+00]], dtype=float32)
+array([[5.8217300e-04, 4.7552472e-04, 3.5390016e-04, ..., 1.9405001e+01,
+        1.9179874e+01, 1.8959581e+01],
+       [1.2144940e-04, 6.6219603e-05, 3.0706153e-05, ..., 4.7972722e+00,
+        4.7477250e+00, 4.6991367e+00],
+       [1.9631812e-05, 6.9778694e-06, 2.2202112e-06, ..., 1.2500964e+00,
+        1.2371680e+00, 1.2244837e+00]], dtype=float32)
 """
 )
 
@@ -1109,12 +1102,12 @@ Optimize the Model
 Get the simulated discharges:
 
 >>> %(model_example_response)s.response.q
-array([[3.8725851e-04, 3.5436003e-04, 3.0995562e-04, ..., 1.9623451e+01,
-        1.9391096e+01, 1.9163759e+01],
-       [9.0669761e-05, 6.3609077e-05, 3.9684928e-05, ..., 4.7896295e+00,
-        4.7395453e+00, 4.6904192e+00],
-       [1.6137006e-05, 7.8192916e-06, 3.4578904e-06, ..., 1.2418083e+00,
-        1.2288600e+00, 1.2161492e+00]], dtype=float32)
+array([[3.8725790e-04, 3.5435968e-04, 3.0995542e-04, ..., 1.9623449e+01,
+        1.9391096e+01, 1.9163761e+01],
+       [9.0669666e-05, 6.3609048e-05, 3.9684954e-05, ..., 4.7896299e+00,
+        4.7395458e+00, 4.6904192e+00],
+       [1.6136990e-05, 7.8192916e-06, 3.4578943e-06, ..., 1.2418084e+00,
+        1.2288600e+00, 1.2161493e+00]], dtype=float32)
 """
 )
 
@@ -1465,6 +1458,7 @@ a spatially uniform optimization
     At iterate     3    nfg =   203    J = 2.76056e+00    ddx = 0.04
     At iterate     4    nfg =   271    J = 2.75504e+00    ddx = 0.02
     At iterate     5    nfg =   344    J = 2.75420e+00    ddx = 0.01
+    At iterate     6    nfg =   392    J = 2.75403e+00    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 """
 )

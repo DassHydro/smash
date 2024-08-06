@@ -110,6 +110,7 @@ def default_optimize_options(
         At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
         At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
         At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
+        At iterate     8    nfg =   240    J = 3.67277e-02    ddx = 0.01
         CONVERGENCE: DDX < 0.01
 
     Customize the optimize options dictionary by removing ``'kexc'`` from the optimized parameters

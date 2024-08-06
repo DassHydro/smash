@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from smash._constant import ADAPTIVE_OPTIMIZER, OPTIMIZABLE_NN_PARAMETERS, OPTIMIZER_CLASS
-from smash.core.simulation.optimize._tools import _inf_norm
+from smash.core.simulation.optimize._tools import _inf_norm, _net_to_vect
+from smash.core.simulation.optimize.optimize import Optimize
 from smash.factory.net._layers import (
     Activation,
     Conv2D,
@@ -26,6 +27,9 @@ from smash.factory.net._standardize import (
     _standardize_set_bias_args,
     _standardize_set_trainable_args,
     _standardize_set_weight_args,
+)
+from smash.fcore._mwd_parameters_manipulation import (
+    parameters_to_control as wrap_parameters_to_control,
 )
 
 if TYPE_CHECKING:
@@ -531,83 +535,90 @@ class Net(object):
             random_state=random_state,
         )
 
+        # % First evaluation
+        # calculate the gradient of J wrt rr_parameters (output of the regionalization NN)
+        # and get the gradient of the parameterization NN if used
+        init_cost_grad, nn_parameters_b = _hcost_prime(
+            self, x_train, model_params_states, instance, parameters, wrap_options, wrap_returns
+        )
+        cost_grad = self._backward_pass(init_cost_grad, inplace=False)  # do not update weight and bias
+
+        projg = _inf_norm([cost_grad, nn_parameters_b])
+
+        # calculate cost
+        cost = _hcost(instance)  # forward_run to update cost inside _hcost_prime
+
+        if verbose:
+            print(
+                f"{' '*4}At iterate {0:>5}    nfg = {1:>5}    J = {cost:>.5e}    " f"|proj g| = {projg:>.5e}"
+            )
+
+        # % Early stopping
+        istop = 0
+        opt_info = {"cost": np.inf}  # only used for early_stopping
+
         # % Initialize optimizer for the parameterization NN if used
         ind = ADAPTIVE_OPTIMIZER.index(optimizer)
         func = eval(OPTIMIZER_CLASS[ind])
 
         opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * instance.setup.n_layers)]
 
-        early_stopped = False
-
         # % Train model
-        for ite in range(maxiter + 1):
-            # calculate the gradient of J wrt rr_parameters (output of the regionalization NN)
-            # and get the gradient of the parameterization NN if used
-            init_loss_grad, nn_parameters_b = _hcost_prime(
+        for ite in range(1, maxiter + 1):
+            # backpropagation and weights update
+            for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS[max(0, instance.setup.n_layers - 1)]):
+                if (
+                    key in model_params_states
+                ):  # update trainable parameters of the parameterization NN if used
+                    setattr(
+                        parameters.nn_parameters,
+                        key,
+                        opt_nn_parameters[i].update(
+                            getattr(parameters.nn_parameters, key), nn_parameters_b[i]
+                        ),
+                    )
+
+            self._backward_pass(init_cost_grad, inplace=True)  # update weights of the regionalization NN
+
+            # cost and gradient computation
+            init_cost_grad, nn_parameters_b = _hcost_prime(
                 self, x_train, model_params_states, instance, parameters, wrap_options, wrap_returns
             )
+            cost_grad = self._backward_pass(init_cost_grad, inplace=False)  # do not update weight and bias
 
-            # compute loss
-            loss = _hcost(instance)
-            self.history["loss_train"].append(loss)
+            projg = _inf_norm([cost_grad, nn_parameters_b])
+
+            cost = _hcost(instance)  # forward_run to update cost inside _hcost_prime
 
             # save optimal parameters if early stopping is used
             if early_stopping:
-                if ite == 0:
-                    loss_opt = {"ite": 0, "value": loss}
-                    nn_parameters_bak = parameters.nn_parameters.copy()
-
-                if loss < loss_opt["value"]:
-                    loss_opt["ite"] = ite
-                    loss_opt["value"] = loss
+                if cost < opt_info["cost"] or ite == 1:
+                    opt_info["ite"] = ite
+                    opt_info["cost"] = cost
 
                     # backup nn_parameters
-                    nn_parameters_bak = parameters.nn_parameters.copy()
+                    opt_info["nn_parameters"] = parameters.nn_parameters.copy()
 
-                    # backup weights and biases of rr_parameters
-                    for layer in self.layers:
-                        if hasattr(layer, "_initialize"):
-                            layer._weight = np.copy(layer.weight)
-                            layer._bias = np.copy(layer.bias)
+                    # backup net
+                    opt_info["net_layers"] = self.copy().layers
 
-                else:
-                    if (
-                        ite - loss_opt["ite"] > early_stopping
-                    ):  # stop training if the loss values do not decrease through
-                        # early_stopping consecutive iterations
-                        if verbose:
-                            print(
-                                f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
-                                f"ITERATIONS"
-                            )
-                        break
-
-            # backpropagation and weights update
-            if ite < maxiter:
-                for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS[max(0, instance.setup.n_layers - 1)]):
-                    if (
-                        key in model_params_states
-                    ):  # update trainable parameters of the parameterization NN if used
-                        setattr(
-                            parameters.nn_parameters,
-                            key,
-                            opt_nn_parameters[i].update(
-                                getattr(parameters.nn_parameters, key), nn_parameters_b[i]
-                            ),
+                elif (
+                    ite - opt_info["ite"] > early_stopping
+                ):  # stop training if the cost values do not decrease through early_stopping consecutive
+                    # iterations
+                    if verbose:
+                        print(
+                            f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
+                            f"ITERATIONS"
                         )
+                    break
 
-                # backpropagation and update weights of the regionalization NN
-                loss_grad = self._backward_pass(init_loss_grad, inplace=True)
-            else:  # do not update weights at the last iteration
-                loss_grad = self._backward_pass(init_loss_grad, inplace=False)
-
-            # calculate projected gradient for the LPR operator
-            projg = _inf_norm([loss_grad, nn_parameters_b])
             self.history["proj_grad"].append(projg)
+            self.history["loss_train"].append(cost)
 
             if verbose:
                 print(
-                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    J = {loss:>.5e}    "
+                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    J = {cost:>.5e}    "
                     f"|proj g| = {projg:>.5e}"
                 )
 
@@ -615,29 +626,20 @@ class Net(object):
                     print(f"{' '*4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
 
         if early_stopping:
-            if loss_opt["ite"] < maxiter:
+            if opt_info["ite"] < maxiter:
                 if verbose:
                     print(
-                        f"{' '*4}Reverting to iteration {loss_opt['ite']} with "
-                        f"J = {loss_opt['value']:.5e} due to early stopping"
+                        f"{' '*4}Reverting to iteration {opt_info['ite']} with "
+                        f"J = {opt_info['cost']:.5e} due to early stopping"
                     )
 
-                parameters.nn_parameters = nn_parameters_bak  # revert nn_parameters
+                parameters.nn_parameters = opt_info["nn_parameters"]  # revert nn_parameters
 
-                for layer in self.layers:  # revert weights and biases of rr_parameters
-                    if hasattr(layer, "_initialize"):
-                        layer.weight = np.copy(layer._weight)
-                        layer.bias = np.copy(layer._bias)
+                self.layers = opt_info["net_layers"]  # revert net
 
-                early_stopped = True
+                istop = opt_info["ite"]
 
-            # remove tmp attr for each layer of net
-            for layer in self.layers:
-                if hasattr(layer, "_initialize"):
-                    del layer._weight
-                    del layer._bias
-
-        return early_stopped
+        return istop
 
     def set_weight(self, value: list[Any] | None = None, random_state: int | None = None):
         """

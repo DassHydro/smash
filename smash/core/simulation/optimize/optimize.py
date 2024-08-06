@@ -74,21 +74,18 @@ class Optimize:
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 
-    iter_cost : `numpy.ndarray`
-        An array of shape *(m,)* representing cost iteration values from *m* iterations.
-
-    iter_projg : `numpy.ndarray`
-        An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from
-        *m* iterations.
-
     control_vector : `numpy.ndarray`
-        An array of shape *(k,)* representing the control vector at end of optimization.
+        An array of shape *(k,)* representing the control vector solution of the optimization (it can be
+        transformed).
 
     net : `Net <factory.Net>`
         The trained neural network.
 
     cost : `float`
         Cost value.
+
+    projg : `numpy.ndarray`
+        Projected gardient value (infinity norm of the Jacobian matrix).
 
     jobs : `float`
         Cost observation component value.
@@ -166,18 +163,15 @@ class BayesianOptimize:
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 
-    iter_cost : `numpy.ndarray`
-        An array of shape *(m,)* representing cost iteration values from *m* iterations.
-
-    iter_projg : `numpy.ndarray`
-        An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from
-        *m* iterations.
-
     control_vector : `numpy.ndarray`
-        An array of shape *(k,)* representing the control vector at end of optimization.
+        An array of shape *(k,)* representing the control vector solution of the optimization (it can be
+        transformed).
 
     cost : `float`
         Cost value.
+
+    projg : `numpy.ndarray`
+        Projected gardient value (infinity norm of the Jacobian matrix).
 
     log_lkh : `float`
         Log likelihood component value.
@@ -224,7 +218,7 @@ class BayesianOptimize:
             return self.__class__.__name__ + "()"
 
 
-class _OptimizeCallback:
+class _ScipyOptimizeCallback:
     # % Private callback class for external optimizer i.e. L-BFGS-B from scipy
     def __init__(self, verbose: bool):
         self.verbose = verbose
@@ -234,37 +228,33 @@ class _OptimizeCallback:
         self.nfg = 1
         self.count_nfg = 0
 
-        self.iter_cost = np.array([])
+        self.cost = None
 
-        self.iter_projg = np.array([])
         self.projg = None
 
-    def callback(self, intermediate_result: scipy_OptimizeResult):
+    def intermediate(self, intermediate_result: scipy_OptimizeResult):
         # % intermediate_result is required by callback function in scipy
         if self.verbose:
             print(
                 f"{' '*4}At iterate {self.iterations:>5}    nfg = {self.nfg:>5}    "
-                f"J = {self.iter_cost[-1]:>.5e}    |proj g| = {self.projg:>.5e}"
+                f"J = {self.cost:>.5e}    |proj g| = {self.projg:>.5e}"
             )
 
         self.iterations += 1
 
         self.nfg = self.count_nfg
 
-        self.iter_cost = np.append(self.iter_cost, intermediate_result.fun)
+        self.cost = intermediate_result.fun
 
-        self.iter_projg = np.append(self.iter_projg, self.projg)
         self.projg = self.projg_bak
 
-    def termination(self, final_result: scipy_OptimizeResult):
+    def terminate(self, final_result: scipy_OptimizeResult):
         if self.verbose:
             print(
                 f"{' '*4}At iterate {self.iterations:>5}    nfg = {self.nfg:>5}    "
-                f"J = {final_result.fun:>.5e}    |proj g| = {self.projg:>.5e}"
+                f"J = {self.cost:>.5e}    |proj g| = {self.projg:>.5e}"
             )
             print(f"{' '*4}{final_result.message}")
-
-        self.iter_projg = np.append(self.iter_projg, self.projg)
 
 
 def _optimize_fast_wjreg(
@@ -605,9 +595,15 @@ def _apply_optimizer(
         ret = _lbfgsb_optimize(model, parameters, wrap_options, wrap_returns, return_options)
 
     elif wrap_options.optimize.optimizer in ADAPTIVE_OPTIMIZER:
-        ret = _adaptive_optimize(
-            model, parameters, wrap_options, wrap_returns, optimize_options, return_options
-        )
+        if "net" in optimize_options.keys():
+            ret = _reg_ann_adaptive_optimize(
+                model, parameters, wrap_options, wrap_returns, optimize_options, return_options
+            )
+
+        else:
+            ret = _adaptive_optimize(
+                model, parameters, wrap_options, wrap_returns, optimize_options, return_options
+            )
 
     # % Manually deallocate control
     parameters.control.dealloc()
@@ -623,149 +619,198 @@ def _adaptive_optimize(
     optimize_options: dict,
     return_options: dict,
 ) -> dict:
-    ret = {}
+    ind = ADAPTIVE_OPTIMIZER.index(wrap_options.optimize.optimizer)
+    func = eval(OPTIMIZER_CLASS[ind])
 
-    if "net" in optimize_options.keys():
-        net = _reg_ann_adaptive_optimize(model, parameters, wrap_options, wrap_returns, optimize_options)
+    adap_opt = func(learning_rate=optimize_options["learning_rate"])
 
-        if "net" in return_options["keys"]:
-            ret["net"] = net
+    maxiter = optimize_options["termination_crit"]["maxiter"]
+    early_stopping = optimize_options["termination_crit"]["early_stopping"]
 
-        if "iter_cost" in return_options["keys"]:
-            ret["iter_cost"] = net.history["loss_train"]
+    wrap_parameters_to_control(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        wrap_options,
+    )
 
-        if "iter_projg" in return_options["keys"]:
-            ret["iter_projg"] = net.history["proj_grad"]
+    x = parameters.control.x.copy()
 
-        if "control_vector" in return_options["keys"]:
-            ret["control_vector"] = np.append(parameters.control.x, _net_to_vect(net))
+    l_control = parameters.control.l.copy()
+    u_control = parameters.control.u.copy()
 
-    else:
-        ind = ADAPTIVE_OPTIMIZER.index(wrap_options.optimize.optimizer)
-        func = eval(OPTIMIZER_CLASS[ind])
+    has_lower_bound = np.isin(parameters.control.nbd, [1, 2])
+    has_upper_bound = np.isin(parameters.control.nbd, [2, 3])
 
-        adap_opt = func(learning_rate=optimize_options["learning_rate"])
+    # % First evaluation
+    parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+    grad = parameters_b.control.x.copy()
+    projg = _inf_norm(grad)
 
-        maxiter = optimize_options["termination_crit"]["maxiter"]
-        early_stopping = optimize_options["termination_crit"]["early_stopping"]
+    opt_info = {"cost": np.inf}  # only used for early_stopping
 
-        wrap_parameters_to_control(
-            model.setup,
-            model.mesh,
-            model._input_data,
-            parameters,
-            wrap_options,
+    if wrap_options.comm.verbose:
+        print(
+            f"{' '*4}At iterate {0:>5}    nfg = {1:>5}    "
+            f"J = {model._output.cost:>.5e}    |proj g| = {projg:>.5e}"
         )
 
-        x = parameters.control.x.copy()
+    for ite in range(1, maxiter + 1):
+        # % Gradient-based parameter update
+        x = adap_opt.update(x, grad)
 
-        l_control = parameters.control.l.copy()
-        u_control = parameters.control.u.copy()
+        # % Check bounds condition
+        x = np.where(has_lower_bound, np.maximum(x, l_control), x)
+        x = np.where(has_upper_bound, np.minimum(x, u_control), x)
 
-        has_lower_bound = np.isin(parameters.control.nbd, [1, 2])
-        has_upper_bound = np.isin(parameters.control.nbd, [2, 3])
+        # % Set control values and run adjoint model to get new gradients
+        setattr(parameters.control, "x", x)
 
-        # % First evaluation
         parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
         grad = parameters_b.control.x.copy()
+
         projg = _inf_norm(grad)
 
-        opt_info = {"ite": 0, "value": model._output.cost, "control": x}
+        # % Stop if early stopping is set and met
+        if early_stopping:
+            if model._output.cost < opt_info["cost"] or ite == 1:
+                opt_info["ite"] = ite
+                opt_info["control"] = np.copy(x)
+                opt_info["cost"] = model._output.cost
+                opt_info["projg"] = projg
 
-        if "iter_cost" in return_options["keys"]:
-            ret["iter_cost"] = np.array([model._output.cost])
-
-        if "iter_projg" in return_options["keys"]:
-            ret["iter_projg"] = np.array([projg])
+            elif (
+                ite - opt_info["ite"] > early_stopping
+            ):  # stop training if the loss values do not decrease through early_stopping consecutive
+                # iterations
+                if wrap_options.comm.verbose:
+                    print(
+                        f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
+                        f"ITERATIONS"
+                    )
+                break
 
         if wrap_options.comm.verbose:
             print(
-                f"{' '*4}At iterate {0:>5}    nfg = {1:>5}    "
+                f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    "
                 f"J = {model._output.cost:>.5e}    |proj g| = {projg:>.5e}"
             )
 
-        for ite in range(1, maxiter + 1):
-            # % Gradient-based parameter update
-            x = adap_opt.update(x, grad)
+            if ite == maxiter:
+                print(f"{' '*4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
 
-            # % Check bounds condition
-            x = np.where(has_lower_bound, np.maximum(x, l_control), x)
-            x = np.where(has_upper_bound, np.minimum(x, u_control), x)
-
-            # % Set control values and run adjoint model to get new gradients
-            setattr(parameters.control, "x", x)
-
-            parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
-            grad = parameters_b.control.x.copy()
-
-            projg = _inf_norm(grad)
-
-            # % Set returned values based on return_options
-            if "iter_cost" in return_options["keys"]:
-                ret["iter_cost"] = np.append(ret["iter_cost"], model._output.cost)
-
-            if "iter_projg" in return_options["keys"]:
-                ret["iter_projg"] = np.append(ret["iter_projg"], projg)
-
-            # % Stop if early stopping is set and met
-            if early_stopping:
-                if model._output.cost < opt_info["value"]:
-                    opt_info["ite"] = ite
-                    opt_info["value"] = model._output.cost
-                    opt_info["control"] = x.copy()
-
-                else:
-                    if (
-                        ite - opt_info["ite"] > early_stopping
-                    ):  # stop training if the loss values do not decrease through early_stopping consecutive
-                        # iterations
-                        if wrap_options.comm.verbose:
-                            print(
-                                f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
-                                f"ITERATIONS"
-                            )
-                        break
-
+    if early_stopping:
+        if opt_info["ite"] < maxiter:
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    "
-                    f"J = {model._output.cost:>.5e}    |proj g| = {projg:>.5e}"
+                    f"{' '*4}Reverting to iteration {opt_info['ite']} with "
+                    f"J = {opt_info['cost']:.5e} due to early stopping"
                 )
 
-                if ite == maxiter:
-                    print(f"{' '*4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
+            x = opt_info["control"]
+            projg = opt_info["projg"]
 
-        if early_stopping:
-            if opt_info["ite"] < maxiter:
-                if wrap_options.comm.verbose:
-                    print(
-                        f"{' '*4}Reverting to iteration {opt_info['ite']} with "
-                        f"J = {opt_info['value']:.5e} due to early stopping"
-                    )
+    # % Apply final control and forward run for updating final states
+    setattr(parameters.control, "x", x)
 
-                x = opt_info["control"]
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
 
-        # % Apply final control and forward run for updating final states
-        setattr(parameters.control, "x", x)
+    ret = {}
 
-        wrap_forward_run(
-            model.setup,
-            model.mesh,
-            model._input_data,
-            parameters,
-            model._output,
-            wrap_options,
-            wrap_returns,
-        )
+    if "control_vector" in return_options["keys"]:
+        ret["control_vector"] = x
 
-        if "control_vector" in return_options["keys"]:
-            ret["control_vector"] = parameters.control.x.copy()
+    if "projg" in return_options["keys"]:
+        ret["projg"] = projg
 
-        if "serr_mu" in return_options["keys"]:
-            ret["serr_mu"] = model.get_serr_mu().copy()
+    if "serr_mu" in return_options["keys"]:
+        ret["serr_mu"] = model.get_serr_mu().copy()
 
-        if "serr_sigma" in return_options["keys"]:
-            ret["serr_sigma"] = model.get_serr_sigma().copy()
+    if "serr_sigma" in return_options["keys"]:
+        ret["serr_sigma"] = model.get_serr_sigma().copy()
+
+    return ret
+
+
+def _reg_ann_adaptive_optimize(
+    model: Model,
+    parameters: ParametersDT,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+    optimize_options: dict,
+    return_options: dict,
+) -> Net:
+    # % Preprocessing input descriptors and normalization
+    l_desc = model._input_data.physio_data.l_descriptor
+    u_desc = model._input_data.physio_data.u_descriptor
+
+    desc = model._input_data.physio_data.descriptor.copy()
+    desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
+
+    # % Train regionalization network
+    net = optimize_options["net"]
+
+    if net.layers[0].layer_name() == "Dense":
+        desc = desc.reshape(-1, desc.shape[-1])
+
+    istop = net._fit_d2p(
+        desc,
+        model,
+        parameters,
+        wrap_options,
+        wrap_returns,
+        wrap_options.optimize.optimizer,
+        optimize_options["parameters"],
+        optimize_options["learning_rate"],
+        optimize_options["random_state"],
+        optimize_options["termination_crit"]["maxiter"],
+        optimize_options["termination_crit"]["early_stopping"],
+        wrap_options.comm.verbose,
+    )
+
+    # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
+    if istop:
+        _net_to_parameters(net, desc, optimize_options["parameters"], parameters, model.mesh.flwdir.shape)
+
+    # % Reset control with ann mapping (do not apply to rr_parameters and rr_initial_states)
+    wrap_parameters_to_control(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        wrap_options,
+    )
+
+    # % Forward run for updating final states
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
+
+    ret = {}
+
+    if "net" in return_options["keys"]:
+        ret["net"] = net
+
+    if "control_vector" in return_options["keys"]:
+        ret["control_vector"] = np.append(parameters.control.x, _net_to_vect(net))
+
+    if "projg" in return_options["keys"]:
+        ret["projg"] = net.history["proj_grad"][istop - 1]
 
     return ret
 
@@ -792,16 +837,16 @@ def _lbfgsb_optimize(
     l_control = np.where(np.isin(parameters.control.nbd, [0, 3]), None, parameters.control.l)
     u_control = np.where(np.isin(parameters.control.nbd, [0, 1]), None, parameters.control.u)
 
-    cb = _OptimizeCallback(wrap_options.comm.verbose)
+    scipy_callback = _ScipyOptimizeCallback(wrap_options.comm.verbose)
 
     res_optimize = scipy_minimize(
         _gradient_based_optimize_problem,
         x0,
-        args=(model, parameters, wrap_options, wrap_returns, cb),
+        args=(model, parameters, wrap_options, wrap_returns, scipy_callback),
         method="l-bfgs-b",
         jac=True,
         bounds=tuple(zip(l_control, u_control)),
-        callback=cb.callback,
+        callback=scipy_callback.intermediate,
         options={
             "maxiter": wrap_options.optimize.maxiter,
             "ftol": 2.22e-16 * wrap_options.optimize.factr,
@@ -810,7 +855,7 @@ def _lbfgsb_optimize(
         },
     )
 
-    cb.termination(res_optimize)
+    scipy_callback.terminate(res_optimize)
 
     # % Apply final control and forward run for updating final states
     setattr(parameters.control, "x", res_optimize["x"])
@@ -828,13 +873,10 @@ def _lbfgsb_optimize(
     ret = {}
 
     if "control_vector" in return_options["keys"]:
-        ret["control_vector"] = parameters.control.x.copy()
+        ret["control_vector"] = res_optimize["x"]
 
-    if "iter_cost" in return_options["keys"]:
-        ret["iter_cost"] = cb.iter_cost
-
-    if "iter_projg" in return_options["keys"]:
-        ret["iter_projg"] = cb.iter_projg
+    if "projg" in return_options["keys"]:
+        ret["projg"] = scipy_callback.projg
 
     if "serr_mu" in return_options["keys"]:
         ret["serr_mu"] = model.get_serr_mu().copy()
@@ -896,9 +938,6 @@ def _sbs_optimize(
 
     if wrap_options.comm.verbose:
         print(f"{' '*4}At iterate {0:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    ddx = {ddx:>4.2f}")
-
-    if "iter_cost" in return_options["keys"]:
-        ret["iter_cost"] = np.array([gx])
 
     for iter in range(1, wrap_options.optimize.maxiter * n + 1):
         if dxn > ddx:
@@ -990,17 +1029,17 @@ def _sbs_optimize(
 
         ia = -1
 
-        if iter % n == 0:
+        converged = ddx < 0.01
+
+        if (iter % n == 0) or converged:
             if wrap_options.comm.verbose:
+                iteration = iter // n + (iter % n > 0)
                 print(
-                    f"{' '*4}At iterate {iter//n:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    "
+                    f"{' '*4}At iterate {iteration:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    "
                     f"ddx = {ddx:>4.2f}"
                 )
 
-            if "iter_cost" in return_options["keys"]:
-                ret["iter_cost"] = np.append(ret["iter_cost"], gx)
-
-        if ddx < 0.01:
+        if converged:
             message = "CONVERGENCE: DDX < 0.01"
             break
 
@@ -1017,7 +1056,7 @@ def _sbs_optimize(
     )
 
     if "control_vector" in return_options["keys"]:
-        ret["control_vector"] = parameters.control.x.copy()
+        ret["control_vector"] = z_wa
 
     if "serr_mu" in return_options["keys"]:
         ret["serr_mu"] = model.get_serr_mu().copy()
@@ -1031,81 +1070,13 @@ def _sbs_optimize(
     return ret
 
 
-def _reg_ann_adaptive_optimize(
-    model: Model,
-    parameters: ParametersDT,
-    wrap_options: OptionsDT,
-    wrap_returns: ReturnsDT,
-    optimize_options: dict,
-) -> Net:
-    # % Preprocessing input descriptors and normalization
-    l_desc = model._input_data.physio_data.l_descriptor
-    u_desc = model._input_data.physio_data.u_descriptor
-
-    desc = model._input_data.physio_data.descriptor.copy()
-    desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
-
-    # % Train regionalization network
-    net = optimize_options["net"]
-
-    if net.layers[0].layer_name() == "Dense":
-        desc = desc.reshape(-1, desc.shape[-1])
-
-    # % Change the mapping to trigger distributed control to get distributed gradients
-    wrap_options.optimize.mapping = "distributed"
-
-    early_stopped = net._fit_d2p(
-        desc,
-        model,
-        parameters,
-        wrap_options,
-        wrap_returns,
-        wrap_options.optimize.optimizer,
-        optimize_options["parameters"],
-        optimize_options["learning_rate"],
-        optimize_options["random_state"],
-        optimize_options["termination_crit"]["maxiter"],
-        optimize_options["termination_crit"]["early_stopping"],
-        wrap_options.comm.verbose,
-    )
-
-    # % Reset mapping to ann once fit_d2p done
-    wrap_options.optimize.mapping = "ann"
-
-    # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
-    if early_stopped:
-        _net_to_parameters(net, desc, optimize_options["parameters"], parameters, model.mesh.flwdir.shape)
-
-    # % Reset control with ann mapping
-    wrap_parameters_to_control(
-        model.setup,
-        model.mesh,
-        model._input_data,
-        parameters,
-        wrap_options,
-    )  # only apply to nn_parameters if used since mapping has been reverted to ann
-
-    # % Forward run for updating final states
-    wrap_forward_run(
-        model.setup,
-        model.mesh,
-        model._input_data,
-        parameters,
-        model._output,
-        wrap_options,
-        wrap_returns,
-    )
-
-    return net
-
-
 def _gradient_based_optimize_problem(
     x: np.ndarray,
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-    callback: _OptimizeCallback,
+    scipy_callback: _ScipyOptimizeCallback,
 ) -> tuple[float, np.ndarray]:
     # % Set control values
     setattr(parameters.control, "x", x)
@@ -1115,15 +1086,15 @@ def _gradient_based_optimize_problem(
     grad = parameters_b.control.x.copy()
 
     # % Callback
-    callback.count_nfg += 1
+    scipy_callback.count_nfg += 1
 
-    if callback.iter_cost.size == 0:
-        callback.iter_cost = np.append(callback.iter_cost, model._output.cost)
+    if scipy_callback.cost is None:
+        scipy_callback.cost = model._output.cost
 
-    if callback.projg is None:
-        callback.projg = _inf_norm(grad)
+    if scipy_callback.projg is None:
+        scipy_callback.projg = _inf_norm(grad)
 
     else:
-        callback.projg_bak = _inf_norm(grad)
+        scipy_callback.projg_bak = _inf_norm(grad)
 
     return (model._output.cost, grad)
