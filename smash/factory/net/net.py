@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from smash._constant import ADAPTIVE_OPTIMIZER, OPTIMIZABLE_NN_PARAMETERS, OPTIMIZER_CLASS
-from smash.core.simulation.optimize._tools import _inf_norm, _net_to_vect
-from smash.core.simulation.optimize.optimize import Optimize
+from smash.core.simulation.optimize._tools import _inf_norm
 from smash.factory.net._layers import (
     Activation,
     Conv2D,
@@ -27,9 +26,6 @@ from smash.factory.net._standardize import (
     _standardize_set_bias_args,
     _standardize_set_trainable_args,
     _standardize_set_weight_args,
-)
-from smash.fcore._mwd_parameters_manipulation import (
-    parameters_to_control as wrap_parameters_to_control,
 )
 
 if TYPE_CHECKING:
