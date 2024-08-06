@@ -220,7 +220,7 @@ class BayesianOptimize:
 
 class _ScipyOptimizeCallback:
     # % Private callback class for external optimizer i.e. L-BFGS-B from scipy
-    def __init__(self, verbose: bool):
+    def __init__(self, callback: callable | None, verbose: bool):
         self.verbose = verbose
 
         self.iterations = 0
@@ -231,6 +231,8 @@ class _ScipyOptimizeCallback:
         self.cost = None
 
         self.projg = None
+
+        self.callback = callback
 
     def intermediate(self, intermediate_result: scipy_OptimizeResult):
         # % intermediate_result is required by callback function in scipy
@@ -247,6 +249,17 @@ class _ScipyOptimizeCallback:
         self.cost = intermediate_result.fun
 
         self.projg = self.projg_bak
+
+        if self.callback is not None:
+            self.callback(
+                iopt=Optimize(
+                    {
+                        "control_vector": intermediate_result.x,
+                        "cost": intermediate_result.fun,
+                        "projg": self.projg,
+                    }
+                )
+            )
 
     def terminate(self, final_result: scipy_OptimizeResult):
         if self.verbose:
@@ -280,7 +293,7 @@ def _optimize_fast_wjreg(
 
     # Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
-    _apply_optimizer(model, wparameters, options, returns, optimize_options, return_options)
+    _apply_optimizer(model, wparameters, options, returns, optimize_options, return_options, callback=None)
 
     jobs = returns.jobs
     jreg = returns.jreg
@@ -313,7 +326,7 @@ def _optimize_lcurve_wjreg(
 
     # % Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
-    _apply_optimizer(model, wparameters, options, returns, optimize_options, return_options)
+    _apply_optimizer(model, wparameters, options, returns, optimize_options, return_options, callback=None)
 
     cost = returns.cost
     jobs_min = returns.jobs
@@ -343,7 +356,9 @@ def _optimize_lcurve_wjreg(
             print(f"{' '*4}L-CURVE WJREG CYCLE {i + 2}")
 
         wparameters = model._parameters.copy()
-        _apply_optimizer(model, wparameters, options, returns, optimize_options, return_options)
+        _apply_optimizer(
+            model, wparameters, options, returns, optimize_options, return_options, callback=None
+        )
 
         cost_arr[i + 1] = returns.cost
         jobs_arr[i + 1] = returns.jobs
@@ -373,6 +388,7 @@ def optimize(
     cost_options: dict[str, Any] | None = None,
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
+    callback: callable | None = None,
 ) -> Model | (Model, Optimize):
     wmodel = model.copy()
 
@@ -383,6 +399,7 @@ def optimize(
         cost_options,
         common_options,
         return_options,
+        callback,
     )
 
     if ret_optimize is None:
@@ -399,6 +416,7 @@ def _optimize(
     cost_options: dict,
     common_options: dict,
     return_options: dict,
+    callback: callable | None,
 ) -> Optimize | None:
     if common_options["verbose"]:
         print("</> Optimize")
@@ -447,7 +465,7 @@ def _optimize(
         pass
 
     pyret = _apply_optimizer(
-        model, model._parameters, wrap_options, wrap_returns, optimize_options, return_options
+        model, model._parameters, wrap_options, wrap_returns, optimize_options, return_options, callback
     )
 
     fret = {}
@@ -491,6 +509,7 @@ def bayesian_optimize(
     cost_options: dict[str, Any] | None = None,
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
+    callback: callable | None = None,
 ) -> Model | (Model, BayesianOptimize):
     wmodel = model.copy()
 
@@ -501,6 +520,7 @@ def bayesian_optimize(
         cost_options,
         common_options,
         return_options,
+        callback,
     )
 
     if ret_bayesian_optimize is None:
@@ -517,6 +537,7 @@ def _bayesian_optimize(
     cost_options: dict,
     common_options: dict,
     return_options: dict,
+    callback: callable | None,
 ) -> BayesianOptimize | None:
     if common_options["verbose"]:
         print("</> Bayesian Optimize")
@@ -552,7 +573,7 @@ def _bayesian_optimize(
     _handle_bayesian_optimize_control_prior(model, cost_options["control_prior"], wrap_options)
 
     pyret = _apply_optimizer(
-        model, model._parameters, wrap_options, wrap_returns, optimize_options, return_options
+        model, model._parameters, wrap_options, wrap_returns, optimize_options, return_options, callback
     )
 
     # % Fortran returns
@@ -587,22 +608,23 @@ def _apply_optimizer(
     wrap_returns: ReturnsDT,
     optimize_options: dict,
     return_options: dict,
+    callback: callable | None,
 ) -> dict:
     if wrap_options.optimize.optimizer == "sbs":
-        ret = _sbs_optimize(model, parameters, wrap_options, wrap_returns, return_options)
+        ret = _sbs_optimize(model, parameters, wrap_options, wrap_returns, return_options, callback)
 
     elif wrap_options.optimize.optimizer == "lbfgsb":
-        ret = _lbfgsb_optimize(model, parameters, wrap_options, wrap_returns, return_options)
+        ret = _lbfgsb_optimize(model, parameters, wrap_options, wrap_returns, return_options, callback)
 
     elif wrap_options.optimize.optimizer in ADAPTIVE_OPTIMIZER:
         if "net" in optimize_options.keys():
             ret = _reg_ann_adaptive_optimize(
-                model, parameters, wrap_options, wrap_returns, optimize_options, return_options
+                model, parameters, wrap_options, wrap_returns, optimize_options, return_options, callback
             )
 
         else:
             ret = _adaptive_optimize(
-                model, parameters, wrap_options, wrap_returns, optimize_options, return_options
+                model, parameters, wrap_options, wrap_returns, optimize_options, return_options, callback
             )
 
     # % Manually deallocate control
@@ -618,6 +640,7 @@ def _adaptive_optimize(
     wrap_returns: ReturnsDT,
     optimize_options: dict,
     return_options: dict,
+    callback: callable | None,
 ) -> dict:
     ind = ADAPTIVE_OPTIMIZER.index(wrap_options.optimize.optimizer)
     func = eval(OPTIMIZER_CLASS[ind])
@@ -691,6 +714,11 @@ def _adaptive_optimize(
                     )
                 break
 
+        if callback is not None:
+            callback(
+                iopt=Optimize({"control_vector": np.copy(x), "cost": model._output.cost, "projg": projg})
+            )
+
         if wrap_options.comm.verbose:
             print(
                 f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    "
@@ -748,6 +776,7 @@ def _reg_ann_adaptive_optimize(
     wrap_returns: ReturnsDT,
     optimize_options: dict,
     return_options: dict,
+    callback: callable | None,
 ) -> Net:
     # % Preprocessing input descriptors and normalization
     l_desc = model._input_data.physio_data.l_descriptor
@@ -775,6 +804,7 @@ def _reg_ann_adaptive_optimize(
         optimize_options["termination_crit"]["maxiter"],
         optimize_options["termination_crit"]["early_stopping"],
         wrap_options.comm.verbose,
+        callback,
     )
 
     # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
@@ -821,6 +851,7 @@ def _lbfgsb_optimize(
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
     return_options: dict,
+    callback: callable | None,
 ) -> dict:
     wrap_parameters_to_control(
         model.setup,
@@ -837,7 +868,7 @@ def _lbfgsb_optimize(
     l_control = np.where(np.isin(parameters.control.nbd, [0, 3]), None, parameters.control.l)
     u_control = np.where(np.isin(parameters.control.nbd, [0, 1]), None, parameters.control.u)
 
-    scipy_callback = _ScipyOptimizeCallback(wrap_options.comm.verbose)
+    scipy_callback = _ScipyOptimizeCallback(callback, wrap_options.comm.verbose)
 
     res_optimize = scipy_minimize(
         _gradient_based_optimize_problem,
@@ -893,6 +924,7 @@ def _sbs_optimize(
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
     return_options: dict,
+    callback: callable | None,
 ) -> dict:
     wrap_parameters_to_control(
         model.setup,
@@ -1032,6 +1064,9 @@ def _sbs_optimize(
         converged = ddx < 0.01
 
         if (iter % n == 0) or converged:
+            if callback is not None:
+                callback(iopt=Optimize({"control_vector": np.copy(z_wa), "cost": gx}))
+
             if wrap_options.comm.verbose:
                 iteration = iter // n + (iter % n > 0)
                 print(

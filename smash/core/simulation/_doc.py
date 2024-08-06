@@ -767,7 +767,7 @@ common_options : `dict[str, Any]` or None, default None
     )
     + """
 return_options : `dict[str, Any]` or None, default None
-    Dictionary containing return options to save intermediate variables. The elements are:
+    Dictionary containing return options to save additional simulation results. The elements are:
 
 """
     + _gen_docstring_from_base_doc(
@@ -780,8 +780,8 @@ Returns
 -------
 %(model_return)s
 forward_run : `ForwardRun` or None, default None
-    It returns an object containing the intermediate variables defined in **return_options**.
-    If no intermediate variables are defined, it returns None.
+    It returns an object containing additional simulation results with the keys defined in
+    **return_options**. If no keys are defined, it returns None.
 
 See Also
 --------
@@ -863,7 +863,7 @@ common_options : `dict[str, Any]` or None, default None
     )
     + """
 return_options : `dict[str, Any]` or None, default None
-    Dictionary containing return options to save intermediate variables. The elements are:
+    Dictionary containing return options to save additional simulation results. The elements are:
 
 """
     + _gen_docstring_from_base_doc(
@@ -872,12 +872,23 @@ return_options : `dict[str, Any]` or None, default None
         nindent=1,
     )
     + """
+callback : callable or None, default None
+    A callable called after each iteration with the signature ``callback(iopt: Optimize)``, where ``iopt`` is
+    a keyword argument representing intermediate optimization results, which are an `Optimize` object with
+    attributes ``'control_vector'``, ``'cost'``, ``'projg'`` (if using gradient-based optimizers), and
+    ``'net'`` (if using ``'ann'`` mapping).
+
+    .. note::
+        The name of the argument must be ``iopt`` for the callback to be passed an `Optimize` object.
+
+"""
+    + """
 Returns
 -------
 %(model_return)s
 optimize : `Optimize` or None, default None
-    It returns an object containing the intermediate variables defined in **return_options**.
-    If no intermediate variables are defined, it returns None.
+    It returns an object containing additional simulation results with the keys defined in
+    **return_options**. If no keys are defined, it returns None.
 
 See Also
 --------
@@ -948,7 +959,7 @@ common_options : `dict[str, Any]` or None, default None
     )
     + """
 return_options : `dict[str, Any]` or None, default None
-    Dictionary containing return options to save intermediate variables. The elements are:
+    Dictionary containing return options to save additional simulation results. The elements are:
 
 """
     + _gen_docstring_from_base_doc(
@@ -962,8 +973,8 @@ Returns
 %(model_return)s
 
 multiset_estimate : `MultisetEstimate` or None, default None
-    It returns an object containing the intermediate variables defined in **return_options**. If no
-    intermediate variables are defined, it returns None.
+    It returns an object containing additional simulation results with the keys defined in
+    **return_options**. If no keys are defined, it returns None.
 
 See Also
 --------
@@ -1060,7 +1071,7 @@ common_options : `dict[str, Any]` or None, default None
     )
     + """
 return_options : `dict[str, Any]` or None, default None
-    Dictionary containing return options to save intermediate variables. The elements are:
+    Dictionary containing return options to save additional simulation results. The elements are:
 
 """
     + _gen_docstring_from_base_doc(
@@ -1069,12 +1080,23 @@ return_options : `dict[str, Any]` or None, default None
         nindent=1,
     )
     + """
+callback : callable or None, default None
+    A callable called after each iteration with the signature ``callback(iopt: BayesianOptimize)``, where
+    ``iopt`` is a keyword argument representing intermediate optimization results, which are a
+    `BayesianOptimize` object with attributes ``'control_vector'``, ``'cost'``, and ``'projg'`` (if using
+    gradient-based optimizers).
+
+    .. note::
+        The name of the argument must be ``iopt`` for the callback to be passed a `BayesianOptimize` object.
+
+"""
+    + """
 Returns
 -------
 %(model_return)s
 bayesian_optimize : `BayesianOptimize` or None, default None
-    It returns an object containing the intermediate variables defined in **return_options**.
-    If no intermediate variables are defined, it returns None.
+    It returns an object containing additional simulation results with the keys defined in
+    **return_options**. If no keys are defined, it returns None.
 
 See Also
 --------

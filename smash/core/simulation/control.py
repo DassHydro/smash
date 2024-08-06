@@ -35,13 +35,14 @@ def optimize_control_info(
     args_options = [deepcopy(arg) for arg in [optimize_options, cost_options]]
 
     # % Only get mapping, optimizer, optimize_options and cost_options
-    *args, _, _ = _standardize_optimize_args(
+    *args, _, _, _ = _standardize_optimize_args(
         model,
         mapping,
         optimizer,
         *args_options,
-        None,
-        None,
+        None,  # common_options
+        None,  # return_options
+        None,  # callback
     )
 
     return _get_control_info(model, *args)
@@ -59,13 +60,14 @@ def bayesian_optimize_control_info(
     args_options = [deepcopy(arg) for arg in [optimize_options, cost_options]]
 
     # % Only get mapping, optimizer, optimize_options and cost_options
-    *args, _, _ = _standardize_bayesian_optimize_args(
+    *args, _, _, _ = _standardize_bayesian_optimize_args(
         model,
         mapping,
         optimizer,
         *args_options,
-        None,
-        None,
+        None,  # common_options
+        None,  # return_options
+        None,  # callback
     )
 
     return _get_control_info(model, *args)

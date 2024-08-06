@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from smash._constant import ADAPTIVE_OPTIMIZER, OPTIMIZABLE_NN_PARAMETERS, OPTIMIZER_CLASS
-from smash.core.simulation.optimize._tools import _inf_norm
+from smash.core.simulation.optimize._tools import _inf_norm, _net_to_vect
+from smash.core.simulation.optimize.optimize import Optimize
 from smash.factory.net._layers import (
     Activation,
     Conv2D,
@@ -26,6 +27,9 @@ from smash.factory.net._standardize import (
     _standardize_set_bias_args,
     _standardize_set_trainable_args,
     _standardize_set_weight_args,
+)
+from smash.fcore._mwd_parameters_manipulation import (
+    parameters_to_control as wrap_parameters_to_control,
 )
 
 if TYPE_CHECKING:
@@ -520,6 +524,7 @@ class Net(object):
         maxiter: int,
         early_stopping: int,
         verbose: bool,
+        callback: callable | None,
     ):
         """
         Private function: fit physiographic descriptors to Model parameters mapping.
@@ -611,6 +616,18 @@ class Net(object):
 
             self.history["proj_grad"].append(projg)
             self.history["loss_train"].append(cost)
+
+            if callback is not None:
+                wrap_parameters_to_control(
+                    instance.setup,
+                    instance.mesh,
+                    instance._input_data,
+                    parameters,
+                    wrap_options,
+                )
+                control = np.append(parameters.control.x, _net_to_vect(self))
+
+                callback(iopt=Optimize({"control_vector": control, "cost": cost, "projg": projg}))
 
             if verbose:
                 print(
