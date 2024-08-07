@@ -627,7 +627,11 @@ class Net(object):
                 )
                 control = np.append(parameters.control.x, _net_to_vect(self))
 
-                callback(iopt=Optimize({"control_vector": control, "cost": cost, "projg": projg}))
+                callback(
+                    iopt=Optimize(
+                        {"control_vector": control, "cost": cost, "projg": projg, "net": self.copy()}
+                    )
+                )
 
             if verbose:
                 print(
