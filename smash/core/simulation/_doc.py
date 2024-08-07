@@ -855,10 +855,14 @@ return_options : `dict[str, Any]` or None, default None
     )
     + """
 callback : callable or None, default None
-    A callable called after each iteration with the signature ``callback(iopt: Optimize)``, where ``iopt`` is
-    a keyword argument representing intermediate optimization results, which are an `Optimize` object with
-    attributes ``'control_vector'``, ``'cost'``, ``'projg'`` (if using gradient-based optimizers), and
-    ``'net'`` (if using ``'ann'`` **mapping**).
+    A callable called after each iteration with the signature ``callback(iopt: Optimize)``, where
+    ``iopt`` is a keyword argument representing an instance of the `Optimize` class that contains
+    intermediate optimization results with attributes:
+
+    - ``'control_vector'``: The current control vector.
+    - ``'cost'``: The current cost value.
+    - ``'projg'``: The projected gradient, available if using gradient-based optimizers.
+    - ``'net'``: The regionalization neural network state, available if using ``'ann'`` **mapping**.
 
     >>> iter_cost = []  # to get the cost values through iterations
     >>> def callback_cost(iopt, icost=iter_cost):
@@ -1069,9 +1073,12 @@ return_options : `dict[str, Any]` or None, default None
     + """
 callback : callable or None, default None
     A callable called after each iteration with the signature ``callback(iopt: BayesianOptimize)``, where
-    ``iopt`` is a keyword argument representing intermediate optimization results, which are a
-    `BayesianOptimize` object with attributes ``'control_vector'``, ``'cost'``, and ``'projg'`` (if using
-    gradient-based optimizers).
+    ``iopt`` is a keyword argument representing an instance of the `BayesianOptimize` class that contains
+    intermediate optimization results with attributes:
+
+    - ``'control_vector'``: The current control vector.
+    - ``'cost'``: The current cost value.
+    - ``'projg'``: The projected gradient, available if using gradient-based optimizers.
 
     >>> iter_cost = []  # to get the cost values through iterations
     >>> def callback_cost(iopt, icost=iter_cost):
