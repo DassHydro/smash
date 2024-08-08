@@ -308,8 +308,8 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If **jobs_cmpt** is a multi-criteria and only one transformation is choosen in **jobs_cmpt_tfm**.
-            The transformation will be applied to each observation objective function.
+            If **jobs_cmpt** is a list of multi-objective funcitons, and only one transformation is choosen in
+            **jobs_cmpt_tfm**, the transformation will be applied to each observation objective function.
         """,
     ),
     "wjobs_cmpt": (
@@ -476,7 +476,7 @@ COST_OPTIONS_BASE_DOC = {
         - ``'Triangle'``,    [peak, lower_bound, higher_bound]  (3)
 
         >>> cost_options = {
-            control_prior: {
+            "control_prior": {
                 "cp-0": ["Gaussian", [200, 100]],
                 "kexc-0": ["Gaussian", [0, 5]],
             }
@@ -500,7 +500,7 @@ COST_OPTIONS_BASE_DOC = {
         computation (i.e., **jobs_cmpt** includes flood events signatures).
 
         >>> cost_options = {
-            event_seg = {
+            "event_seg": {
                 "peak_quant": 0.998,
                 "max_duration": 120,
             }
