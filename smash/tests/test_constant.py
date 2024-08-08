@@ -55,9 +55,13 @@ def test_module_name():
         "gr4_ode",
         "gr4_ode_mlp",
         "gr5",
+        "gr5_mlp",
         "gr6",
+        "gr6_mlp",
         "grd",
+        "grd_mlp",
         "loieau",
+        "loieau_mlp",
         "vic3l",
     ]
 
@@ -85,43 +89,35 @@ def test_module_parameters():
     ]
 
     # % Check hydrological module rr parameters
-    assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
-        ["ci", "cp", "ct", "kexc"],  # % gr4
-        ["ci", "cp", "ct", "kexc"],  # % gr4_mlp
-        ["ci", "cp", "ct", "kexc"],  # % gr4_ode
-        ["ci", "cp", "ct", "kexc"],  # % gr4_ode_mlp
-        ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
-        ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
-        ["cp", "ct"],  # % grd
-        ["ca", "cc", "kb"],  # % loieau
-        ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
-    ]
+    assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == (
+        [["ci", "cp", "ct", "kexc"]] * 4  # gr4, gr4_mlp, gr4_ode, gr4_ode_mlp
+        + [["ci", "cp", "ct", "kexc", "aexc"]] * 2  # gr5, gr5_mlp
+        + [["ci", "cp", "ct", "be", "kexc", "aexc"]] * 2  # gr6, gr6_mlp
+        + [["cp", "ct"]] * 2  # grd, grd_mlp
+        + [["ca", "cc", "kb"]] * 2  # loieau, loieau_mlp
+        + [["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"]]  # vic3l
+    )
 
     # % Check hydrological module rr states
-    assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == [
-        ["hi", "hp", "ht"],  # % gr4
-        ["hi", "hp", "ht"],  # % gr4_mlp
-        ["hi", "hp", "ht"],  # % gr4_ode
-        ["hi", "hp", "ht"],  # % gr4_ode_mlp
-        ["hi", "hp", "ht"],  # % gr5
-        ["hi", "hp", "ht", "he"],  # % gr6
-        ["hp", "ht"],  # % grd
-        ["ha", "hc"],  # % loieau
-        ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
-    ]
+    assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == (
+        [["hi", "hp", "ht"]] * 6  # gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp
+        + [["hi", "hp", "ht", "he"]] * 2  # gr6, gr6_mlp
+        + [["hp", "ht"]] * 2  # grd, grd_mlp
+        + [["ha", "hc"]] * 2  # loieau, loieau_mlp
+        + [["hcl", "husl", "hmsl", "hbsl"]]  # vic3l
+    )
 
     # % Check hydrological module rr internal fluxes
-    assert list(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES.values()) == [
-        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
-        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4_mlp
-        ["pn", "en", "lexc", "qt"],  # % gr4_ode
-        ["pn", "en", "lexc", "qt"],  # % gr4_ode_mlp
-        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
-        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
-        ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
-        ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
-        ["pn", "en", "qr", "qb", "qt"],  # % vic3l
-    ]
+    assert list(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES.values()) == (
+        [["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"]] * 2  # gr4, gr4_mlp
+        + [["pn", "en", "lexc", "qt"]] * 2  # gr4_ode, gr4_ode_mlp
+        + [["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"]] * 4  # gr5, gr5_mlp
+        + [["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
+        * 2  # gr6, gr6_mlp
+        + [["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"]] * 2  # grd, grd_mlp
+        + [["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"]] * 2  # loieau, loieau_mlp
+        + [["pn", "en", "qr", "qb", "qt"]]  # vic3l
+    )
 
     # % Check routing module rr parameters
     assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], ["llr"], ["akw", "bkw"]]
@@ -139,15 +135,15 @@ def test_parameters():
     # % Check rainfall-runoff parameters
     assert RR_PARAMETERS == [
         "kmlt",  # % ssn
-        "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
-        "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
-        "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
-        "be",  # % gr6
-        "kexc",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
-        "aexc",  # % (gr5, gr6)
-        "ca",  # % loieau
-        "cc",  # % loieau
-        "kb",  # % loieau
+        "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp)
+        "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp, grd, grd_mlp)
+        "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp, grd, grd_mlp)
+        "be",  # % (gr6, gr6_mlp)
+        "kexc",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp)
+        "aexc",  # % (gr5, gr5_mlp, gr6, gr6_mlp)
+        "ca",  # % loieau, loieau_mlp
+        "cc",  # % loieau, loieau_mlp
+        "kb",  # % loieau, loieau_mlp
         "b",  # % vic3l
         "cusl",  # % vic3l
         "cmsl",  # % vic3l
@@ -165,12 +161,12 @@ def test_parameters():
     # % Check rainfall-runoff states
     assert RR_STATES == [
         "hs",  # % ssn
-        "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
-        "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
-        "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
-        "he",  # % gr6
-        "ha",  # % loieau
-        "hc",  # % loieau
+        "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp)
+        "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp, grd, grd_mlp)
+        "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp, grd, grd_mlp)
+        "he",  # % (gr6, gr6_mlp)
+        "ha",  # % loieau, loieau_mlp
+        "hc",  # % loieau, loieau_mlp
         "hcl",  # % vic3l
         "husl",  # % vic3l
         "hmsl",  # % vic3l

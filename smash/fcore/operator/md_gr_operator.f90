@@ -15,9 +15,13 @@
 !%      - gr4_ode_time_step
 !%      - gr4_ode_mlp_time_step
 !%      - gr5_time_step
+!%      - gr5_mlp_time_step
 !%      - gr6_time_step
+!%      - gr6_mlp_time_step
 !%      - grd_time_step
+!%      - grd_mlp_time_step
 !%      - loieau_time_step
+!%      - loieau_mlp_time_step
 
 module md_gr_operator
 
@@ -102,15 +106,15 @@ contains
 
     end subroutine gr_exchange
 
-    subroutine gr_threshold_exchange(kexc, aexc, ht, l)
+    subroutine gr_threshold_exchange(fq_l, kexc, aexc, ht, l)
 
         implicit none
 
-        real(sp), intent(in) :: kexc, aexc
+        real(sp), intent(in) :: fq_l, kexc, aexc
         real(sp), intent(inout) :: ht
         real(sp), intent(out) :: l
 
-        l = kexc*(ht - aexc)
+        l = (1._sp + fq_l)*kexc*(ht - aexc)
 
     end subroutine gr_threshold_exchange
 
@@ -809,7 +813,7 @@ contains
 
                     call gr_production(0._sp, 0._sp, pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
 
-                    call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+                    call gr_threshold_exchange(0._sp, ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
                 else
 
@@ -856,6 +860,163 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine gr5_time_step
+
+    subroutine gr5_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
+    & weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, &
+    & ac_hi, ac_hp, ac_ht, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(setup%neurons(2), setup%neurons(1)), intent(in) :: weight_1
+        real(sp), dimension(setup%neurons(2)), intent(in) :: bias_1
+        real(sp), dimension(setup%neurons(3), setup%neurons(2)), intent(in) :: weight_2
+        real(sp), dimension(setup%neurons(3)), intent(in) :: bias_2
+        real(sp), dimension(setup%neurons(4), setup%neurons(3)), intent(in) :: weight_3
+        real(sp), dimension(setup%neurons(4)), intent(in) :: bias_3
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(setup%neurons(1)) :: input_layer
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
+        integer :: row, col, k, time_step_returns
+        real(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+
+        ! Interception with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
+        !$OMP& private(row, col, k)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn(k), en(k))
+
+                else
+
+                    pn(k) = 0._sp
+                    en(k) = 0._sp
+
+                end if
+
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+        ! Forward MLP without OPENMP
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+                    & input_layer, output_layer(:, k))
+
+                else
+                    output_layer(:, k) = 0._sp
+
+                end if
+
+            end do
+        end do
+
+        ! Production and transfer with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
+        !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, pr, perc, l, prr, prd, qr, qd)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), ac_cp(k), &
+                    & beta, ac_hp(k), pr, perc)
+
+                    call gr_threshold_exchange(output_layer(4, k), ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn(k), en(k), pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+    end subroutine gr5_mlp_time_step
 
     subroutine gr6_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_be, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
@@ -904,7 +1065,7 @@ contains
 
                     call gr_production(0._sp, 0._sp, pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
 
-                    call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+                    call gr_threshold_exchange(0._sp, ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
                 else
 
@@ -954,6 +1115,171 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine gr6_time_step
+
+    subroutine gr6_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
+    & weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_be, ac_kexc, ac_aexc, &
+    & ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(setup%neurons(2), setup%neurons(1)), intent(in) :: weight_1
+        real(sp), dimension(setup%neurons(2)), intent(in) :: bias_1
+        real(sp), dimension(setup%neurons(3), setup%neurons(2)), intent(in) :: weight_2
+        real(sp), dimension(setup%neurons(3)), intent(in) :: bias_2
+        real(sp), dimension(setup%neurons(4), setup%neurons(3)), intent(in) :: weight_3
+        real(sp), dimension(setup%neurons(4)), intent(in) :: bias_3
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_be, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht, ac_he
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(setup%neurons(1)) :: input_layer
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
+        integer :: row, col, k, time_step_returns
+        real(sp) :: beta, pr, perc, l, prr, pre, prd, qr, qd, qe
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+
+        ! Interception with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
+        !$OMP& private(row, col, k)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn(k), en(k))
+
+                else
+
+                    pn(k) = 0._sp
+                    en(k) = 0._sp
+
+                end if
+
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+        ! Forward MLP without OPENMP
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn(k), en(k)/)
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+                    & input_layer, output_layer(:, k))
+
+                else
+                    output_layer(:, k) = 0._sp
+
+                end if
+
+            end do
+        end do
+
+        ! Production and transfer with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
+        !$OMP& ac_cp, beta, ac_ct, ac_be, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_he, ac_qt, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, pr, perc, l, prr, pre, prd, qr, qd, qe)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), ac_cp(k), &
+                    & beta, ac_hp(k), pr, perc)
+
+                    call gr_threshold_exchange(output_layer(5, k), ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                prr = (0.6_sp - 0.4_sp*output_layer(4, k))* &
+                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &
+                & (pr + perc) + l
+
+                pre = (0.4_sp*(1._sp + output_layer(4, k)))* &
+                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &
+                & (pr + perc) + l
+
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+                call gr_exponential_transfer(pre, ac_be(k), ac_he(k), qe)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd + qe
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn(k), en(k), pr, perc, l, prr, prd, pre, qr, qd, qe, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+    end subroutine gr6_mlp_time_step
 
     subroutine grd_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
     & ac_ht, ac_qt)
@@ -1043,6 +1369,156 @@ contains
 #endif
     end subroutine grd_time_step
 
+    subroutine grd_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
+    & weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(setup%neurons(2), setup%neurons(1)), intent(in) :: weight_1
+        real(sp), dimension(setup%neurons(2)), intent(in) :: bias_1
+        real(sp), dimension(setup%neurons(3), setup%neurons(2)), intent(in) :: weight_2
+        real(sp), dimension(setup%neurons(3)), intent(in) :: bias_2
+        real(sp), dimension(setup%neurons(4), setup%neurons(3)), intent(in) :: weight_3
+        real(sp), dimension(setup%neurons(4)), intent(in) :: bias_3
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_cp, ac_ct
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(setup%neurons(1)) :: input_layer
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
+        integer :: row, col, k, time_step_returns
+        real(sp) :: pr, perc, prr, qr
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Interception with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(mesh, ac_prcp, ac_pet, ei, pn, en) &
+        !$OMP& private(row, col, k)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    ei(k) = min(ac_pet(k), ac_prcp(k))
+                    pn(k) = max(0._sp, ac_prcp(k) - ei(k))
+                    en(k) = ac_pet(k) - ei(k)
+
+                else
+
+                    ei(k) = 0._sp
+                    pn(k) = 0._sp
+                    en(k) = 0._sp
+
+                end if
+
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+        ! Forward MLP without OPENMP
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+                    & input_layer, output_layer(:, k))
+
+                else
+                    output_layer(:, k) = 0._sp
+
+                end if
+
+            end do
+        end do
+
+        ! Production and transfer with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
+        !$OMP& ac_cp, ac_ct, ac_hp, ac_ht, ac_qt, ei, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, pr, perc, prr, qr)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), ac_cp(k), &
+                    & 1000._sp, ac_hp(k), pr, perc)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+
+                end if
+
+                prr = pr + perc
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                ac_qt(k) = qr
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/ei(k), pn(k), en(k), pr, perc, prr, qr, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+    end subroutine grd_mlp_time_step
+
     subroutine loieau_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ca, ac_cc, ac_kb, &
     & ac_ha, ac_hc, ac_qt)
 
@@ -1054,9 +1530,9 @@ contains
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
-        real(sp), dimension(mesh%nac), intent(in):: ac_mlt
-        real(sp), dimension(mesh%nac), intent(in):: ac_ca, ac_cc, ac_kb
-        real(sp), dimension(mesh%nac), intent(inout):: ac_ha, ac_hc
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ca, ac_cc, ac_kb
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_ha, ac_hc
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
@@ -1136,5 +1612,161 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine loieau_time_step
+
+    subroutine loieau_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
+    & weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(setup%neurons(2), setup%neurons(1)), intent(in) :: weight_1
+        real(sp), dimension(setup%neurons(2)), intent(in) :: bias_1
+        real(sp), dimension(setup%neurons(3), setup%neurons(2)), intent(in) :: weight_2
+        real(sp), dimension(setup%neurons(3)), intent(in) :: bias_2
+        real(sp), dimension(setup%neurons(4), setup%neurons(3)), intent(in) :: weight_3
+        real(sp), dimension(setup%neurons(4)), intent(in) :: bias_3
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ca, ac_cc, ac_kb
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_ha, ac_hc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(setup%neurons(1)) :: input_layer
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
+        integer :: row, col, k, time_step_returns
+        real(sp) :: beta, pr, perc, prr, prd, qr, qd
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+
+        ! Interception with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(mesh, ac_prcp, ac_pet, ei, pn, en) &
+        !$OMP& private(row, col, k)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    ei(k) = min(ac_pet(k), ac_prcp(k))
+                    pn(k) = max(0._sp, ac_prcp(k) - ei(k))
+                    en(k) = ac_pet(k) - ei(k)
+
+                else
+
+                    ei(k) = 0._sp
+                    pn(k) = 0._sp
+                    en(k) = 0._sp
+
+                end if
+
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+        ! Forward MLP without OPENMP
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    input_layer(:) = (/ac_ha(k), ac_hc(k), pn(k), en(k)/)
+                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+                    & input_layer, output_layer(:, k))
+
+                else
+                    output_layer(:, k) = 0._sp
+
+                end if
+
+            end do
+        end do
+
+        ! Production and transfer with OPENMP
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
+        !$OMP& ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt, ei, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, pr, perc, prr, prd, qr, qd)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), ac_ca(k), &
+                    & beta, ac_ha(k), pr, perc)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+
+                end if
+
+                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc)
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+
+                call gr_transfer(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), qr)
+
+                qd = max(0._sp, prd)
+
+                ac_qt(k) = ac_kb(k)*(qr + qd)
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/ei(k), pn(k), en(k), pr, perc, prr, prd, qr, qd, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+
+    end subroutine loieau_mlp_time_step
 
 end module md_gr_operator
