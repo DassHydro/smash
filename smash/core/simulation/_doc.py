@@ -1465,10 +1465,6 @@ optimize_options : `dict[str, Any]`
     returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly passed to
     the **optimize_options** argument of the `optimize` (or `Model.optimize`) method.
 
-See Also
---------
-smash.optimize : Model assimilation using numerical optimization algorithms.
-
 Examples
 --------
 >>> from smash.factory import load_dataset
