@@ -54,6 +54,7 @@ from smash.core.simulation.optimize._standardize import (
     _standardize_bayesian_optimize_args,
     _standardize_optimize_args,
 )
+from smash.core.simulation.optimize._tools import _set_control
 from smash.core.simulation.optimize.optimize import (
     _bayesian_optimize,
     _optimize,
@@ -2731,6 +2732,31 @@ class Model:
 
         return _optimize(self, *args)
 
+    def set_control_optimize(
+        self,
+        control_vector: np.ndarray,
+        mapping: str = "uniform",
+        optimizer: str | None = None,
+        optimize_options: dict[str, Any] | None = None,
+    ):
+        optimize_options = deepcopy(optimize_options)
+
+        # % Only get mapping, optimizer, optimize_options and cost_options
+        *args, _, _, _ = _standardize_optimize_args(
+            self,
+            mapping,
+            optimizer,
+            optimize_options,
+            None,  # cost_options
+            None,  # common_options
+            None,  # return_options
+            None,  # callback
+        )
+
+        # Cannot standardize 'control_vectol' here before initializing model._parameters.control
+        # it will be checked later by Numpy when using setattr method
+        _set_control(self, control_vector, *args)
+
     @_model_multiset_estimate_doc_substitution
     @_multiset_estimate_doc_appender
     def multiset_estimate(
@@ -2771,3 +2797,28 @@ class Model:
         )
 
         return _bayesian_optimize(self, *args)
+
+    def set_control_bayesian_optimize(
+        self,
+        control_vector: np.ndarray,
+        mapping: str = "uniform",
+        optimizer: str | None = None,
+        optimize_options: dict[str, Any] | None = None,
+        cost_options: dict[str, Any] | None = None,
+    ):
+        args_options = [deepcopy(arg) for arg in [optimize_options, cost_options]]
+
+        # % Only get mapping, optimizer, optimize_options and cost_options
+        *args, _, _, _ = _standardize_bayesian_optimize_args(
+            self,
+            mapping,
+            optimizer,
+            *args_options,
+            None,  # common_options
+            None,  # return_options
+            None,  # callback
+        )
+
+        # Cannot standardize 'control_vectol' here before initializing model._parameters.control
+        # it will be checked later by Numpy when using setattr method
+        _set_control(self, control_vector, *args)
