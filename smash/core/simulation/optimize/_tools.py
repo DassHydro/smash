@@ -12,6 +12,9 @@ from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_parameters_manipulation import (
+    control_to_parameters as wrap_control_to_parameters,
+)
+from smash.fcore._mwd_parameters_manipulation import (
     parameters_to_control as wrap_parameters_to_control,
 )
 
@@ -129,6 +132,20 @@ def _net_to_vect(net: Net) -> np.ndarray:
     return np.concatenate(x)
 
 
+def _vect_to_net(vect: np.ndarray, net: Net) -> Net:
+    ind = 0
+
+    for layer in net.layers:
+        if layer.trainable:
+            layer.weight = vect[ind : ind + layer.weight.size].reshape(layer.weight_shape, order="F")
+            ind += layer.weight.size
+
+            layer.bias = vect[ind : ind + layer.bias.size].reshape(layer.bias_shape)
+            ind += layer.bias.size
+
+    return net
+
+
 def _net_to_parameters(
     net: Net, x: np.ndarray, model_params_states: np.ndarray, parameters: ParametersDT, flwdir_shape: tuple
 ):
@@ -154,6 +171,77 @@ def _net_to_parameters(
             parameters.rr_initial_states.values[..., ind] = y[..., i]
 
     return output_reshaped
+
+
+def _set_control(
+    model: Model,
+    control_vector: np.ndarray,
+    mapping: str,
+    optimizer: str,
+    optimize_options: dict,
+    cost_options: dict,
+):
+    wrap_options = OptionsDT(
+        model.setup,
+        model.mesh,
+        cost_options["njoc"],
+        cost_options["njrc"],
+    )
+
+    # % Map optimize_options dict to derived type
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
+
+    # % Map cost_options dict to derived type
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
+
+    wrap_parameters_to_control(model.setup, model.mesh, model._input_data, model._parameters, wrap_options)
+
+    # % Set control values
+    if "net" not in optimize_options.keys():
+        # Could not fully standardize 'control_vectol' before initializing model._parameters.control
+        # 'control_vector' can be checked by Numpy with setattr method applied to a Numpy array
+        setattr(model._parameters.control, "x", control_vector)
+
+        wrap_control_to_parameters(
+            model.setup, model.mesh, model._input_data, model._parameters, wrap_options
+        )
+
+    else:  # in case of using 'ann' mapping
+        ind = np.sum(model._parameters.control.nbk)
+
+        # Set Fortran control
+        setattr(model._parameters.control, "x", control_vector[:ind])
+
+        wrap_control_to_parameters(
+            model.setup, model.mesh, model._input_data, model._parameters, wrap_options
+        )  # do not apply to rr_parameters and rr_initial_states with 'ann' mapping
+
+        # Set Python control from Net
+        net = optimize_options["net"]
+
+        net._compile(
+            optimizer=optimizer,
+            learning_param={"learning_rate": optimize_options["learning_rate"]},
+            random_state=None,
+        )
+
+        net = _vect_to_net(control_vector[ind:], net)
+
+        l_desc = model._input_data.physio_data.l_descriptor
+        u_desc = model._input_data.physio_data.u_descriptor
+
+        desc = model._input_data.physio_data.descriptor.copy()
+        desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
+
+        if net.layers[0].layer_name() == "Dense":
+            desc = desc.reshape(-1, desc.shape[-1])
+
+        _net_to_parameters(
+            net, desc, optimize_options["parameters"], model._parameters, model.mesh.flwdir.shape
+        )
+
+    # Manually dealloc the control
+    model._parameters.control.dealloc()
 
 
 def _get_lcurve_wjreg_best(
