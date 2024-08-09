@@ -39,6 +39,7 @@ def optimize_control_info(
         mapping,
         optimizer,
         optimize_options,
+        None,  # cost_options
         None,  # common_options
         None,  # return_options
         None,  # callback
