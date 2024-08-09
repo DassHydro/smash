@@ -254,7 +254,7 @@ class _ScipyOptimizeCallback:
             self.callback(
                 iopt=Optimize(
                     {
-                        "control_vector": intermediate_result.x,
+                        "control_vector": intermediate_result.x.copy(),
                         "cost": intermediate_result.fun,
                         "projg": self.projg,
                     }
