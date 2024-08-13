@@ -59,13 +59,16 @@ def _split_date_occurence(date_pattern) -> str:
 def _sample_delta_time_in_file(files, date_pattern, dt):
     d_pattern, occurence = _split_date_occurence(date_pattern)
     regex_date = _build_date_regex_pattern(d_pattern)
-
+    
+    if len(files) == 0 :
+        return False
+    
     nsample = 5
     niter = 100
     list_delta_time = []
     list_date_block = []
 
-    for i in range(0, len(files), int(len(files) / nsample)):
+    for i in range(0, len(files), max(int(len(files) / nsample), niter)):
         for j in range(min(niter, len(files) - i - 1)):
             re_match_0 = re.findall(regex_date, os.path.basename(files[i + j]))
             re_match_1 = re.findall(regex_date, os.path.basename(files[i + j + 1]))
@@ -220,29 +223,25 @@ def _get_files_list_for_date_range(files, date_pattern, date_range):
     regex_date = _build_date_regex_pattern(d_pattern)
 
     vec_date = []
-    for i, f in enumerate(files):
-        re_match = re.findall(regex_date, os.path.basename(f))
-
-        if len(re_match) > 0:
-            vec_date.append(re_match[occurence])
-        # else:
-        #     raise ValueError(
-        #         f"Date formatter {d_pattern} corresponding to regex {regex_date}"
-        #         " not found in filename {os.path.basename(f)}"
-        #     )
-
-    vec_date = pd.to_datetime(vec_date, format=d_pattern)
-    vec_date = vec_date.strftime("%Y%m%d%H%M%S")
+    if len(files)>0:
+        for i, f in enumerate(files):
+            re_match = re.findall(regex_date, os.path.basename(f))
+            
+            if len(re_match) > 0:
+                vec_date.append(re_match[occurence])
+        
+        vec_date = pd.to_datetime(vec_date, format=d_pattern)
+        vec_date = vec_date.strftime("%Y%m%d%H%M%S")
 
     # convert to numpy array
     np_lst_date = np.array(vec_date)
-    np_lst_files = np.array(files)
-    np_date_range = np.array(date_range.strftime("%Y%m%d%H%M%S").to_list())
     # sort but keep indexes
     sorted_indices = np_lst_date.argsort()
     # sort according previous indexes
     np_lst_date_sorted = np_lst_date[sorted_indices]
-
+    
+    np_date_range = np.array(date_range.strftime("%Y%m%d%H%M%S").to_list())
+    
     # build the list of index only for the daterange
     index_list_for_daterange = []
     for i in range(len(np_date_range)):
@@ -256,9 +255,9 @@ def _get_files_list_for_date_range(files, date_pattern, date_range):
     final_list_files = []
     for index in index_list_for_daterange:
         if index >= 0:
-            final_list_files.append(np_lst_files[sorted_indices[index]])
+            final_list_files.append(files[sorted_indices[index]])
         else:
-            final_list_files.append(-1)
+            final_list_files.append("miss")
 
     return final_list_files
 
@@ -297,7 +296,15 @@ def _get_atmos_files(
         files.extend(glob.glob(f"{dir}/{date_strftime_access}/**/*{fmt}", recursive=True))
 
     files = sorted(files)
-
+    
+    final_list_files=[]
+    
+    if len(files)==0:
+        for i in range(len(date_range)):
+            final_list_files.append("miss")
+        
+        return final_list_files
+    
     # Return all files if daily interannual (336 files max)
     if daily_interannual:
         return files
@@ -536,7 +543,7 @@ def _read_atmos_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, atm
         for i, date in enumerate(tqdm(date_range, desc=f"</> Reading {atmos_data}")):
             atmos_file = files[i]
 
-            if atmos_file == -1:
+            if atmos_file == "miss":
                 reading_warning["miss"].append(
                     date.strftime("%Y-%m-%d %H:%M")
                     + f", (matching pattern {date.strftime(atmos_date_pattern)})"
@@ -607,7 +614,7 @@ def _read_interannual_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
             setup.pet_access,
             setup.dt,
             date_range,
-            setup.prcp_date_pattern,
+            setup.pet_date_pattern,
             setup.daily_interannual_pet,
         )
 
