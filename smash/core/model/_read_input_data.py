@@ -59,10 +59,10 @@ def _split_date_occurence(date_pattern) -> str:
 def _sample_delta_time_in_file(files, date_pattern, dt):
     d_pattern, occurence = _split_date_occurence(date_pattern)
     regex_date = _build_date_regex_pattern(d_pattern)
-    
-    if len(files) == 0 :
+
+    if len(files) == 0:
         return False
-    
+
     nsample = 5
     niter = 100
     list_delta_time = []
@@ -223,13 +223,13 @@ def _get_files_list_for_date_range(files, date_pattern, date_range):
     regex_date = _build_date_regex_pattern(d_pattern)
 
     vec_date = []
-    if len(files)>0:
+    if len(files) > 0:
         for i, f in enumerate(files):
             re_match = re.findall(regex_date, os.path.basename(f))
-            
+
             if len(re_match) > 0:
                 vec_date.append(re_match[occurence])
-        
+
         vec_date = pd.to_datetime(vec_date, format=d_pattern)
         vec_date = vec_date.strftime("%Y%m%d%H%M%S")
 
@@ -239,9 +239,9 @@ def _get_files_list_for_date_range(files, date_pattern, date_range):
     sorted_indices = np_lst_date.argsort()
     # sort according previous indexes
     np_lst_date_sorted = np_lst_date[sorted_indices]
-    
+
     np_date_range = np.array(date_range.strftime("%Y%m%d%H%M%S").to_list())
-    
+
     # build the list of index only for the daterange
     index_list_for_daterange = []
     for i in range(len(np_date_range)):
@@ -296,15 +296,14 @@ def _get_atmos_files(
         files.extend(glob.glob(f"{dir}/{date_strftime_access}/**/*{fmt}", recursive=True))
 
     files = sorted(files)
-    
-    final_list_files=[]
-    
-    if len(files)==0:
-        for i in range(len(date_range)):
-            final_list_files.append("miss")
-        
+
+    final_list_files = []
+
+    if len(files) == 0:
+        final_list_files = ["miss" for i in range(len(date_range))]
+
         return final_list_files
-    
+
     # Return all files if daily interannual (336 files max)
     if daily_interannual:
         return files
