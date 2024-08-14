@@ -61,12 +61,12 @@ def _get_control_info(
     # Manually dealloc the control
     model._parameters.control.dealloc()
 
-    _finalize_get_control_info(ret, optimize_options.get("net", None))
+    _finalize_get_control_info(ret, optimize_options)
 
     return ret
 
 
-def _finalize_get_control_info(ret: dict, net: Net | None):
+def _finalize_get_control_info(ret: dict, optimize_options: dict):
     # % Handle unbounded and semi-unbounded parameters
     for key in ["l", "u", "l_bkg", "u_bkg"]:
         if key.startswith("l"):
@@ -76,6 +76,8 @@ def _finalize_get_control_info(ret: dict, net: Net | None):
             ret[key] = np.where(np.isin(ret["nbd"], [0, 1]), np.inf, ret[key])
 
     # % Handle control info from net
+    net = optimize_options.get("net", None)
+
     if net is None:
         ret["nbk"] = np.append(ret["nbk"], 0)
 
@@ -110,11 +112,14 @@ def _finalize_get_control_info(ret: dict, net: Net | None):
 
             ret[key] = np.append(ret[key], np.full(x_net_size, value))
 
-        try:  # if net is initialized
-            x = _net_to_vect(net)
-
-        except Exception:  # it will be set by random values
-            x = np.full(x_net_size, np.nan)
+        # Set weights and biases if net is not initialized
+        # Otherwise, it will be initialized with random values
+        if optimize_options["random_state"] is not None:
+            np.random.seed(optimize_options["random_state"])
+        for layer in net.layers:
+            if hasattr(layer, "_initialize"):
+                layer._initialize(None)
+        x = _net_to_vect(net)
 
         ret["x"] = np.append(ret["x"], x)
 
@@ -197,7 +202,9 @@ def _set_control(
     wrap_parameters_to_control(model.setup, model.mesh, model._input_data, model._parameters, wrap_options)
 
     # % Set control values
-    if "net" not in optimize_options.keys():
+    net = optimize_options.get("net", None)
+
+    if net is None:
         # Could not fully standardize 'control_vectol' before initializing model._parameters.control
         # 'control_vector' can be checked by Numpy with setattr method applied to a Numpy array
         setattr(model._parameters.control, "x", control_vector)
@@ -217,15 +224,11 @@ def _set_control(
         )  # do not apply to rr_parameters and rr_initial_states with 'ann' mapping
 
         # Set Python control from Net
-        net = optimize_options["net"]
+        for layer in net.layers:  # initialize weight and bias matrices if not set
+            if hasattr(layer, "_initialize"):
+                layer._initialize(None)
 
-        net._compile(
-            optimizer=optimizer,
-            learning_param={"learning_rate": optimize_options["learning_rate"]},
-            random_state=None,
-        )
-
-        net = _vect_to_net(control_vector[ind:], net)
+        net = _vect_to_net(control_vector[ind:], net)  # set weight and bias with control values
 
         l_desc = model._input_data.physio_data.l_descriptor
         u_desc = model._input_data.physio_data.u_descriptor
