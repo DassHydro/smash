@@ -45,6 +45,10 @@ from smash.core.simulation._doc import (
     _model_optimize_doc_substitution,
     _multiset_estimate_doc_appender,
     _optimize_doc_appender,
+    _set_control_bayesian_optimize_doc_appender,
+    _set_control_bayesian_optimize_doc_substitution,
+    _set_control_optimize_doc_appender,
+    _set_control_optimize_doc_substitution,
 )
 from smash.core.simulation.estimate._standardize import (
     _standardize_multiset_estimate_args,
@@ -1507,6 +1511,7 @@ class Model:
 
         Generate the random grid
 
+        >>> import numpy as np
         >>> np.random.seed(99)
         >>> random_arr = np.random.randint(10, 500, shape)
         >>> random_arr
@@ -1693,6 +1698,7 @@ class Model:
 
         Generate the random grid
 
+        >>> import numpy as np
         >>> np.random.seed(99)
         >>> random_arr = np.random.rand(*shape)
         >>> random_arr
@@ -2728,6 +2734,8 @@ class Model:
 
         return _optimize(self, *args)
 
+    @_set_control_optimize_doc_substitution
+    @_set_control_optimize_doc_appender
     def set_control_optimize(
         self,
         control_vector: np.ndarray,
@@ -2794,6 +2802,8 @@ class Model:
 
         return _bayesian_optimize(self, *args)
 
+    @_set_control_bayesian_optimize_doc_substitution
+    @_set_control_bayesian_optimize_doc_appender
     def set_control_bayesian_optimize(
         self,
         control_vector: np.ndarray,
