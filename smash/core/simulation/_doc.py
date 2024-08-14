@@ -25,7 +25,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         - `Model.rr_parameters`
         - `Model.rr_initial_states`
-        %(parameters_nn_parameters)s
+        - `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)
         %(parameters_serr_mu_parameters)s
         %(parameters_serr_sigma_parameters)s
 
@@ -37,7 +37,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If not given, all parameters in `Model.rr_parameters`%(parameters_note_nn_parameters)s
+            If not given, all parameters in `Model.rr_parameters`, `Model.nn_parameters` (if used)
             %(parameters_note_serr_parameters)s will be optimized.
         """,
     ),
@@ -1561,9 +1561,6 @@ _optimize_doc_appender = DocAppender(_optimize_doc, indents=0)
 _smash_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
     default_optimize_options_func="default_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1576,9 +1573,6 @@ _smash_optimize_doc_substitution = DocSubstitution(
 _model_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1609,9 +1603,6 @@ _bayesian_optimize_doc_appender = DocAppender(_bayesian_optimize_doc, indents=0)
 _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
@@ -1625,9 +1616,6 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
 _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
@@ -1644,9 +1632,6 @@ _multiple_forward_run_doc_appender = DocAppender(_multiple_forward_run_doc, inde
 _optimize_control_info_doc_appender = DocAppender(_optimize_control_info_doc, indents=0)
 _smash_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1656,9 +1641,6 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
 _bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_control_info_doc, indents=0)
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
