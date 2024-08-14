@@ -58,12 +58,12 @@ def _get_control_info(
     # Manually dealloc the control
     model._parameters.control.dealloc()
 
-    _finalize_get_control_info(ret, optimize_options.get("net", None))
+    _finalize_get_control_info(ret, optimize_options)
 
     return ret
 
 
-def _finalize_get_control_info(ret: dict, net: Net | None):
+def _finalize_get_control_info(ret: dict, optimize_options: dict):
     # % Handle unbounded and semi-unbounded parameters
     for key in ["l", "u", "l_bkg", "u_bkg"]:
         if key.startswith("l"):
@@ -73,6 +73,8 @@ def _finalize_get_control_info(ret: dict, net: Net | None):
             ret[key] = np.where(np.isin(ret["nbd"], [0, 1]), np.inf, ret[key])
 
     # % Handle control info from net
+    net = optimize_options.get("net", None)
+
     if net is None:
         ret["nbk"] = np.append(ret["nbk"], 0)
 
@@ -107,11 +109,14 @@ def _finalize_get_control_info(ret: dict, net: Net | None):
 
             ret[key] = np.append(ret[key], np.full(x_net_size, value))
 
-        try:  # if net is initialized
-            x = _net_to_vect(net)
-
-        except Exception:  # it will be set by random values
-            x = np.full(x_net_size, np.nan)
+        # Set weights and biases if net is not initialized
+        # Otherwise, it will be initialized with random values
+        if optimize_options["random_state"] is not None:
+            np.random.seed(optimize_options["random_state"])
+        for layer in net.layers:
+            if hasattr(layer, "_initialize"):
+                layer._initialize(None)
+        x = _net_to_vect(net)
 
         ret["x"] = np.append(ret["x"], x)
 
