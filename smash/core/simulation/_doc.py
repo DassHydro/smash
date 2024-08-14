@@ -127,7 +127,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         - `Model.rr_parameters`
         - `Model.rr_initial_states`
-        %(parameters_nn_parameters)s
+        - `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)
         %(parameters_serr_mu_parameters)s
         %(parameters_serr_sigma_parameters)s
 
@@ -139,7 +139,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If not given, all parameters in `Model.rr_parameters`%(parameters_note_nn_parameters)s
+            If not given, all parameters in `Model.rr_parameters`, `Model.nn_parameters` (if used)
             %(parameters_note_serr_parameters)s will be optimized.
         """,
     ),
@@ -1888,9 +1888,6 @@ _smash_optimize_doc_substitution = DocSubstitution(
     optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
     default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
     default_optimize_options_func="default_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1906,9 +1903,6 @@ _model_optimize_doc_substitution = DocSubstitution(
     optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
     default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
     default_optimize_options_func="default_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1942,9 +1936,6 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
     default_optimizer_for_ann_mapping="",
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
@@ -1961,9 +1952,6 @@ _model_bayesian_optimize_doc_substitution = DocSubstitution(
     optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
     default_optimizer_for_ann_mapping="",
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
@@ -1983,9 +1971,6 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
     optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
     default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
     default_optimize_options_func="default_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
     parameters_note_serr_parameters="",
@@ -1998,9 +1983,6 @@ _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
     optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
     default_optimizer_for_ann_mapping="",
     default_optimize_options_func="default_bayesian_optimize_options",
-    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
-    "(depending on **hydrological_module**)",
-    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
