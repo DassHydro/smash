@@ -1771,13 +1771,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        [
-            "parameters",
-            "bounds",
-            "control_tfm",
-            "descriptor",
-            "termination_crit",
-        ],
+        OPTIMIZE_OPTIONS_KEYS,
         nindent=1,
     )
     + """
@@ -1830,13 +1824,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        [
-            "parameters",
-            "bounds",
-            "control_tfm",
-            "descriptor",
-            "termination_crit",
-        ],
+        BAYESIAN_OPTIMIZE_OPTIONS_KEYS,
         nindent=1,
     )
     + """

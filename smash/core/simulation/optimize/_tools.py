@@ -202,7 +202,9 @@ def _set_control(
     wrap_parameters_to_control(model.setup, model.mesh, model._input_data, model._parameters, wrap_options)
 
     # % Set control values
-    if "net" not in optimize_options.keys():
+    net = optimize_options.get("net", None)
+
+    if net is None:
         # Could not fully standardize 'control_vectol' before initializing model._parameters.control
         # 'control_vector' can be checked by Numpy with setattr method applied to a Numpy array
         setattr(model._parameters.control, "x", control_vector)
@@ -222,15 +224,11 @@ def _set_control(
         )  # do not apply to rr_parameters and rr_initial_states with 'ann' mapping
 
         # Set Python control from Net
-        net = optimize_options["net"]
+        for layer in net.layers:  # initialize weight and bias matrices if not set
+            if hasattr(layer, "_initialize"):
+                layer._initialize(None)
 
-        net._compile(
-            optimizer=optimizer,
-            learning_param={"learning_rate": optimize_options["learning_rate"]},
-            random_state=None,
-        )
-
-        net = _vect_to_net(control_vector[ind:], net)
+        net = _vect_to_net(control_vector[ind:], net)  # set weight and bias with control values
 
         l_desc = model._input_data.physio_data.l_descriptor
         u_desc = model._input_data.physio_data.u_descriptor
