@@ -43,8 +43,8 @@ Simulation
    Model.multiset_estimate
    Model.bayesian_optimize
 
-Parameters/States
-*****************
+Parameters/States/Control
+*************************
 .. autosummary::
    :toctree: smash/
 

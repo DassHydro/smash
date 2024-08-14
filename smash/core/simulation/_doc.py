@@ -1757,6 +1757,134 @@ The optimization process was terminated after 10 iterations, the maximal value w
 """
 )
 
+_set_control_optimize_doc = (
+    """
+Retrieve the Model parameters/states from the optimization control vector.
+
+Parameters
+----------
+control_vector : `numpy.ndarray`
+    A 1D array representing the control values, ideally obtained from the `optimize` (or `Model.optimize`)
+    method.
+
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
+
+optimize_options : `dict[str, Any]` or None, default None
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
+
+"""
+    + _gen_docstring_from_base_doc(
+        OPTIMIZE_OPTIONS_BASE_DOC,
+        [
+            "parameters",
+            "bounds",
+            "control_tfm",
+            "descriptor",
+            "termination_crit",
+        ],
+        nindent=1,
+    )
+    + """
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Define a callback function to store the control vector solutions during the optimization process
+
+>>> iter_control = []
+>>> def callback(iopt, icontrol=iter_control):
+...     icontrol.append(iopt.control_vector)
+
+Optimize the Model
+
+>>> model.optimize(callback=callback)
+
+Retrieve the model parameters from the control vector solution at the first iteration
+
+>>> model.set_control_optimize(iter_control[0])
+
+Perform a forward run to update the hydrological responses and final states
+
+>>> model.forward_run()
+"""
+)
+
+_set_control_bayesian_optimize_doc = (
+    """
+Retrieve the Model parameters/states from the bayesian optimization control vector.
+
+Parameters
+----------
+control_vector : `numpy.ndarray`
+    A 1D array representing the control values, ideally obtained from the `bayesian_optimize`
+    (or `Model.bayesian_optimize`) method.
+
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
+
+optimize_options : `dict[str, Any]` or None, default None
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
+
+"""
+    + _gen_docstring_from_base_doc(
+        OPTIMIZE_OPTIONS_BASE_DOC,
+        [
+            "parameters",
+            "bounds",
+            "control_tfm",
+            "descriptor",
+            "termination_crit",
+        ],
+        nindent=1,
+    )
+    + """
+cost_options : `dict[str, Any]` or None, default None
+    Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COST_OPTIONS_BASE_DOC,
+        DEFAULT_SIMULATION_COST_OPTIONS["bayesian_optimize"].keys(),
+        nindent=1,
+    )
+    + """
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Define a callback function to store the control vector solutions during the optimization process
+
+>>> iter_control = []
+>>> def callback(iopt, icontrol=iter_control):
+...     icontrol.append(iopt.control_vector)
+
+Optimize the Model
+
+>>> model.bayesian_optimize(callback=callback)
+
+Retrieve the model parameters from the control vector solution at the first iteration
+
+>>> model.set_control_bayesian_optimize(iter_control[0])
+
+Perform a forward run to update the hydrological responses and final states
+
+>>> model.forward_run()
+"""
+)
+
 _forward_run_doc_appender = DocAppender(_forward_run_doc, indents=0)
 _smash_forward_run_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
@@ -1886,6 +2014,37 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
 
 _bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_control_info_doc, indents=0)
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
+    mapping_ann="",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
+    default_optimizer_for_ann_mapping="",
+    default_optimize_options_func="default_bayesian_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
+    parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
+    parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
+    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
+    "`Model.get_serr_sigma_parameters_bounds`",
+)
+
+_set_control_optimize_doc_appender = DocAppender(_set_control_optimize_doc, indents=0)
+_set_control_optimize_doc_substitution = DocSubstitution(
+    mapping_ann="- ``'ann'``",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
+    default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
+    default_optimize_options_func="default_optimize_options",
+    parameters_nn_parameters="- `Model.nn_parameters`, if using a hybrid structure model "
+    "(depending on **hydrological_module**)",
+    parameters_note_nn_parameters=", `Model.nn_parameters` (if used)",
+    parameters_serr_mu_parameters="",
+    parameters_serr_sigma_parameters="",
+    parameters_note_serr_parameters="",
+    bounds_get_serr_parameters_bounds="",
+)
+
+_set_control_bayesian_optimize_doc_appender = DocAppender(_set_control_bayesian_optimize_doc, indents=0)
+_set_control_bayesian_optimize_doc_substitution = DocSubstitution(
     mapping_ann="",
     optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
     default_optimizer_for_ann_mapping="",
