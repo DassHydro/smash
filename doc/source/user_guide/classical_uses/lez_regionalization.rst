@@ -271,6 +271,7 @@ Since we have returned the optimized neural network, we can visualize what it co
 
 The above information indicates that the default neural network is composed of 3 hidden dense layers, each followed by a ``ReLU`` activation function.
 The output layer is followed by a ``TanH`` function. To scale the network output to the boundary condition, a ``MinMaxScale`` function is applied.
+Other information is available in the `smash.factory.Net` object, including the value of the cost function at each iteration.
 
 .. ipython:: python
 
