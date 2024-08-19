@@ -238,9 +238,9 @@ We also pass other options specific to the use of a NN:
         model,
         mapping="ann",
         optimize_options={
-            "random_state": 23,
-            "learning_rate": 0.004,
-            "termination_crit": dict(maxiter=100, early_stopping=20),
+            "random_state": 0,
+            "learning_rate": 0.003,
+            "termination_crit": dict(maxiter=80, early_stopping=20),
         },
         return_options={"net": True},
         common_options={"ncpu": ncpu},
@@ -253,9 +253,9 @@ We also pass other options specific to the use of a NN:
         model,
         mapping="ann",
         optimize_options={
-            "random_state": 23,
-            "learning_rate": 0.004,
-            "termination_crit": dict(maxiter=100, early_stopping=20),
+            "random_state": 0,
+            "learning_rate": 0.003,
+            "termination_crit": dict(maxiter=80, early_stopping=20),
         },
         return_options={"net": True},
     )
