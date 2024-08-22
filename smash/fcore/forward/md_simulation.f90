@@ -21,7 +21,7 @@ module md_simulation
     use mwd_returns !% only: ReturnsDT
     use md_checkpoint_variable !% only: Checkpoint_VariableDT
     use md_snow_operator !% only: ssn_time_step
-    use md_gr_operator !% only: gr4_time_step, gr5_time_step, grd_time_step, loieau_time_step
+    use md_gr_operator !% only: gr4_time_step, gr5_time_step, grc_time_step, grd_time_step, loieau_time_step
     use md_vic3l_operator !% only: vic3l_time_step
     use md_routing_operator !% only: lag0_time_step, lr_time_step, kw_time_step
     use mwd_sparse_matrix_manipulation !% only: matrix_to_ac_vector, &
@@ -228,7 +228,7 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 3
 
-               ! 'gr4_reunion' module
+                ! 'gr5_reunion' module
             case ("grc")
 
                 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -237,7 +237,7 @@ contains
                 h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
                 h4 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) ! % hl
 
-                call grc( &
+                call grc_time_step( &
                     setup, &
                     mesh, &
                     input_data, &
@@ -249,7 +249,6 @@ contains
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % ct
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % cl
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 5), & ! % kexc
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 6), & ! % aexc
                     h1, & ! % hi
                     h2, & ! % hp
                     h3, & ! % ht
@@ -261,7 +260,7 @@ contains
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) = h4
 
-                rr_parameters_inc = rr_parameters_inc + 6
+                rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 4
 
                 ! 'grd' module

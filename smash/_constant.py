@@ -58,7 +58,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         [
             ["ci", "cp", "ct", "kexc"],  # % gr4
             ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
-            ["ci", "cp", "ct", "cl", "kexc", "aexc"],  # % grc
+            ["ci", "cp", "ct", "cl", "kexc"],  # % grc
             ["cp", "ct"],  # % grd
             ["ca", "cc", "kb"],  # % loieau
             ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -157,7 +157,7 @@ RR_PARAMETERS = [
     "ct",  # % (gr4, gr5, grd, grc)
     "cl",  # % (gr4, gr5, grd, grc)
     "kexc",  # % (gr4, gr5, grc)
-    "aexc",  # % gr5, grc
+    "aexc",  # % gr5
     "ca",  # % loieau
     "cc",  # % loieau
     "kb",  # % loieau
@@ -180,7 +180,7 @@ RR_STATES = [
     "hi",  # % (gr4, gr5, grc)
     "hp",  # % (gr4, gr5, grd, grc)
     "ht",  # % (gr4, gr5, grd, grc)
-    "hl", # % (grc)
+    "hl",  # % (grc)
     "ha",  # % loieau
     "hc",  # % loieau
     "hcl",  # % vic3l
