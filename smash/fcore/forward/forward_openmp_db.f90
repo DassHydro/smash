@@ -13767,15 +13767,16 @@ CONTAINS
 !   variations   of useful results: ac_qt ac_hi ac_hl ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cl ac_cp ac_ct
 !                ac_qt ac_hi ac_hl ac_hp ac_ht ac_mlt
-  SUBROUTINE GRC_TIME_STEP_D(setup, mesh, input_data, options, time_step&
-&   , ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, ac_ct_d, &
-&   ac_cl, ac_cl_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, ac_hp, ac_hp_d, &
-&   ac_ht, ac_ht_d, ac_hl, ac_hl_d, ac_qt, ac_qt_d)
+  SUBROUTINE GRC_TIME_STEP_D(setup, mesh, input_data, options, returns, &
+&   time_step, ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, &
+&   ac_ct_d, ac_cl, ac_cl_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, ac_hp, &
+&   ac_hp_d, ac_ht, ac_ht_d, ac_hl, ac_hl_d, ac_qt, ac_qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
@@ -13791,7 +13792,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
-    INTEGER :: row, col, k
+    INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d&
 &   , ql_d, qd_d
@@ -13865,15 +13866,16 @@ CONTAINS
 !                ac_qt ac_hi ac_hl ac_hp ac_ht ac_mlt
 !   with respect to varying inputs: ac_kexc ac_ci ac_cl ac_cp ac_ct
 !                ac_qt ac_hi ac_hl ac_hp ac_ht ac_mlt
-  SUBROUTINE GRC_TIME_STEP_B(setup, mesh, input_data, options, time_step&
-&   , ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, ac_ct_b, &
-&   ac_cl, ac_cl_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, ac_hp, ac_hp_b, &
-&   ac_ht, ac_ht_b, ac_hl, ac_hl_b, ac_qt, ac_qt_b)
+  SUBROUTINE GRC_TIME_STEP_B(setup, mesh, input_data, options, returns, &
+&   time_step, ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, &
+&   ac_ct_b, ac_cl, ac_cl_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, ac_hp, &
+&   ac_hp_b, ac_ht, ac_ht_b, ac_hl, ac_hl_b, ac_qt, ac_qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
@@ -13889,7 +13891,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
-    INTEGER :: row, col, k
+    INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b&
 &   , ql_b, qd_b
@@ -14033,14 +14035,15 @@ CONTAINS
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GRC_TIME_STEP_B
 
-  SUBROUTINE GRC_TIME_STEP(setup, mesh, input_data, options, time_step, &
-&   ac_mlt, ac_ci, ac_cp, ac_ct, ac_cl, ac_kexc, ac_hi, ac_hp, ac_ht, &
-&   ac_hl, ac_qt)
+  SUBROUTINE GRC_TIME_STEP(setup, mesh, input_data, options, returns, &
+&   time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_cl, ac_kexc, ac_hi, ac_hp&
+&   , ac_ht, ac_hl, ac_qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
@@ -14049,7 +14052,7 @@ CONTAINS
 &   , ac_hl
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
-    INTEGER :: row, col, k
+    INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -18275,26 +18278,27 @@ CONTAINS
 ! % hp
 ! % ht
 ! % hl
-        CALL GRC_TIME_STEP_D(setup, mesh, input_data, options, t, &
-&                      checkpoint_variable%ac_mlt, checkpoint_variable_d&
-&                      %ac_mlt, checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+1), checkpoint_variable_d%&
-&                      ac_rr_parameters(:, rr_parameters_inc+1), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+2), checkpoint_variable_d%&
+        CALL GRC_TIME_STEP_D(setup, mesh, input_data, options, returns, &
+&                      t, checkpoint_variable%ac_mlt, &
+&                      checkpoint_variable_d%ac_mlt, checkpoint_variable&
+&                      %ac_rr_parameters(:, rr_parameters_inc+1), &
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+1), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+2), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+3), checkpoint_variable_d%&
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+2), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+3), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+4), checkpoint_variable_d%&
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+3), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+4), &
-&                      checkpoint_variable%ac_rr_parameters(:, &
-&                      rr_parameters_inc+5), checkpoint_variable_d%&
-&                      ac_rr_parameters(:, rr_parameters_inc+5), h1, &
-&                      h1_d, h2, h2_d, h3, h3_d, h4, h4_d, &
-&                      checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                      checkpoint_variable_d%ac_qtz(:, setup%nqz))
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+4), checkpoint_variable%&
+&                      ac_rr_parameters(:, rr_parameters_inc+5), &
+&                      checkpoint_variable_d%ac_rr_parameters(:, &
+&                      rr_parameters_inc+5), h1, h1_d, h2, h2_d, h3, &
+&                      h3_d, h4, h4_d, checkpoint_variable%ac_qtz(:, &
+&                      setup%nqz), checkpoint_variable_d%ac_qtz(:, setup&
+&                      %nqz))
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -18718,8 +18722,8 @@ CONTAINS
         CALL PUSHREAL4ARRAY(h3, mesh%nac)
         CALL PUSHREAL4ARRAY(h2, mesh%nac)
         CALL PUSHREAL4ARRAY(h1, mesh%nac)
-        CALL GRC_TIME_STEP(setup, mesh, input_data, options, t, &
-&                    checkpoint_variable%ac_mlt, checkpoint_variable%&
+        CALL GRC_TIME_STEP(setup, mesh, input_data, options, returns, t&
+&                    , checkpoint_variable%ac_mlt, checkpoint_variable%&
 &                    ac_rr_parameters(:, rr_parameters_inc+1), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+2), checkpoint_variable%&
@@ -19128,8 +19132,8 @@ CONTAINS
           CALL POPREAL4ARRAY(h4, mesh%nac)
           CALL POPREAL4ARRAY(checkpoint_variable%ac_qtz(:, setup%nqz), &
 &                      SIZE(checkpoint_variable%ac_qtz, 1))
-          CALL GRC_TIME_STEP_B(setup, mesh, input_data, options, t, &
-&                        checkpoint_variable%ac_mlt, &
+          CALL GRC_TIME_STEP_B(setup, mesh, input_data, options, returns&
+&                        , t, checkpoint_variable%ac_mlt, &
 &                        checkpoint_variable_b%ac_mlt, &
 &                        checkpoint_variable%ac_rr_parameters(:, &
 &                        rr_parameters_inc+1), checkpoint_variable_b%&
@@ -19486,8 +19490,8 @@ CONTAINS
 ! % hp
 ! % ht
 ! % hl
-        CALL GRC_TIME_STEP(setup, mesh, input_data, options, t, &
-&                    checkpoint_variable%ac_mlt, checkpoint_variable%&
+        CALL GRC_TIME_STEP(setup, mesh, input_data, options, returns, t&
+&                    , checkpoint_variable%ac_mlt, checkpoint_variable%&
 &                    ac_rr_parameters(:, rr_parameters_inc+1), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+2), checkpoint_variable%&

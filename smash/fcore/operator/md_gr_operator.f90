@@ -447,7 +447,7 @@ contains
 #endif
     end subroutine gr6_time_step
 
-    subroutine grc_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    subroutine grc_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
         & ac_cl, ac_kexc, ac_hi, ac_hp, ac_ht, ac_hl, ac_qt)
 
         implicit none
@@ -456,6 +456,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
         real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_cl, ac_kexc
@@ -463,7 +464,7 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
-        integer :: row, col, k
+        integer :: row, col, k, time_step_returns
         real(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
