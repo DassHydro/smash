@@ -496,6 +496,73 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         q_t(x, t) = q_r(x, t) + q_{e}(x, t) + q_d(x, t) 
 
 
+
+.. _math_num_documentation.forward_structure.hydrological_module.grc:
+
+
+.. dropdown:: grc (Génie Rural c)
+    :animate: fade-in-slide-down
+
+    This hydrological operator is derived from the GR6 model. It consists in a gr6 like model stucture (see diagram above) but with a tansfert reservoir instead of the exponential reservoir.
+
+    .. hint::
+
+        Helpful links about GR:
+
+        - `Brief history of GR models <https://webgr.inrae.fr/models/a-brief-history/>`__
+        - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
+        - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
+
+    .. figure:: ../_static/grc_structure.svg
+        :align: center
+        :width: 400
+        
+        Diagram of the ``grc`` like hydrological operator
+
+    It can be expressed as follows:
+
+    .. math::
+
+        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
+
+    with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
+    :math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
+    :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
+    :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
+    :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir.
+
+    .. note::
+
+        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        
+        - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+        - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+        - Parameters, :math:`\{c_i, c_p, c_t, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+        - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
+
+    The function :math:`f` is resolved numerically as follows:
+
+    **Interception**
+
+    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+    **Production**
+
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+    **Exchange**
+
+    - Compute the exchange flux :math:`l_{exc}`
+
+    .. math::
+
+        l_{exc}(x, t) = k_{exc}(x) \left(h_t(x, t - 1) - a_{exc}(x)\right)
+
+    **Transfer**
+
+    Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+
 .. _math_num_documentation.forward_structure.hydrological_module.grd:
 
 .. dropdown:: grd (Génie Rural Distribué)
