@@ -149,7 +149,7 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"],  # % gr6
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % grc
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"],  # % grc
             ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
             ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
             ["pn", "en", "qr", "qb", "qt"],  # % vic3l
