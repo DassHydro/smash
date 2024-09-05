@@ -503,7 +503,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: grc (Génie Rural c)
     :animate: fade-in-slide-down
 
-    This hydrological operator is derived from the GR6 model. It consists in a gr6 like model stucture (see diagram above) but with a tansfert reservoir instead of the exponential reservoir.
+    This hydrological operator is derived from the GR6 model. It consists in a gr6 like model stucture (see diagram above) but with a slow-tansfert reservoir instead of the exponential reservoir. This structure is used for the Reunion island.
 
     .. hint::
 
@@ -523,13 +523,15 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. math::
 
-        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
+        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, c_l, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t, h_l\right](x, t)\right)
 
     with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-    :math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
+    :math:`m_{lt}` the melt flux from the snow module, :math:`c_i` the maximum capacity of the interception reservoir,
     :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
+    :math:`c_l` the maximum capacity of the slow-transfer reservoir, 
     :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
-    :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir.
+    :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
+    :math:`h_l` the state of the slow transfer reservoir.
 
     .. note::
 
@@ -537,10 +539,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         
         - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
-        - Parameters, :math:`\{c_i, c_p, c_t, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
-        - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
+        - Parameters, :math:`\{c_i, c_p, c_t, c_l, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+        - States, :math:`\{h_i, h_p, h_t, h_l\}\in\boldsymbol{h}`
 
     The function :math:`f` is resolved numerically as follows:
+
 
     **Interception**
 
@@ -552,15 +555,72 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Exchange**
 
-    - Compute the exchange flux :math:`l_{exc}`
-
-    .. math::
-
-        l_{exc}(x, t) = k_{exc}(x) \left(h_t(x, t - 1) - a_{exc}(x)\right)
+    Same as ``gr5`` exchange, see :ref:`GR5 Production <math_num_documentation.forward_structure.hydrological_module.gr5>`
 
     **Transfer**
 
-    Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    - Split the production runoff :math:`p_r` into three branches (transfer, slow-transfer and direct), :math:`p_{rr}`, :math:`p_{rl}` and :math:`p_{rd}`
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &p_{rr}(x, t)& &=& &0.6 \times 0.9(p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+            &p_{rl}(x, t)& &=& &0.4 \times 0.9(p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+            &p_{rd}(x, t)& &=& &0.1(p_r(x, t) + p_{erc}(x, t))
+
+        \end{eqnarray}
+
+    - Update the transfer reservoir state :math:`h_t` and `h_l`
+
+    .. math::
+        
+        h_t(x, t^*) = \max\left(0, h_t(x, t - 1) + \frac{p_{rr}(x, t)}{c_t(x)}\right)
+
+    .. math::
+
+        h_l(x, t^*) = \max\left(0, h_l(x, t - 1) + \frac{p_{rl}(x, t)}{c_l(x)}\right)
+
+    - Compute the transfer branch elemental discharge :math:`q_r` and `q_l`
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            q_r(x, t) = h_t(x, t^*)c_t(x) - \left(\left(h_t(x, t^*)c_t(x)\right)^{-4} + c_t(x)^{-4}\right)^{-1/4}
+
+        \end{eqnarray}
+        
+        \begin{eqnarray}
+
+            ql(x, t) = h_l(x, t^*)c_l(x) - \left(\left(h_l(x, t^*)c_l(x)\right)^{-4} + c_l(x)^{-4}\right)^{-1/4}
+
+        \end{eqnarray}
+
+    - Update the transfer reservoir state :math:`h_t` and `h_l`
+
+    .. math::
+
+        h_t(x, t) = h_t(x, t^*) - \frac{q_r(x, t)}{c_t(x)}
+        
+    .. math::
+        
+        h_l(x, t) = h_l(x, t^*) - \frac{q_r(x, t)}{c_l(x)}
+        
+
+    - Compute the direct branch elemental discharge :math:`q_d`
+
+    .. math::
+
+        q_d(x, t) = \max(0, p_{rd}(x, t) + l_{exc}(x, t))
+
+    - Compute the elemental discharge :math:`q_t`
+
+    .. math::
+
+        q_t(x, t) = q_r(x, t) + q_l(x, t) + q_d(x, t) 
 
 
 .. _math_num_documentation.forward_structure.hydrological_module.grd:
