@@ -513,7 +513,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
         - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
 
-    .. figure:: ../_static/grc_structure.svg
+    .. figure:: ../_static/gr6_structure.svg
         :align: center
         :width: 400
         
