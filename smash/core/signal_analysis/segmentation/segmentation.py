@@ -128,7 +128,10 @@ def _hydrograph_segmentation(instance: Model, peak_quant: float, max_duration: N
         q = getattr(instance, f"response{suffix}").q[i, :].copy()
 
         if (prcp < 0).all() or (q < 0).all():
-            warnings.warn(f"Catchment {catchment} has no precipitation or/and discharge data", stacklevel=2)
+            warnings.warn(
+                f"Catchment {catchment} has no precipitation or/and discharge data",
+                stacklevel=2,
+            )
 
             pdrow = pd.DataFrame([[catchment] + [np.nan] * (len(col_name) - 1)], columns=col_name)
             df = pdrow.copy() if df.empty else pd.concat([df, pdrow], ignore_index=True)

@@ -27,6 +27,8 @@ from smash._constant import (
     MAPPING,
     MAPPING_OPTIMIZER,
     METRICS,
+    NN_PARAMETERS_KEYS,
+    OPTIMIZABLE_NN_PARAMETERS,
     OPTIMIZABLE_RR_INITIAL_STATES,
     OPTIMIZABLE_RR_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
@@ -140,19 +142,20 @@ def _standardize_simulation_optimize_options_parameters(
         for key in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]
         if OPTIMIZABLE_SERR_SIGMA_PARAMETERS[key]
     ]
-    available_parameters = available_rr_parameters + available_rr_initial_states
+    available_nn_parameters = OPTIMIZABLE_NN_PARAMETERS[max(0, model.setup.n_layers - 1)]
+
+    available_parameters = available_rr_parameters + available_rr_initial_states + available_nn_parameters
 
     if is_bayesian:
         available_parameters.extend(available_serr_mu_parameters + available_serr_sigma_parameters)
 
     if parameters is None:
+        default_parameters = available_rr_parameters + available_nn_parameters
+
         if is_bayesian:
-            parameters = np.array(
-                available_rr_parameters + available_serr_mu_parameters + available_serr_sigma_parameters,
-                ndmin=1,
-            )
-        else:
-            parameters = np.array(available_rr_parameters, ndmin=1)
+            default_parameters += available_serr_mu_parameters + available_serr_sigma_parameters
+
+        parameters = np.array(default_parameters, ndmin=1)
 
     else:
         if isinstance(parameters, (str, list, tuple, np.ndarray)):
@@ -181,13 +184,15 @@ def _standardize_simulation_optimize_options_parameters(
 def _standardize_simulation_optimize_options_bounds(
     model: Model, parameters: np.ndarray, bounds: dict | None, **kwargs
 ) -> dict:
+    bounded_parameters = [p for p in parameters if p not in NN_PARAMETERS_KEYS]
+
     if bounds is None:
         bounds = {}
 
     else:
         if isinstance(bounds, dict):
             for key, value in bounds.items():
-                if key in parameters:
+                if key in bounded_parameters:
                     if isinstance(value, (list, tuple, np.ndarray)) and len(value) == 2:
                         if value[0] >= value[1]:
                             raise ValueError(
@@ -203,8 +208,8 @@ def _standardize_simulation_optimize_options_bounds(
                         )
                 else:
                     raise ValueError(
-                        f"Unknown or non optimized parameter '{key}' in bounds optimize_options. "
-                        f"Choices: {parameters}"
+                        f"Unknown, non optimized, or unbounded parameter '{key}' in bounds optimize_options. "
+                        f"Choices: {bounded_parameters}"
                     )
         else:
             raise TypeError("bounds optimize_options must be a dictionary")
@@ -217,7 +222,7 @@ def _standardize_simulation_optimize_options_bounds(
     )
 
     for key, value in parameters_bounds.items():
-        if key in parameters:
+        if key in bounded_parameters:
             bounds.setdefault(key, value)
 
     # % Check that bounds are inside feasible domain and that bounds include parameter domain
@@ -260,7 +265,7 @@ def _standardize_simulation_optimize_options_bounds(
                 f"included in the feasible domain ]{low}, {upp}[ in bounds optimize_options"
             )
 
-    bounds = {key: bounds[key] for key in parameters}
+    bounds = {key: bounds[key] for key in bounded_parameters}
 
     return bounds
 
@@ -772,7 +777,11 @@ def _standardize_simulation_cost_options_end_warmup(
 
 
 def _standardize_simulation_cost_options_gauge(
-    model: Model, func_name: str, gauge: str | ListLike, end_warmup: pd.Timestamp, **kwargs
+    model: Model,
+    func_name: str,
+    gauge: str | ListLike,
+    end_warmup: pd.Timestamp,
+    **kwargs,
 ) -> np.ndarray:
     if isinstance(gauge, str):
         if gauge == "dws":
@@ -1188,6 +1197,13 @@ def _standardize_simulation_optimize_options_finalize(
                 for j, desc in enumerate(model.setup.descriptor_name):
                     if desc in optimize_options["descriptor"][key]:
                         optimize_options["rr_initial_states_descriptor"][j, i] = 1
+
+    # % nn parameters
+    optimize_options["nn_parameters"] = np.zeros(shape=len(NN_PARAMETERS_KEYS), dtype=np.int32)
+
+    for i, key in enumerate(NN_PARAMETERS_KEYS):
+        if key in optimize_options["parameters"]:
+            optimize_options["nn_parameters"][i] = 1
 
     # % serr mu parameters
     optimize_options["serr_mu_parameters"] = np.zeros(shape=model.setup.nsep_mu, dtype=np.int32)

@@ -43,6 +43,8 @@ def save_model_ddt(model: Model, path: FilePath):
       are only stored if a snow module has been selected)
     - ``keys``, ``values`` from `Model.rr_parameters <smash.Model.rr_parameters>`
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
+    - ``weight_1``, ``bias_1``, ``weight_2``, ``bias_2``, ``weight_3``, ``bias_3`` from
+      `Model.nn_parameters <smash.Model.nn_parameters>` (depending on the hydrological module)
     - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
     - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
     - ``q`` from `Model.response <smash.Model.response>`
@@ -133,9 +135,9 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
 
     >>> model_ddt = read_model_ddt("model_ddt.hdf5")
     >>> model_ddt.keys()
-    dict_keys(['mesh', 'physio_data', 'response', 'response_data', 'rr_final_states',
-    'rr_initial_states', 'rr_parameters', 'serr_mu_parameters', 'serr_sigma_parameters',
-    'setup'])
+    dict_keys(['atmos_data', 'mesh', 'nn_parameters', 'physio_data', 'response',
+    'response_data', 'rr_final_states', 'rr_initial_states', 'rr_parameters',
+    'serr_mu_parameters', 'serr_sigma_parameters', 'setup'])
 
     Access to setup variables
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS
+from smash._constant import OPTIMIZABLE_NN_PARAMETERS, PY_OPTIMIZER, PY_OPTIMIZER_CLASS
 from smash.factory.net._layers import Activation, Conv2D, Dense, Dropout, Flatten, Scale
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
 
@@ -514,13 +514,22 @@ class Net(object):
             random_state=random_state,
         )
 
+        # % Initialize optimizer for the parameterization NN if used
+        ind = PY_OPTIMIZER.index(optimizer.lower())
+        func = eval(PY_OPTIMIZER_CLASS[ind])
+
+        opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * instance.setup.n_layers)]
+
         # % Train model
         for epo in tqdm(range(epochs), desc="    Training"):
             # forward propogation
             y_pred = self._forward_pass(x_train)
 
             # calculate the gradient of the loss function wrt y_pred of the regionalization NN
-            init_loss_grad = _hcost_prime(y_pred, parameters, instance, wrap_options, wrap_returns)
+            # and get the gradient of the parameterization NN if used
+            init_loss_grad, nn_parameters_b = _hcost_prime(
+                y_pred, parameters, instance, wrap_options, wrap_returns
+            )
 
             # compute loss
             loss = _hcost(instance)
@@ -530,11 +539,16 @@ class Net(object):
             if early_stopping:
                 if epo == 0:
                     loss_opt = {"epo": 0, "value": loss}
+                    nn_parameters_bak = instance.nn_parameters.copy()
 
                 if loss <= loss_opt["value"]:
                     loss_opt["epo"] = epo
                     loss_opt["value"] = loss
 
+                    # backup nn_parameters
+                    nn_parameters_bak = instance.nn_parameters.copy()
+
+                    # backup weights and biases of rr_parameters
                     for layer in self.layers:
                         if hasattr(layer, "_initialize"):
                             layer._weight = np.copy(layer.weight)
@@ -549,13 +563,23 @@ class Net(object):
 
             # backpropagation and weights update
             if epo < epochs - 1:
+                for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS[max(0, instance.setup.n_layers - 1)]):
+                    if key in parameters:  # update trainable parameters of the parameterization NN if used
+                        setattr(
+                            instance.nn_parameters,
+                            key,
+                            opt_nn_parameters[i].update(
+                                getattr(instance.nn_parameters, key), nn_parameters_b[i]
+                            ),
+                        )
+
                 # backpropagation and update weights of the regionalization NN
                 loss_grad = self._backward_pass(init_loss_grad, inplace=True)
             else:  # do not update weights at the last epoch
                 loss_grad = self._backward_pass(init_loss_grad, inplace=False)
 
             # calculate projected gradient for the LPR operator
-            self.history["proj_grad"].append(_inf_norm(loss_grad))
+            self.history["proj_grad"].append(_inf_norm([loss_grad, nn_parameters_b]))
 
             if verbose:
                 ret = []
@@ -568,10 +592,16 @@ class Net(object):
                 tqdm.write((" " * 4).join(ret))
 
         if early_stopping:
+            instance.nn_parameters = nn_parameters_bak  # revert nn_parameters
+
             for layer in self.layers:
-                if hasattr(layer, "_initialize"):
+                if hasattr(layer, "_initialize"):  # revert weights and biases of rr_parameters
                     layer.weight = np.copy(layer._weight)
                     layer.bias = np.copy(layer._bias)
+
+                    # remove tmp attr for each layer of net
+                    del layer._weight
+                    del layer._bias
 
     def _forward_pass(self, x_train: np.ndarray):
         layer_output = x_train
