@@ -954,8 +954,7 @@ def _sbs_optimize(
         ret["iter_cost"] = np.array([gx])
 
     for iter in range(1, wrap_options.optimize.maxiter * n + 1):
-        if dxn > ddx:
-            dxn = ddx
+        dxn = min(dxn, ddx)
         if ddx > 2:
             ddx = dxn
 

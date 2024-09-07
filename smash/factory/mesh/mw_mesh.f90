@@ -470,7 +470,7 @@ contains
 
     end subroutine flow_partition_variable
 
-    subroutine check_well_in_flowdir(nrow, ncol, flwdir, well)
+    subroutine check_well_in_flwdir(nrow, ncol, flwdir, well)
 
         implicit none
 
@@ -507,6 +507,6 @@ contains
 
         end do
 
-    end subroutine check_well_in_flowdir
+    end subroutine check_well_in_flwdir
 
 end module mw_mesh

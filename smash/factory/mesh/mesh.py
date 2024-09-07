@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -99,10 +100,10 @@ def generate_mesh(
         (i.e. in ``ASCII`` file). The **epsg** argument must be filled in.
 
     check_well: `bool`, default True
-        If True, check the consistency of the flow directions. If some well(s) are detected,
-        the function will print an error and return a dictionnary with all necessary informations
-        to identify the well(s). If False, this check is disabled. Notice that the presence of well(s)
-        could lead to unexpected behaviours such as crashs and inconsistent hydrological results.
+        Whether to check the consistency of the flow directions. If any wells are detected, the function
+        will raise a warning and return a dictionary with all necessary information to identify the well(s).
+        If False, this check is disabled. Note that the presence of wells could lead to unexpected behaviors,
+        such as crashes or inconsistent hydrological results.
 
     Returns
     -------
@@ -429,13 +430,13 @@ def _generate_mesh_from_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: np.nd
     return mesh
 
 
-def _check_well_in_flowdir(
+def _check_well_in_flwdir(
     flwdir_dataset: rasterio.DatasetReader,
 ):
     (xmin, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
     flwdir = _get_array(flwdir_dataset)
 
-    well = mw_mesh.check_well_in_flowdir(flwdir)
+    well = mw_mesh.check_well_in_flwdir(flwdir)
 
     well_coord_x = xmin + np.where(well > 0)[0] * xres
     well_coord_y = ymax - np.where(well > 0)[1] * yres
@@ -463,15 +464,20 @@ def _generate_mesh(
     check_well: bool,
 ) -> dict:
     if check_well:
-        print(r"<\> Checking the consistency of the flow directions ...")
-        well = _check_well_in_flowdir(flwdir_dataset)
+        print("</> Checking the consistency of the flow directions")
+        well = _check_well_in_flwdir(flwdir_dataset)
 
         if np.sum(well["well"]) != 0:
-            print(r"<\> Error: Well(s) detected in the flow directions.")
+            warnings.warn(
+                "Well(s) detected in the flow directions may lead to unexpected hydrological behaviors",
+                stacklevel=2,
+            )
+
             flwdir_dataset.close()
+
             return well
 
-    print(r"<\> Generate the mesh ...")
+    print("</> Generating mesh")
 
     if bbox is not None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
