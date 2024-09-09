@@ -34,7 +34,7 @@ def get_rr_states_from_structure(structure: str) -> list[str]:
 
 SNOW_MODULE = ["zero", "ssn"]
 
-HYDROLOGICAL_MODULE = ["gr4", "gr5", "gr5_ri", "grd", "loieau", "vic3l"]
+HYDROLOGICAL_MODULE = ["gr4", "gr4_ri", "gr5", "gr5_ri", "grd", "loieau", "vic3l"]
 
 ROUTING_MODULE = ["lag0", "lr", "kw"]
 
@@ -57,6 +57,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         HYDROLOGICAL_MODULE,
         [
             ["ci", "cp", "ct", "kexc"],  # % gr4
+            ["ci", "cp", "ct", "kexc", "alpha1", "alpha2"],  # % gr4_ri
             ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
             ["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"],  # % gr5_ri
             ["cp", "ct"],  # % grd
@@ -95,6 +96,7 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
         HYDROLOGICAL_MODULE,
         [
             ["hi", "hp", "ht"],  # % gr4
+            ["hi", "hp", "ht"],  # % gr4_ri
             ["hi", "hp", "ht"],  # % gr5
             ["hi", "hp", "ht"],  # % gr5_ri
             ["hp", "ht"],  # % grd
@@ -155,8 +157,8 @@ RR_PARAMETERS = [
     "ci",  # % (gr4, gr5, gr5_ri)
     "cp",  # % (gr4, gr5, gr5_ri, grd)
     "ct",  # % (gr4, gr5, gr5_ri, grd)
-    "alpha1", # % gr5_ri
-    "alpha2", # % gr5_ri
+    "alpha1", # % (gr4_ri, gr5_ri)
+    "alpha2", # % (gr4_ri, gr5_ri)
     "kexc",  # % (gr4, gr5, gr5_ri)
     "aexc",  # % (gr5, gr5_ri)
     "ca",  # % loieau
@@ -178,9 +180,9 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % (gr4, gr5, gr5_ri)
-    "hp",  # % (gr4, gr5, grd, gr5_ri)
-    "ht",  # % (gr4, gr5, grd, gr5_ri)
+    "hi",  # % (gr4, gr4_ri, gr5, gr5_ri)
+    "hp",  # % (gr4, gr4_ri, gr5, gr5_ri, grd)
+    "ht",  # % (gr4, gr4_ri, gr5, gr5_ri, grd)
     "ha",  # % loieau
     "hc",  # % loieau
     "hcl",  # % vic3l
@@ -202,8 +204,8 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % ci
             (0, np.inf),  # % cp
             (0, np.inf),  # % ct
-            (-np.inf, np.inf), # % alpha1
-            (-np.inf, np.inf), # % alpha2
+            (0, np.inf), # % alpha1
+            (0, np.inf), # % alpha2
             (-np.inf, np.inf),  # % kexc
             (0, 1),  # % aexc
             (0, np.inf),  # % ca
@@ -259,7 +261,7 @@ DEFAULT_RR_PARAMETERS = dict(
             1e-6,  # % ci
             200,  # % cp
             500,  # % ct
-            1e-4, # % alpha1
+            1e-2, # % alpha1
             1e-2, # % alpha2
             0,  # % kexc
             0.1,  # % aexc
@@ -314,8 +316,8 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e2),  # % ci
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
-            (0., 1.), # % alpha1
-            (0., 1.), # % alpha2
+            (1e-3, 0.2), # % alpha1
+            (1e-3, 0.1), # % alpha2
             (-50, 50),  # % kexc
             (1e-6, 0.999999),  # % aexc
             (1e-6, 1e3),  # % ca

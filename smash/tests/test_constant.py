@@ -68,6 +68,7 @@ def test_module_parameters():
     # % Check hydrological module rr parameters
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
+        ["ci", "cp", "ct", "alpha1", "alpha2", "kexc"],  # % gr4_ri
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
         ["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"],  # % gr5_ri
         ["cp", "ct"],  # % grd
