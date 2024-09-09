@@ -38,18 +38,17 @@ def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
 def get_neurons_from_hydrological_module(hydrological_module: str, hidden_neuron: np.ndarray) -> np.ndarray:
     neurons = np.zeros(len(hidden_neuron) + 2, dtype=np.int32)
 
-    if "mlp" in hydrological_module:
-        if hydrological_module == "gr4_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 4
-            n_in, n_out = (4, 4)
-        elif hydrological_module == "gr4_ode_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 5
-            n_in, n_out = (4, 5)
+    if hydrological_module == "gr4_mlp":
+        # % fixed NN input size = 4 and fixed NN output size 4
+        n_in, n_out = (4, 4)
+    elif hydrological_module == "gr4_ode_mlp":
+        # % fixed NN input size = 4 and fixed NN output size 5
+        n_in, n_out = (4, 5)
 
-        neurons[0] = n_in
-        non_zero_hidden_neurons = [val for val in hidden_neuron if val > 0]
-        neurons[1 : 1 + len(non_zero_hidden_neurons)] = non_zero_hidden_neurons
-        neurons[1 + len(non_zero_hidden_neurons)] = n_out
+    neurons[0] = n_in
+    non_zero_hidden_neurons = [val for val in hidden_neuron if val > 0]
+    neurons[1 : 1 + len(non_zero_hidden_neurons)] = non_zero_hidden_neurons
+    neurons[1 + len(non_zero_hidden_neurons)] = n_out
 
     return neurons
 
