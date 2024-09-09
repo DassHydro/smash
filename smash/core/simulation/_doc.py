@@ -25,7 +25,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         - `Model.rr_parameters`
         - `Model.rr_initial_states`
-        - `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)
+        - `Model.nn_parameters`, if using a hybrid model structure (depending on **hydrological_module**)
         %(parameters_serr_mu_parameters)s
         %(parameters_serr_sigma_parameters)s
 
