@@ -29,6 +29,8 @@ from smash.core.model._standardize import (
     _standardize_get_serr_mu_parameters_args,
     _standardize_get_serr_sigma_parameters_args,
     _standardize_model_args,
+    _standardize_set_nn_parameters_bias_args,
+    _standardize_set_nn_parameters_weight_args,
     _standardize_set_rr_initial_states_args,
     _standardize_set_rr_parameters_args,
     _standardize_set_serr_mu_parameters_args,
@@ -58,6 +60,7 @@ from smash.core.simulation.optimize.optimize import (
 )
 from smash.core.simulation.run._standardize import _standardize_forward_run_args
 from smash.core.simulation.run.run import _forward_run
+from smash.factory.net._layers import _initialize_nn_parameter
 from smash.fcore._mwd_input_data import Input_DataDT
 from smash.fcore._mwd_mesh import MeshDT
 from smash.fcore._mwd_output import OutputDT
@@ -78,11 +81,11 @@ if TYPE_CHECKING:
     from smash.core.simulation.estimate.estimate import MultisetEstimate
     from smash.core.simulation.optimize.optimize import (
         BayesianOptimize,
-        MultipleOptimize,
         Optimize,
     )
     from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun
     from smash.fcore._mwd_atmos_data import Atmos_DataDT
+    from smash.fcore._mwd_nn_parameters import NN_ParametersDT
     from smash.fcore._mwd_physio_data import Physio_DataDT
     from smash.fcore._mwd_response import ResponseDT
     from smash.fcore._mwd_response_data import Response_DataDT
@@ -118,8 +121,13 @@ class Model:
             Name of hydrological module. Should be one of:
 
             - ``'gr4'``
+            - ``'gr4_ri'``
+            - ``'gr4_mlp'``
+            - ``'gr4_ode'``
+            - ``'gr4_ode_mlp'``
             - ``'gr5'``
             - ``'gr5_ri'``
+            - ``'gr6'``
             - ``'grd'``
             - ``'loieau'``
             - ``'vic3l'``
@@ -138,6 +146,12 @@ class Model:
             .. hint::
                 See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>`
                 section
+
+        hidden_neuron : `int` or `list[int]`, default 16
+            Number of neurons in hidden layer(s) of the parameterization neural network
+            used to correct internal fluxes, if used (depending on **hydrological_module**).
+            If it is a list, the maximum length is 2,
+            which means the neural network can have up to 2 hidden layers.
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of the mapping used for :math:`\\mu`, the mean of structural errors. Should be one of:
@@ -354,7 +368,7 @@ class Model:
         Model initialization mesh dictionary.
 
         .. note::
-            The elements are described in the `smash.factory.generate_mesh` method.
+            The elements are described in the `smash.factory.generate_mesh <factory.generate_mesh>` method.
 
     See Also
     --------
@@ -482,7 +496,7 @@ class Model:
 
         Returns
         -------
-        setup : `SetupDT <smash.fcore._mwd_setup.SetupDT>`
+        setup : `SetupDT <fcore._mwd_setup.SetupDT>`
             It returns a Fortran derived type containing the variables relating to the setup.
 
         Examples
@@ -509,30 +523,34 @@ class Model:
         If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.setup.<TAB>
-        model.setup.adjust_interception     model.setup.prcp_format
-        model.setup.compute_mean_atmos      model.setup.prcp_partitioning
-        model.setup.copy()                  model.setup.qobs_directory
-        model.setup.daily_interannual_pet   model.setup.read_descriptor
-        model.setup.descriptor_directory    model.setup.read_pet
-        model.setup.descriptor_format       model.setup.read_prcp
-        model.setup.descriptor_name         model.setup.read_qobs
-        model.setup.dt                      model.setup.read_snow
-        model.setup.end_time                model.setup.read_temp
-        model.setup.from_handle(            model.setup.routing_module
-        model.setup.hydrological_module     model.setup.serr_mu_mapping
-        model.setup.nd                      model.setup.serr_sigma_mapping
-        model.setup.nrrp                    model.setup.snow_access
-        model.setup.nrrs                    model.setup.snow_conversion_factor
-        model.setup.nsep_mu                 model.setup.snow_directory
-        model.setup.nsep_sigma              model.setup.snow_format
-        model.setup.ntime_step              model.setup.snow_module
-        model.setup.pet_access              model.setup.snow_module_present
-        model.setup.pet_conversion_factor   model.setup.sparse_storage
-        model.setup.pet_directory           model.setup.start_time
-        model.setup.pet_format              model.setup.structure
-        model.setup.prcp_access             model.setup.temp_access
-        model.setup.prcp_conversion_factor  model.setup.temp_directory
-        model.setup.prcp_directory          model.setup.temp_format
+        model.setup.adjust_interception     model.setup.pet_format
+        model.setup.compute_mean_atmos      model.setup.prcp_access
+        model.setup.copy()                  model.setup.prcp_conversion_factor
+        model.setup.daily_interannual_pet   model.setup.prcp_directory
+        model.setup.descriptor_directory    model.setup.prcp_format
+        model.setup.descriptor_format       model.setup.prcp_partitioning
+        model.setup.descriptor_name         model.setup.qobs_directory
+        model.setup.dt                      model.setup.read_descriptor
+        model.setup.end_time                model.setup.read_pet
+        model.setup.from_handle(            model.setup.read_prcp
+        model.setup.hidden_neuron           model.setup.read_qobs
+        model.setup.hydrological_module     model.setup.read_snow
+        model.setup.n_hydro_fluxes          model.setup.read_temp
+        model.setup.n_internal_fluxes       model.setup.routing_module
+        model.setup.n_layers                model.setup.serr_mu_mapping
+        model.setup.n_routing_fluxes        model.setup.serr_sigma_mapping
+        model.setup.n_snow_fluxes           model.setup.snow_access
+        model.setup.nd                      model.setup.snow_conversion_factor
+        model.setup.neurons                 model.setup.snow_directory
+        model.setup.nqz                     model.setup.snow_format
+        model.setup.nrrp                    model.setup.snow_module
+        model.setup.nrrs                    model.setup.snow_module_present
+        model.setup.nsep_mu                 model.setup.sparse_storage
+        model.setup.nsep_sigma              model.setup.start_time
+        model.setup.ntime_step              model.setup.structure
+        model.setup.pet_access              model.setup.temp_access
+        model.setup.pet_conversion_factor   model.setup.temp_directory
+        model.setup.pet_directory           model.setup.temp_format
         """
 
         return self._setup
@@ -548,7 +566,7 @@ class Model:
 
         Returns
         -------
-        mesh : `MeshDT <smash.fcore._mwd_mesh.MeshDT>`
+        mesh : `MeshDT <fcore._mwd_mesh.MeshDT>`
             It returns a Fortran derived type containing the variables relating to the mesh.
 
         Examples
@@ -610,7 +628,7 @@ class Model:
 
         Returns
         -------
-        response_data : `Response_DataDT <smash.fcore._mwd_response_data.Response_DataDT>`
+        response_data : `Response_DataDT <fcore._mwd_response_data.Response_DataDT>`
             It returns a Fortran derived type containing the variables relating to the response data.
 
         Examples
@@ -658,7 +676,7 @@ class Model:
 
         Returns
         -------
-        u_response_data : `U_Response_DataDT <smash.fcore._mwd_u_response_data.U_Response_DataDT>`
+        u_response_data : `U_Response_DataDT <fcore._mwd_u_response_data.U_Response_DataDT>`
             It returns a Fortran derived type containing the variables relating to the response data
             uncertainties.
 
@@ -716,7 +734,7 @@ class Model:
 
         Returns
         -------
-        physio_data : `Physio_DataDT <smash.fcore._mwd_physio_data.Physio_DataDT>`
+        physio_data : `Physio_DataDT <fcore._mwd_physio_data.Physio_DataDT>`
             It returns a Fortran derived type containing the variables relating to the physiographic data.
 
         Examples
@@ -772,7 +790,7 @@ class Model:
 
         Returns
         -------
-        atmos_data : `Atmos_DataDT <smash.fcore._mwd_atmos_data.Atmos_DataDT>`
+        atmos_data : `Atmos_DataDT <fcore._mwd_atmos_data.Atmos_DataDT>`
             It returns a Fortran derived type containing the variables relating to the atmospheric data.
 
         Examples
@@ -802,7 +820,7 @@ class Model:
 
         .. warning::
             If the Model object has been initialised with the ``sparse_storage`` option in setup
-            (see `smash.Model`), the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are
+            (see `Model`), the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are
             unavailable and replaced by ``sparse_prcp``, ``sparse_pet`` (``sparse_snow`` and ``sparse_temp``,
             optionally) and vice versa if the sparse_storage option has not been chosen.
 
@@ -853,7 +871,7 @@ class Model:
 
         Returns
         -------
-        rr_parameters : `RR_ParametersDT <smash.fcore._mwd_rr_parameters.RR_ParametersDT>`
+        rr_parameters : `RR_ParametersDT <fcore._mwd_rr_parameters.RR_ParametersDT>`
             It returns a Fortran derived type containing the variables relating to the rainfall-runoff
             parameters.
 
@@ -918,7 +936,7 @@ class Model:
 
         Returns
         -------
-        rr_initial_states : `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>`
+        rr_initial_states : `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>`
             It returns a Fortran derived type containing the variables relating to the rainfall-runoff
             initial states.
 
@@ -983,7 +1001,7 @@ class Model:
 
         Returns
         -------
-        serr_mu_parameters : `SErr_Mu_ParametersDT <smash.fcore._mwd_serr_mu_parameters.SErr_Mu_ParametersDT>`
+        serr_mu_parameters : `SErr_Mu_ParametersDT <fcore._mwd_serr_mu_parameters.SErr_Mu_ParametersDT>`
             It returns a Fortran derived type containing the variables relating to the structural error mu
             parameters.
 
@@ -997,7 +1015,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -1054,7 +1072,7 @@ class Model:
 
         Returns
         -------
-        serr_sigma_parameters : `SErr_Sigma_ParametersDT <smash.fcore._mwd_serr_sigma_parameters.SErr_Sigma_ParametersDT>`
+        serr_sigma_parameters : `SErr_Sigma_ParametersDT <fcore._mwd_serr_sigma_parameters.SErr_Sigma_ParametersDT>`
             It returns a Fortran derived type containing the variables relating to the structural error sigma
             parameters.
 
@@ -1067,6 +1085,7 @@ class Model:
         --------
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
 
         Access to Model structural error sigma parameters
 
@@ -1104,13 +1123,104 @@ class Model:
         self._parameters.serr_sigma_parameters = value
 
     @property
+    def nn_parameters(self) -> NN_ParametersDT:
+        """
+        The weight and bias of the parameterization neural network.
+
+        The neural network is used in hybrid model structures to correct internal fluxes.
+
+        Returns
+        -------
+        nn_parameters : `NN_ParametersDT <fcore._mwd_nn_parameters.NN_ParametersDT>`
+            It returns a Fortran derived type containing the weight and bias of the parameterization
+            neural network.
+
+        See Also
+        --------
+        Model.get_nn_parameters_weight : Get the weight of the parameterization neural network.
+        Model.get_nn_parameters_bias : Get the bias of the parameterization neural network.
+        Model.set_nn_parameters_weight : Set the values of the weight in the parameterization neural network.
+        Model.set_nn_parameters_bias : Set the values of the bias in the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp"
+        >>> model = smash.Model(setup, mesh)
+
+        By default, the weight and bias of the parameterization neural network are set to zero.
+        Access to their values with the getter method
+        `get_nn_parameters_weight <Model.get_nn_parameters_weight>` or
+        `get_nn_parameters_bias <Model.get_nn_parameters_bias>`
+
+        >>> model.get_nn_parameters_bias()
+        [array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+                dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
+
+        The output contains a list of weight or bias values for trainable layers.
+
+        Set random values with the setter methods
+        `set_nn_parameters_weight <Model.set_nn_parameters_weight>` or
+        `set_nn_parameters_bias <Model.set_nn_parameters_bias>` using available initializers
+
+        >>> model.set_nn_parameters_bias(initializer="uniform", random_state=0)
+        >>> model.get_nn_parameters_bias()
+        [array([ 0.09762701,  0.43037874,  0.20552675,  0.08976637, -0.1526904 ,
+                0.29178822, -0.12482557,  0.78354603,  0.92732555, -0.23311697,
+                0.5834501 ,  0.05778984,  0.13608912,  0.85119325, -0.85792786,
+                -0.8257414 ], dtype=float32),
+        array([-0.9595632 ,  0.6652397 ,  0.5563135 ,  0.74002427], dtype=float32)]
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
+
+        >>> model.nn_parameters.<TAB>
+        model.nn_parameters.bias_1                  model.nn_parameters.from_handle(
+        model.nn_parameters.bias_2                  model.nn_parameters.weight_1
+        model.nn_parameters.bias_3                  model.nn_parameters.weight_2
+        model.nn_parameters.copy()                  model.nn_parameters.weight_3
+
+        .. note::
+            Not all layer weights and biases are used in the neural network.
+            The default network only uses 2 layers, which means that ``weight_3`` and ``bias_3``
+            are not used and are empty arrays in this case
+
+            >>> model.nn_parameters.weight_3.size, model.nn_parameters.bias_3.size
+            (0, 0)
+
+        To set another neural network structure
+
+        >>> setup["hidden_neuron"] = (32, 16)
+        >>> model_2 = smash.Model(setup, mesh)
+
+        In this case, the number of layers is 3 instead of 2
+
+        >>> weights = model_2.get_nn_parameters_weight()
+        >>> len(weights)
+        3
+
+        >>> weights[2].size
+        64
+        """
+
+        return self._parameters.nn_parameters
+
+    @nn_parameters.setter
+    def nn_parameters(self, value: NN_ParametersDT):
+        self._parameters.nn_parameters = value
+
+    @property
     def response(self) -> ResponseDT:
         """
         Model response.
 
         Returns
         -------
-        response : `ResponseDT <smash.fcore._mwd_response.ResponseDT>`
+        response : `ResponseDT <fcore._mwd_response.ResponseDT>`
             It returns a Fortran derived type containing the variables relating to the response.
 
         Examples
@@ -1163,7 +1273,7 @@ class Model:
 
         Returns
         -------
-        rr_final_states : `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>`
+        rr_final_states : `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>`
             It returns a Fortran derived type containing the variables relating to the rainfall-runoff final
             states.
 
@@ -1682,7 +1792,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -1745,7 +1855,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -2123,7 +2233,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -2192,7 +2302,7 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        Set the structural error mu mapping to ``'Linear'`` (see `Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
@@ -2308,6 +2418,277 @@ class Model:
         wrap_get_serr_sigma(self.setup, self.mesh, self._parameters, self._output, serr_sigma)
         return serr_sigma
 
+    def get_nn_parameters_weight(self) -> list[NDArray[np.float32]]:
+        """
+        Get the weight of the parameterization neural network.
+
+        Returns
+        -------
+        value : list[`numpy.ndarray`]
+            A list of arrays representing the weights of trainable layers.
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
+        Model.set_nn_parameters_weight : Set the values of the weight in the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp"
+
+        Set the number of neurons in the hidden layer to 3 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 3
+        >>> model = smash.Model(setup, mesh)
+
+        By default, the weights of trainable layers are set to zero.
+        Access to their values with the getter methods
+        `get_nn_parameters_weight <Model.get_nn_parameters_weight>`
+
+        >>> model.get_nn_parameters_weight()
+        [array([[0., 0., 0., 0.],
+                [0., 0., 0., 0.],
+                [0., 0., 0., 0.]], dtype=float32), array([[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]], dtype=float32)]
+
+        The output contains a list of weight values for trainable layers.
+        """
+
+        return [getattr(self._parameters.nn_parameters, f"weight_{i+1}") for i in range(self.setup.n_layers)]
+
+    def get_nn_parameters_bias(self) -> list[NDArray[np.float32]]:
+        """
+        Get the bias of the parameterization neural network.
+
+        Returns
+        -------
+        value : list[`numpy.ndarray`]
+            A list of arrays representing the biases of trainable layers.
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
+        Model.set_nn_parameters_bias : Set the values of the bias in the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp"
+
+        Set the number of neurons in the hidden layer to 6 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 6
+        >>> model = smash.Model(setup, mesh)
+
+        By default, the biases of trainable layers are set to zero.
+        Access to their values with the getter methods
+        `get_nn_parameters_bias <Model.get_nn_parameters_bias>`
+
+        >>> model.get_nn_parameters_bias()
+        [array([0., 0., 0., 0., 0., 0.], dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
+
+        The output contains a list of bias values for trainable layers.
+        """
+
+        return [getattr(self._parameters.nn_parameters, f"bias_{i+1}") for i in range(self.setup.n_layers)]
+
+    def set_nn_parameters_weight(
+        self,
+        value: list[NDArray[Any]] | None = None,
+        initializer: str = "glorot_uniform",
+        random_state: int | None = None,
+    ):
+        """
+        Set the values of the weight in the parameterization neural network.
+
+        Parameters
+        ----------
+        value : list[`float` or `numpy.ndarray`] or None, default None
+            The list of values to set to the weights of trainable layers. If an element of the list is
+            a `numpy.ndarray`, its shape must be broadcastable into the weight shape of that layer.
+            If not used, a default or specified initialization method will be used.
+
+        initializer : str, default 'glorot_uniform'
+            Weight initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Only used if **value** is not set.
+
+        random_state : `int` or None, default None
+            Random seed used for the initialization in case of using **initializer**.
+
+            .. note::
+                If not given, the parameters will be initialized with a random seed.
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
+        Model.get_nn_parameters_weight : Get the weight of the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp"
+
+        Set the number of neurons in the hidden layer to 3 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 3
+        >>> model = smash.Model(setup, mesh)
+
+        Set random weights using Glorot uniform initializer
+
+        >>> model.set_nn_parameters_weight(initializer="glorot_uniform", random_state=0)
+        >>> model.get_nn_parameters_weight()
+        [array([[ 0.09038505,  0.3984533 ,  0.1902808 ,  0.08310751],
+                [-0.14136384,  0.27014342, -0.11556603,  0.7254226 ],
+                [ 0.8585366 , -0.21582437,  0.54016984,  0.053503  ]], dtype=float32),
+        array([[ 0.12599404,  0.78805184, -0.7942869 ],
+                [-0.764488  , -0.8883829 ,  0.6158923 ],
+                [ 0.51504624,  0.68512934,  0.886229  ],
+                [ 0.55393404, -0.07132636,  0.5194391 ]], dtype=float32)]
+
+        The output contains a list of weight values for trainable layers.
+
+        Set weights with specified values
+
+        >>> import numpy as np
+        >>> np.random.seed(0)
+        >>> model.set_nn_parameters_weight([0.01, np.random.normal(size=(4,3))])
+        >>> model.get_nn_parameters_weight()
+        [array([[0.01, 0.01, 0.01, 0.01],
+                [0.01, 0.01, 0.01, 0.01],
+                [0.01, 0.01, 0.01, 0.01]], dtype=float32),
+        array([[ 1.7640524 ,  0.4001572 ,  0.978738  ],
+                [ 2.2408931 ,  1.867558  , -0.9772779 ],
+                [ 0.95008844, -0.1513572 , -0.10321885],
+                [ 0.41059852,  0.14404356,  1.4542735 ]], dtype=float32)]
+        """
+
+        value, initializer, random_state = _standardize_set_nn_parameters_weight_args(
+            self, value, initializer, random_state
+        )
+
+        if (random_state is not None) and (initializer != "zeros") and (value is None):
+            np.random.seed(random_state)
+
+        if value is None:
+            for i in range(self.setup.n_layers):
+                (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i+1}").shape
+                setattr(
+                    self._parameters.nn_parameters,
+                    f"weight_{i+1}",
+                    _initialize_nn_parameter(n_in, n_neuron, initializer),
+                )
+
+        else:
+            for i, val in enumerate(value):
+                setattr(self._parameters.nn_parameters, f"weight_{i+1}", val)
+
+    def set_nn_parameters_bias(
+        self,
+        value: list[NDArray[Any]] | None = None,
+        initializer: str = "zeros",
+        random_state: int | None = None,
+    ):
+        """
+        Set the values of the bias in the parameterization neural network.
+
+        Parameters
+        ----------
+        value : list[`float` or `numpy.ndarray`] or None, default None
+            The list of values to set to the biases of trainable layers. If an element of the list is
+            a `numpy.ndarray`, its shape must be broadcastable into the bias shape of that layer.
+            If not used, a default or specified initialization method will be used.
+
+        initializer : str, default 'zeros'
+            Bias initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
+            ``'he_uniform'``, ``'normal'``, ``'glorot_normal'``, ``'he_normal'``, ``'zeros'``.
+            Only used if **value** is not set.
+
+        random_state : `int` or None, default None
+            Random seed used for the initialization in case of using **initializer**.
+
+            .. note::
+                If not given, the parameters will be initialized with a random seed.
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network.
+        Model.get_nn_parameters_bias : Get the bias of the parameterization neural network.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+
+        Set the hydrological module to ``'gr4_mlp'`` (hybrid hydrological model with multilayer
+        perceptron)
+
+        >>> setup["hydrological_module"] = "gr4_mlp"
+
+        Set the number of neurons in the hidden layer to 6 (the default value is 16, if not set)
+
+        >>> setup["hidden_neuron"] = 6
+        >>> model = smash.Model(setup, mesh)
+
+        Set random biases using Glorot normal initializer
+
+        >>> model.set_nn_parameters_bias(initializer="glorot_normal", random_state=0)
+        >>> model.get_nn_parameters_bias()
+        [array([ 0.94292563,  0.21389303,  0.5231575 ,  1.1978078 ,  0.99825174, -0.522377  ],
+            dtype=float32),
+        array([ 0.60088867, -0.09572671, -0.06528133,  0.2596853 ],
+            dtype=float32)]
+
+        The output contains a list of bias values for trainable layers.
+
+        Set biases with specified values
+
+        >>> import numpy as np
+        >>> np.random.seed(0)
+        >>> model.set_nn_parameters_bias([np.random.normal(size=6), 0])
+        >>> model.get_nn_parameters_bias()
+        [array([ 1.7640524,  0.4001572,  0.978738 ,  2.2408931,  1.867558 ,
+                -0.9772779], dtype=float32), array([0., 0., 0., 0.], dtype=float32)]
+        """
+
+        value, initializer, random_state = _standardize_set_nn_parameters_bias_args(
+            self, value, initializer, random_state
+        )
+
+        if (random_state is not None) and (initializer != "zeros") and (value is None):
+            np.random.seed(random_state)
+
+        if value is None:
+            for i in range(self.setup.n_layers):
+                n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i+1}").shape[0]
+                setattr(
+                    self._parameters.nn_parameters,
+                    f"bias_{i+1}",
+                    _initialize_nn_parameter(1, n_neuron, initializer).flatten(),
+                )
+
+        else:
+            for i, val in enumerate(value):
+                setattr(self._parameters.nn_parameters, f"bias_{i+1}", val)
+
     @_model_forward_run_doc_substitution
     @_forward_run_doc_appender
     def forward_run(
@@ -2350,7 +2731,7 @@ class Model:
     @_multiset_estimate_doc_appender
     def multiset_estimate(
         self,
-        multiset: MultipleForwardRun | MultipleOptimize,
+        multiset: MultipleForwardRun,
         alpha: Numeric | ListLike | None = None,
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,

@@ -15,12 +15,6 @@
 !%          ``rr_states_flag``       Return flag of rr_states
 !%          ``q_domain``             Array of discharge
 !%          ``q_domain_flag``        Return flag of q_domain
-!%          ``iter_cost``            Array of cost iteration
-!%          ``iter_cost_flag``       Return flag of iter_cost
-!%          ``iter_projg``           Array of infinity norm of projected gradient iteration
-!%          ``iter_projg_flag``      Return flag of iter_projg
-!%          ``control_vector``       Array of control vector
-!%          ``control_vector_flag``  Return flag of control_vector
 !%          ``cost``                 Cost value
 !%          ``cost_flag``            Return flag of cost
 !%          ``jobs``                 Jobs value
@@ -33,10 +27,6 @@
 !%          ``log_prior_flag``       Return flag of log_prior
 !%          ``log_h``                Log_h value
 !%          ``log_h_flag``           Return flag of log_h
-!%          ``serr_mu``              Serr mu value
-!%          ``serr_mu_flag``         Return flag of serr_mu
-!%          ``serr_sigma``           Serr sigma value
-!%          ``serr_sigma_flag``      Return flag of serr_sigma
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -67,15 +57,6 @@ module mwd_returns
         real(sp), dimension(:, :, :), allocatable :: q_domain
         logical :: q_domain_flag = .false.
 
-        real(sp), dimension(:), allocatable :: iter_cost
-        logical :: iter_cost_flag = .false.
-
-        real(sp), dimension(:), allocatable :: iter_projg
-        logical :: iter_projg_flag = .false.
-
-        real(sp), dimension(:), allocatable :: control_vector
-        logical :: control_vector_flag = .false.
-
         real(sp) :: cost
         logical :: cost_flag = .false.
 
@@ -94,11 +75,8 @@ module mwd_returns
         real(sp) :: log_h
         logical :: log_h_flag = .false.
 
-        real(sp), dimension(:, :), allocatable :: serr_mu
-        logical :: serr_mu_flag = .false.
-
-        real(sp), dimension(:, :), allocatable :: serr_sigma
-        logical :: serr_sigma_flag = .false.
+        real(sp), dimension(:, :, :, :), allocatable :: internal_fluxes
+        logical :: internal_fluxes_flag = .false.
 
     end type ReturnsDT
 
@@ -150,15 +128,6 @@ contains
                 allocate (this%q_domain(mesh%nrow, mesh%ncol, this%nmts))
                 this%q_domain = -99._sp
 
-            case ("iter_cost")
-                this%iter_cost_flag = .true.
-
-            case ("iter_projg")
-                this%iter_projg_flag = .true.
-
-            case ("control_vector")
-                this%control_vector_flag = .true.
-
             case ("cost")
                 this%cost_flag = .true.
 
@@ -177,13 +146,9 @@ contains
             case ("log_h")
                 this%log_h_flag = .true.
 
-            case ("serr_mu")
-                this%serr_mu_flag = .true.
-                allocate (this%serr_mu(mesh%ng, setup%ntime_step))
-
-            case ("serr_sigma")
-                this%serr_sigma_flag = .true.
-                allocate (this%serr_sigma(mesh%ng, setup%ntime_step))
+            case ("internal_fluxes")
+                this%internal_fluxes_flag = .true.
+                allocate (this%internal_fluxes(mesh%nrow, mesh%ncol, this%nmts, setup%n_internal_fluxes))
 
             end select
 

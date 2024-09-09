@@ -7,6 +7,7 @@ import numpy as np
 
 from smash._constant import (
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
+    STRUCTURE_RR_INTERNAL_FLUXES,
 )
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (
@@ -82,11 +83,15 @@ class ForwardRun:
         A list of length *n* containing the returned time steps.
 
     rr_states : `FortranDerivedTypeArray`
-        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
+        A list of length *n* of `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
+
+    internal_fluxes: `dict[str, numpy.ndarray]`
+        A dictionary where keys are the names of the internal fluxes and the values are array of
+        shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 
     cost : `float`
         Cost value.
@@ -97,7 +102,7 @@ class ForwardRun:
     Notes
     -----
     The object's available attributes depend on what is requested by the user in **return_options** during a
-    call to `smash.forward_run`.
+    call to `forward_run`.
 
     See Also
     --------
@@ -192,7 +197,14 @@ def _forward_run(
         fret[key] = value
 
     ret = {**fret, **pyret}
+
     if ret:
+        if "internal_fluxes" in ret:
+            ret["internal_fluxes"] = {
+                key: ret["internal_fluxes"][..., i]
+                for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+            }
+
         # % Add time_step to the object
         if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()
@@ -202,7 +214,7 @@ def _forward_run(
 @_multiple_forward_run_doc_appender
 def multiple_forward_run(
     model: Model,
-    samples: Samples,
+    samples: Samples | dict[str, Any],
     cost_options: dict[str, Any] | None = None,
     common_options: dict[str, Any] | None = None,
 ) -> MultipleForwardRun:
@@ -217,7 +229,8 @@ def multiple_forward_run(
 
 def _multiple_forward_run(
     model: Model,
-    samples: Samples,
+    samples: Samples | None,
+    spatialized_samples: dict[str, np.ndarray],
     cost_options: dict,
     common_options: dict,
 ) -> dict:
@@ -238,11 +251,11 @@ def _multiple_forward_run(
     _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Generate samples info
-    nv = samples._problem["num_vars"]
+    nv = len(spatialized_samples)
     samples_kind = np.zeros(shape=nv, dtype=np.int32, order="F")
     samples_ind = np.zeros(shape=nv, dtype=np.int32, order="F")
 
-    for i, name in enumerate(samples._problem["names"]):
+    for i, name in enumerate(spatialized_samples.keys()):
         if name in model._parameters.rr_parameters.keys:
             samples_kind[i] = 0
             # % Adding 1 because Fortran uses one based indexing
@@ -256,9 +269,10 @@ def _multiple_forward_run(
             pass
 
     # % Initialise results
-    cost = np.zeros(shape=samples.n_sample, dtype=np.float32, order="F")
+    n_sample = next(iter(spatialized_samples.values())).shape[-1]
+    cost = np.zeros(shape=n_sample, dtype=np.float32, order="F")
     q = np.zeros(
-        shape=(*model.response_data.q.shape, samples.n_sample),
+        shape=(*model.response_data.q.shape, n_sample),
         dtype=np.float32,
         order="F",
     )
@@ -270,11 +284,17 @@ def _multiple_forward_run(
         model._parameters,
         model._output,
         wrap_options,
-        samples.to_numpy(),
+        np.transpose(list(spatialized_samples.values()), (1, 2, 0, 3)),
         samples_kind,
         samples_ind,
         cost,
         q,
     )
 
-    return {"cost": cost, "q": q, "_samples": samples, "_cost_options": cost_options}
+    return {
+        "cost": cost,
+        "q": q,
+        "_samples": samples,
+        "_spatialized_samples": spatialized_samples,
+        "_cost_options": cost_options,
+    }

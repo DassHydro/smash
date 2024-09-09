@@ -20,6 +20,7 @@ m_f90_sources = [
 ]
 
 md_f90_sources = [
+    'common/md_algebra.f90',
     'common/md_constant.f90',
     'common/md_stats.f90',
 
@@ -28,17 +29,16 @@ md_f90_sources = [
     'forward/md_simulation.f90',
 
     'operator/md_gr_operator.f90',
+    'operator/md_neural_network.f90',
     'operator/md_routing_operator.f90',
     'operator/md_snow_operator.f90',
     'operator/md_vic3l_operator.f90',
 
-    'optimize/md_regularization.f90',
+    'cost/md_regularization.f90',
 ]
 
 mw_f90_sources = [
     'forward/mw_forward.f90',
-
-    'optimize/mw_optimize.f90',
 
     'routine/mw_atmos_statistic.f90',
     'routine/mw_interception_capacity.f90',
@@ -54,6 +54,7 @@ mwd_f90_sources = [
     'derived_type/mwd_cost_options.f90',
     'derived_type/mwd_input_data.f90',
     'derived_type/mwd_mesh.f90',
+    'derived_type/mwd_nn_parameters.f90',
     'derived_type/mwd_optimize_options.f90',
     'derived_type/mwd_options.f90',
     'derived_type/mwd_output.f90',
@@ -72,7 +73,7 @@ mwd_f90_sources = [
 
     'external/mwd_bayesian_tools.f90',
 
-    'optimize/mwd_cost.f90',
+    'cost/mwd_cost.f90',
 
     'routine/mwd_atmos_manipulation.f90',
     'routine/mwd_parameters_manipulation.f90',

@@ -29,6 +29,10 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
         else:
             parameters = None
 
+        # % Hybrid forward hydrological model with NN
+        if model.setup.n_layers > 0:
+            model.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
+
         for mp in MAPPING:
             if mp == "ann":
                 instance = smash.optimize(
@@ -44,9 +48,13 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                 )
 
             else:
+                # Ignore SBS optimizer if the forward model uses NN
+                opt = "lbfgsb" if model.setup.n_layers > 0 else None
+
                 instance, ret = smash.optimize(
                     model,
                     mapping=mp,
+                    optimizer=opt,
                     optimize_options={
                         "parameters": parameters,
                         "termination_crit": {"maxiter": 1},
@@ -220,8 +228,8 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
         },
     ]
 
-    for i, kwargs in enumerate(custom_sets):
-        instance = smash.optimize(model, **kwargs)
+    for i, inner_kwargs in enumerate(custom_sets):
+        instance = smash.optimize(model, **inner_kwargs)
 
         qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
@@ -237,42 +245,3 @@ def test_custom_optimize():
     for key, value in res.items():
         # % Check qsim in sparse storage run
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-03), key
-
-
-def test_multiple_optimize():
-    instance = pytest.model.copy()
-    ncpu = min(5, max(1, os.cpu_count() - 1))
-
-    problem = {
-        "num_vars": 5,
-        "names": ["cp", "ct", "kexc", "llr", "hp"],
-        "bounds": [(1, 1_000), (1, 1_000), (-20, 5), (1, 200), (0.1, 0.9)],
-    }
-    n_sample = 5
-    samples = smash.factory.generate_samples(problem, random_state=99, n=n_sample)
-
-    optq = np.zeros(shape=(*instance.response_data.q.shape, n_sample), dtype=np.float32)
-
-    for i in range(n_sample):
-        for key in samples._problem["names"]:
-            if key in instance.rr_parameters.keys:
-                instance.set_rr_parameters(key, getattr(samples, key)[i])
-            elif key in instance.rr_initial_states.keys:
-                instance.set_rr_initial_states(key, getattr(samples, key)[i])
-        instance.optimize(
-            mapping="distributed",
-            optimize_options={"termination_crit": {"maxiter": 1}},
-            common_options={"verbose": False, "ncpu": ncpu},
-        )
-        optq[..., i] = instance.response.q.copy()
-
-    mopt = smash.multiple_optimize(
-        instance,
-        samples,
-        mapping="distributed",
-        optimize_options={"termination_crit": {"maxiter": 1}},
-        common_options={"verbose": False, "ncpu": ncpu},
-    )
-
-    # % Check that optimize discharge is equivalent to multiple optimize discharge
-    assert np.allclose(optq, mopt.q, atol=1e-03, equal_nan=True), "multiple_optimize.q"

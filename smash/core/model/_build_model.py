@@ -12,6 +12,7 @@ from smash._constant import (
     DEFAULT_RR_PARAMETERS,
     DEFAULT_SERR_MU_PARAMETERS,
     DEFAULT_SERR_SIGMA_PARAMETERS,
+    OPTIMIZABLE_NN_PARAMETERS,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
     STRUCTURE_ADJUST_CI,
@@ -177,6 +178,11 @@ def _build_parameters(
     for i, key in enumerate(parameters.serr_sigma_parameters.keys):
         value = DEFAULT_SERR_SIGMA_PARAMETERS[key]
         parameters.serr_sigma_parameters.values[..., i] = value
+
+    # % Initalize weights and biases of ANN if hybrid model structure is used
+    for key in OPTIMIZABLE_NN_PARAMETERS[max(0, setup.n_layers - 1)]:
+        # zero init
+        setattr(parameters.nn_parameters, key, 0)
 
 
 def _build_output(

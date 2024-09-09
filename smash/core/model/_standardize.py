@@ -10,33 +10,52 @@ import pandas as pd
 
 from smash._constant import (
     DEFAULT_MODEL_SETUP,
+    F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     HYDROLOGICAL_MODULE,
+    HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
+    NN_PARAMETERS_KEYS,
     ROUTING_MODULE,
     ROUTING_MODULE_NQZ,
+    ROUTING_MODULE_RR_INTERNAL_FLUXES,
     SERR_MU_MAPPING,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING,
     SERR_SIGMA_MAPPING_PARAMETERS,
     SNOW_MODULE,
+    SNOW_MODULE_RR_INTERNAL_FLUXES,
+    STRUCTURE_RR_INTERNAL_FLUXES,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    get_neurons_from_hydrological_module,
 )
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from smash.core.model.model import Model
-    from smash.util._typing import AnyTuple, ListLike, Numeric
+    from smash.util._typing import Any, AnyTuple, ListLike, Numeric
+
+from smash.factory.net._standardize import _standardize_initializer
+from smash.factory.samples._standardize import (
+    _standardize_generate_samples_random_state,
+)
 
 
-def _standardize_model_setup_bool(key: str, value: bool) -> bool:
-    if not isinstance(value, bool):
-        raise TypeError(f"{key} model setup must be a boolean")
+def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
+    if isinstance(value, bool):
+        pass
+    elif isinstance(value, int):
+        if value not in (0, 1):
+            raise ValueError(f"{key} model setup must be equal to 0 or 1")
+    else:
+        raise TypeError(f"{key} model setup must be a boolean or integer (0, 1)")
 
-    return value
+    return bool(value)
 
 
 def _standardize_model_setup_directory(read: bool, key: str, value: str | None) -> str:
@@ -398,6 +417,34 @@ def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, *
     return descriptor_name
 
 
+def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **kwargs) -> np.ndarray:
+    standardized_hidden_neuron = np.zeros(int(len(NN_PARAMETERS_KEYS) / 2) - 1, dtype=np.int32)
+
+    if isinstance(hidden_neuron, (int, float)):
+        standardized_hidden_neuron[0] = int(hidden_neuron)
+
+    elif isinstance(hidden_neuron, (list, tuple, np.ndarray)):
+        if len(hidden_neuron) == 0:
+            raise ValueError("hidden_neuron model setup cannot be an empty list")
+
+        elif len(hidden_neuron) > len(standardized_hidden_neuron):
+            raise ValueError(
+                f"Cannot set hidden_neuron model setup with {len(hidden_neuron)} layers. "
+                f"The maximum allowable number of hidden layers is {len(standardized_hidden_neuron)}"
+            )
+
+        else:
+            standardized_hidden_neuron[: len(hidden_neuron)] = hidden_neuron
+
+    else:
+        raise TypeError(
+            "hidden_neuron model setup must be of Numeric or ListLike type "
+            "(int, float, List, Tuple, np.ndarray)"
+        )
+
+    return standardized_hidden_neuron
+
+
 def _standardize_model_setup(setup: dict) -> dict:
     if isinstance(setup, dict):
         pop_keys = []
@@ -434,6 +481,11 @@ def _standardize_model_setup_finalize(setup: dict):
 
     setup["snow_module_present"] = setup["snow_module"] != "zero"
 
+    setup["neurons"] = get_neurons_from_hydrological_module(
+        setup["hydrological_module"], setup["hidden_neuron"]
+    )
+    setup["n_layers"] = max(0, np.count_nonzero(setup["neurons"]) - 1)
+
     setup["ntime_step"] = int((setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"])
     setup["nd"] = setup["descriptor_name"].size
     setup["nrrp"] = len(STRUCTURE_RR_PARAMETERS[setup["structure"]])
@@ -441,7 +493,10 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
     setup["nqz"] = ROUTING_MODULE_NQZ[setup["routing_module"]]
-
+    setup["n_internal_fluxes"] = len(STRUCTURE_RR_INTERNAL_FLUXES[setup["structure"]])
+    setup["n_snow_fluxes"] = len(SNOW_MODULE_RR_INTERNAL_FLUXES[setup["snow_module"]])
+    setup["n_hydro_fluxes"] = len(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES[setup["hydrological_module"]])
+    setup["n_routing_fluxes"] = len(ROUTING_MODULE_RR_INTERNAL_FLUXES[setup["routing_module"]])
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
     setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")
 
@@ -520,18 +575,24 @@ def _standardize_rr_parameters_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
-    low, upp = FEASIBLE_RR_PARAMETERS[key]
-    low_arr = np.min(arr)
-    upp_arr = np.max(arr)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
 
-    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
+    if arr.size == 1:
+        mask = np.ones(arr.shape, dtype=bool)
+    elif arr.shape == model.mesh.flwdir.shape:
+        # Do not check if a value is inside the feasible domain outside of active cells
+        mask = model.mesh.active_cell == 1
+    else:
         raise ValueError(
             f"Invalid shape for model rr_parameter '{key}'. Could not broadcast input array from shape "
-            f"{value.shape} into shape {model.mesh.flwdir.shape}"
+            f"{arr.shape} into shape {model.mesh.flwdir.shape}"
         )
 
-    if low_arr <= low or upp_arr >= upp:
+    low, upp = FEASIBLE_RR_PARAMETERS[key]
+    low_arr = np.min(arr, where=mask, initial=np.inf)
+    upp_arr = np.max(arr, where=mask, initial=-np.inf)
+
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{low_arr}, {upp_arr}] is "
             f"not included in the feasible domain ]{low}, {upp}["
@@ -546,18 +607,24 @@ def _standardize_rr_states_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
-    low, upp = FEASIBLE_RR_INITIAL_STATES[key]
-    low_arr = np.min(arr)
-    upp_arr = np.max(arr)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
 
-    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
+    if arr.size == 1:
+        mask = np.ones(arr.shape, dtype=bool)
+    elif arr.shape == model.mesh.flwdir.shape:
+        # Do not check if a value is inside the feasible domain outside of active cells
+        mask = model.mesh.active_cell == 1
+    else:
         raise ValueError(
             f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape "
-            f"{value.shape} into shape {model.mesh.flwdir.shape}"
+            f"{arr.shape} into shape {model.mesh.flwdir.shape}"
         )
 
-    if low_arr <= low or upp_arr >= upp:
+    low, upp = FEASIBLE_RR_INITIAL_STATES[key]
+    low_arr = np.min(arr, where=mask, initial=np.inf)
+    upp_arr = np.max(arr, where=mask, initial=-np.inf)
+
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{low_arr}, {upp_arr}] is "
             f"not included in the feasible domain ]{low}, {upp}["
@@ -572,18 +639,19 @@ def _standardize_serr_mu_parameters_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
+
+    if arr.shape != (model.mesh.ng,) and arr.size != 1:
+        raise ValueError(
+            f"Invalid shape for model serr_mu_parameter '{key}'. Could not broadcast input array from shape "
+            f"{arr.shape} into shape {(model.mesh.ng,)}"
+        )
+
     low, upp = FEASIBLE_SERR_MU_PARAMETERS[key]
     low_arr = np.min(arr)
     upp_arr = np.max(arr)
 
-    if isinstance(value, np.ndarray) and value.shape != (model.mesh.ng,) and value.size != 1:
-        raise ValueError(
-            f"Invalid shape for model serr_mu_parameter '{key}'. Could not broadcast input array from shape "
-            f"{value.shape} into shape {(model.mesh.ng,)}"
-        )
-
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain "
             f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
@@ -598,18 +666,19 @@ def _standardize_serr_sigma_parameters_value(
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
-    arr = np.array(value, ndmin=1)
+    arr = np.array(value, ndmin=1, dtype=np.float32)
+
+    if arr.shape != (model.mesh.ng,) and arr.size != 1:
+        raise ValueError(
+            f"Invalid shape for model serr_sigma_parameter '{key}'. Could not broadcast input array from "
+            f"shape {arr.shape} into shape {(model.mesh.ng,)}"
+        )
+
     low, upp = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
     low_arr = np.min(arr)
     upp_arr = np.max(arr)
 
-    if isinstance(value, np.ndarray) and value.shape != (model.mesh.ng,) and value.size != 1:
-        raise ValueError(
-            f"Invalid shape for model serr_sigma_parameter '{key}'. Could not broadcast input array from "
-            f"shape {value.shape} into shape {(model.mesh.ng,)}"
-        )
-
-    if low_arr <= low or upp_arr >= upp:
+    if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
         raise ValueError(
             f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain "
             f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
@@ -681,3 +750,109 @@ def _standardize_set_serr_sigma_parameters_args(
     value = _standardize_serr_sigma_parameters_value(model, key, value)
 
     return (key, value)
+
+
+def _standardize_set_nn_parameters_weight_value(
+    model: Model, value: list[Any] | None
+) -> list[NDArray[np.float32]]:
+    if value is None:
+        pass
+
+    elif isinstance(value, list):
+        weights = [
+            getattr(model._parameters.nn_parameters, f"weight_{i+1}") for i in range(model.setup.n_layers)
+        ]
+
+        if len(value) != len(weights):
+            raise ValueError(
+                f"Inconsistent size between value argument and the layers of the network: "
+                f"{len(value)} != {len(weights)}"
+            )
+
+        else:
+            for i, arr in enumerate(value):
+                if isinstance(arr, (int, float)):
+                    value[i] = arr * np.ones(weights[i].shape)
+                elif isinstance(arr, np.ndarray):
+                    if arr.shape != weights[i].shape:
+                        raise ValueError(
+                            f"Invalid shape for value argument. Could not broadcast input array "
+                            f"from shape {arr.shape} into shape {weights[i].shape}"
+                        )
+                else:
+                    raise TypeError(
+                        "Each element of value argument must be of Numeric type (int, float) or np.ndarray"
+                    )
+
+    else:
+        raise TypeError("value argument must be a list of a same size with layers")
+
+    return value
+
+
+def _standardize_set_nn_parameters_bias_value(
+    model: Model, value: list[Any] | None
+) -> list[NDArray[np.float32]]:
+    if value is None:
+        pass
+
+    elif isinstance(value, list):
+        biases = [
+            getattr(model._parameters.nn_parameters, f"bias_{i+1}") for i in range(model.setup.n_layers)
+        ]
+
+        if len(value) != len(biases):
+            raise ValueError(
+                f"Inconsistent size between value argument and "
+                f"the layers of the network: {len(value)} != {len(biases)}"
+            )
+
+        else:
+            for i, arr in enumerate(value):
+                if isinstance(arr, (int, float)):
+                    value[i] = arr * np.ones(biases[i].shape)
+                elif isinstance(arr, np.ndarray):
+                    if arr.shape != biases[i].shape:
+                        raise ValueError(
+                            f"Invalid shape for value argument. Could not broadcast input array "
+                            f"from shape {arr.shape} into shape {biases[i].shape}"
+                        )
+                else:
+                    raise TypeError(
+                        "Each element of value argument must be of Numeric type (int, float) or np.ndarray"
+                    )
+
+    else:
+        raise TypeError("value argument must be a list of a same size with layers")
+
+    return value
+
+
+def _standardize_set_nn_parameters_initializer(initializer: str) -> str:
+    return _standardize_initializer(initializer)
+
+
+def _standardize_set_nn_parameters_random_state(
+    random_state: Numeric | None,
+) -> int | None:
+    return _standardize_generate_samples_random_state(random_state)
+
+
+def _standardize_set_nn_parameters_weight_args(
+    model: Model, value: list[Any] | None, initializer: str, random_state: Numeric | None
+) -> AnyTuple:
+    value = _standardize_set_nn_parameters_weight_value(model, value)
+    initializer = _standardize_set_nn_parameters_initializer(initializer)
+    random_state = _standardize_set_nn_parameters_random_state(random_state)
+
+    return (value, initializer, random_state)
+
+
+def _standardize_set_nn_parameters_bias_args(
+    model: Model, value: list[Any] | None, initializer: str, random_state: Numeric | None
+) -> AnyTuple:
+    value = _standardize_set_nn_parameters_bias_value(model, value)
+    initializer = _standardize_set_nn_parameters_initializer(initializer)
+    random_state = _standardize_set_nn_parameters_random_state(random_state)
+
+    return (value, initializer, random_state)

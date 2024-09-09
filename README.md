@@ -9,15 +9,17 @@
 </picture>
 </h1><br>
 
+[![PyPI](https://badge.fury.io/py/hydro-smash.svg)](https://badge.fury.io/py/hydro-smash)
+
+**smash** is a Python library, that provides a variety of user-friendly routines for hydrological modeling, including data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis, all interfaced with an efficient Fortran computational engine.
+
 - **Documentation:** https://smash.recover.inrae.fr
 - **Source code:** https://github.com/DassHydro/smash
 - **Contributing:** https://smash.recover.inrae.fr/contributor_guide/index.html
 - **Scientific references from latest version:** https://smash.recover.inrae.fr/bibliography/index.html
 - **Bug reports:** https://github.com/DassHydro/smash/issues
 
-**smash** is a Python library, that provides a variety of user-friendly routines for hydrological modeling, including data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis, all interfaced with an efficient Fortran solver.
-
-**smash** offers a range of advanced optimization techniques, including Variational Data Assimilation (VDA), Bayesian estimation, and Artificial Neural Network (ANN) approaches, using an adjoint model generated with the **Tapenade** Automatic Differentiation Engine.
+It offers a range of advanced optimization techniques, including Variational Data Assimilation (VDA), Bayesian estimation, and Artificial Neural Network (ANN) approaches, using an adjoint model generated with the **Tapenade** automatic differentiation tool.
 
 - **Tapenade** website: https://team.inria.fr/ecuador/en/tapenade/
 - **Tapenade** article: https://doi.org/10.1145/2450153.2450158

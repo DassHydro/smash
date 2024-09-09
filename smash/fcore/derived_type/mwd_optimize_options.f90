@@ -16,6 +16,7 @@
 !%          ``rr_parameters``                 RR parameters to optimize
 !%          ``l_rr_parameters``               RR parameters lower bound
 !%          ``u_rr_parameters``               RR parameters upper bound
+!%          ``nn_parameters``                 NN parameters to optimize
 !%          ``rr_parameters_descriptor``      RR parameters descriptor to use
 !%          ``rr_initial_states``             RR initial states to optimize
 !%          ``l_rr_initial_states``           RR initial states lower bound
@@ -56,6 +57,8 @@ module mwd_optimize_options
         real(sp), dimension(:), allocatable :: u_rr_parameters
         integer, dimension(:, :), allocatable :: rr_parameters_descriptor
 
+        integer, dimension(:), allocatable :: nn_parameters
+
         integer, dimension(:), allocatable :: rr_initial_states
         real(sp), dimension(:), allocatable :: l_rr_initial_states
         real(sp), dimension(:), allocatable :: u_rr_initial_states
@@ -95,6 +98,9 @@ contains
 
         allocate (this%rr_parameters_descriptor(setup%nd, setup%nrrp))
         this%rr_parameters_descriptor = -99
+
+        allocate (this%nn_parameters((size(setup%neurons) - 1)*2))
+        this%nn_parameters = -99
 
         allocate (this%rr_initial_states(setup%nrrs))
         this%rr_initial_states = -99

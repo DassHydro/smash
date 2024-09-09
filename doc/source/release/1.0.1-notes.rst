@@ -1,0 +1,47 @@
+.. _release.1.0.1-notes:
+
+=========================
+smash 1.0.1 Release Notes
+=========================
+
+The smash 1.0.1 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation.
+The highlights are:
+
+- ``NumPy 2.0 support``
+    `smash` now supports NumPy ``2.0`` and is backwards compatible to NumPy ``1.24``
+
+- ``Math / Num documentation``
+    Adjustments have been made in the forward & inverse problems section, as well as in the forward structure
+    section, where flowcharts of the forward model and hydrological modules have been added.
+
+- ``Fortran character limit``
+    The character limit for directory paths and gauge codes has been increased from 128 to 256 and 20 to 128,
+    respectively.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Pierre-André Garambois (`<https://github.com/pag13>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+- `#191 <https://github.com/DassHydro/smash/pull/191>`__: MAINT: Handle f90wrap compatibility
+- `#194 <https://github.com/DassHydro/smash/pull/192>`__: Fix directory path max length
+- `#196 <https://github.com/DassHydro/smash/pull/196>`__: Fix fortran char array
+- `#197 <https://github.com/DassHydro/smash/pull/197>`__: Doc roll discharge comment
+- `#203 <https://github.com/DassHydro/smash/pull/203>`__: FIX: Fix generate baseline
+- `#204 <https://github.com/DassHydro/smash/pull/204>`__: DOC: Remove conda usage
+- `#205 <https://github.com/DassHydro/smash/pull/205>`__: Doc graphes
+- `#206 <https://github.com/DassHydro/smash/pull/206>`__: FIX PR: Add check and test on char maximum limit
+- `#214 <https://github.com/DassHydro/smash/pull/214>`__: DOC: upgrade math num section
+- `#220 <https://github.com/DassHydro/smash/pull/220>`__: MAINT: numpy 2.0 support
+- `#222 <https://github.com/DassHydro/smash/pull/222>`__: FIX: VIC3L under and over flow
+- `#225 <https://github.com/DassHydro/smash/pull/225>`__: MAINT: update pyproject.toml for compatibility with numpy 2
+- `#226 <https://github.com/DassHydro/smash/pull/226>`__: FIX: fix code check with some bugs detected by ruff 0.5

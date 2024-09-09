@@ -19,7 +19,7 @@ System-level dependencies
 `smash` uses compiled code for speed, which means you need compilers and some other system-level
 (i.e, non-Python / non-PyPI) dependencies to build it on your system.
 
-Anaconda (recommanded)
+Anaconda (recommended)
 ''''''''''''''''''''''
 
 If you are using `Conda <https://www.anaconda.com/>`__, all the dependencies will be installed
@@ -34,6 +34,14 @@ It will create a Conda environment called ``smash-dev`` that can be activated as
 .. code-block:: none
 
     conda activate smash-dev
+
+Once ``smash-dev`` is created, it is recommended to update pip and your Conda environment
+to ensure you have the latest package versions and to prevent any conflicts:
+
+.. code-block:: none
+
+    (smash-dev) python3 -m pip install --upgrade pip
+    (smash-dev) conda update --all
 
 Linux
 '''''
@@ -1661,6 +1669,11 @@ regenerate the expected values file (``baseline.hdf5``). To do this, you need to
 If the logs in the ``diff_baseline.csv`` file seem consistent with your modifications (i.e. that tests that shouldn't be modified aren't modified
 and conversely that tests that should be modified are modified), all you have to do is simply delete the ``baseline.hdf5`` file and rename
 ``new_baseline.hdf5`` to ``baseline.hdf5``.
+
+.. note::
+
+    To properly generate the ``diff_baseline.csv`` file, please ensure that you have the ``baseline.hdf5`` file from the latest commit
+    on the main branch before running the ``make test-baseline`` command.
 
 Documentation
 -------------

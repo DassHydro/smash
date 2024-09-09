@@ -7,7 +7,6 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_return_options,
     _standardize_simulation_return_options_finalize,
 )
-from smash.core.simulation.optimize.optimize import MultipleOptimize
 from smash.core.simulation.run.run import MultipleForwardRun
 
 if TYPE_CHECKING:
@@ -19,7 +18,7 @@ import numpy as np
 
 def _standardize_multiset_estimate_args(
     model: Model,
-    multiset: MultipleForwardRun | MultipleOptimize,
+    multiset: MultipleForwardRun,
     alpha: Numeric | ListLike,
     common_options: dict | None,
     return_options: dict | None,
@@ -39,10 +38,10 @@ def _standardize_multiset_estimate_args(
 
 
 def _standardize_multiset_estimate_multiset(
-    multiset: MultipleForwardRun | MultipleOptimize,
-) -> MultipleForwardRun | MultipleOptimize:
-    if not isinstance(multiset, (MultipleForwardRun, MultipleOptimize)):
-        raise TypeError("multiset must be a MultipleForwardRun or MultipleOptimize object")
+    multiset: MultipleForwardRun,
+) -> MultipleForwardRun:
+    if not isinstance(multiset, MultipleForwardRun):
+        raise TypeError("multiset must be a MultipleForwardRun object")
 
     return multiset
 

@@ -26,7 +26,7 @@ def default_optimize_options(
 
     Parameters
     ----------
-    model : `Model <smash.Model>`
+    model : `Model`
         Primary data structure of the hydrological model `smash`.
 
     mapping : `str`, default 'uniform'
@@ -68,7 +68,7 @@ def default_optimize_options(
     optimize_options : `dict[str, Any]`
         Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
         returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly pass to
-        the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
+        the **optimize_options** argument of the optimize method `optimize` (or `Model.optimize`).
 
     See Also
     --------
@@ -97,7 +97,7 @@ def default_optimize_options(
     }
 
     Directly pass this dictionary to the **optimize_options** argument of the optimize method
-    `smash.optimize` (or `Model.optimize`).
+    `optimize` (or `Model.optimize`).
     It's equivalent to set **optimize_options** to None (which is the default value)
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
@@ -239,7 +239,7 @@ def default_bayesian_optimize_options(
 
     Parameters
     ----------
-    model : `Model <smash.Model>`
+    model : `Model`
         Primary data structure of the hydrological model `smash`.
 
     mapping : `str`, default 'uniform'
@@ -275,7 +275,7 @@ def default_bayesian_optimize_options(
     optimize_options : `dict[str, Any]`
         Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
         returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly pass to
-        the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or
+        the **optimize_options** argument of the optimize method `bayesian_optimize` (or
         `Model.bayesian_optimize`).
 
     Examples
@@ -303,7 +303,7 @@ def default_bayesian_optimize_options(
     }
 
     Directly pass this dictionary to the **optimize_options** argument of the optimize method
-    `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
+    `bayesian_optimize` (or `Model.bayesian_optimize`).
     It's equivalent to set **optimize_options** to None (which is the default value)
 
     >>> model_u = smash.bayesian_optimize(model, mapping="uniform", optimize_options=opt_u)

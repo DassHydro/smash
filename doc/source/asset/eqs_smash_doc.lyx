@@ -489,7 +489,7 @@ J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
 
 \begin_layout Standard
 \begin_inset Graphics
-	filename /home/pagarambois/Documents/Distant/smash/doc/source/_static/forward_simple_flowchart.png
+	filename ../_static/forward_simple_flowchart.png
 
 \end_inset
 
@@ -498,7 +498,16 @@ J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
 
 \begin_layout Standard
 \begin_inset Graphics
-	filename forward_composition_flowchart.png
+	filename ../_static/forward_composition_flowchart.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ../_static/forward_flowchart_GMDv1.png
 
 \end_inset
 
@@ -514,7 +523,7 @@ J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
 
 \begin_layout Standard
 \begin_inset Graphics
-	filename Inversion_process_flowchart.png
+	filename ../_static/Inversion_process_flowchart.png
 
 \end_inset
 
@@ -530,7 +539,43 @@ J\left(\boldsymbol{U}\left(\boldsymbol{\rho}\right),\boldsymbol{Y}^{*}\right)
 
 \begin_layout Standard
 \begin_inset Graphics
-	filename /home/pagarambois/Documents/Distant/smash/doc/source/_static/flowchart_forward_gridded.png
+	filename ../_static/forward_flowchart_detail_input_params_states_fluxes.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Model structures :
+\end_layout
+
+\begin_layout Standard
+gr4-5
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ../_static/gr_flowchart.png
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename ../_static/gr_flowchart.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+grd
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ../_static/grd_flowchart.png
 
 \end_inset
 
