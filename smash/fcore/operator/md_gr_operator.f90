@@ -16,6 +16,7 @@
 !%      - gr4_ode_mlp_time_step
 !%      - gr5_time_step
 !%      - gr6_time_step
+!%      - grc_time_step
 !%      - grd_time_step
 !%      - loieau_time_step
 
@@ -954,6 +955,101 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine gr6_time_step
+
+    subroutine grc_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_cl, ac_kexc, ac_hi, ac_hp, ac_ht, ac_hl, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_cl, ac_kexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht, ac_hl
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k, time_step_returns
+        real(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_cl, ac_kexc, &
+        !$OMP& ac_hi, ac_hp, ac_ht, ac_hl, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
+
+                    call gr_production(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr, perc)
+
+                    call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                prr = 0.6_sp*0.9_sp*(pr + perc) + l
+                prl = 0.4_sp*0.9_sp*(pr + perc) + l
+                prd = 0.1_sp*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+                call gr_transfer(5._sp, ac_prcp(k), prl, ac_cl(k), ac_hl(k), ql)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + ql + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn, en, pr, perc, l, prr, prd, prl, qr, qd, ql, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+    end subroutine grc_time_step
 
     subroutine grd_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
     & ac_ht, ac_qt)
