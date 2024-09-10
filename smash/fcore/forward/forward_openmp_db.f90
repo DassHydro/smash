@@ -6377,12 +6377,15 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER, INTENT(INOUT) :: n
-    n = options%optimize%nn_parameters(1)*setup%neurons(2)*setup%neurons&
-&     (1) + options%optimize%nn_parameters(2)*setup%neurons(2) + options&
-&     %optimize%nn_parameters(3)*setup%neurons(3)*setup%neurons(2) + &
-&     options%optimize%nn_parameters(4)*setup%neurons(3) + options%&
-&     optimize%nn_parameters(5)*setup%neurons(4)*setup%neurons(3) + &
-&     options%optimize%nn_parameters(6)*setup%neurons(4)
+    INTEGER :: i, n_w, n_b
+    INTRINSIC SIZE
+    n = 0
+    DO i=0,SIZE(setup%hidden_neuron)
+      n_w = options%optimize%nn_parameters(2*i+1)*setup%neurons(i+2)*&
+&       setup%neurons(i+1)
+      n_b = options%optimize%nn_parameters(2*i+2)*setup%neurons(i+2)
+      n = n + n_w + n_b
+    END DO
   END SUBROUTINE NN_PARAMETERS_GET_CONTROL_SIZE
 
   SUBROUTINE GET_CONTROL_SIZES(setup, mesh, options, nbk)
@@ -6797,6 +6800,7 @@ CONTAINS
     CHARACTER(len=lchar) :: name
     INTEGER :: j, k, l
     INTRINSIC SUM
+! NN parameters is fifth control kind
     j = SUM(parameters%control%nbk(1:4))
     IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
       DO k=1,setup%neurons(1)
@@ -8254,6 +8258,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     INTEGER :: j, k, l
     INTRINSIC SUM
+! NN parameters is fifth control kind
     j = SUM(parameters%control%nbk(1:4))
     IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
       parameters_d%nn_parameters%weight_1 = 0.0_4
@@ -8349,6 +8354,7 @@ CONTAINS
     INTEGER :: j, k, l
     INTRINSIC SUM
     INTEGER :: branch
+! NN parameters is fifth control kind
     j = SUM(parameters%control%nbk(1:4))
     IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
       DO k=1,setup%neurons(1)
@@ -8473,6 +8479,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     INTEGER :: j, k, l
     INTRINSIC SUM
+! NN parameters is fifth control kind
     j = SUM(parameters%control%nbk(1:4))
     IF (options%optimize%nn_parameters(1) .EQ. 1) THEN
       DO k=1,setup%neurons(1)
