@@ -105,18 +105,7 @@ def _initialize_nn_parameter(n_in: int, n_out: int, initializer: str) -> np.ndar
 
 
 def _set_initialized_wb_to_layer(layer: Layer, kind: str):
-    if layer.layer_name() == "Dense":
-        n_in = layer.input_shape[-1]
-        n_out = layer.neurons
-
-    elif layer.layer_name() == "Conv2D":
-        n_in = layer.input_shape[-1] * np.prod(layer.filter_shape)
-        n_out = layer.filters
-        # The real shape of W in this case is (filters, depth, height, width),
-        # which is simplified as (filters, depth*height*width)
-
-    else:  # Should be unreachable
-        pass
+    n_out, n_in = layer.weight_shape
 
     if kind == "bias":
         initializer = layer.bias_initializer
@@ -150,14 +139,15 @@ class Dense(Layer):
         self.trainable = True
 
         self.weight = None
+        self.weight_shape = (neurons, input_shape[-1])
 
         self.bias = None
+        self.bias_shape = (1, neurons)
 
         self.kernel_initializer = kernel_initializer
         self.bias_initializer = bias_initializer
 
-    # TODO TYPE HINT: replace function by Callable
-    def _initialize(self, optimizer: function):  # noqa: F821
+    def _initialize(self, optimizer: callable):
         if self.weight is None:
             _set_initialized_wb_to_layer(self, "weight")
         if self.bias is None:
@@ -212,8 +202,12 @@ class Conv2D(Layer):
         self.trainable = True
 
         self.weight = None
+        self.weight_shape = (filters, input_shape[-1] * np.prod(filter_shape))
+        # The real shape of W in this case is (filters, depth, height, width),
+        # which is simplified as (filters, depth*height*width)
 
         self.bias = None
+        self.bias_shape = (1, filters)
 
         self.kernel_initializer = kernel_initializer
         self.bias_initializer = bias_initializer

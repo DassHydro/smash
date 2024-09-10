@@ -501,7 +501,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the GR models. It consists in a ``gr4`` like model stucture
-    with a second [slow-]transfer reservoir. This structure is used for the Reunion island.
+    with a second transfer reservoir.
 
     .. figure:: ../_static/grc_structure.svg
         :align: center
@@ -520,7 +520,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
     :math:`c_l` the maximum capacity of the [slow-]transfer reservoir, :math:`k_{exc}` the exchange coefficient,
     :math:`h_i` the state of the interception reservoir, :math:`h_p` the state of the production reservoir,
-    :math:`h_t` the state of the transfer reservoir and :math:`h_t` the state of the [slow-]transfer reservoir.
+    :math:`h_t` the state of the first transfer reservoir and :math:`h_l` the state of the second transfer reservoir.
 
     .. note::
 
@@ -547,7 +547,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into three branches (transfer, [slow-]transfer and direct), :math:`p_{rr}`, :math:`p_{rl}` and :math:`p_{rd}`
+    - Split the production runoff :math:`p_r` into three branches (first transfer, second transfer and direct), :math:`p_{rr}`, :math:`p_{rl}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:

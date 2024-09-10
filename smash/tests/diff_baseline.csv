@@ -1,8 +1,11 @@
-commit d3581d6c9a93a5994becd1367d93d3c80fbd1578
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Mon Sep 9 13:51:28 2024 +0200
+commit da6692db62bebc9c46e6771dee3126ae3234bf59
+Author: Francois Colleoni <francois.colleoni@inrae.fr>
+Date:   Mon Sep 9 19:12:47 2024 +0200
 
-    FIX PR: apply suggestion changes from FC review regarding to hybird model branch (#311)
+    ENH: Add grc structure based on MJA dev
+    
+    - Add a new hydrological module `grc`
+    - Update `grd` structure image (remove percolation)
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -640,6 +643,7 @@ multiset_estimate.set_2.lcurve_multiset.alpha_opt              |NON MODIFIED
 multiset_estimate.set_2.lcurve_multiset.cost                   |NON MODIFIED
 multiset_estimate.set_2.lcurve_multiset.mahal_dist             |NON MODIFIED
 multiset_estimate.set_2.sim_q                                  |NON MODIFIED
+net_forward_pass.output                                        |NON MODIFIED
 net_init.bias_layer_1                                          |NON MODIFIED
 net_init.bias_layer_2                                          |NON MODIFIED
 net_init.bias_layer_3                                          |NON MODIFIED
