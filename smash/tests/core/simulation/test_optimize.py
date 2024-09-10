@@ -35,7 +35,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
 
         for mp in MAPPING:
             if mp == "ann":
-                instance = smash.optimize(
+                instance, ret = smash.optimize(
                     model,
                     mapping=mp,
                     optimize_options={
@@ -45,6 +45,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                         "termination_crit": {"maxiter": 2},
                     },
                     common_options={"ncpu": ncpu, "verbose": False},
+                    return_options={"control_vector": True},
                 )
 
             else:
@@ -60,11 +61,10 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                         "termination_crit": {"maxiter": 1},
                     },
                     common_options={"ncpu": ncpu, "verbose": False},
-                    return_options={"iter_cost": True, "control_vector": True},
+                    return_options={"control_vector": True},
                 )
 
-                res[f"optimize.{model.setup.structure}.{mp}.iter_cost"] = ret.iter_cost
-                res[f"optimize.{model.setup.structure}.{mp}.control_vector"] = ret.control_vector
+            res[f"optimize.{model.setup.structure}.{mp}.control_vector"] = ret.control_vector
 
             qsim = instance.response.q[:].flatten()
             qsim = qsim[::10]  # extract values at every 10th position
