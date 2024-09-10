@@ -2528,7 +2528,7 @@ class Model:
             Random seed used for the initialization in case of using **initializer**.
 
             .. note::
-                If not given, the parameters will be initialized with a random seed.
+                If not given, the neural network parameters will be initialized with a random seed.
 
         See Also
         --------
@@ -2624,7 +2624,7 @@ class Model:
             Random seed used for the initialization in case of using **initializer**.
 
             .. note::
-                If not given, the parameters will be initialized with a random seed.
+                If not given, the neural network parameters will be initialized with a random seed.
 
         See Also
         --------

@@ -940,8 +940,7 @@ def _sbs_optimize(
         print(f"{' '*4}At iterate {0:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    ddx = {ddx:>4.2f}")
 
     for iter in range(1, wrap_options.optimize.maxiter * n + 1):
-        if dxn > ddx:
-            dxn = ddx
+        dxn = min(dxn, ddx)
         if ddx > 2:
             ddx = dxn
 

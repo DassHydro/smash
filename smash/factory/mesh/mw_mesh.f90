@@ -45,6 +45,7 @@ contains
 
         integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
         integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
+        integer, dimension(8) :: opposite_dir = (/5, 6, 7, 8, 1, 2, 3, 4/)
         integer :: i, row_imd, col_imd
 
         mask(row, col) = 1
@@ -55,8 +56,6 @@ contains
             col_imd = col + dcol(i)
 
             if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
-
-            if (abs(flwdir(row, col) - flwdir(row_imd, col_imd)) .eq. 4) cycle
 
             if (flwdir(row_imd, col_imd) .eq. i) call mask_upstream_cells(nrow, ncol, flwdir, row_imd, col_imd, mask)
 
@@ -337,6 +336,7 @@ contains
 
         integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
         integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
+        integer, dimension(8) :: opposite_dir = (/5, 6, 7, 8, 1, 2, 3, 4/)
         integer :: i, j, row_imd, col_imd
 
         do i = 1, 8
@@ -469,5 +469,44 @@ contains
         end do
 
     end subroutine flow_partition_variable
+
+    subroutine check_well_in_flwdir(nrow, ncol, flwdir, well)
+
+        implicit none
+
+        integer, intent(in) :: nrow, ncol
+        integer, dimension(nrow, ncol), intent(in) :: flwdir
+        integer, dimension(nrow, ncol), intent(out) :: well
+
+        integer :: i, j, k, row_imd, col_imd
+        integer, dimension(3) :: drow = (/0, 1, 1/)
+        integer, dimension(3) :: dcol = (/1, 1, 0/)
+        integer, dimension(3) :: dir = (/3, 4, 5/)
+        integer, dimension(3) :: opposite_dir = (/7, 8, 1/)
+
+        well = 0
+
+        do i = 1, nrow - 1
+
+            do j = 1, ncol - 1
+
+                do k = 1, 3
+
+                    row_imd = i + drow(k)
+                    col_imd = j + dcol(k)
+
+                    if (flwdir(row_imd, col_imd) .eq. opposite_dir(k) .and. flwdir(i, j) .eq. dir(k)) then
+
+                        well(i, j) = 1
+
+                    end if
+
+                end do
+
+            end do
+
+        end do
+
+    end subroutine check_well_in_flwdir
 
 end module mw_mesh
