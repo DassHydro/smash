@@ -45,6 +45,8 @@ def _get_control_info(
     wrap_parameters_to_control(model.setup, model.mesh, model._input_data, model._parameters, wrap_options)
 
     ret = {}
+
+    # % Get Fortran control
     for attr in dir(model._parameters.control):
         if attr.startswith("_"):
             continue
@@ -55,24 +57,24 @@ def _get_control_info(
             value = value.copy()
         ret[attr] = value
 
-    # Manually dealloc the control
-    model._parameters.control.dealloc()
-
-    _finalize_get_control_info(ret, optimize_options)
-
-    return ret
-
-
-def _finalize_get_control_info(ret: dict, optimize_options: dict):
-    # % Handle unbounded and semi-unbounded parameters
     for key in ["l", "u", "l_bkg", "u_bkg"]:
+        # Handle unbounded and semi-unbounded parameters
         if key.startswith("l"):
             ret[key] = np.where(np.isin(ret["nbd"], [0, 3]), -np.inf, ret[key])
 
         elif key.startswith("u"):
             ret[key] = np.where(np.isin(ret["nbd"], [0, 1]), np.inf, ret[key])
 
-    # % Handle control info from net
+    # % Manually dealloc the control
+    model._parameters.control.dealloc()
+
+    # % Get and merge control from net
+    _merge_net_control(ret, optimize_options)
+
+    return ret
+
+
+def _merge_net_control(ret: dict, optimize_options: dict):
     net = optimize_options.get("net", None)
 
     if net is None:
@@ -135,15 +137,15 @@ def _net_to_vect(net: Net) -> np.ndarray:
 
 
 def _net_to_parameters(
-    net: Net, x: np.ndarray, model_params_states: np.ndarray, parameters: ParametersDT, flwdir_shape: tuple
-):
+    net: Net, x: np.ndarray, model_params_states: np.ndarray, parameters: ParametersDT
+) -> bool:
     # % Forward propogation
     y = net._forward_pass(x)
 
     output_reshaped = False
 
     if y.ndim < 3:
-        y = y.reshape(flwdir_shape + (-1,))
+        y = y.reshape(parameters.rr_parameters.values.shape[0:2] + (-1,))
         output_reshaped = True  # reshape output in case of Dense (MLP)
 
     # % Set parameters or states
@@ -246,7 +248,7 @@ def _handle_bayesian_optimize_control_prior(model: Model, control_prior: dict, o
         _map_dict_to_fortran_derived_type(prior, options.cost.control_prior[i])
 
 
-def _forward_run_b(
+def _get_parameters_b(
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,

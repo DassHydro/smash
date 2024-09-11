@@ -649,7 +649,7 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return the projected gardient value (infinity norm of the Jacobian matrix).
+        Whether to return the projected gradient value (infinity norm of the Jacobian matrix).
         """,
     ),
     "jobs": (
@@ -1516,7 +1516,7 @@ Customize the optimization options by removing ``'kexc'`` from the optimized par
 Run the optimization method
 
 >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
-ValueError: Unknown or non optimized parameter 'kexc' in bounds optimize_options.
+ValueError: Unknown, non optimized, or unbounded parameter 'kexc' in bounds optimize_options.
 Choices: ['cp', 'ct', 'llr']
 
 An error is raised because we define ``bounds`` to a non optimized parameter ``kexc``. Remove also
@@ -1609,7 +1609,7 @@ Again, customize the optimization options and optimize the Model
     Reverting to iteration 41 with J = 5.12064e-02 due to early stopping
 
 The training process was terminated after 46 iterations, where the loss did not decrease below the minimal
-value at iteration 41 for 5 consecutive iterations. The optimal parameters are thus recorded at epoch 41.
+value at iteration 41 for 5 consecutive iterations. The optimal parameters are thus recorded at iteration 41.
 """
 )
 

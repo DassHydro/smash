@@ -19,8 +19,8 @@ from smash.core.simulation._doc import (
     _smash_optimize_doc_substitution,
 )
 from smash.core.simulation.optimize._tools import (
-    _forward_run_b,
     _get_lcurve_wjreg_best,
+    _get_parameters_b,
     _handle_bayesian_optimize_control_prior,
     _inf_norm,
     _net_to_parameters,
@@ -85,7 +85,7 @@ class Optimize:
         Cost value.
 
     projg : `numpy.ndarray`
-        Projected gardient value (infinity norm of the Jacobian matrix).
+        Projected gradient value (infinity norm of the Jacobian matrix).
 
     jobs : `float`
         Cost observation component value.
@@ -171,7 +171,7 @@ class BayesianOptimize:
         Cost value.
 
     projg : `numpy.ndarray`
-        Projected gardient value (infinity norm of the Jacobian matrix).
+        Projected gradient value (infinity norm of the Jacobian matrix).
 
     log_lkh : `float`
         Log likelihood component value.
@@ -644,7 +644,7 @@ def _adaptive_optimize(
     has_upper_bound = np.isin(parameters.control.nbd, [2, 3])
 
     # % First evaluation
-    parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
     grad = parameters_b.control.x.copy()
     projg = _inf_norm(grad)
 
@@ -667,7 +667,7 @@ def _adaptive_optimize(
         # % Set control values and run adjoint model to get new gradients
         setattr(parameters.control, "x", x)
 
-        parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+        parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
         grad = parameters_b.control.x.copy()
 
         projg = _inf_norm(grad)
@@ -779,7 +779,7 @@ def _reg_ann_adaptive_optimize(
 
     # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
     if istop:
-        _net_to_parameters(net, desc, optimize_options["parameters"], parameters, model.mesh.flwdir.shape)
+        _net_to_parameters(net, desc, optimize_options["parameters"], parameters)
 
     # % Reset control with ann mapping (do not apply to rr_parameters and rr_initial_states)
     wrap_parameters_to_control(
@@ -1081,7 +1081,7 @@ def _gradient_based_optimize_problem(
     setattr(parameters.control, "x", x)
 
     # % Get gradient J wrt control vector
-    parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
     grad = parameters_b.control.x.copy()
 
     # % Callback

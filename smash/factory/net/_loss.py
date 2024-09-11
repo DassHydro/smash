@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from smash._constant import OPTIMIZABLE_NN_PARAMETERS
-from smash.core.simulation.optimize._tools import _forward_run_b, _net_to_parameters
+from smash.core.simulation.optimize._tools import _get_parameters_b, _net_to_parameters
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,
 )
@@ -34,7 +34,7 @@ def _hcost_prime(
     wrap_returns: ReturnsDT,
 ):
     # % Update rr_parameters and/or rr_initial_states using net
-    y_reshaped = _net_to_parameters(net, x, model_params_states, parameters, instance.mesh.flwdir.shape)
+    y_reshaped = _net_to_parameters(net, x, model_params_states, parameters)
 
     # % Change the mapping to trigger distributed control to get distributed gradients
     wrap_options.optimize.mapping = "distributed"
@@ -47,7 +47,7 @@ def _hcost_prime(
         parameters,
         wrap_options,
     )
-    parameters_b = _forward_run_b(instance, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(instance, parameters, wrap_options, wrap_returns)
 
     wrap_control_to_parameters(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
