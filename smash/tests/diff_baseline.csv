@@ -1,11 +1,9 @@
-commit 1f6798ee309f981616792fb984af91d8c71835c9
-Merge: fceee65 ebe3275
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Tue Sep 10 14:01:49 2024 +0200
+commit dbcec3449439962bbd57c715885873846d9a323d
+Merge: ab49571 f1d6416
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Tue Sep 10 16:26:30 2024 +0200
 
-    Merge pull request #8 from nghi-truyen/merge-adaptive-opt
-    
-    MAINT: merge branch main into enh-adaptive-opt-for-all-mappings
+    Merge remote-tracking branch 'upstream/main' into enh-adaptive-optimizers
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -186,6 +184,31 @@ forward_run.zero-gr6-lr.rr_states.hlr                          |NON MODIFIED
 forward_run.zero-gr6-lr.rr_states.hp                           |NON MODIFIED
 forward_run.zero-gr6-lr.rr_states.ht                           |NON MODIFIED
 forward_run.zero-gr6-lr.sim_q                                  |NON MODIFIED
+forward_run.zero-grc-kw.cost                                   |NON MODIFIED
+forward_run.zero-grc-kw.jobs                                   |NON MODIFIED
+forward_run.zero-grc-kw.q_domain                               |NON MODIFIED
+forward_run.zero-grc-kw.rr_states.hi                           |NON MODIFIED
+forward_run.zero-grc-kw.rr_states.hl                           |NON MODIFIED
+forward_run.zero-grc-kw.rr_states.hp                           |NON MODIFIED
+forward_run.zero-grc-kw.rr_states.ht                           |NON MODIFIED
+forward_run.zero-grc-kw.sim_q                                  |NON MODIFIED
+forward_run.zero-grc-lag0.cost                                 |NON MODIFIED
+forward_run.zero-grc-lag0.jobs                                 |NON MODIFIED
+forward_run.zero-grc-lag0.q_domain                             |NON MODIFIED
+forward_run.zero-grc-lag0.rr_states.hi                         |NON MODIFIED
+forward_run.zero-grc-lag0.rr_states.hl                         |NON MODIFIED
+forward_run.zero-grc-lag0.rr_states.hp                         |NON MODIFIED
+forward_run.zero-grc-lag0.rr_states.ht                         |NON MODIFIED
+forward_run.zero-grc-lag0.sim_q                                |NON MODIFIED
+forward_run.zero-grc-lr.cost                                   |NON MODIFIED
+forward_run.zero-grc-lr.jobs                                   |NON MODIFIED
+forward_run.zero-grc-lr.q_domain                               |NON MODIFIED
+forward_run.zero-grc-lr.rr_states.hi                           |NON MODIFIED
+forward_run.zero-grc-lr.rr_states.hl                           |NON MODIFIED
+forward_run.zero-grc-lr.rr_states.hlr                          |NON MODIFIED
+forward_run.zero-grc-lr.rr_states.hp                           |NON MODIFIED
+forward_run.zero-grc-lr.rr_states.ht                           |NON MODIFIED
+forward_run.zero-grc-lr.sim_q                                  |NON MODIFIED
 forward_run.zero-grd-kw.cost                                   |NON MODIFIED
 forward_run.zero-grd-kw.jobs                                   |NON MODIFIED
 forward_run.zero-grd-kw.q_domain                               |NON MODIFIED
@@ -421,6 +444,45 @@ internal_fluxes.zero-gr6-lr.qe                                 |NON MODIFIED
 internal_fluxes.zero-gr6-lr.qr                                 |NON MODIFIED
 internal_fluxes.zero-gr6-lr.qt                                 |NON MODIFIED
 internal_fluxes.zero-gr6-lr.qup                                |NON MODIFIED
+internal_fluxes.zero-grc-kw.en                                 |NON MODIFIED
+internal_fluxes.zero-grc-kw.lexc                               |NON MODIFIED
+internal_fluxes.zero-grc-kw.perc                               |NON MODIFIED
+internal_fluxes.zero-grc-kw.pn                                 |NON MODIFIED
+internal_fluxes.zero-grc-kw.pr                                 |NON MODIFIED
+internal_fluxes.zero-grc-kw.prd                                |NON MODIFIED
+internal_fluxes.zero-grc-kw.prl                                |NON MODIFIED
+internal_fluxes.zero-grc-kw.prr                                |NON MODIFIED
+internal_fluxes.zero-grc-kw.qd                                 |NON MODIFIED
+internal_fluxes.zero-grc-kw.qim1j                              |NON MODIFIED
+internal_fluxes.zero-grc-kw.ql                                 |NON MODIFIED
+internal_fluxes.zero-grc-kw.qr                                 |NON MODIFIED
+internal_fluxes.zero-grc-kw.qt                                 |NON MODIFIED
+internal_fluxes.zero-grc-lag0.en                               |NON MODIFIED
+internal_fluxes.zero-grc-lag0.lexc                             |NON MODIFIED
+internal_fluxes.zero-grc-lag0.perc                             |NON MODIFIED
+internal_fluxes.zero-grc-lag0.pn                               |NON MODIFIED
+internal_fluxes.zero-grc-lag0.pr                               |NON MODIFIED
+internal_fluxes.zero-grc-lag0.prd                              |NON MODIFIED
+internal_fluxes.zero-grc-lag0.prl                              |NON MODIFIED
+internal_fluxes.zero-grc-lag0.prr                              |NON MODIFIED
+internal_fluxes.zero-grc-lag0.qd                               |NON MODIFIED
+internal_fluxes.zero-grc-lag0.ql                               |NON MODIFIED
+internal_fluxes.zero-grc-lag0.qr                               |NON MODIFIED
+internal_fluxes.zero-grc-lag0.qt                               |NON MODIFIED
+internal_fluxes.zero-grc-lag0.qup                              |NON MODIFIED
+internal_fluxes.zero-grc-lr.en                                 |NON MODIFIED
+internal_fluxes.zero-grc-lr.lexc                               |NON MODIFIED
+internal_fluxes.zero-grc-lr.perc                               |NON MODIFIED
+internal_fluxes.zero-grc-lr.pn                                 |NON MODIFIED
+internal_fluxes.zero-grc-lr.pr                                 |NON MODIFIED
+internal_fluxes.zero-grc-lr.prd                                |NON MODIFIED
+internal_fluxes.zero-grc-lr.prl                                |NON MODIFIED
+internal_fluxes.zero-grc-lr.prr                                |NON MODIFIED
+internal_fluxes.zero-grc-lr.qd                                 |NON MODIFIED
+internal_fluxes.zero-grc-lr.ql                                 |NON MODIFIED
+internal_fluxes.zero-grc-lr.qr                                 |NON MODIFIED
+internal_fluxes.zero-grc-lr.qt                                 |NON MODIFIED
+internal_fluxes.zero-grc-lr.qup                                |NON MODIFIED
 internal_fluxes.zero-grd-kw.ei                                 |NON MODIFIED
 internal_fluxes.zero-grd-kw.en                                 |NON MODIFIED
 internal_fluxes.zero-grd-kw.perc                               |NON MODIFIED
@@ -845,6 +907,48 @@ optimize.zero-gr6-lr.multi-polynomial.sim_q                    |NON MODIFIED
 optimize.zero-gr6-lr.uniform.control_vector                    |MODIFIED
 optimize.zero-gr6-lr.uniform.iter_cost                         |DELETED
 optimize.zero-gr6-lr.uniform.sim_q                             |NON MODIFIED
+optimize.zero-grc-kw.ann.control_vector                        |ADDED
+optimize.zero-grc-kw.ann.sim_q                                 |NON MODIFIED
+optimize.zero-grc-kw.distributed.control_vector                |MODIFIED
+optimize.zero-grc-kw.distributed.iter_cost                     |DELETED
+optimize.zero-grc-kw.distributed.sim_q                         |NON MODIFIED
+optimize.zero-grc-kw.multi-linear.control_vector               |NON MODIFIED
+optimize.zero-grc-kw.multi-linear.iter_cost                    |DELETED
+optimize.zero-grc-kw.multi-linear.sim_q                        |NON MODIFIED
+optimize.zero-grc-kw.multi-polynomial.control_vector           |MODIFIED
+optimize.zero-grc-kw.multi-polynomial.iter_cost                |DELETED
+optimize.zero-grc-kw.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-grc-kw.uniform.control_vector                    |MODIFIED
+optimize.zero-grc-kw.uniform.iter_cost                         |DELETED
+optimize.zero-grc-kw.uniform.sim_q                             |NON MODIFIED
+optimize.zero-grc-lag0.ann.control_vector                      |ADDED
+optimize.zero-grc-lag0.ann.sim_q                               |NON MODIFIED
+optimize.zero-grc-lag0.distributed.control_vector              |MODIFIED
+optimize.zero-grc-lag0.distributed.iter_cost                   |DELETED
+optimize.zero-grc-lag0.distributed.sim_q                       |NON MODIFIED
+optimize.zero-grc-lag0.multi-linear.control_vector             |NON MODIFIED
+optimize.zero-grc-lag0.multi-linear.iter_cost                  |DELETED
+optimize.zero-grc-lag0.multi-linear.sim_q                      |NON MODIFIED
+optimize.zero-grc-lag0.multi-polynomial.control_vector         |MODIFIED
+optimize.zero-grc-lag0.multi-polynomial.iter_cost              |DELETED
+optimize.zero-grc-lag0.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-grc-lag0.uniform.control_vector                  |MODIFIED
+optimize.zero-grc-lag0.uniform.iter_cost                       |DELETED
+optimize.zero-grc-lag0.uniform.sim_q                           |NON MODIFIED
+optimize.zero-grc-lr.ann.control_vector                        |ADDED
+optimize.zero-grc-lr.ann.sim_q                                 |NON MODIFIED
+optimize.zero-grc-lr.distributed.control_vector                |MODIFIED
+optimize.zero-grc-lr.distributed.iter_cost                     |DELETED
+optimize.zero-grc-lr.distributed.sim_q                         |NON MODIFIED
+optimize.zero-grc-lr.multi-linear.control_vector               |NON MODIFIED
+optimize.zero-grc-lr.multi-linear.iter_cost                    |DELETED
+optimize.zero-grc-lr.multi-linear.sim_q                        |NON MODIFIED
+optimize.zero-grc-lr.multi-polynomial.control_vector           |MODIFIED
+optimize.zero-grc-lr.multi-polynomial.iter_cost                |DELETED
+optimize.zero-grc-lr.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-grc-lr.uniform.control_vector                    |MODIFIED
+optimize.zero-grc-lr.uniform.iter_cost                         |DELETED
+optimize.zero-grc-lr.uniform.sim_q                             |NON MODIFIED
 optimize.zero-grd-kw.ann.control_vector                        |ADDED
 optimize.zero-grd-kw.ann.sim_q                                 |NON MODIFIED
 optimize.zero-grd-kw.distributed.control_vector                |MODIFIED
