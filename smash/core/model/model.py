@@ -128,6 +128,7 @@ class Model:
             - ``'gr4'``, ``'gr4_mlp'``, ``'gr4_ode'``, ``'gr4_ode_mlp'``
             - ``'gr5'``, ``'gr5_mlp'``
             - ``'gr6'``, ``'gr6_mlp'``
+            - ``'grc'``
             - ``'grd'``, ``'grd_mlp'``
             - ``'loieau'``, ``'loieau_mlp'``
             - ``'vic3l'``
@@ -2532,7 +2533,7 @@ class Model:
             Random seed used for the initialization in case of using **initializer**.
 
             .. note::
-                If not given, the parameters will be initialized with a random seed.
+                If not given, the neural network parameters will be initialized with a random seed.
 
         See Also
         --------
@@ -2628,7 +2629,7 @@ class Model:
             Random seed used for the initialization in case of using **initializer**.
 
             .. note::
-                If not given, the parameters will be initialized with a random seed.
+                If not given, the neural network parameters will be initialized with a random seed.
 
         See Also
         --------
