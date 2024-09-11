@@ -748,12 +748,18 @@ contains
         type(OptionsDT), intent(in) :: options
         integer, intent(inout) :: n
 
-        n = options%optimize%nn_parameters(1)*setup%neurons(2)*setup%neurons(1) &
-        & + options%optimize%nn_parameters(2)*setup%neurons(2) &
-        & + options%optimize%nn_parameters(3)*setup%neurons(3)*setup%neurons(2) &
-        & + options%optimize%nn_parameters(4)*setup%neurons(3) &
-        & + options%optimize%nn_parameters(5)*setup%neurons(4)*setup%neurons(3) &
-        & + options%optimize%nn_parameters(6)*setup%neurons(4)
+        integer :: i, n_w, n_b
+
+        n = 0
+
+        do i = 0, size(setup%hidden_neuron)
+
+            n_w = options%optimize%nn_parameters(2*i + 1)*setup%neurons(i + 2)*setup%neurons(i + 1)
+            n_b = options%optimize%nn_parameters(2*i + 2)*setup%neurons(i + 2)
+
+            n = n + n_w + n_b
+
+        end do
 
     end subroutine nn_parameters_get_control_size
 
@@ -788,8 +794,7 @@ contains
             call multi_polynomial_rr_parameters_get_control_size(setup, options, nbk(1))
             call multi_polynomial_rr_initial_states_get_control_size(setup, options, nbk(2))
 
-            !% Should be reach by "ann" only
-        case default
+        case ("ann")
 
             nbk(1) = 0
             nbk(2) = 0
@@ -1247,6 +1252,7 @@ contains
         character(lchar) :: name
         integer :: j, k, l
 
+        ! NN parameters is fifth control kind
         j = sum(parameters%control%nbk(1:4))
 
         if (options%optimize%nn_parameters(1) .eq. 1) then
@@ -1786,6 +1792,7 @@ contains
 
         integer :: j, k, l
 
+        ! NN parameters is fifth control kind
         j = sum(parameters%control%nbk(1:4))
 
         if (options%optimize%nn_parameters(1) .eq. 1) then
