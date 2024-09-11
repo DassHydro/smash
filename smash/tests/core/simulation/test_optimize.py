@@ -279,12 +279,31 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
     ]
 
     for i, inner_kwargs in enumerate(custom_sets):
+        iter_control = []
+        iter_cost = []
+        iter_projg = []
+
+        def callback(iopt, icontrol=iter_control, icost=iter_cost, iprojg=iter_projg):
+            icontrol.append(iopt.control_vector)
+            icost.append(iopt.cost)
+
+            if hasattr(iopt, "projg"):
+                iprojg.append(iopt.projg)
+
+        inner_kwargs.update({"callback": callback})
+
         instance = smash.optimize(model, **inner_kwargs)
 
         qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.sim_q"] = qsim
+
+        res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_control"] = np.array(iter_control)
+        res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_cost"] = np.array(iter_cost)
+
+        if iter_projg:
+            res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_projg"] = np.array(iter_projg)
 
     return res
 
