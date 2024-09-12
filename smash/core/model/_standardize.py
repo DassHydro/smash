@@ -448,8 +448,8 @@ def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **
 def _standardize_model_setup(setup: dict) -> dict:
     if isinstance(setup, dict):
         pop_keys = []
-        for key in setup.keys():
-            if key not in DEFAULT_MODEL_SETUP.keys():
+        for key in setup:
+            if key not in DEFAULT_MODEL_SETUP:
                 pop_keys.append(key)
                 warnings.warn(
                     f"Unknown model setup key '{key}'. Choices: {list(DEFAULT_MODEL_SETUP.keys())}",

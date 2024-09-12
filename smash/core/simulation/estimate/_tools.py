@@ -105,10 +105,10 @@ def _forward_run_with_estimated_parameters(
     cost_options: dict,
     common_options: dict,
     return_options: dict,
-) -> (ForwardRun | None, dict):
+) -> tuple[ForwardRun | None, dict]:
     mahal_distance = 0
 
-    for p in prior_data.keys():
+    for p in prior_data:
         param_p, distance_p = _estimate_parameter(prior_data[p], cost, density[p], alpha)
 
         if p in model.rr_parameters.keys:
@@ -144,7 +144,7 @@ def _forward_run_with_estimated_parameters(
 def _lcurve_forward_run_with_estimated_parameters(
     alpha: np.ndarray,
     *args_forward_run_with_estimated_parameters: AnyTuple,
-) -> (ForwardRun | None, dict):
+) -> tuple[ForwardRun | None, dict]:
     l_cost = np.zeros(alpha.size)
     l_mahal_distance = np.zeros(alpha.size)
 

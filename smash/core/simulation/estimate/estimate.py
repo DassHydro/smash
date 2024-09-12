@@ -110,7 +110,7 @@ def multiset_estimate(
     if ret_multiset_estimate is None:
         return wmodel
     else:
-        return wmodel, ret_multiset_estimate
+        return (wmodel, ret_multiset_estimate)
 
 
 def _multiset_estimate(

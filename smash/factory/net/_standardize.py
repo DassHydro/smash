@@ -196,7 +196,7 @@ def _standardize_forward_pass_x(input_shape: tuple, x: np.ndarray) -> np.ndarray
                 f"from shape {x.shape} into shape {input_shape}"
             )
     else:
-        raise TypeError("Input x must be a Numpy array")
+        raise TypeError("Input x must be a np.ndarray")
 
     return x
 

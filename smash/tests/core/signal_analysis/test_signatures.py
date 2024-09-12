@@ -21,7 +21,7 @@ def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
     signresult["sim_by_sim"] = smash.signatures(instance, domain="sim", event_seg={"by": "sim"})
 
     for typ, sign in zip(["cont", "event"], [CSIGN, ESIGN]):  # % remove percentile signatures calculation
-        for dom in signresult.keys():
+        for dom in signresult:
             res[f"signatures.{typ}_{dom}"] = getattr(signresult[dom], typ)[sign].to_numpy(dtype=np.float32)
 
     return res

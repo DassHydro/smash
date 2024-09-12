@@ -19,8 +19,8 @@ from smash.core.simulation._doc import (
     _smash_optimize_doc_substitution,
 )
 from smash.core.simulation.optimize._tools import (
-    _forward_run_b,
     _get_lcurve_wjreg_best,
+    _get_parameters_b,
     _handle_bayesian_optimize_control_prior,
     _inf_norm,
     _net_to_parameters,
@@ -85,7 +85,7 @@ class Optimize:
         Cost value.
 
     projg : `numpy.ndarray`
-        Projected gardient value (infinity norm of the Jacobian matrix).
+        Projected gradient value (infinity norm of the Jacobian matrix).
 
     jobs : `float`
         Cost observation component value.
@@ -171,7 +171,7 @@ class BayesianOptimize:
         Cost value.
 
     projg : `numpy.ndarray`
-        Projected gardient value (infinity norm of the Jacobian matrix).
+        Projected gradient value (infinity norm of the Jacobian matrix).
 
     log_lkh : `float`
         Log likelihood component value.
@@ -305,7 +305,7 @@ def _optimize_fast_wjreg(
 
 def _optimize_lcurve_wjreg(
     model: Model, options: OptionsDT, returns: ReturnsDT, optimize_options: dict, return_options: dict
-) -> (float, dict):
+) -> tuple[float, dict]:
     if options.comm.verbose:
         print(f"{' '*4}L-CURVE WJREG CYCLE 1")
 
@@ -389,7 +389,7 @@ def optimize(
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
     callback: callable | None = None,
-) -> Model | (Model, Optimize):
+) -> Model | tuple[Model, Optimize]:
     wmodel = model.copy()
 
     ret_optimize = wmodel.optimize(
@@ -405,7 +405,7 @@ def optimize(
     if ret_optimize is None:
         return wmodel
     else:
-        return wmodel, ret_optimize
+        return (wmodel, ret_optimize)
 
 
 def _optimize(
@@ -494,7 +494,7 @@ def _optimize(
             }
 
         # % Add time_step to the object
-        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
+        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret):
             ret["time_step"] = return_options["time_step"].copy()
         return Optimize(ret)
 
@@ -510,7 +510,7 @@ def bayesian_optimize(
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
     callback: callable | None = None,
-) -> Model | (Model, BayesianOptimize):
+) -> Model | tuple[Model, BayesianOptimize]:
     wmodel = model.copy()
 
     ret_bayesian_optimize = wmodel.bayesian_optimize(
@@ -526,7 +526,7 @@ def bayesian_optimize(
     if ret_bayesian_optimize is None:
         return wmodel
     else:
-        return wmodel, ret_bayesian_optimize
+        return (wmodel, ret_bayesian_optimize)
 
 
 def _bayesian_optimize(
@@ -596,7 +596,7 @@ def _bayesian_optimize(
                 for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
             }
         # % Add time_step to the object
-        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
+        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret):
             ret["time_step"] = return_options["time_step"].copy()
         return BayesianOptimize(ret)
 
@@ -617,8 +617,8 @@ def _apply_optimizer(
         ret = _lbfgsb_optimize(model, parameters, wrap_options, wrap_returns, return_options, callback)
 
     elif wrap_options.optimize.optimizer in ADAPTIVE_OPTIMIZER:
-        if "net" in optimize_options.keys():
-            ret = _reg_ann_adaptive_optimize(
+        if "net" in optimize_options:
+            ret = _ann_adaptive_optimize(
                 model, parameters, wrap_options, wrap_returns, optimize_options, return_options, callback
             )
 
@@ -667,7 +667,7 @@ def _adaptive_optimize(
     has_upper_bound = np.isin(parameters.control.nbd, [2, 3])
 
     # % First evaluation
-    parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
     grad = parameters_b.control.x.copy()
     projg = _inf_norm(grad)
 
@@ -690,7 +690,7 @@ def _adaptive_optimize(
         # % Set control values and run adjoint model to get new gradients
         setattr(parameters.control, "x", x)
 
-        parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+        parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
         grad = parameters_b.control.x.copy()
 
         projg = _inf_norm(grad)
@@ -769,7 +769,7 @@ def _adaptive_optimize(
     return ret
 
 
-def _reg_ann_adaptive_optimize(
+def _ann_adaptive_optimize(
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,
@@ -809,7 +809,7 @@ def _reg_ann_adaptive_optimize(
 
     # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
     if istop:
-        _net_to_parameters(net, desc, optimize_options["parameters"], parameters, model.mesh.flwdir.shape)
+        _net_to_parameters(net, desc, optimize_options["parameters"], parameters)
 
     # % Reset control with ann mapping (do not apply to rr_parameters and rr_initial_states)
     wrap_parameters_to_control(
@@ -972,8 +972,7 @@ def _sbs_optimize(
         print(f"{' '*4}At iterate {0:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    ddx = {ddx:>4.2f}")
 
     for iter in range(1, wrap_options.optimize.maxiter * n + 1):
-        if dxn > ddx:
-            dxn = ddx
+        dxn = min(dxn, ddx)
         if ddx > 2:
             ddx = dxn
 
@@ -1117,7 +1116,7 @@ def _gradient_based_optimize_problem(
     setattr(parameters.control, "x", x)
 
     # % Get gradient J wrt control vector
-    parameters_b = _forward_run_b(model, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
     grad = parameters_b.control.x.copy()
 
     # % Callback
