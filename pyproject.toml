@@ -1,8 +1,11 @@
 [build-system]
 requires = [
     "meson-python",
-    "numpy",
-    "f90wrap<0.2.14",  # temporary upper bound until v0.2.15 is released
+    # numpy requirement for wheel builds for distribution on PyPI - building
+    # against 2.x yields wheels that are also compatible with numpy 1.x at
+    # runtime.
+    "numpy>=2.0.0",
+    "f90wrap>=0.2.15",
     "versioneer[toml]"
 ]
 build-backend = "mesonpy"
@@ -18,13 +21,13 @@ authors = [
 license = {text = "GPL-3.0"}
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
-    "f90wrap",
-    "rasterio",
-    "pandas",
-    "h5py",
+    "numpy>=1.24",
+    "f90wrap>=0.2.15",
+    "rasterio>=1.3.10",
+    "pandas>=2.2.2",
+    "h5py>=3.11",
     "tqdm",
-    "scipy",
+    "scipy>=1.13",
     "pyyaml",
     "terminaltables",
 ]
@@ -39,10 +42,12 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3 :: Only',
     'Topic :: Scientific/Engineering',
     'Operating System :: Unix',
     'Operating System :: Microsoft :: Windows',
+    "Operating System :: MacOS",
 ]
 
 [project.optional-dependencies]
@@ -55,10 +60,11 @@ doc = [
     "numpydoc",
     "pydata-sphinx-theme",
     "ipython",
+    "pickleshare",
     "sphinxcontrib-bibtex",
     "sphinx-design",
     "sphinx-autosummary-accessors",
-    "matplotlib"
+    "matplotlib>=3.8.4"
 ]
 dev = [
     "ruff",
@@ -78,7 +84,7 @@ tag_prefix = "v"
 parentdir_prefix = "smash-"
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* cp38-* cp312-* pp* *_i686 *_ppc64le *_s390x"
+skip = "cp36-* cp37-* cp38-* pp* *_i686 *_ppc64le *_s390x"
 test-command = 'python -c "import smash; print(smash.__version__)"'
 build-verbosity = 3
 
@@ -86,9 +92,11 @@ build-verbosity = 3
 before-build = "pip install delvewheel"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 
+[tool.cibuildwheel.macos]
+before-build = "brew reinstall gfortran libomp && brew unlink gfortran && brew link gfortran"
+
 [tool.ruff]
 line-length = 110
-target-version = "py311"
 
 # ruff lint rules derived from Pandas
 [tool.ruff.lint]

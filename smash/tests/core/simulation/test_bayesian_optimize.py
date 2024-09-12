@@ -58,8 +58,8 @@ def generic_custom_bayesian_optimize(model: smash.Model, **kwargs) -> dict:
             "cost_options": {
                 "gauge": "all",
                 "control_prior": {
-                    "cp0": ["Gaussian", [200, 100]],
-                    "kexc0": ["Gaussian", [0, 5]],
+                    "cp-0": ["Gaussian", [200, 100]],
+                    "kexc-0": ["Gaussian", [0, 5]],
                 },
             },
             "optimize_options": {
@@ -72,8 +72,8 @@ def generic_custom_bayesian_optimize(model: smash.Model, **kwargs) -> dict:
         },
     ]
 
-    for i, kwargs in enumerate(custom_sets):
-        instance = smash.bayesian_optimize(model, **kwargs)
+    for i, inner_kwargs in enumerate(custom_sets):
+        instance = smash.bayesian_optimize(model, **inner_kwargs)
 
         qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position

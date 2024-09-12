@@ -1,0 +1,49 @@
+.. _release.1.0.2-notes:
+
+=========================
+smash 1.0.2 Release Notes
+=========================
+
+The smash 1.0.2 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation.
+The highlights are:
+
+- ``Physiographic descriptor missing values``
+    The handling of missing data in physiographic descriptors has been modified. `smash` no longer accepts
+    missing data on active cells and returns an error on reading.
+
+- ``Feasible domain on active cells``
+    `smash` no longer returns an error if the values of parameters or initial states on non-active cells are
+    outside the feasibility domain.
+
+- ``Net scaling layer``
+    Net scaling layer is now able to take the outputs from other activation functions (not only sigmoid) such
+    as softmax and tanh.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+- Apolline El Baz (`<https://github.com/asjeb>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+- `#245 <https://github.com/DassHydro/smash/pull/245>`__: Rebase of MJA pull request on main
+- `#259 <https://github.com/DassHydro/smash/pull/259>`__: MAINT: Sphinx v7.4 compatibility
+- `#262 <https://github.com/DassHydro/smash/pull/262>`__: DOC: Add pypi badge for smash
+- `#269 <https://github.com/DassHydro/smash/pull/269>`__: FIX: Check descriptor missing values on active cells
+- `#270 <https://github.com/DassHydro/smash/pull/270>`__: DOC: Update contributor guide summary
+- `#271 <https://github.com/DassHydro/smash/pull/271>`__: FIX: Correct the filling of the control vector in case of distributed mapping
+- `#272 <https://github.com/DassHydro/smash/pull/272>`__: FIX: scaling layer for bounded outputs from activation layer
+- `#275 <https://github.com/DassHydro/smash/pull/275>`__: FIX: docstring serr_sigma_parameters
+- `#278 <https://github.com/DassHydro/smash/pull/278>`__: DOC: correct control_tfm documentation
+- `#281 <https://github.com/DassHydro/smash/pull/281>`__: Fix crash in generate mesh if a well is present at a cell : infinite recursive loop. Just test if it is a well and cycle
+- `#284 <https://github.com/DassHydro/smash/pull/284>`__: DOC: add note to contributor guide for test-baseline
+- `#288 <https://github.com/DassHydro/smash/pull/288>`__: ENH: set parameters condition outside active cell
+- `#297 <https://github.com/DassHydro/smash/pull/297>`__: manage kernel pip

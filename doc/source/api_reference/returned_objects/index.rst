@@ -13,7 +13,6 @@ Simulation
 
     Samples
     MultipleForwardRun
-    MultipleOptimize
     ForwardRun
     Optimize
     MultisetEstimate

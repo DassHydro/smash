@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from smash._constant import STRUCTURE_RR_INTERNAL_FLUXES
 from smash.core.simulation._doc import (
     _multiset_estimate_doc_appender,
     _smash_multiset_estimate_doc_substitution,
@@ -13,13 +14,12 @@ from smash.core.simulation.estimate._tools import (
     _forward_run_with_estimated_parameters,
     _lcurve_forward_run_with_estimated_parameters,
 )
-from smash.core.simulation.optimize.optimize import MultipleOptimize
-from smash.core.simulation.run.run import MultipleForwardRun
 
 if TYPE_CHECKING:
     from typing import Any
 
     from smash.core.model.model import Model
+    from smash.core.simulation.run.run import MultipleForwardRun
     from smash.util._typing import ListLike, Numeric
 
 __all__ = ["MultisetEstimate", "multiset_estimate"]
@@ -35,11 +35,15 @@ class MultisetEstimate:
         A list of length *n* containing the returned time steps.
 
     rr_states : `FortranDerivedTypeArray`
-        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
+        A list of length *n* of `RR_StatesDT <fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
+
+    internal_fluxes: `dict[str, numpy.ndarray]`
+        A dictionary where keys are the names of the internal fluxes and the values are array of
+        shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 
     cost : `float`
         Cost value.
@@ -65,7 +69,7 @@ class MultisetEstimate:
     Notes
     -----
     The object's available attributes depend on what is requested by the user during a call to
-    `smash.multiset_estimate`.
+    `multiset_estimate`.
 
     See Also
     --------
@@ -94,7 +98,7 @@ class MultisetEstimate:
 @_multiset_estimate_doc_appender
 def multiset_estimate(
     model: Model,
-    multiset: MultipleForwardRun | MultipleOptimize,
+    multiset: MultipleForwardRun,
     alpha: Numeric | ListLike | None = None,
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
@@ -111,7 +115,7 @@ def multiset_estimate(
 
 def _multiset_estimate(
     model: Model,
-    multiset: MultipleForwardRun | MultipleOptimize,
+    multiset: MultipleForwardRun,
     alpha: float | np.ndarray,
     common_options: dict,
     return_options: dict,
@@ -120,30 +124,8 @@ def _multiset_estimate(
     if common_options["verbose"]:
         print("</> Multiple Set Estimate")
 
-    # % Prepare data
-    if isinstance(multiset, MultipleForwardRun):
-        optimized_parameters = {p: None for p in multiset._samples._problem["names"]}
-
-        prior_data = dict(
-            zip(
-                optimized_parameters.keys(),
-                [
-                    np.tile(getattr(multiset._samples, p), (*model.mesh.flwdir.shape, 1))
-                    for p in optimized_parameters.keys()
-                ],
-            )
-        )
-
-    elif isinstance(multiset, MultipleOptimize):
-        optimized_parameters = multiset.parameters
-
-        prior_data = multiset.parameters
-
-    else:  # In case we have other kind of multiset. Should be unreachable
-        pass
-
     # % Compute density
-    density = _compute_density(multiset._samples, optimized_parameters, model.mesh.active_cell)
+    density = _compute_density(multiset._samples, multiset._spatialized_samples, model.mesh.active_cell)
 
     # % Multiple set estimate
     if isinstance(alpha, float):
@@ -158,7 +140,7 @@ def _multiset_estimate(
     ret_forward_run, lcurve_multiset = estimator(
         alpha,
         model,
-        prior_data,
+        multiset._spatialized_samples,
         density,
         multiset.cost,
         multiset._cost_options,
@@ -172,4 +154,9 @@ def _multiset_estimate(
     ret = {**fret, **pyret}
 
     if ret:
+        if "internal_fluxes" in ret:
+            ret["internal_fluxes"] = {
+                key: ret["internal_fluxes"][..., i]
+                for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
+            }
         return MultisetEstimate(ret)

@@ -16,6 +16,7 @@ module md_routing_operator
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_options !% only: OptionsDT
+    use mwd_returns !% only: ReturnsDT
 
     implicit none
 
@@ -125,17 +126,19 @@ contains
 
     end subroutine kinematic_wave1d
 
-    subroutine lag0_time_step(setup, mesh, options, ac_qtz, ac_qz)
+    subroutine lag0_time_step(setup, mesh, options, returns, time_step, ac_qtz, ac_qz)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac, setup%nqz), intent(in) :: ac_qtz
         real(sp), dimension(mesh%nac, setup%nqz), intent(inout) :: ac_qz
 
-        integer :: i, j, row, col, k
+        integer :: i, j, row, col, k, time_step_returns
         real(sp) :: qup
 
         ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
@@ -163,6 +166,24 @@ contains
 
                     ac_qz(k, setup%nqz) = ac_qz(k, setup%nqz) + qup
 
+                    !$AD start-exclude
+                    !internal fluxes
+                    if (returns%internal_fluxes_flag) then
+                        if (allocated(returns%mask_time_step)) then
+                            if (returns%mask_time_step(time_step)) then
+                                time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                                returns%internal_fluxes( &
+                                    row, &
+                                    col, &
+                                    time_step_returns, &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
+                            end if
+                        end if
+                    end if
+                    !$AD end-exclude
+
                 end do
 #ifdef _OPENMP
                 !$OMP end parallel do
@@ -181,6 +202,24 @@ contains
 
                     ac_qz(k, setup%nqz) = ac_qz(k, setup%nqz) + qup
 
+                    !$AD start-exclude
+                    !internal fluxes
+                    if (returns%internal_fluxes_flag) then
+                        if (allocated(returns%mask_time_step)) then
+                            if (returns%mask_time_step(time_step)) then
+                                time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                                returns%internal_fluxes( &
+                                    row, &
+                                    col, &
+                                    time_step_returns, &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
+                            end if
+                        end if
+                    end if
+                    !$AD end-exclude
+
                 end do
 
             end if
@@ -189,19 +228,21 @@ contains
 
     end subroutine lag0_time_step
 
-    subroutine lr_time_step(setup, mesh, options, ac_qtz, ac_llr, ac_hlr, ac_qz)
+    subroutine lr_time_step(setup, mesh, options, returns, time_step, ac_qtz, ac_llr, ac_hlr, ac_qz)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
         real(sp), dimension(mesh%nac, setup%nqz), intent(in) :: ac_qtz
         real(sp), dimension(mesh%nac), intent(in) :: ac_llr
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hlr
         real(sp), dimension(mesh%nac, setup%nqz), intent(inout) :: ac_qz
 
-        integer :: i, j, row, col, k
+        integer :: i, j, row, col, k, time_step_returns
         real(sp) :: qup
 
         ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
@@ -230,6 +271,24 @@ contains
                     call linear_routing(mesh%dx(row, col), mesh%dy(row, col), setup%dt, mesh%flwacc(row, col), &
                     & ac_llr(k), ac_hlr(k), qup, ac_qz(k, setup%nqz))
 
+                    !$AD start-exclude
+                    !internal fluxes
+                    if (returns%internal_fluxes_flag) then
+                        if (allocated(returns%mask_time_step)) then
+                            if (returns%mask_time_step(time_step)) then
+                                time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                                returns%internal_fluxes( &
+                                    row, &
+                                    col, &
+                                    time_step_returns, &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
+                            end if
+                        end if
+                    end if
+                    !$AD end-exclude
+
                 end do
 #ifdef _OPENMP
                 !$OMP end parallel do
@@ -249,6 +308,24 @@ contains
                     call linear_routing(mesh%dx(row, col), mesh%dy(row, col), setup%dt, mesh%flwacc(row, col), &
                     & ac_llr(k), ac_hlr(k), qup, ac_qz(k, setup%nqz))
 
+                    !$AD start-exclude
+                    !internal fluxes
+                    if (returns%internal_fluxes_flag) then
+                        if (allocated(returns%mask_time_step)) then
+                            if (returns%mask_time_step(time_step)) then
+                                time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                                returns%internal_fluxes( &
+                                    row, &
+                                    col, &
+                                    time_step_returns, &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qup/)
+                            end if
+                        end if
+                    end if
+                    !$AD end-exclude
+
                 end do
 
             end if
@@ -257,18 +334,24 @@ contains
 
     end subroutine lr_time_step
 
-    subroutine kw_time_step(setup, mesh, options, ac_qtz, ac_akw, ac_bkw, ac_qz)
+    subroutine kw_time_step(setup, mesh, options, returns, t, ac_qtz, ac_akw, ac_bkw, ac_qz)
+        ! Bug fixed on the parallel adjoint linked to variable names by changing of variable names :
+        ! Added local variable t instead of time_step as input to kw_time_step -> no change
+        ! Added local variable t_returns instead of time_step_returns to kw_time_step
+        ! -> modified openMP, unmodified non-openMP
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: t
         real(sp), dimension(mesh%nac, setup%nqz), intent(in) :: ac_qtz
         real(sp), dimension(mesh%nac), intent(in) :: ac_akw, ac_bkw
         real(sp), dimension(mesh%nac, setup%nqz), intent(inout) :: ac_qz
 
-        integer :: i, j, row, col, k
+        integer :: i, j, row, col, k, t_returns
         real(sp) :: qlijm1, qlij, qim1j, qijm1
 
         ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
@@ -301,6 +384,23 @@ contains
                     call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
                     & ac_akw(k), ac_bkw(k), qlijm1, qlij, qim1j, qijm1, ac_qz(k, setup%nqz))
 
+                    !$AD start-exclude
+                    !internal fluxes
+                    if (returns%internal_fluxes_flag) then
+                        if (allocated(returns%mask_time_step)) then
+                            if (returns%mask_time_step(t)) then
+                                t_returns = returns%time_step_to_returns_time_step(t)
+                                returns%internal_fluxes( &
+                                    row, &
+                                    col, &
+                                    t_returns, &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qim1j/)
+                            end if
+                        end if
+                    end if
+                    !$AD end-exclude
                 end do
 #ifdef _OPENMP
                 !$OMP end parallel do
@@ -324,6 +424,23 @@ contains
                     call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
                     & ac_akw(k), ac_bkw(k), qlijm1, qlij, qim1j, qijm1, ac_qz(k, setup%nqz))
 
+                    !$AD start-exclude
+                    !internal fluxes
+                    if (returns%internal_fluxes_flag) then
+                        if (allocated(returns%mask_time_step)) then
+                            if (returns%mask_time_step(t)) then
+                                t_returns = returns%time_step_to_returns_time_step(t)
+                                returns%internal_fluxes( &
+                                    row, &
+                                    col, &
+                                    t_returns, &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + 1: &
+                                    setup%n_snow_fluxes + setup%n_hydro_fluxes + setup%n_routing_fluxes &
+                                    ) = (/qim1j/)
+                            end if
+                        end if
+                    end if
+                    !$AD end-exclude
                 end do
 
             end if

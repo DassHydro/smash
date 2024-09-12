@@ -572,20 +572,27 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
             mask = desc != -99.0
 
-            # % Check if descriptor contains only no data
+            # % Check if descriptor contains only missing values
             if not np.any(mask):
                 raise ValueError(
                     f"Invalid descriptor '{name}'. It contains only missing values on the selected domain"
                 )
 
+            # % Check if descriptor contains missing values on active cells
+            if not np.all(mask[mesh.active_cell == 1]):
+                raise ValueError(
+                    f"Invalid descriptor '{name}'. It contains missing values on the active cells of the "
+                    f"selected domain"
+                )
+
+            # % Check if descriptor is uniform
             low = np.min(desc, where=mask, initial=np.inf)
             upp = np.max(desc, where=mask, initial=-np.inf)
 
-            # % Check if descriptor is uniform
             if low == upp:
                 raise ValueError(
-                    f"Invalid descriptor '{name}'. Spatially uniform values on the selected domain. It must "
-                    "be removed to perform optimization"
+                    f"Invalid descriptor '{name}'. It contains spatially uniform values on the selected "
+                    f"domain"
                 )
             # % Assign values
             input_data.physio_data.descriptor[..., i] = desc

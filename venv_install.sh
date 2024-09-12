@@ -4,7 +4,7 @@
 #When running this script, you will be prompted for your administrator password to install the required dependencies.
 
 venv_path=~/python_venv
-env_name=smash_1.0
+env_name=smash_dev_1.0
 
 
 #Parse input arguments
@@ -51,14 +51,14 @@ fi
 #Warning to the user
 if [ $(cat /etc/*release | grep ^NAME | grep -o Ubuntu) == "Ubuntu" ]; then
 
-    DEB_PACKAGE_NAME="gfortran build-essential gdal-bin libgdal-dev libshp-dev python3-gdal python3-venv python3-dev"
+    DEB_PACKAGE_NAME="gfortran build-essential python3-venv"
     echo "==============================================="
     echo "Make sure you first installed the following package (ubuntu): $DEB_PACKAGE_NAME"
     echo "==============================================="
     
 else
 
-    PACKAGE_NAME="gfortran build-essential gdal-bin libgdal-dev libshp-dev python3-gdal python3-venv python3-dev"
+    PACKAGE_NAME="gfortran build-essential python3-venv python3-dev"
     echo "==============================================="
     echo "Builging smash require some packages. Make sure you install them first. Install the corresponding package depending your distribution. On Debian/Ubuntu these package are: $PACKAGE_NAME"
     echo "==============================================="
@@ -83,22 +83,13 @@ if [ ! -d "${venv_path}/.venv-${env_name}" ] ; then
     
     #install python dependencies
     pip install --upgrade pip
-    pip install 'numpy>=1.13,<=1.23'
-    pip install f90wrap
-    pip install wheel
-    pip install rasterio pandas h5py tqdm scipy pyyaml terminaltables matplotlib
+    pip install -r requirements-dev.txt
     
     echo ''
     echo 'Building Smash...'
     echo ''
     
     make
-    
-    echo ''
-    echo 'Installing extra-package for building the documentation...'
-    echo ''
-    #install extra-package for building the documentation:
-    pip install sphinx numpydoc pydata-sphinx-theme ipython sphinxcontrib-bibtex sphinx-design sphinx-autosummary-accessors pytest pytest-cov black ruff fprettify
     
 else
     echo ''
@@ -122,4 +113,3 @@ echo '(smash)> python'
 echo 'Import the SMASH package in your python shell:'
 echo '>>> import smash'
 echo '************************************************'
-

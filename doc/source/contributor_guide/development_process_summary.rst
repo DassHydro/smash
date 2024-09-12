@@ -7,7 +7,7 @@ Development Process Summary
 Fork
 ----
 
-Go to https://github.com/DassHydro/smash/fork and create your own ``Fork`` of the project. Uncheck the box "Copy the main branch only".
+Go to https://github.com/DassHydro/smash/fork and create your own ``Fork`` of the project.
 
 Clone
 -----
@@ -52,26 +52,33 @@ Activate the conda environment:
 Develop contribution
 --------------------
 
-Switch to the latest development version of smash (``maintenance/x.y.z``):
-
-.. code-block:: none
-
-    (smash-dev) git checkout maintenance/x.y.z
-
-Create a new branch on which you will implement your development:
+Create a new branch, based on main, on which you will implement your development:
 
 .. code-block:: none
 
     (smash-dev) git checkout -b your-development-branch
 
+Then, build in editable mode:
+
+.. code-block:: none
+
+    (smash-dev) make edit
+
 Submit
 ------
 
-Before submitting your changes, make sure that the tests pass (although they will also be executed automatically once the submission has been made):
+Before submitting your changes, make sure that the unit tests pass (although they will also be executed automatically once the submission has been made):
 
 .. code-block:: none
 
     (smash-dev) make test
+
+As well as linters and formatters:
+
+.. code-block:: none
+
+    (smash-dev) make check
+    (smash-dev) make format
 
 If changes have also been made to the documentation, also run the command to check the compilation of the documentation:
 

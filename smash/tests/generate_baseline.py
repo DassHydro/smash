@@ -93,15 +93,16 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
     status = []
 
     for key in all_keys:
-        if len(key) > max_len_name:
-            max_len_name = len(key)
+        max_len_name = max(len(key), max_len_name)
 
         test_name.append(key)
 
         if key in new_f_keys and key in f_keys:
             # % If an error occurs during check (inconsistent shapes ...)
             try:
-                if f[key][:].dtype == "object" or f[key][:].dtype.char == "S":
+                if f[key][:].size == 0:
+                    is_equal = new_f[key][:].size == 0
+                elif f[key][:].dtype == "object" or f[key][:].dtype.char == "S":
                     is_equal = np.array_equal(f[key][:], new_f[key][:])
                 else:
                     is_equal = np.allclose(f[key][:], new_f[key][:], equal_nan=True, atol=1e-3)
