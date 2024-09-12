@@ -8,6 +8,8 @@ from scipy.optimize import minimize as scipy_minimize
 from smash._constant import (
     ADAPTIVE_OPTIMIZER,
     OPTIMIZER_CLASS,
+    ADAPTIVE_OPTIMIZER,
+    OPTIMIZER_CLASS,
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
     STRUCTURE_RR_INTERNAL_FLUXES,
 )
