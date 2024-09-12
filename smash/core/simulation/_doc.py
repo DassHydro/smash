@@ -1772,7 +1772,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        OPTIMIZE_OPTIONS_KEYS,
+        OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -1825,7 +1825,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        BAYESIAN_OPTIMIZE_OPTIONS_KEYS,
+        BAYESIAN_OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
