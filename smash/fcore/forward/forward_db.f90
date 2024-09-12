@@ -15119,7 +15119,7 @@ CONTAINS
           END IF
           split_d = 0.9_sp*2*TANH(ac_alpha2(k)*pn)*(1.0-TANH(ac_alpha2(k&
 &           )*pn)**2)*(pn*ac_alpha2_d(k)+ac_alpha2(k)*pn_d)
-          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1
+          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1_sp
           prr_d = (1._sp-split)*(pr_d+perc_d) - (pr+perc)*split_d + l_d
           prr = (1._sp-split)*(pr+perc) + l
           prd_d = (pr+perc)*split_d + split*(pr_d+perc_d)
@@ -15221,7 +15221,7 @@ CONTAINS
             CALL PUSHCONTROL1B(0)
           END IF
           CALL PUSHREAL4(split)
-          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1
+          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1_sp
           CALL PUSHREAL4(prr)
           prr = (1._sp-split)*(pr+perc) + l
           prd = split*(pr+perc)
@@ -15342,7 +15342,7 @@ CONTAINS
             perc = 0._sp
             l = 0._sp
           END IF
-          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1
+          split = 0.9_sp*TANH(ac_alpha2(k)*pn)**2 + 0.1_sp
           prr = (1._sp-split)*(pr+perc) + l
           prd = split*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &

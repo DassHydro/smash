@@ -476,8 +476,7 @@ contains
                     l = 0._sp
 
                 end if
-
-                split = 0.9_sp * tanh(ac_alpha2(k) * pn) ** 2 + 0.1 
+                split = 0.9_sp * tanh(ac_alpha2(k) * pn) ** 2 + 0.1_sp 
                 
                 prr = (1._sp - split) * (pr + perc) + l
                 prd = split * (pr + perc)
@@ -1055,7 +1054,7 @@ contains
 
                 end if
                 
-                split = 0.9_sp * tanh(ac_alpha2(k) * pn) ** 2 + 0.1 
+                split = 0.9_sp * tanh(ac_alpha2(k) * pn) ** 2 + 0.1_sp
                 
                 prr = (1._sp - split) * (pr + perc) + l
                 prd = split * (pr + perc)
