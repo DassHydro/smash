@@ -14,7 +14,7 @@ from smash.factory.net._layers import (
     Scale,
     _set_initialized_wb_to_layer,
 )
-from smash.factory.net._loss import _hcost, _hcost_prime
+from smash.factory.net._loss import _get_cost_value, _get_gradient_value
 
 # Used inside eval statement
 from smash.factory.net._optimizers import SGD, Adagrad, Adam, RMSprop  # noqa: F401
@@ -518,14 +518,14 @@ class Net(object):
         wrap_options: OptionsDT,
         wrap_returns: ReturnsDT,
         optimizer: str,
-        model_params_states: np.ndarray,
+        calibrated_parameters: np.ndarray,
         learning_rate: Numeric,
         random_state: Numeric | None,
         maxiter: int,
         early_stopping: int,
         verbose: bool,
         callback: callable | None,
-    ):
+    ) -> int:
         """
         Private function: fit physiographic descriptors to Model parameters mapping.
         """
@@ -537,17 +537,18 @@ class Net(object):
         )
 
         # % First evaluation
-        # calculate the gradient of J wrt rr_parameters (output of the regionalization NN)
-        # and get the gradient of the parameterization NN if used
-        init_cost_grad, nn_parameters_b = _hcost_prime(
-            self, x_train, model_params_states, instance, parameters, wrap_options, wrap_returns
+        # calculate the gradient of J wrt rr_parameters and rr_initial_states
+        # that are the output of the descriptors-to-parameters (d2p) NN
+        # and get the gradient of the pmtz NN (pmtz) if used
+        grad_d2p_init, grad_pmtz = _get_gradient_value(
+            self, x_train, calibrated_parameters, instance, parameters, wrap_options, wrap_returns
         )
-        cost_grad = self._backward_pass(init_cost_grad, inplace=False)  # do not update weight and bias
+        grad_d2p = self._backward_pass(grad_d2p_init, inplace=False)  # do not update weight and bias
 
-        projg = _inf_norm([cost_grad, nn_parameters_b])
+        projg = _inf_norm([grad_d2p, grad_pmtz])
 
         # calculate cost
-        cost = _hcost(instance)  # forward_run to update cost inside _hcost_prime
+        cost = _get_cost_value(instance)  # forward_run to update cost inside _get_gradient_value
 
         if verbose:
             print(
@@ -558,7 +559,7 @@ class Net(object):
         istop = 0
         opt_info = {"cost": np.inf}  # only used for early_stopping
 
-        # % Initialize optimizer for the parameterization NN if used
+        # % Initialize optimizer for the pmtz NN if used
         ind = ADAPTIVE_OPTIMIZER.index(optimizer)
         func = eval(OPTIMIZER_CLASS[ind])
 
@@ -568,28 +569,24 @@ class Net(object):
         for ite in range(1, maxiter + 1):
             # backpropagation and weights update
             for i, key in enumerate(OPTIMIZABLE_NN_PARAMETERS[max(0, instance.setup.n_layers - 1)]):
-                if (
-                    key in model_params_states
-                ):  # update trainable parameters of the parameterization NN if used
+                if key in calibrated_parameters:  # update trainable parameters of the pmtz NN if used
                     setattr(
                         parameters.nn_parameters,
                         key,
-                        opt_nn_parameters[i].update(
-                            getattr(parameters.nn_parameters, key), nn_parameters_b[i]
-                        ),
+                        opt_nn_parameters[i].update(getattr(parameters.nn_parameters, key), grad_pmtz[i]),
                     )
 
-            self._backward_pass(init_cost_grad, inplace=True)  # update weights of the regionalization NN
+            self._backward_pass(grad_d2p_init, inplace=True)  # update weights of the d2p NN
 
             # cost and gradient computation
-            init_cost_grad, nn_parameters_b = _hcost_prime(
-                self, x_train, model_params_states, instance, parameters, wrap_options, wrap_returns
+            grad_d2p_init, grad_pmtz = _get_gradient_value(
+                self, x_train, calibrated_parameters, instance, parameters, wrap_options, wrap_returns
             )
-            cost_grad = self._backward_pass(init_cost_grad, inplace=False)  # do not update weight and bias
+            grad_d2p = self._backward_pass(grad_d2p_init, inplace=False)  # do not update weight and bias
 
-            projg = _inf_norm([cost_grad, nn_parameters_b])
+            projg = _inf_norm([grad_d2p, grad_pmtz])
 
-            cost = _hcost(instance)  # forward_run to update cost inside _hcost_prime
+            cost = _get_cost_value(instance)  # forward_run to update cost inside _get_gradient_value
 
             # save optimal parameters if early stopping is used
             if early_stopping:

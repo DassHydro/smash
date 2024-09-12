@@ -903,7 +903,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),
+    ),  # product between 2 mappings (uniform, distributed) and all adaptive optimizers
     ("multi-linear", "lbfgsb"): [
         "parameters",
         "bounds",
@@ -934,7 +934,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),
+    ),  # product between 2 mappings (multi-linear, multi-polynomial) and all adaptive optimizers
     **dict(
         zip(
             [("ann", optimizer) for optimizer in ADAPTIVE_OPTIMIZER],
@@ -950,15 +950,15 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),
+    ),  # ann mapping and all adaptive optimizers
 }
 
 OPTIMIZER_CONTROL_TFM = {
-    (mapping, optimizer): ["sbs", "normalize", "keep"]
+    (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
     if optimizer == "sbs"
-    else ["normalize", "keep"]
+    else ["normalize", "keep"]  # in case of ann mapping
     if mapping != "ann"
-    else ["keep"]
+    else ["keep"]  # other cases
     for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
 }
 

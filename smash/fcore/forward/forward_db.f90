@@ -6414,8 +6414,7 @@ CONTAINS
       CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
 &                                                        options, nbk(2)&
 &                                                       )
-    CASE DEFAULT
-!% Should be reach by "ann" only
+    CASE ('ann') 
       nbk(1) = 0
       nbk(2) = 0
     END SELECT

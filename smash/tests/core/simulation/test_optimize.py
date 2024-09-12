@@ -35,7 +35,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
 
         for mp in MAPPING:
             if mp == "ann":
-                instance = smash.optimize(
+                instance, ret = smash.optimize(
                     model,
                     mapping=mp,
                     optimize_options={
@@ -45,6 +45,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                         "termination_crit": {"maxiter": 2},
                     },
                     common_options={"ncpu": ncpu, "verbose": False},
+                    return_options={"control_vector": True},
                 )
 
             else:
@@ -60,11 +61,10 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                         "termination_crit": {"maxiter": 1},
                     },
                     common_options={"ncpu": ncpu, "verbose": False},
-                    return_options={"iter_cost": True, "control_vector": True},
+                    return_options={"control_vector": True},
                 )
 
-                res[f"optimize.{model.setup.structure}.{mp}.iter_cost"] = ret.iter_cost
-                res[f"optimize.{model.setup.structure}.{mp}.control_vector"] = ret.control_vector
+            res[f"optimize.{model.setup.structure}.{mp}.control_vector"] = ret.control_vector
 
             qsim = instance.response.q[:].flatten()
             qsim = qsim[::10]  # extract values at every 10th position
@@ -279,12 +279,31 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
     ]
 
     for i, inner_kwargs in enumerate(custom_sets):
+        iter_control = []
+        iter_cost = []
+        iter_projg = []
+
+        def callback(iopt, icontrol=iter_control, icost=iter_cost, iprojg=iter_projg):
+            icontrol.append(iopt.control_vector)
+            icost.append(iopt.cost)
+
+            if hasattr(iopt, "projg"):
+                iprojg.append(iopt.projg)
+
+        inner_kwargs.update({"callback": callback})
+
         instance = smash.optimize(model, **inner_kwargs)
 
         qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.sim_q"] = qsim
+
+        res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_control"] = np.array(iter_control)
+        res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_cost"] = np.array(iter_cost)
+
+        if iter_projg:
+            res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_projg"] = np.array(iter_projg)
 
     return res
 
