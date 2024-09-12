@@ -238,9 +238,9 @@ We also pass other options specific to the use of a NN:
         model,
         mapping="ann",
         optimize_options={
-            "random_state": 23,
-            "learning_rate": 0.004,
-            "termination_crit": dict(maxiter=100, early_stopping=20),
+            "random_state": 0,
+            "learning_rate": 0.003,
+            "termination_crit": dict(maxiter=80, early_stopping=20),
         },
         return_options={"net": True},
         common_options={"ncpu": ncpu},
@@ -253,9 +253,9 @@ We also pass other options specific to the use of a NN:
         model,
         mapping="ann",
         optimize_options={
-            "random_state": 23,
-            "learning_rate": 0.004,
-            "termination_crit": dict(maxiter=100, early_stopping=20),
+            "random_state": 0,
+            "learning_rate": 0.003,
+            "termination_crit": dict(maxiter=80, early_stopping=20),
         },
         return_options={"net": True},
     )
@@ -269,8 +269,8 @@ Since we have returned the optimized neural network, we can visualize what it co
 
     opt_ann.net
 
-The information displayed tells us that the default neural network is composed of 2 hidden dense layers followed by ``ReLU`` activation functions 
-and a final layer followed by a ``Sigmoid`` function. To scale the network output to the boundary condition, a ``MinMaxScale`` function is applied. 
+The above information indicates that the default neural network is composed of 3 hidden dense layers, each followed by a ``ReLU`` activation function.
+The output layer is followed by a ``TanH`` function. To scale the network output to the boundary condition, a ``MinMaxScale`` function is applied.
 Other information is available in the `smash.factory.Net` object, including the value of the cost function at each iteration.
 
 .. ipython:: python
