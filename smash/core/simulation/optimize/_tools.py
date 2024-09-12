@@ -137,7 +137,7 @@ def _net_to_vect(net: Net) -> np.ndarray:
 
 
 def _net_to_parameters(
-    net: Net, x: np.ndarray, model_params_states: np.ndarray, parameters: ParametersDT
+    net: Net, x: np.ndarray, calibrated_parameters: np.ndarray, parameters: ParametersDT
 ) -> bool:
     # % Forward propogation
     y = net._forward_pass(x)
@@ -149,7 +149,7 @@ def _net_to_parameters(
         output_reshaped = True  # reshape output in case of Dense (MLP)
 
     # % Set parameters or states
-    for i, name in enumerate(model_params_states):
+    for i, name in enumerate(calibrated_parameters):
         if name in parameters.rr_parameters.keys:
             ind = np.argwhere(parameters.rr_parameters.keys == name).item()
 

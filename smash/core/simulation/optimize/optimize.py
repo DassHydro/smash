@@ -476,7 +476,7 @@ def _optimize(
             }
 
         # % Add time_step to the object
-        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
+        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret):
             ret["time_step"] = return_options["time_step"].copy()
         return Optimize(ret)
 
@@ -575,7 +575,7 @@ def _bayesian_optimize(
                 for i, key in enumerate(STRUCTURE_RR_INTERNAL_FLUXES[model.setup.structure])
             }
         # % Add time_step to the object
-        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
+        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret):
             ret["time_step"] = return_options["time_step"].copy()
         return BayesianOptimize(ret)
 
@@ -595,8 +595,8 @@ def _apply_optimizer(
         ret = _lbfgsb_optimize(model, parameters, wrap_options, wrap_returns, return_options)
 
     elif wrap_options.optimize.optimizer in ADAPTIVE_OPTIMIZER:
-        if "net" in optimize_options.keys():
-            ret = _reg_ann_adaptive_optimize(
+        if "net" in optimize_options:
+            ret = _ann_adaptive_optimize(
                 model, parameters, wrap_options, wrap_returns, optimize_options, return_options
             )
 
@@ -741,7 +741,7 @@ def _adaptive_optimize(
     return ret
 
 
-def _reg_ann_adaptive_optimize(
+def _ann_adaptive_optimize(
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,

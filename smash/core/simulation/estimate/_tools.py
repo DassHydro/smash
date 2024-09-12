@@ -108,7 +108,7 @@ def _forward_run_with_estimated_parameters(
 ) -> tuple[ForwardRun | None, dict]:
     mahal_distance = 0
 
-    for p in prior_data.keys():
+    for p in prior_data:
         param_p, distance_p = _estimate_parameter(prior_data[p], cost, density[p], alpha)
 
         if p in model.rr_parameters.keys:
