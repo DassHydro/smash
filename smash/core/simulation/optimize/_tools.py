@@ -137,7 +137,7 @@ def _net_to_vect(net: Net) -> np.ndarray:
 
 
 def _net_to_parameters(
-    net: Net, x: np.ndarray, model_params_states: np.ndarray, parameters: ParametersDT
+    net: Net, x: np.ndarray, calibrated_parameters: np.ndarray, parameters: ParametersDT
 ) -> bool:
     # % Forward propogation
     y = net._forward_pass(x)
@@ -149,7 +149,7 @@ def _net_to_parameters(
         output_reshaped = True  # reshape output in case of Dense (MLP)
 
     # % Set parameters or states
-    for i, name in enumerate(model_params_states):
+    for i, name in enumerate(calibrated_parameters):
         if name in parameters.rr_parameters.keys:
             ind = np.argwhere(parameters.rr_parameters.keys == name).item()
 
@@ -168,7 +168,7 @@ def _get_lcurve_wjreg_best(
     jobs_arr: np.ndarray,
     jreg_arr: np.ndarray,
     wjreg_arr: np.ndarray,
-) -> (np.ndarray, float):
+) -> tuple[np.ndarray, float]:
     jobs_min = np.min(jobs_arr)
     jobs_max = np.max(jobs_arr)
     jreg_min = np.min(jreg_arr)
@@ -197,7 +197,7 @@ def _get_lcurve_wjreg_best(
         else:
             distance[i] = np.nan
 
-    return distance, wjreg
+    return (distance, wjreg)
 
 
 def _handle_bayesian_optimize_control_prior(model: Model, control_prior: dict, options: OptionsDT):
@@ -253,7 +253,7 @@ def _get_parameters_b(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-):
+) -> ParametersDT:
     parameters_b = parameters.copy()
     output_b = model._output.copy()
     output_b.cost = np.float32(1)

@@ -937,7 +937,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),
+    ),  # ann mapping and all adaptive optimizers
 }
 
 OPTIMIZER_CONTROL_TFM = {
