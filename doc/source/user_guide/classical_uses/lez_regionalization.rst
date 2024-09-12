@@ -224,7 +224,7 @@ We also pass other options specific to the use of a NN:
 - ``optimize_options``
     - ``random_state``: a random seed used to initialize neural network weights.
     - ``learning_rate``: the learning rate used for weights updates during training.
-    - ``termination_crit``: the number of training ``epochs`` for the neural network and a positive number to stop training when the loss function does not decrease below the current optimal value for  ``early_stopping`` consecutive ``epochs``
+    - ``termination_crit``: the maximum number of training ``maxiter`` for the neural network and a positive number to stop training when the loss function does not decrease below the current optimal value for ``early_stopping`` consecutive iterations.
 
 - ``return_options``
     - ``net``: return the optimized neural network
@@ -240,7 +240,7 @@ We also pass other options specific to the use of a NN:
         optimize_options={
             "random_state": 23,
             "learning_rate": 0.004,
-            "termination_crit": dict(epochs=100, early_stopping=20),
+            "termination_crit": dict(maxiter=100, early_stopping=20),
         },
         return_options={"net": True},
         common_options={"ncpu": ncpu},
@@ -255,7 +255,7 @@ We also pass other options specific to the use of a NN:
         optimize_options={
             "random_state": 23,
             "learning_rate": 0.004,
-            "termination_crit": dict(epochs=100, early_stopping=20),
+            "termination_crit": dict(maxiter=100, early_stopping=20),
         },
         return_options={"net": True},
     )
@@ -276,7 +276,7 @@ Other information is available in the `smash.factory.Net` object, including the 
 .. ipython:: python
 
     plt.plot(opt_ann.net.history["loss_train"]);
-    plt.xlabel("Epoch");
+    plt.xlabel("Iteration");
     plt.ylabel("$1-NSE$");
     plt.grid(alpha=.7, ls="--");
     @savefig user_guide.classical_uses.lez_regionalization.ann_J.png

@@ -9,10 +9,6 @@ c_sources = [
     'tapenade/adStack.c',
 ]
 
-f77_sources = [
-    'external/lbfgsb.f'
-]
-
 m_f90_sources = [
     'common/m_array_creation.f90',
     'common/m_array_manipulation.f90',
@@ -156,7 +152,7 @@ endif
 
 py.extension_module(
     '_libfcore',
-    c_sources, f77_sources, f90_sources, f90wrap_f90_sources, f2py_f90wrap_sources,
+    c_sources, f90_sources, f90wrap_f90_sources, f2py_f90wrap_sources,
     c_args: ['-O3', c_ignore_warnings],
     fortran_args: ['-O3', '-march=native', '-cpp', fortran_ignore_warnings],
     link_args: link_args,

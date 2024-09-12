@@ -757,9 +757,7 @@ WB_INITIALIZER = [
     "zeros",
 ]
 
-PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
-
-PY_OPTIMIZER = [opt.lower() for opt in PY_OPTIMIZER_CLASS]
+OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
 
 ACTIVATION_FUNCTION_CLASS = [
     "Sigmoid",
@@ -799,9 +797,11 @@ REGIONAL_MAPPING = ["multi-linear", "multi-polynomial", "ann"]
 
 MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
 
-F90_OPTIMIZER = ["sbs", "lbfgsb"]
+ADAPTIVE_OPTIMIZER = [opt.lower() for opt in OPTIMIZER_CLASS]
+GRADIENT_BASED_OPTIMIZER = ["lbfgsb"] + ADAPTIVE_OPTIMIZER
+HEURISTIC_OPTIMIZER = ["sbs"]
 
-OPTIMIZER = F90_OPTIMIZER + PY_OPTIMIZER
+OPTIMIZER = HEURISTIC_OPTIMIZER + GRADIENT_BASED_OPTIMIZER
 
 # % Following MAPPING order
 # % The first optimizer for each mapping is used as default optimizer
@@ -809,21 +809,11 @@ MAPPING_OPTIMIZER = dict(
     zip(
         MAPPING,
         [
-            F90_OPTIMIZER,
-            ["lbfgsb"],
-            ["lbfgsb"],
-            ["lbfgsb"],
-            PY_OPTIMIZER,
-        ],
-    )
-)
-
-F90_OPTIMIZER_CONTROL_TFM = dict(
-    zip(
-        F90_OPTIMIZER,
-        [
-            ["sbs", "normalize", "keep"],
-            ["normalize", "keep"],
+            OPTIMIZER,  # for uniform mapping (all optimizers are possible, default is sbs)
+            *(
+                [GRADIENT_BASED_OPTIMIZER] * 3
+            ),  # for distributed, multi-linear, multi-polynomial mappings (default is lbfgsb)
+            ADAPTIVE_OPTIMIZER,  # for ann mapping (default is adam)
         ],
     )
 )
@@ -843,11 +833,11 @@ GAUGE_ALIAS = ["dws", "all"]
 DEFAULT_TERMINATION_CRIT = dict(
     **dict(
         zip(
-            F90_OPTIMIZER,
+            ["sbs", "lbfgsb"],
             [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
         )
     ),
-    **dict(zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])),
+    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -885,6 +875,22 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
         "control_tfm",
         "termination_crit",
     ],
+    **dict(
+        zip(
+            itertools.product(["uniform", "distributed"], ADAPTIVE_OPTIMIZER),
+            2
+            * len(ADAPTIVE_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "control_tfm",
+                    "learning_rate",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),  # product between 2 mappings (uniform, distributed) and all adaptive optimizers
     ("multi-linear", "lbfgsb"): [
         "parameters",
         "bounds",
@@ -901,8 +907,25 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ],
     **dict(
         zip(
-            [("ann", optimizer) for optimizer in PY_OPTIMIZER],
-            len(PY_OPTIMIZER)
+            itertools.product(["multi-linear", "multi-polynomial"], ADAPTIVE_OPTIMIZER),
+            2
+            * len(ADAPTIVE_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "control_tfm",
+                    "descriptor",
+                    "learning_rate",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),  # product between 2 mappings (multi-linear, multi-polynomial) and all adaptive optimizers
+    **dict(
+        zip(
+            [("ann", optimizer) for optimizer in ADAPTIVE_OPTIMIZER],
+            len(ADAPTIVE_OPTIMIZER)
             * [
                 [
                     "parameters",
@@ -914,7 +937,16 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),
+    ),  # ann mapping and all adaptive optimizers
+}
+
+OPTIMIZER_CONTROL_TFM = {
+    (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
+    if optimizer == "sbs"
+    else ["normalize", "keep"]  # in case of ann mapping
+    if mapping != "ann"
+    else ["keep"]  # other cases
+    for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
 }
 
 DEFAULT_SIMULATION_COST_OPTIONS = {
@@ -962,11 +994,10 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "rr_states": False,
         "q_domain": False,
         "internal_fluxes": False,
-        "iter_cost": False,
-        "iter_projg": False,
         "control_vector": False,
         "net": False,
         "cost": False,
+        "projg": False,
         "jobs": False,
         "jreg": False,
         "lcurve_wjreg": False,
@@ -976,10 +1007,9 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "rr_states": False,
         "q_domain": False,
         "internal_fluxes": False,
-        "iter_cost": False,
-        "iter_projg": False,
         "control_vector": False,
         "cost": False,
+        "projg": False,
         "log_lkh": False,
         "log_prior": False,
         "log_h": False,

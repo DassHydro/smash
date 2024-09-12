@@ -9,11 +9,113 @@ from smash._constant import (
 )
 from smash.util._doctools import DocAppender, DocSubstitution
 
-# TODO: mapping and optimizer arguments are duplicated between each docstrings.
-# Maybe create intermediate variables to store this with or without ann optimizer.
-
 # TODO: store the docstring for each returned variable and then applied it
 # for each optional return object (ForwardRun, Optimize, etc.)
+
+OPTIMIZE_OPTIONS_KEYS_DOC = [
+    "parameters",
+    "bounds",
+    "control_tfm",
+    "descriptor",
+    "net",
+    "learning_rate",
+    "random_state",
+    "termination_crit",
+]
+
+BAYESIAN_OPTIMIZE_OPTIONS_KEYS_DOC = [
+    "parameters",
+    "bounds",
+    "control_tfm",
+    "descriptor",
+    "termination_crit",
+]
+
+RETURN_CONTROL_INFO_BASE_DOC = """
+Returns
+-------
+control_info : `dict[str, Any]`
+    A dictionary containing optimize control information of Model. The elements are:
+
+    - n : `int`
+        The size of the control vector.
+
+    - nbk : `numpy.ndarray`
+        An array of shape *(6,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
+        `Model.nn_parameters`, `Net <factory.Net>`) of the control vector (``sum(nbk) = n``).
+
+    - x : `numpy.ndarray`
+        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
+
+    - l : `numpy.ndarray`
+        An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
+
+    - u : `numpy.ndarray`
+        An array of shape *(n,)* containing the upper bounds of the control vector (it can be transformed).
+
+    - nbd : `numpy.ndarray`
+        An array of shape *(n,)* containing the type of bounds of the control vector. The values are:
+
+        - ``0``: unbounded
+        - ``1``: only lower bound
+        - ``2``: both lower and upper bounds
+        - ``3``: only upper bound
+
+    - x_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background values of the control vector.
+
+    - l_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background lower bounds of the control vector.
+
+    - u_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background upper bounds of the control vector.
+"""
+
+MAPPING_OPTIMIZER_BASE_DOC = {
+    "mapping": (
+        """
+        `str`, default 'uniform'
+        """,
+        """
+        Type of mapping. Should be one of
+
+        - ``'uniform'``
+        - ``'distributed'``
+        - ``'multi-linear'``
+        - ``'multi-polynomial'``
+        %(mapping_ann)s
+
+        .. hint::
+            See the :ref:`math_num_documentation.mapping` section.
+        """,
+    ),
+    "optimizer": (
+        """
+        `str` or None, default None
+        """,
+        """
+        Name of optimizer. Should be one of
+
+        - ``'sbs'`` (only for ``'uniform'`` **mapping**)
+        %(optimizer_lbfgsb)s
+        - ``'adam'`` (for all mappings)
+        - ``'adagrad'`` (for all mappings)
+        - ``'rmsprop'`` (for all mappings)
+        - ``'sgd'`` (for all mappings)
+
+        .. note::
+            If not given, a default optimizer will be set as follows:
+
+            - ``'sbs'`` for **mapping** = ``'uniform'``
+            - ``'lbfgsb'`` for **mapping** = ``'distributed'``, ``'multi-linear'``, ``'multi-polynomial'``
+            %(default_optimizer_for_ann_mapping)s
+
+        .. hint::
+            See the :ref:`math_num_documentation.optimization_algorithm` section.
+        """,
+    ),
+}
 
 OPTIMIZE_OPTIONS_BASE_DOC = {
     "parameters": (
@@ -70,18 +172,16 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `str` or None, default None
         """,
         """
-        Transformation method applied to the control vector. Only used with ``'sbs'`` or ``'lbfgsb'``
-        optimizer. Should be one of:
+        Transformation method applied to bounded parameters of the control vector. Should be one of
 
         - ``'keep'``
         - ``'normalize'``
         - ``'sbs'`` (``'sbs'`` **optimizer** only)
 
         .. note::
-            If not given, a default control vector transformation will be set depending on the optimizer:
-
-            - **optimizer** = ``'sbs'``; **control_tfm** = ``'sbs'``
-            - **optimizer** = ``'lbfgsb'``; **control_tfm** = ``'normalize'``
+            If not given, the default control vector transformation is **control_tfm** = ``'normalize'``
+            except for the ``'sbs'`` optimizer, where **control_tfm** = ``'sbs'``. This options is not used
+            when **mapping** is ``'ann'``.
         """,
     ),
     "descriptor": (
@@ -125,11 +225,11 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `float` or None, default None
         """,
         """
-        The learning rate used for weight updates during training.
+        The learning rate used for updating trainable parameters when using adaptive optimizers
+        (i.e., ``'adam'``, ``'adagrad'``, ``'rmsprop'``, ``'sgd'``).
 
         .. note::
-            If not given, a default learning rate will be used. This option is only used when **mapping** is
-            ``'ann'``.
+            If not given, a default learning rate for each optimizer will be used.
         """,
     ),
     "random_state": (
@@ -152,18 +252,15 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         """
         Termination criteria. The elements are:
 
-        - ``'maxiter'``: The maximum number of iterations. Only used when **optimizer** is ``'sbs'`` or
-          ``'lbfgsb'``.
+        - ``'maxiter'``: The maximum number of iterations.
         - ``'factr'``: An additional termination criterion based on cost values. Only used when **optimizer**
           is ``'lbfgsb'``.
         - ``'pgtol'``: An additional termination criterion based on the projected gradient of the cost
           function. Only used when **optimizer** is ``'lbfgsb'``.
-        - ``'epochs'``: The number of training epochs for the neural network. Only used when **mapping** is
-          ``'ann'``.
-        - ``'early_stopping'``: A positive number to stop training when the loss function does not decrease
-          below the current optimal value for **early_stopping** consecutive epochs. When set to zero, early
-          stopping is disabled, and the training continues for the full number of epochs. Only used when
-          **mapping** is ``'ann'``.
+        - ``'early_stopping'``: A positive number to stop training when the cost function does not decrease
+          below the current optimal value for **early_stopping** consecutive iterations. When set to zero,
+          early stopping is disabled, and the training continues for the full number of iterations.
+          Only used for adaptive optimizers (i.e., ``'adam'``, ``'adagrad'``, ``'rmsprop'``, ``'sgd'``).
 
         >>> optimize_options = {
             "termination_crit": {
@@ -173,7 +270,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         }
         >>> optimize_options = {
             "termination_crit": {
-                "epochs": 200,
+                "maxiter": 200,
+                "early_stopping": 20,
             },
         }
 
@@ -280,8 +378,8 @@ COST_OPTIONS_BASE_DOC = {
         `str` or `list[str, ...]`, default 'prior'
         """,
         """
-        Type(s) of regularization function(s) to be minimized when regularization term is set (i.e.,**wjreg**
-        > 0). Should be one or a sequence of any of
+        Type(s) of regularization function(s) to be minimized when regularization term is set
+        (i.e., **wjreg** > 0). Should be one or a sequence of any of
 
         - ``'prior'``
         - ``'smoothing'``
@@ -521,29 +619,12 @@ RETURN_OPTIONS_BASE_DOC = {
         the whole domain for specific time steps.
         """,
     ),
-    "iter_cost": (
-        """
-        `bool`, default False
-        """,
-        """
-        Whether to return cost iteration values.
-        """,
-    ),
-    "iter_projg": (
-        """
-        `bool`, default False
-        """,
-        """
-        Whether to return infinity norm of the projected gardient iteration values.
-        """,
-    ),
     "control_vector": (
         """
         `bool`, default False
         """,
         """
-        Whether to return control vector at end of optimization. In case of optimization with ``'ann'``
-        **mapping**, the control vector is represented in `Net.layers <factory.Net.layers>` instead.
+        Whether to return the control vector solution of the optimization (it can be transformed).
         """,
     ),
     "net": (
@@ -561,6 +642,14 @@ RETURN_OPTIONS_BASE_DOC = {
         """,
         """
         Whether to return cost value.
+        """,
+    ),
+    "projg": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return the projected gradient value (infinity norm of the Jacobian matrix).
         """,
     ),
     "jobs": (
@@ -584,7 +673,7 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return the wjreg lcurve. Only used if **wjreg** in cost_options is equal to ``'lcurve'``.
+        Whether to return the wjreg L-curve. Only used if **wjreg** in cost_options is equal to ``'lcurve'``.
         """,
     ),
     "lcurve_multiset": (
@@ -731,37 +820,10 @@ Model assimilation using numerical optimization algorithms.
 Parameters
 ----------
 %(model_parameter)s
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
 
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-    - ``'ann'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
-    - ``'sgd'`` (``'ann'`` **mapping** only)
-    - ``'adam'`` (``'ann'`` **mapping** only)
-    - ``'adagrad'`` (``'ann'`` **mapping** only)
-    - ``'rmsprop'`` (``'ann'`` **mapping** only)
-
-    .. note::
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-        - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.
@@ -771,16 +833,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        [
-            "parameters",
-            "bounds",
-            "control_tfm",
-            "descriptor",
-            "net",
-            "learning_rate",
-            "random_state",
-            "termination_crit",
-        ],
+        OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -833,25 +886,26 @@ Optimize the Model
 
 >>> %(model_example_func)s
 </> Optimize
-    At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
-    At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
-    At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
-    At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
-    At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
-    At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
-    At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
-    At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
+    At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+    At iterate     1    nfg =    30    J = 9.84107e-02    ddx = 0.64
+    At iterate     2    nfg =    59    J = 4.54087e-02    ddx = 0.32
+    At iterate     3    nfg =    88    J = 3.81818e-02    ddx = 0.16
+    At iterate     4    nfg =   117    J = 3.73617e-02    ddx = 0.08
+    At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
+    At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
+    At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
+    At iterate     8    nfg =   240    J = 3.67277e-02    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
-array([[5.8217382e-04, 4.7552516e-04, 3.5390016e-04, ..., 1.9439360e+01,
-        1.9214035e+01, 1.8993553e+01],
-       [1.2144950e-04, 6.6219603e-05, 3.0706105e-05, ..., 4.8059664e+00,
-        4.7563825e+00, 4.7077618e+00],
-       [1.9631827e-05, 6.9778653e-06, 2.2202073e-06, ..., 1.2523955e+00,
-        1.2394531e+00, 1.2267693e+00]], dtype=float32)
+array([[5.8217300e-04, 4.7552472e-04, 3.5390016e-04, ..., 1.9405001e+01,
+        1.9179874e+01, 1.8959581e+01],
+       [1.2144940e-04, 6.6219603e-05, 3.0706153e-05, ..., 4.7972722e+00,
+        4.7477250e+00, 4.6991367e+00],
+       [1.9631812e-05, 6.9778694e-06, 2.2202112e-06, ..., 1.2500964e+00,
+        1.2371680e+00, 1.2244837e+00]], dtype=float32)
 """
 )
 
@@ -957,33 +1011,10 @@ Model bayesian assimilation using numerical optimization algorithms.
 Parameters
 ----------
 %(model_parameter)s
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
 
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.
@@ -993,13 +1024,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        [
-            "parameters",
-            "bounds",
-            "control_tfm",
-            "descriptor",
-            "termination_crit",
-        ],
+        BAYESIAN_OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -1052,24 +1077,24 @@ Optimize the Model
 
 >>> %(model_example_func)s
 </> Bayesian Optimize
-    At iterate      0    nfg =     1    J =     77.049133    ddx = 0.64
-    At iterate      1    nfg =    68    J =      2.584603    ddx = 0.64
-    At iterate      2    nfg =   135    J =      2.324317    ddx = 0.32
-    At iterate      3    nfg =   202    J =      2.304130    ddx = 0.08
-    At iterate      4    nfg =   269    J =      2.262191    ddx = 0.08
-    At iterate      5    nfg =   343    J =      2.260251    ddx = 0.01
-    At iterate      6    nfg =   416    J =      2.258220    ddx = 0.00
+    At iterate     0    nfg =     1    J = 7.70491e+01    ddx = 0.64
+    At iterate     1    nfg =    68    J = 2.58460e+00    ddx = 0.64
+    At iterate     2    nfg =   135    J = 2.32432e+00    ddx = 0.32
+    At iterate     3    nfg =   202    J = 2.30413e+00    ddx = 0.08
+    At iterate     4    nfg =   269    J = 2.26219e+00    ddx = 0.08
+    At iterate     5    nfg =   343    J = 2.26025e+00    ddx = 0.01
+    At iterate     6    nfg =   416    J = 2.25822e+00    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 Get the simulated discharges:
 
 >>> %(model_example_response)s.response.q
-array([[3.8725851e-04, 3.5436003e-04, 3.0995562e-04, ..., 1.9623451e+01,
-        1.9391096e+01, 1.9163759e+01],
-       [9.0669761e-05, 6.3609077e-05, 3.9684928e-05, ..., 4.7896295e+00,
-        4.7395453e+00, 4.6904192e+00],
-       [1.6137006e-05, 7.8192916e-06, 3.4578904e-06, ..., 1.2418083e+00,
-        1.2288600e+00, 1.2161492e+00]], dtype=float32)
+array([[3.8725790e-04, 3.5435968e-04, 3.0995542e-04, ..., 1.9623449e+01,
+        1.9391096e+01, 1.9163761e+01],
+       [9.0669666e-05, 6.3609048e-05, 3.9684954e-05, ..., 4.7896299e+00,
+        4.7395458e+00, 4.6904192e+00],
+       [1.6136990e-05, 7.8192916e-06, 3.4578943e-06, ..., 1.2418084e+00,
+        1.2288600e+00, 1.2161493e+00]], dtype=float32)
 """
 )
 
@@ -1155,33 +1180,9 @@ Parameters
 model : `Model`
     Primary data structure of the hydrological model `smash`.
 
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
-
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.
@@ -1191,13 +1192,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        [
-            "parameters",
-            "bounds",
-            "control_tfm",
-            "descriptor",
-            "termination_crit",
-        ],
+        OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -1210,36 +1205,8 @@ cost_options : `dict[str, Any]` or None, default None
         DEFAULT_SIMULATION_COST_OPTIONS["optimize"].keys(),
         nindent=1,
     )
+    + RETURN_CONTROL_INFO_BASE_DOC
     + """
-Returns
--------
-control_info : `dict[str, Any]`
-    A dictionary containing optimize control information of Model. The elements are:
-
-    - n : `int`
-        The size of the control vector.
-
-    - nbk : `numpy.ndarray`
-        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
-        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
-
-    - x : `numpy.ndarray`
-        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
-
-    - l : `numpy.ndarray`
-        An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
-
-    - u : `numpy.ndarray`
-        An array of shape *(n,)* containing the upper bounds of the control vector (it can be transformed).
-
-    - nbd : `numpy.ndarray`
-        An array of shape *(n,)* containing the type of bounds of the control vector. The values are:
-
-        - ``0``: unbounded
-        - ``1``: only lower bound
-        - ``2``: both lower and upper bounds
-        - ``3``: only upper bound
 
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
@@ -1257,15 +1224,10 @@ control_info : `dict[str, Any]`
           indicates the layer and type of parameter (e.g., ``'weight_1'`` for the first layer weights,
           ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
           position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
-
-    - x_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background values of the control vector.
-
-    - l_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background lower bounds of the control vector.
-
-    - u_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background upper bounds of the control vector.
+        - ``reg_<key>-<row>-<col>``: Weights and biases of the regionalization neural network where ``<key>``
+          indicates the layer and type of parameter (e.g., ``'reg_weight_1'`` for the first layer weights,
+          ``'reg_bias_3'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
+          position in the matrix or vector (``'reg_weight_3-32-28'``, ``'reg_bias_1-4'``, etc).
 
 Examples
 --------
@@ -1281,9 +1243,9 @@ Default optimize control vector information
     'l': array([-13.815511 , -13.815511 ,  -4.6052704, -13.815511 ], dtype=float32),
     'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06], dtype=float32),
     'n': 4,
-    'name': array(['cp0', 'ct0', 'kexc0', 'llr0'], dtype='<U5'),
+    'name': array(['cp-0', 'ct-0', 'kexc-0', 'llr-0'], dtype='<U128'),
     'nbd': array([2, 2, 2, 2], dtype=int32),
-    'nbk': array([4, 0, 0, 0], dtype=int32),
+    'nbk': array([4, 0, 0, 0, 0, 0]),
     'u': array([6.9077554, 6.9077554, 4.6052704, 6.9077554], dtype=float32),
     'u_bkg': array([1000., 1000.,   50., 1000.], dtype=float32),
     'x': array([5.2983174, 6.214608 , 0.       , 1.609438 ], dtype=float32),
@@ -1291,9 +1253,9 @@ Default optimize control vector information
 }
 
 This gives a direct indication of what the optimizer takes as input, depending on the optimization
-configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'``
-and ``'llr0'``). Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was
-applied to the control (``x`` relative to ``x_bkg``)
+configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp-0'``, ``'ct-0'``,
+``'kexc-0'`` and ``'llr-0'``). Each parameter has a lower and upper bound (``2`` in ``nbd``) and a
+transformation was applied to the control (``x`` relative to ``x_bkg``).
 
 With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and optimizing only ``cp``
 and ``kexc`` with different descriptors
@@ -1308,21 +1270,21 @@ and ``kexc`` with different descriptors
     )
 >>> control_info
 {
-    'l': array([-99., -99., -99., -99., -99.], dtype=float32),
-    'l_bkg': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'l': array([-inf, -inf, -inf, -inf, -inf], dtype=float32),
+    'l_bkg': array([-inf, -inf, -inf, -inf, -inf], dtype=float32),
     'n': 5,
-    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a'], dtype='<U10'),
+    'name': array(['cp-0', 'cp-slope-a', 'cp-dd-a', 'kexc-0', 'kexc-dd-a'], dtype='<U128'),
     'nbd': array([0, 0, 0, 0, 0], dtype=int32),
-    'nbk': array([5, 0, 0, 0], dtype=int32),
-    'u': array([-99., -99., -99., -99., -99.], dtype=float32),
-    'u_bkg': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'nbk': array([5, 0, 0, 0, 0, 0]),
+    'u': array([inf, inf, inf, inf, inf], dtype=float32),
+    'u_bkg': array([inf, inf, inf, inf, inf], dtype=float32),
     'x': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
     'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
 }
 
-5 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``) and the coefficients
+5 parameters are optimized which are the intercepts (``'cp-0'`` and  ``'kexc-0'``) and the coefficients
 (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the descriptors
-(``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``)
+(``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``).
 """
 )
 
@@ -1335,33 +1297,9 @@ Parameters
 model : `Model`
     Primary data structure of the hydrological model `smash`.
 
-mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of
-
-    - ``'uniform'``
-    - ``'distributed'``
-    - ``'multi-linear'``
-    - ``'multi-polynomial'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.mapping` section
-
-optimizer : `str` or None, default None
-    Name of optimizer. Should be one of
-
-    - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
-      **mapping** only)
-
-    .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
-        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
-          ``'lbfgsb'``
-
-    .. hint::
-        See the :ref:`math_num_documentation.optimization_algorithm` section
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process.
@@ -1371,13 +1309,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        [
-            "parameters",
-            "bounds",
-            "control_tfm",
-            "descriptor",
-            "termination_crit",
-        ],
+        BAYESIAN_OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -1390,36 +1322,8 @@ cost_options : `dict[str, Any]` or None, default None
         DEFAULT_SIMULATION_COST_OPTIONS["bayesian_optimize"].keys(),
         nindent=1,
     )
+    + RETURN_CONTROL_INFO_BASE_DOC
     + """
-Returns
--------
-control_info : `dict[str, Any]`
-    A dictionary containing optimize control information of Model. The elements are:
-
-    - n : `int`
-        The size of the control vector.
-
-    - nbk : `numpy.ndarray`
-        An array of shape *(5,)* containing the number of elements by kind (`Model.rr_parameters`,
-        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`,
-        `Model.nn_parameters`) of the control vector (``sum(nbk) = n``).
-
-    - x : `numpy.ndarray`
-        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
-
-    - l : `numpy.ndarray`
-        An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
-
-    - u : `numpy.ndarray`
-        An array of shape *(n,)* containing the upper bounds of the control vector (it can be transformed).
-
-    - nbd : `numpy.ndarray`
-        An array of shape *(n,)* containing the type of bounds of the control vector. The values are:
-
-        - ``0``: unbounded
-        - ``1``: only lower bound
-        - ``2``: both lower and upper bounds
-        - ``3``: only upper bound
 
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
@@ -1441,15 +1345,6 @@ control_info : `dict[str, Any]`
           ``'bias_2'`` for the second layer biases), and ``<row>``, ``<col>`` represent the corresponding
           position in the matrix or vector (``'weight_2-23-21'``, ``'bias_1-16'``, etc).
 
-    - x_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background values of the control vector.
-
-    - l_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background lower bounds of the control vector.
-
-    - u_bkg : `numpy.ndarray`
-        An array of shape *(n,)* containing the background upper bounds of the control vector.
-
 Examples
 --------
 >>> from smash.factory import load_dataset
@@ -1465,9 +1360,9 @@ Default optimize control vector information
          dtype=float32),
     'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06,  1.e-06,  1.e-06], dtype=float32),
     'n': 6,
-    'name': array(['cp0', 'ct0', 'kexc0', 'llr0', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U12'),
+    'name': array(['cp-0', 'ct-0', 'kexc-0', 'llr-0', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U128'),
     'nbd': array([2, 2, 2, 2, 2, 2], dtype=int32),
-    'nbk': array([4, 0, 0, 2], dtype=int32),
+    'nbk': array([4, 0, 0, 2]),
     'u': array([   6.9077554,    6.9077554,    4.6052704,    6.9077554, 1000.       ,   10.       ],
          dtype=float32),
     'u_bkg': array([1000., 1000.,   50., 1000., 1000.,   10.], dtype=float32),
@@ -1476,10 +1371,10 @@ Default optimize control vector information
 }
 
 This gives a direct indication of what the optimizer takes as input, depending on the optimization
-configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'``
-and ``'llr0'``) and 2 structural error sigma parameters at gauge ``'V3524010'`` (``'sg0-V3524010'``,
-``'sg1-V3524010'``) Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was
-applied to the control (``x`` relative to ``x_bkg``)
+configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp-0'``, ``'ct-0'``,
+``'kexc-0'`` and ``'llr-0'``) and 2 structural error sigma parameters at gauge ``'V3524010'``
+(``'sg0-V3524010'``, ``'sg1-V3524010'``). Each parameter has a lower and upper bound (``2`` in ``nbd``)
+and a transformation was applied to the control (``x`` relative to ``x_bkg``).
 
 With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and
 optimizing only 2 rainfall-runoff parameters ``cp``, ``kexc`` with different descriptors and 2 structural
@@ -1495,22 +1390,22 @@ error sigma parameters ``sg0`` and ``sg1``.
     )
 >>> control_info
 {
-    'l': array([-99., -99., -99., -99., -99.,   0.,   0.], dtype=float32),
-    'l_bkg': array([-9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01,  1.0e-06, 1.0e-06], dtype=float32),
+    'l': array([-inf, -inf, -inf, -inf, -inf,   0.,   0.], dtype=float32),
+    'l_bkg': array([  -inf,   -inf,   -inf,   -inf,   -inf, 1.e-06, 1.e-06], dtype=float32),
     'n': 7,
-    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'],
-            dtype='<U12'),
+    'name': array(['cp-0', 'cp-slope-a', 'cp-dd-a', 'kexc-0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'],
+            dtype='<U128'),
     'nbd': array([0, 0, 0, 0, 0, 2, 2], dtype=int32),
-    'nbk': array([5, 0, 0, 2], dtype=int32),
-    'u': array([-99., -99., -99., -99., -99.,   1.,   1.], dtype=float32),
-    'u_bkg': array([ -99.,  -99.,  -99.,  -99.,  -99., 1000.,   10.], dtype=float32),
+    'nbk': array([5, 0, 0, 2]),
+    'u': array([inf, inf, inf, inf, inf,  1.,  1.], dtype=float32),
+    'u_bkg': array([  inf,   inf,   inf,   inf,   inf, 1000.,   10.], dtype=float32),
     'x': array([-1.3862944e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  9.9999900e-04,
          1.9999903e-02], dtype=float32),
     'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       , 1.       ,  0.2      ],
              dtype=float32),
 }
 
-7 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``)
+7 parameters are optimized which are the intercepts (``'cp-0'`` and  ``'kexc-0'``)
 and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the
 descriptors  (``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``) and the 2
 structural error sigma parameters (``'sg0'`` and ``'sg1'``) associated to the gauge ``'V3524010'``.
@@ -1523,22 +1418,306 @@ filled in all the optimization options. This is why we can define all the optimi
 parameters that make up the control vector and then call the optimization function, assigning the priors we
 want to.
 
-Assign Gaussian priors to the two rainfall-runoff parameters ``'cp0'`` and ``'kexc0'`` and perform a spatially
-uniform optimization
+Assign Gaussian priors to the two rainfall-runoff parameters ``'cp-0'`` and ``'kexc-0'`` and perform
+a spatially uniform optimization
 
 >>> model.bayesian_optimize(
         cost_options={
-            "control_prior": {"cp0": ["Gaussian", [200, 100]], "kexc0": ["Gaussian", [0, 5]]}
+            "control_prior": {"cp-0": ["Gaussian", [200, 100]], "kexc-0": ["Gaussian", [0, 5]]}
         },
     )
 </> Bayesian Optimize
-    At iterate      0    nfg =     1    J =     80.526947    ddx = 0.64
-    At iterate      1    nfg =    68    J =      3.029253    ddx = 0.64
-    At iterate      2    nfg =   135    J =      2.764919    ddx = 0.32
-    At iterate      3    nfg =   203    J =      2.760564    ddx = 0.04
-    At iterate      4    nfg =   271    J =      2.755039    ddx = 0.02
-    At iterate      5    nfg =   344    J =      2.754198    ddx = 0.01
+    At iterate     0    nfg =     1    J = 8.05269e+01    ddx = 0.64
+    At iterate     1    nfg =    68    J = 3.02925e+00    ddx = 0.64
+    At iterate     2    nfg =   135    J = 2.76492e+00    ddx = 0.32
+    At iterate     3    nfg =   203    J = 2.76056e+00    ddx = 0.04
+    At iterate     4    nfg =   271    J = 2.75504e+00    ddx = 0.02
+    At iterate     5    nfg =   344    J = 2.75420e+00    ddx = 0.01
+    At iterate     6    nfg =   392    J = 2.75403e+00    ddx = 0.01
     CONVERGENCE: DDX < 0.01
+"""
+)
+
+_default_optimize_options_doc = (
+    """
+Default optimization options of Model.
+
+Parameters
+----------
+model : `Model`
+    Primary data structure of the hydrological model `smash`.
+
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
+
+Returns
+-------
+optimize_options : `dict[str, Any]`
+    Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
+    returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly passed to
+    the **optimize_options** argument of the `optimize` (or `Model.optimize`) method.
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Get the default optimization options for ``'uniform'`` mapping
+
+>>> opt_u = smash.default_optimize_options(model, mapping="uniform")
+>>> opt_u
+{
+    'parameters': ['cp', 'ct', 'kexc', 'llr'],
+    'bounds': {
+        'cp': (1e-06, 1000.0),
+        'ct': (1e-06, 1000.0),
+        'kexc': (-50, 50),
+        'llr': (1e-06, 1000.0)
+    },
+    'control_tfm': 'sbs',
+    'termination_crit': {'maxiter': 50},
+}
+
+Directly pass this dictionary to the **optimize_options** argument of the `optimize`
+(or `Model.optimize`) method.
+It's equivalent to set **optimize_options** to None (which is the default value)
+
+>>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
+</> Optimize
+    At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+    At iterate     1    nfg =    30    J = 9.84107e-02    ddx = 0.64
+    At iterate     2    nfg =    59    J = 4.54087e-02    ddx = 0.32
+    At iterate     3    nfg =    88    J = 3.81818e-02    ddx = 0.16
+    At iterate     4    nfg =   117    J = 3.73617e-02    ddx = 0.08
+    At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
+    At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
+    At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
+    At iterate     8    nfg =   240    J = 3.67277e-02    ddx = 0.01
+    CONVERGENCE: DDX < 0.01
+
+Customize the optimization options by removing ``'kexc'`` from the optimized parameters
+
+>>> opt_u["parameters"].remove("kexc")
+>>> opt_u
+{
+    'parameters': ['cp', 'ct', 'llr'],
+    'bounds': {
+        'cp': (1e-06, 1000.0),
+        'ct': (1e-06, 1000.0),
+        'kexc': (-50, 50),
+        'llr': (1e-06, 1000.0)
+    },
+    'control_tfm': 'sbs',
+    'termination_crit': {'maxiter': 50},
+}
+
+Run the optimization method
+
+>>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
+ValueError: Unknown, non optimized, or unbounded parameter 'kexc' in bounds optimize_options.
+Choices: ['cp', 'ct', 'llr']
+
+An error is raised because we define ``bounds`` to a non optimized parameter ``kexc``. Remove also
+``kexc`` from bounds
+
+>>> opt_u["bounds"].pop("kexc")
+(-50, 50)
+
+.. note::
+    The built-in dictionary method `pop <https://docs.python.org/3/library/stdtypes.html#dict.pop>`__
+    returns the value associated to the removed key
+
+>>> opt_u
+{
+    'parameters': ['cp', 'ct', 'llr'],
+    'bounds': {
+        'cp': (1e-06, 1000.0),
+        'ct': (1e-06, 1000.0),
+        'llr': (1e-06, 1000.0)
+    },
+    'control_tfm': 'sbs',
+    'termination_crit': {'maxiter': 50},
+}
+
+Run again the optimization to see the differences linked to a change in control vector
+
+>>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
+</> Optimize
+    At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+    At iterate     1    nfg =    17    J = 1.28863e-01    ddx = 0.64
+    At iterate     2    nfg =    32    J = 6.94838e-02    ddx = 0.32
+    At iterate     3    nfg =    49    J = 4.50720e-02    ddx = 0.16
+    At iterate     4    nfg =    65    J = 4.40468e-02    ddx = 0.08
+    At iterate     5    nfg =    84    J = 4.35278e-02    ddx = 0.04
+    At iterate     6    nfg =   102    J = 4.26906e-02    ddx = 0.02
+    At iterate     7    nfg =   122    J = 4.26645e-02    ddx = 0.01
+    At iterate     8    nfg =   140    J = 4.26062e-02    ddx = 0.01
+    CONVERGENCE: DDX < 0.01
+
+Get the default optimization options for a different mapping
+
+>>> opt_ann = smash.default_optimize_options(model, mapping="ann")
+>>> opt_ann
+{
+    'parameters': ['cp', 'ct', 'kexc', 'llr'],
+    'bounds': {
+        'cp': (1e-06, 1000.0),
+        'ct': (1e-06, 1000.0),
+        'kexc': (-50, 50),
+        'llr': (1e-06, 1000.0)
+    },
+    'net':
+        +----------------------------------------------------------+
+        | Layer Type            Input/Output Shape  Num Parameters |
+        +----------------------------------------------------------+
+        | Dense                 (2,)/(18,)          54             |
+        | Activation (ReLU)     (18,)/(18,)         0              |
+        | Dense                 (18,)/(9,)          171            |
+        | Activation (ReLU)     (9,)/(9,)           0              |
+        | Dense                 (9,)/(4,)           40             |
+        | Activation (Sigmoid)  (4,)/(4,)           0              |
+        | Scale (MinMaxScale)   (4,)/(4,)           0              |
+        +----------------------------------------------------------+
+        Total parameters: 265
+        Trainable parameters: 265,
+    'learning_rate': 0.001,
+    'random_state': None,
+    'termination_crit': {'maxiter': 200, 'early_stopping': 0}
+}
+
+Again, customize the optimization options and optimize the Model
+
+>>> opt_ann["learning_rate"] = 0.006
+>>> opt_ann["termination_crit"]["maxiter"] = 50
+>>> opt_ann["termination_crit"]["early_stopping"] = 5
+>>> opt_ann["random_state"] = 21
+>>> model.optimize(mapping="ann", optimize_options=opt_ann)
+</> Optimize
+    At iterate     0    nfg =     1    J = 1.22206e+00    |proj g| = 2.09135e-04
+    At iterate     1    nfg =     2    J = 1.21931e+00    |proj g| = 2.39937e-04
+    ...
+    At iterate    40    nfg =    41    J = 5.21514e-02    |proj g| = 1.31863e-02
+    At iterate    41    nfg =    42    J = 5.12064e-02    |proj g| = 3.74748e-03
+    At iterate    42    nfg =    43    J = 5.79208e-02    |proj g| = 5.08674e-03
+    At iterate    43    nfg =    44    J = 6.38050e-02    |proj g| = 1.01001e-02
+    At iterate    44    nfg =    45    J = 6.57343e-02    |proj g| = 1.33649e-02
+    At iterate    45    nfg =    46    J = 6.45393e-02    |proj g| = 1.56155e-02
+    At iterate    46    nfg =    47    J = 6.33092e-02    |proj g| = 1.72698e-02
+    EARLY STOPPING: NO IMPROVEMENT for 5 CONSECUTIVE ITERATIONS
+    Reverting to iteration 41 with J = 5.12064e-02 due to early stopping
+
+The training process was terminated after 46 iterations, where the loss did not decrease below the minimal
+value at iteration 41 for 5 consecutive iterations. The optimal parameters are thus recorded at iteration 41.
+"""
+)
+
+_default_bayesian_optimize_options_doc = (
+    """
+Default bayesian optimization options of Model.
+
+Parameters
+----------
+model : `Model`
+    Primary data structure of the hydrological model `smash`.
+
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
+
+Returns
+-------
+optimize_options : `dict[str, Any]`
+    Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
+    returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly passed to
+    the **optimize_options** argument of the `bayesian_optimize` (or `Model.bayesian_optimize`) method.
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Get the default bayesian optimization options for ``'uniform'`` mapping
+
+>>> opt_u = smash.default_bayesian_optimize_options(model, mapping="uniform")
+>>> opt_u
+{
+    'parameters': ['cp', 'ct', 'kexc', 'llr', 'sg0', 'sg1'],
+    'bounds': {
+        'cp': (1e-06, 1000.0),
+        'ct': (1e-06, 1000.0),
+        'kexc': (-50, 50),
+        'llr': (1e-06, 1000.0),
+        'sg0': (1e-06, 1000.0),
+        'sg1': (1e-06, 10.0)
+    },
+    'control_tfm': 'sbs',
+    'termination_crit': {'maxiter': 50},
+}
+
+Directly pass this dictionary to the **optimize_options** argument of the `bayesian_optimize`
+(or `Model.bayesian_optimize`) method.
+It's equivalent to set **optimize_options** to None (which is the default value)
+
+>>> model_u = smash.bayesian_optimize(model, mapping="uniform", optimize_options=opt_u)
+</> Bayesian Optimize
+    At iterate     0    nfg =     1    J = 7.70491e+01    ddx = 0.64
+    At iterate     1    nfg =    68    J = 2.58460e+00    ddx = 0.64
+    At iterate     2    nfg =   135    J = 2.32432e+00    ddx = 0.32
+    At iterate     3    nfg =   202    J = 2.30413e+00    ddx = 0.08
+    At iterate     4    nfg =   269    J = 2.26219e+00    ddx = 0.08
+    At iterate     5    nfg =   343    J = 2.26025e+00    ddx = 0.01
+    At iterate     6    nfg =   416    J = 2.25822e+00    ddx = 0.01
+    CONVERGENCE: DDX < 0.01
+
+Get the default bayesian optimization options for a different mapping
+
+>>> opt_ml = smash.default_bayesian_optimize_options(model, mapping="multi-linear")
+>>> opt_ml
+{
+    'parameters': ['cp', 'ct', 'kexc', 'llr', 'sg0', 'sg1'],
+    'bounds': {
+        'cp': (1e-06, 1000.0),
+        'ct': (1e-06, 1000.0),
+        'kexc': (-50, 50),
+        'llr': (1e-06, 1000.0),
+        'sg0': (1e-06, 1000.0),
+        'sg1': (1e-06, 10.0)
+    },
+    'control_tfm': 'normalize',
+    'descriptor': {
+        'cp': array(['slope', 'dd'], dtype='<U5'),
+        'ct': array(['slope', 'dd'], dtype='<U5'),
+        'kexc': array(['slope', 'dd'], dtype='<U5'),
+        'llr': array(['slope', 'dd'], dtype='<U5')
+    },
+    'termination_crit': {'maxiter': 100, 'factr': 1000000.0, 'pgtol': 1e-12},
+}
+
+Customize the bayesian optimization options and optimize the Model
+
+>>> opt_ml["bounds"]["cp"] = (1, 2000)
+>>> opt_ml["bounds"]["sg0"] = (1e-3, 100)
+>>> opt_ml["descriptor"]["cp"] = "slope"
+>>> opt_ml["termination_crit"]["maxiter"] = 10
+>>> model.bayesian_optimize(mapping="multi-linear", optimize_options=opt_ml)
+</> Bayesian Optimize
+    At iterate     0    nfg =     1    J = 7.70491e+01    |proj g| = 1.05147e+04
+    At iterate     1    nfg =     2    J = 6.69437e+00    |proj g| = 2.15263e+02
+    At iterate     2    nfg =     3    J = 6.52716e+00    |proj g| = 2.03207e+02
+    At iterate     3    nfg =     4    J = 5.08876e+00    |proj g| = 6.83760e+01
+    At iterate     4    nfg =     5    J = 4.73664e+00    |proj g| = 4.19148e+01
+    At iterate     5    nfg =     6    J = 4.42125e+00    |proj g| = 1.94103e+01
+    At iterate     6    nfg =     7    J = 4.28494e+00    |proj g| = 9.39774e+00
+    At iterate     7    nfg =     8    J = 4.19646e+00    |proj g| = 4.74194e+00
+    At iterate     8    nfg =     9    J = 4.13953e+00    |proj g| = 1.74698e+00
+    At iterate     9    nfg =    10    J = 4.09997e+00    |proj g| = 1.04288e+00
+    At iterate    10    nfg =    11    J = 4.02741e+00    |proj g| = 4.41394e+00
+    STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+The optimization process was terminated after 10 iterations, the maximal value we defined.
 """
 )
 
@@ -1561,6 +1740,9 @@ _model_forward_run_doc_substitution = DocSubstitution(
 _optimize_doc_appender = DocAppender(_optimize_doc, indents=0)
 _smash_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
+    mapping_ann="- ``'ann'``",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
+    default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
     default_optimize_options_func="default_optimize_options",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1573,6 +1755,9 @@ _smash_optimize_doc_substitution = DocSubstitution(
 )
 _model_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
+    mapping_ann="- ``'ann'``",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
+    default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
     default_optimize_options_func="default_optimize_options",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1603,6 +1788,9 @@ _model_multiset_estimate_doc_substitution = DocSubstitution(
 _bayesian_optimize_doc_appender = DocAppender(_bayesian_optimize_doc, indents=0)
 _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
+    mapping_ann="",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
+    default_optimizer_for_ann_mapping="",
     default_optimize_options_func="default_bayesian_optimize_options",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
@@ -1616,6 +1804,9 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
 )
 _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
+    mapping_ann="",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
+    default_optimizer_for_ann_mapping="",
     default_optimize_options_func="default_bayesian_optimize_options",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
@@ -1632,6 +1823,9 @@ _multiple_forward_run_doc_appender = DocAppender(_multiple_forward_run_doc, inde
 
 _optimize_control_info_doc_appender = DocAppender(_optimize_control_info_doc, indents=0)
 _smash_optimize_control_info_doc_substitution = DocSubstitution(
+    mapping_ann="- ``'ann'``",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
+    default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
     default_optimize_options_func="default_optimize_options",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1641,10 +1835,29 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
 
 _bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_control_info_doc, indents=0)
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
+    mapping_ann="",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
+    default_optimizer_for_ann_mapping="",
     default_optimize_options_func="default_bayesian_optimize_options",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`",
     bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
     "`Model.get_serr_sigma_parameters_bounds`",
+)
+
+_default_optimize_options_doc_appender = DocAppender(_default_optimize_options_doc, indents=0)
+_smash_default_optimize_options_doc_substitution = DocSubstitution(
+    mapping_ann="- ``'ann'``",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
+    default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
+)
+
+_default_bayesian_optimize_options_doc_appender = DocAppender(
+    _default_bayesian_optimize_options_doc, indents=0
+)
+_smash_default_bayesian_optimize_options_doc_substitution = DocSubstitution(
+    mapping_ann="",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings)",
+    default_optimizer_for_ann_mapping="",
 )
