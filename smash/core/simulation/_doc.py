@@ -25,7 +25,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         - `Model.rr_parameters`
         - `Model.rr_initial_states`
-        - `Model.nn_parameters`, if using a hybrid structure model (depending on **hydrological_module**)
+        - `Model.nn_parameters`, if using a hybrid model structure (depending on **hydrological_module**)
         %(parameters_serr_mu_parameters)s
         %(parameters_serr_sigma_parameters)s
 
@@ -137,11 +137,12 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `int` or None, default None
         """,
         """
-        A random seed used to initialize neural network weights.
+        A random seed used to initialize neural network parameters.
 
         .. note::
-            If not given, the weights will be initialized with a random seed. This options is only used when
-            **mapping** is ``'ann'``.
+            If not given, the neural network parameters will be initialized with a random seed. This options
+            is only used when **mapping** is ``'ann'``, and the weights and biases of **net** are not yet
+            initialized.
         """,
     ),
     "termination_crit": (

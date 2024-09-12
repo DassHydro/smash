@@ -93,8 +93,7 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
     status = []
 
     for key in all_keys:
-        if len(key) > max_len_name:
-            max_len_name = len(key)
+        max_len_name = max(len(key), max_len_name)
 
         test_name.append(key)
 

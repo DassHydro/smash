@@ -71,6 +71,7 @@ HYDROLOGICAL_MODULE = [
     "gr5",
     "gr5_ri",
     "gr6",
+    "grc",
     "grd",
     "loieau",
     "vic3l",
@@ -105,6 +106,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
             ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
             ["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"],  # % gr5_ri
             ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
+            ["ci", "cp", "ct", "cl", "kexc"],  # % grc
             ["cp", "ct"],  # % grd
             ["ca", "cc", "kb"],  # % loieau
             ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -148,6 +150,7 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
             ["hi", "hp", "ht"],  # % gr5
             ["hi", "hp", "ht"],  # % gr5_ri
             ["hi", "hp", "ht", "he"],  # % gr6
+            ["hi", "hp", "ht", "hl"],  # % grc
             ["hp", "ht"],  # % grd
             ["ha", "hc"],  # % loieau
             ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
@@ -193,6 +196,7 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5-ri
             ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
+            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"],  # % grc
             ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
             ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
             ["pn", "en", "qr", "qb", "qt"],  # % vic3l
@@ -254,13 +258,14 @@ STRUCTURE_RR_INTERNAL_FLUXES = dict(
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6)
-    "cp",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6, grd)
-    "ct",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6, grd)
+    "ci",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6)
+    "cp",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
+    "ct",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
     "alpha1", # % (gr4_ri, gr5_ri)
     "alpha2", # % (gr4_ri, gr5_ri)
+    "cl",  # % grc
     "be",  # % (gr6)
-    "kexc",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6)
+    "kexc",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6)
     "aexc",  # % (gr5, gr5_ri, gr6)
     "ca",  # % loieau
     "cc",  # % loieau
@@ -281,10 +286,11 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6)
-    "hp",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6, grd)
-    "ht",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6, grd)
-    "he",  # % (gr6)
+    "hi",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6)
+    "hp",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
+    "ht",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
+    "hl",  # % grc
+    "he",  # % gr6
     "ha",  # % loieau
     "hc",  # % loieau
     "hcl",  # % vic3l
@@ -308,6 +314,7 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % ct
             (0, np.inf), # % alpha1
             (0, np.inf), # % alpha2
+            (0, np.inf),  # % cl
             (0, np.inf),  # % be
             (-np.inf, np.inf),  # % kexc
             (0, 1),  # % aexc
@@ -339,6 +346,7 @@ FEASIBLE_RR_INITIAL_STATES = dict(
             (0, 1),  # % hi
             (0, 1),  # % hp
             (0, 1),  # % ht
+            (0, 1),  # % hl
             (-np.inf, np.inf),  # % he
             (0, 1),  # % ha
             (0, 1),  # % hc
@@ -367,6 +375,7 @@ DEFAULT_RR_PARAMETERS = dict(
             500,  # % ct
             3e-4, # % alpha1
             8e-2, # % alpha2
+            500,  # % cl
             10,  # % be
             0,  # % kexc
             0.1,  # % aexc
@@ -398,6 +407,7 @@ DEFAULT_RR_INITIAL_STATES = dict(
             1e-2,  # % hi
             1e-2,  # % hp
             1e-2,  # % ht
+            1e-2,  # % hl
             -100,  # % he
             1e-2,  # % ha
             1e-2,  # % hc
@@ -424,6 +434,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e3),  # % ct
             (1e-6, 5e-4),  # % alpha1 
             (1e-6, 1.),  # % alpha2
+            (1e-6, 1e3),  # % cl
             (1e-3, 20),  # % be
             (-50, 50),  # % kexc
             (1e-6, 0.999999),  # % aexc
@@ -455,6 +466,7 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
             (1e-6, 0.999999),  # % hi
             (1e-6, 0.999999),  # % hp
             (1e-6, 0.999999),  # % ht
+            (1e-6, 0.999999),  # % hl
             (-1e3, 0),  # % he
             (1e-6, 0.999999),  # % ha
             (1e-6, 0.999999),  # % hc

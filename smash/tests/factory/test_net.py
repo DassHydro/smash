@@ -54,6 +54,43 @@ def generic_net_init(**kwargs):
     return res
 
 
+def generic_net_forward_pass(**kwargs):
+    res = {}
+
+    net = smash.factory.Net()
+
+    # % Set NN graph
+    net.add_conv2d(
+        filters=64,
+        filter_shape=(8, 6),
+        input_shape=(12, 11, 3),
+    )
+    net.add_conv2d(
+        filters=32,
+        filter_shape=4,
+        activation="selu",
+    )
+    net.add_flatten()
+    net.add_dense(neurons=16, activation="elu")
+    net.add_dense(neurons=4, activation="softplus")
+
+    # % Set random weights
+    net.set_weight(random_state=0)
+
+    # % Set random biases
+    np.random.seed(1)
+    net.set_bias([0.01, 0, 0.02, np.random.uniform(size=(1, 4))])
+
+    # % Forward pass
+    np.random.seed(2)
+    x = np.random.normal(0, 0.01, size=(12, 11, 3))
+    y = net.forward_pass(x)
+
+    res["net_forward_pass.output"] = y
+
+    return res
+
+
 def test_net_init():
     res = generic_net_init()
 
@@ -65,3 +102,11 @@ def test_net_init():
         else:
             # % Check net init layer weight and bias
             assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+
+
+def test_net_forward_pass():
+    res = generic_net_forward_pass()
+
+    key = "net_forward_pass.output"
+
+    assert np.allclose(res[key], pytest.baseline[key][:], atol=1e-06), key

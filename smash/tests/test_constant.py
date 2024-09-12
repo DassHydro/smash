@@ -56,6 +56,7 @@ def test_module_name():
         "gr4_ode_mlp",
         "gr5",
         "gr6",
+        "grc",
         "grd",
         "loieau",
         "vic3l",
@@ -92,6 +93,7 @@ def test_module_parameters():
         ["ci", "cp", "ct", "kexc"],  # % gr4_ode_mlp
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
         ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
+        ["ci", "cp", "ct", "cl", "kexc"],  # % grc
         ["cp", "ct"],  # % grd
         ["ca", "cc", "kb"],  # % loieau
         ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -105,6 +107,7 @@ def test_module_parameters():
         ["hi", "hp", "ht"],  # % gr4_ode_mlp
         ["hi", "hp", "ht"],  # % gr5
         ["hi", "hp", "ht", "he"],  # % gr6
+        ["hi", "hp", "ht", "hl"],  # % grc
         ["hp", "ht"],  # % grd
         ["ha", "hc"],  # % loieau
         ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
@@ -118,6 +121,7 @@ def test_module_parameters():
         ["pn", "en", "lexc", "qt"],  # % gr4_ode_mlp
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"],  # % grc
         ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
         ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
         ["pn", "en", "qr", "qb", "qt"],  # % vic3l
@@ -139,9 +143,10 @@ def test_parameters():
     # % Check rainfall-runoff parameters
     assert RR_PARAMETERS == [
         "kmlt",  # % ssn
-        "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
-        "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
-        "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
+        "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc)
+        "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
+        "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
+        "cl",  # % grc
         "be",  # % gr6
         "kexc",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
         "aexc",  # % (gr5, gr6)
@@ -165,9 +170,10 @@ def test_parameters():
     # % Check rainfall-runoff states
     assert RR_STATES == [
         "hs",  # % ssn
-        "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
-        "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
-        "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grd)
+        "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc)
+        "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
+        "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
+        "hl",  # % grc
         "he",  # % gr6
         "ha",  # % loieau
         "hc",  # % loieau
@@ -226,6 +232,7 @@ def test_feasible_domain():
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
+        (0, np.inf),  # % cl
         (0, np.inf),  # % be
         (-np.inf, np.inf),  # % kexc
         (0, 1),  # % aexc
@@ -252,6 +259,7 @@ def test_feasible_domain():
         (0, 1),  # % hi
         (0, 1),  # % hp
         (0, 1),  # % ht
+        (0, 1),  # % hl
         (-np.inf, np.inf),  # % he
         (0, 1),  # % ha
         (0, 1),  # % hc
@@ -283,6 +291,7 @@ def test_default_parameters():
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
+        500,  # % cl
         10,  # % be
         0,  # % kexc
         0.1,  # % aexc
@@ -309,6 +318,7 @@ def test_default_parameters():
         1e-2,  # % hi
         1e-2,  # % hp
         1e-2,  # % ht
+        1e-2,  # % hl
         -100,  # % he
         1e-2,  # % ha
         1e-2,  # % hc
@@ -340,6 +350,7 @@ def test_default_bounds_parameters():
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
+        (1e-6, 1e3),  # % cl
         (1e-3, 20),  # % be
         (-50, 50),  # % kexc
         (1e-6, 0.999999),  # % aexc
@@ -366,6 +377,7 @@ def test_default_bounds_parameters():
         (1e-6, 0.999999),  # % hi
         (1e-6, 0.999999),  # % hp
         (1e-6, 0.999999),  # % ht
+        (1e-6, 0.999999),  # % hl
         (-1e3, 0),  # % he
         (1e-6, 0.999999),  # % ha
         (1e-6, 0.999999),  # % hc
