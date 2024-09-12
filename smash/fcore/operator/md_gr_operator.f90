@@ -64,12 +64,14 @@ contains
         real(sp), intent(inout) :: hp
         real(sp), intent(out) :: pr, perc
 
-        real(sp) :: inv_cp, ps, es, hp_imd, pne
+        real(sp) :: inv_cp, ps, es, hp_imd, pne, ene
 
         inv_cp = 1._sp/cp
         pr = 0._sp
 
         pne = (1._sp - imperviousness)*pn
+        ene = (1._sp - imperviousness)*en
+        
         ps = cp*(1._sp - hp*hp)*tanh(pn*inv_cp)/ &
         & (1._sp + hp*tanh(pn*inv_cp))
         ps = (1._sp + fq_ps)*ps

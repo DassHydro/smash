@@ -13294,7 +13294,7 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: hp_d
     REAL(sp), INTENT(OUT) :: pr, perc
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pne
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
     REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d
     INTRINSIC TANH
     REAL(sp) :: pwx1
@@ -13365,7 +13365,7 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: hp_b
     REAL(sp) :: pr, perc
     REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pne
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
     REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b
     INTRINSIC TANH
     REAL(sp) :: pwx1
@@ -13483,13 +13483,14 @@ CONTAINS
 &   beta
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pne
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
     pne = (1._sp-imperviousness)*pn
+    ene = (1._sp-imperviousness)*en
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
     ps = (1._sp+fq_ps)*ps
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
