@@ -292,7 +292,7 @@ def _optimize_fast_wjreg(
 
 def _optimize_lcurve_wjreg(
     model: Model, options: OptionsDT, returns: ReturnsDT, optimize_options: dict, return_options: dict
-) -> (float, dict):
+) -> tuple[float, dict]:
     if options.comm.verbose:
         print(f"{' '*4}L-CURVE WJREG CYCLE 1")
 
@@ -373,7 +373,7 @@ def optimize(
     cost_options: dict[str, Any] | None = None,
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
-) -> Model | (Model, Optimize):
+) -> Model | tuple[Model, Optimize]:
     wmodel = model.copy()
 
     ret_optimize = wmodel.optimize(
@@ -388,7 +388,7 @@ def optimize(
     if ret_optimize is None:
         return wmodel
     else:
-        return wmodel, ret_optimize
+        return (wmodel, ret_optimize)
 
 
 def _optimize(
@@ -491,7 +491,7 @@ def bayesian_optimize(
     cost_options: dict[str, Any] | None = None,
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
-) -> Model | (Model, BayesianOptimize):
+) -> Model | tuple[Model, BayesianOptimize]:
     wmodel = model.copy()
 
     ret_bayesian_optimize = wmodel.bayesian_optimize(
@@ -506,7 +506,7 @@ def bayesian_optimize(
     if ret_bayesian_optimize is None:
         return wmodel
     else:
-        return wmodel, ret_bayesian_optimize
+        return (wmodel, ret_bayesian_optimize)
 
 
 def _bayesian_optimize(

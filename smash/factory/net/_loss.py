@@ -20,11 +20,11 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_returns import ReturnsDT
 
 
-def _hcost(instance: Model) -> float:
+def _get_cost_value(instance: Model) -> float:
     return instance._output.cost
 
 
-def _hcost_prime(
+def _get_gradient_value(
     net: Net,
     x: np.ndarray,
     model_params_states: np.ndarray,
@@ -32,7 +32,7 @@ def _hcost_prime(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-):
+) -> tuple[np.ndarray, list]:
     # % Update rr_parameters and/or rr_initial_states using net
     y_reshaped = _net_to_parameters(net, x, model_params_states, parameters)
 
@@ -84,4 +84,4 @@ def _hcost_prime(
         for key in OPTIMIZABLE_NN_PARAMETERS[max(0, instance.setup.n_layers - 1)]
     ]
 
-    return grad_reg, grad_par
+    return (grad_reg, grad_par)

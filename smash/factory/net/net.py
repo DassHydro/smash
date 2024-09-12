@@ -13,7 +13,7 @@ from smash.factory.net._layers import (
     Scale,
     _set_initialized_wb_to_layer,
 )
-from smash.factory.net._loss import _hcost, _hcost_prime
+from smash.factory.net._loss import _get_cost_value, _get_gradient_value
 
 # Used inside eval statement
 from smash.factory.net._optimizers import SGD, Adagrad, Adam, RMSprop  # noqa: F401
@@ -520,7 +520,7 @@ class Net(object):
         maxiter: int,
         early_stopping: int,
         verbose: bool,
-    ):
+    ) -> int:
         """
         Private function: fit physiographic descriptors to Model parameters mapping.
         """
@@ -534,15 +534,15 @@ class Net(object):
         # % First evaluation
         # calculate the gradient of J wrt rr_parameters (output of the regionalization NN)
         # and get the gradient of the parameterization NN if used
-        init_cost_grad, nn_parameters_b = _hcost_prime(
+        grad_reg_init, grad_par = _get_gradient_value(
             self, x_train, model_params_states, instance, parameters, wrap_options, wrap_returns
         )
-        cost_grad = self._backward_pass(init_cost_grad, inplace=False)  # do not update weight and bias
+        grad_reg = self._backward_pass(grad_reg_init, inplace=False)  # do not update weight and bias
 
-        projg = _inf_norm([cost_grad, nn_parameters_b])
+        projg = _inf_norm([grad_reg, grad_par])
 
         # calculate cost
-        cost = _hcost(instance)  # forward_run to update cost inside _hcost_prime
+        cost = _get_cost_value(instance)  # forward_run to update cost inside _get_gradient_value
 
         if verbose:
             print(
@@ -569,22 +569,20 @@ class Net(object):
                     setattr(
                         parameters.nn_parameters,
                         key,
-                        opt_nn_parameters[i].update(
-                            getattr(parameters.nn_parameters, key), nn_parameters_b[i]
-                        ),
+                        opt_nn_parameters[i].update(getattr(parameters.nn_parameters, key), grad_par[i]),
                     )
 
-            self._backward_pass(init_cost_grad, inplace=True)  # update weights of the regionalization NN
+            self._backward_pass(grad_reg_init, inplace=True)  # update weights of the regionalization NN
 
             # cost and gradient computation
-            init_cost_grad, nn_parameters_b = _hcost_prime(
+            grad_reg_init, grad_par = _get_gradient_value(
                 self, x_train, model_params_states, instance, parameters, wrap_options, wrap_returns
             )
-            cost_grad = self._backward_pass(init_cost_grad, inplace=False)  # do not update weight and bias
+            grad_reg = self._backward_pass(grad_reg_init, inplace=False)  # do not update weight and bias
 
-            projg = _inf_norm([cost_grad, nn_parameters_b])
+            projg = _inf_norm([grad_reg, grad_par])
 
-            cost = _hcost(instance)  # forward_run to update cost inside _hcost_prime
+            cost = _get_cost_value(instance)  # forward_run to update cost inside _get_gradient_value
 
             # save optimal parameters if early stopping is used
             if early_stopping:

@@ -12,7 +12,7 @@ from smash.util._doctools import DocAppender, DocSubstitution
 # TODO: store the docstring for each returned variable and then applied it
 # for each optional return object (ForwardRun, Optimize, etc.)
 
-OPTIMIZE_OPTIONS_KEYS = [
+OPTIMIZE_OPTIONS_KEYS_DOC = [
     "parameters",
     "bounds",
     "control_tfm",
@@ -23,7 +23,7 @@ OPTIMIZE_OPTIONS_KEYS = [
     "termination_crit",
 ]
 
-BAYESIAN_OPTIMIZE_OPTIONS_KEYS = [
+BAYESIAN_OPTIMIZE_OPTIONS_KEYS_DOC = [
     "parameters",
     "bounds",
     "control_tfm",
@@ -833,7 +833,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        OPTIMIZE_OPTIONS_KEYS,
+        OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -1024,7 +1024,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        BAYESIAN_OPTIMIZE_OPTIONS_KEYS,
+        BAYESIAN_OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -1192,7 +1192,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        OPTIMIZE_OPTIONS_KEYS,
+        OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """
@@ -1309,7 +1309,7 @@ optimize_options : `dict[str, Any]` or None, default None
 """
     + _gen_docstring_from_base_doc(
         OPTIMIZE_OPTIONS_BASE_DOC,
-        BAYESIAN_OPTIMIZE_OPTIONS_KEYS,
+        BAYESIAN_OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
     + """

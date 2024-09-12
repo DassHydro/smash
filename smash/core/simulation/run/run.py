@@ -134,7 +134,7 @@ def forward_run(
     cost_options: dict[str, Any] | None = None,
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
-) -> Model | (Model, ForwardRun):
+) -> Model | tuple[Model, ForwardRun]:
     wmodel = model.copy()
 
     ret_forward_run = wmodel.forward_run(cost_options, common_options, return_options)
@@ -142,7 +142,7 @@ def forward_run(
     if ret_forward_run is None:
         return wmodel
     else:
-        return wmodel, ret_forward_run
+        return (wmodel, ret_forward_run)
 
 
 def _forward_run(
