@@ -30,16 +30,16 @@ def optimize_control_info(
     mapping: str = "uniform",
     optimizer: str | None = None,
     optimize_options: dict[str, Any] | None = None,
-    cost_options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    args_options = [deepcopy(arg) for arg in [optimize_options, cost_options]]
+    optimize_options = deepcopy(optimize_options)
 
     # % Only get mapping, optimizer, optimize_options and cost_options
     *args, _, _, _ = _standardize_optimize_args(
         model,
         mapping,
         optimizer,
-        *args_options,
+        optimize_options,
+        None,  # cost_options
         None,  # common_options
         None,  # return_options
         None,  # callback

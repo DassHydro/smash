@@ -1234,16 +1234,6 @@ optimize_options : `dict[str, Any]` or None, default None
         OPTIMIZE_OPTIONS_KEYS_DOC,
         nindent=1,
     )
-    + """
-cost_options : `dict[str, Any]` or None, default None
-    Dictionary containing computation cost options for simulated and observed responses. The elements are:
-
-"""
-    + _gen_docstring_from_base_doc(
-        COST_OPTIONS_BASE_DOC,
-        DEFAULT_SIMULATION_COST_OPTIONS["optimize"].keys(),
-        nindent=1,
-    )
     + RETURN_CONTROL_INFO_BASE_DOC
     + """
 
