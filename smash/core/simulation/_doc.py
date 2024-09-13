@@ -328,7 +328,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If **jobs_cmpt** is a list of multi-objective funcitons, and only one transformation is choosen in
+            If **jobs_cmpt** is a list of multi-objective functions, and only one transformation is chosen in
             **jobs_cmpt_tfm**, the transformation will be applied to each observation objective function.
         """,
     ),
@@ -872,16 +872,19 @@ callback : callable or None, default None
 
     - ``'control_vector'``: The current control vector.
     - ``'cost'``: The current cost value.
-    - ``'projg'``: The projected gradient, available if using gradient-based optimizers.
+    - ``'projg'``: The current projected gradient, available if using gradient-based optimizers.
     - ``'net'``: The regionalization neural network state, available if using ``'ann'`` **mapping**.
 
+    >>> import numpy as np
     >>> iter_cost = []  # to get the cost values through iterations
-    >>> def callback_cost(iopt, icost=iter_cost):
+    >>> def callback_func(iopt, icost=iter_cost):
     ...     icost.append(iopt.cost)
-    >>> callback = callback_cost
+    ...     # save the current control vector value to a text file
+    ...     np.savetxt(f"control_iter_{len(icost)}.txt", iopt.control_vector)
+    >>> callback = callback_func
 
     .. note::
-        The name of the argument must be ``iopt`` for the callback to be passed an `Optimize` object.
+        The name of the argument must be ``iopt`` for the callback to be passed as an `Optimize` object.
 
 """
     + """
@@ -1083,15 +1086,19 @@ callback : callable or None, default None
 
     - ``'control_vector'``: The current control vector.
     - ``'cost'``: The current cost value.
-    - ``'projg'``: The projected gradient, available if using gradient-based optimizers.
+    - ``'projg'``: The current projected gradient, available if using gradient-based optimizers.
 
+    >>> import numpy as np
     >>> iter_cost = []  # to get the cost values through iterations
-    >>> def callback_cost(iopt, icost=iter_cost):
+    >>> def callback_func(iopt, icost=iter_cost):
     ...     icost.append(iopt.cost)
-    >>> callback = callback_cost
+    ...     # save the current control vector value to a text file
+    ...     np.savetxt(f"control_iter_{len(icost)}.txt", iopt.control_vector)
+    >>> callback = callback_func
 
     .. note::
-        The name of the argument must be ``iopt`` for the callback to be passed a `BayesianOptimize` object.
+        The name of the argument must be ``iopt`` for the callback to be passed as a `BayesianOptimize`
+        object.
 
 """
     + """
