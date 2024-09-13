@@ -2712,6 +2712,7 @@ class Model:
         cost_options: dict[str, Any] | None = None,
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,
+        callback: callable | None = None,
     ) -> Optimize | None:
         args_options = [
             deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
@@ -2722,6 +2723,7 @@ class Model:
             mapping,
             optimizer,
             *args_options,
+            callback,
         )
 
         return _optimize(self, *args)
@@ -2751,6 +2753,7 @@ class Model:
         cost_options: dict[str, Any] | None = None,
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,
+        callback: callable | None = None,
     ) -> BayesianOptimize | None:
         args_options = [
             deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
@@ -2761,6 +2764,7 @@ class Model:
             mapping,
             optimizer,
             *args_options,
+            callback,
         )
 
         return _bayesian_optimize(self, *args)

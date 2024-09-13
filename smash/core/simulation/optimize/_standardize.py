@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import warnings
 from typing import TYPE_CHECKING
 
@@ -49,6 +50,22 @@ def _standardize_optimize_optimizer(mapping: str, optimizer: str, setup: SetupDT
     return optimizer
 
 
+def _standardize_optimize_callback(callback: callable | None) -> callable | None:
+    if callback is None:
+        pass
+
+    elif callable(callback):
+        cb_signature = inspect.signature(callback)
+
+        if "iopt" not in cb_signature.parameters:
+            raise ValueError("Callback function is required to have an 'iopt' argument")
+
+    else:
+        raise TypeError("callback argument must be callable")
+
+    return callback
+
+
 def _standardize_optimize_args(
     model: Model,
     mapping: str,
@@ -57,6 +74,7 @@ def _standardize_optimize_args(
     cost_options: dict | None,
     common_options: dict | None,
     return_options: dict | None,
+    callback: callable | None,
 ) -> AnyTuple:
     func_name = "optimize"
     # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
@@ -85,6 +103,8 @@ def _standardize_optimize_args(
     # % Finalize return_options
     _standardize_simulation_return_options_finalize(model, return_options)
 
+    callback = _standardize_optimize_callback(callback)
+
     return (
         mapping,
         optimizer,
@@ -92,6 +112,7 @@ def _standardize_optimize_args(
         cost_options,
         common_options,
         return_options,
+        callback,
     )
 
 
@@ -103,6 +124,7 @@ def _standardize_bayesian_optimize_args(
     cost_options: dict | None,
     common_options: dict | None,
     return_options: dict | None,
+    callback: callable | None,
 ) -> AnyTuple:
     func_name = "bayesian_optimize"
 
@@ -132,6 +154,8 @@ def _standardize_bayesian_optimize_args(
     # % Finalize return_options
     _standardize_simulation_return_options_finalize(model, return_options)
 
+    callback = _standardize_optimize_callback(callback)
+
     return (
         mapping,
         optimizer,
@@ -139,4 +163,5 @@ def _standardize_bayesian_optimize_args(
         cost_options,
         common_options,
         return_options,
+        callback,
     )
