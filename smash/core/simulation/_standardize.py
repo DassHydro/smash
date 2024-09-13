@@ -378,7 +378,7 @@ def _standardize_simulation_optimize_options_net(
                 for i, name in enumerate(bounds):
                     if diff[i].any():
                         warnings.warn(
-                            f"net optimize_options: Inconsistent values between the bound in scaling layer "
+                            f"net optimize_options: Inconsistent values between the bounds in scaling layer "
                             f"and the parameter bound for {name}: {net_bounds[i]} != {bound_values[i]}. "
                             f"Ignoring default bounds for scaling layer.",
                             stacklevel=2,
