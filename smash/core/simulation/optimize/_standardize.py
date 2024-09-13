@@ -58,7 +58,7 @@ def _standardize_optimize_callback(callback: callable | None) -> callable | None
         cb_signature = inspect.signature(callback)
 
         if "iopt" not in cb_signature.parameters:
-            raise ValueError("Callback function must accept an 'iopt' argument")
+            raise ValueError("Callback function is required to have an 'iopt' argument")
 
     else:
         raise TypeError("callback argument must be callable")
