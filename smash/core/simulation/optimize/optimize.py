@@ -218,6 +218,12 @@ class BayesianOptimize:
             return self.__class__.__name__ + "()"
 
 
+# % The argument passed to the callback function is of type Optimize since
+# BayesianOptimize and Optimize share the same structure and have common attribute names.
+# Although the code only specifies Optimize, the documentation lists both types
+# (Optimize and BayesianOptimize) to reflect their specific usage in different cases.
+
+
 class _ScipyOptimizeCallback:
     # % Private callback class for external optimizer i.e. L-BFGS-B from scipy
     def __init__(self, callback: callable | None, verbose: bool):
