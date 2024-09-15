@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from smash._constant import OPTIMIZABLE_NN_PARAMETERS
-from smash.core.simulation.optimize._tools import _get_parameters_b, _net_to_parameters
+from smash.core.simulation.optimize._tools import _get_parameters_b, _set_parameters_from_net
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,
 )
@@ -34,7 +34,7 @@ def _get_gradient_value(
     wrap_returns: ReturnsDT,
 ) -> tuple[np.ndarray, list]:
     # % Update rr_parameters and/or rr_initial_states using net
-    y_reshaped = _net_to_parameters(net, x, calibrated_parameters, parameters)
+    y_reshaped = _set_parameters_from_net(net, x, calibrated_parameters, parameters)
 
     # % Change the mapping to trigger distributed control to get distributed gradients
     wrap_options.optimize.mapping = "distributed"
