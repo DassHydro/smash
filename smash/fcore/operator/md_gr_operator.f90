@@ -99,18 +99,18 @@ contains
         real(sp), intent(in) :: dt
         real(sp), intent(inout) :: hp
         real(sp), intent(out) :: pr, perc
-        
+
         real(sp) :: inv_cp, ps, es, hp_imd
         real(sp) :: lambda, gam, inv_lambda
-        
-        inv_cp = 1._sp / cp
+
+        inv_cp = 1._sp/cp
         pr = 0._sp
-        gam = 1._sp - exp(-pn * alpha1)
+        gam = 1._sp - exp(-pn*alpha1)
         lambda = sqrt(1._sp - gam)
-        inv_lambda = 1._sp / lambda
-        
-        ps = cp * inv_lambda * tanh(lambda * pn * inv_cp) * (1._sp - (lambda * hp) ** 2) &
-        & / (1._sp + lambda * hp * tanh(lambda * pn * inv_cp)) - gam * dt
+        inv_lambda = 1._sp/lambda
+
+        ps = cp*inv_lambda*tanh(lambda*pn*inv_cp)*(1._sp - (lambda*hp)**2) &
+        & /(1._sp + lambda*hp*tanh(lambda*pn*inv_cp)) - gam*dt
 
         es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
         & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
@@ -419,7 +419,6 @@ contains
 #endif
     end subroutine gr4_time_step
 
-
     subroutine gr4_ri_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_alpha1, ac_alpha2, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -467,7 +466,7 @@ contains
                     & ac_hi(k), pn, en)
 
                     call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
-                    
+
                     call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
 
                 else
@@ -477,10 +476,10 @@ contains
                     l = 0._sp
 
                 end if
-                split = 0.9_sp * tanh(ac_alpha2(k) * pn) ** 2 + 0.1_sp 
-                
-                prr = (1._sp - split) * (pr + perc) + l
-                prd = split * (pr + perc)
+                split = 0.9_sp*tanh(ac_alpha2(k)*pn)**2 + 0.1_sp
+
+                prr = (1._sp - split)*(pr + perc) + l
+                prd = split*(pr + perc)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
@@ -517,7 +516,6 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine gr4_ri_time_step
-    
 
     subroutine gr4_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
     & weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -1024,7 +1022,7 @@ contains
 
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
-        
+
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, &
@@ -1054,12 +1052,12 @@ contains
                     l = 0._sp
 
                 end if
-                
-                split = 0.9_sp * tanh(ac_alpha2(k) * pn) ** 2 + 0.1_sp
-                
-                prr = (1._sp - split) * (pr + perc) + l
-                prd = split * (pr + perc)
-            
+
+                split = 0.9_sp*tanh(ac_alpha2(k)*pn)**2 + 0.1_sp
+
+                prr = (1._sp - split)*(pr + perc) + l
+                prd = split*(pr + perc)
+
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
                 qd = max(0._sp, prd + l)

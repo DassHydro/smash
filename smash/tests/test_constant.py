@@ -154,8 +154,8 @@ def test_parameters():
         "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc)
         "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
         "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
-        "alpha1", # % (gr4_ri, gr5_ri)
-        "alpha2", # % (gr4_ri, gr5_ri)
+        "alpha1",  # % (gr4_ri, gr5_ri)
+        "alpha2",  # % (gr4_ri, gr5_ri)
         "cl",  # % grc
         "be",  # % gr6
         "kexc",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
@@ -242,8 +242,8 @@ def test_feasible_domain():
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
-        (0, np.inf), # % alpha1
-        (0, np.inf), # % alpha2
+        (0, np.inf),  # % alpha1
+        (0, np.inf),  # % alpha2
         (0, np.inf),  # % cl
         (0, np.inf),  # % be
         (-np.inf, np.inf),  # % kexc
@@ -303,8 +303,8 @@ def test_default_parameters():
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
-        3e-4, # % alpha1
-        1e-3, # % alpha2
+        3e-4,  # % alpha1
+        1e-3,  # % alpha2
         500,  # % cl
         10,  # % be
         0,  # % kexc
@@ -364,8 +364,8 @@ def test_default_bounds_parameters():
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
-        (1e-6, 5e-4),  # % alpha1 
-        (1e-5, 1.),  # % alpha2
+        (1e-6, 5e-4),  # % alpha1
+        (1e-5, 1.0),  # % alpha2
         (1e-6, 1e3),  # % cl
         (1e-3, 20),  # % be
         (-50, 50),  # % kexc

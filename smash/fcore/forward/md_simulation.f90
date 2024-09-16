@@ -373,9 +373,9 @@ contains
 
                 rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 3
-            
+
             case ("gr5_ri")
-            
+
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
                 h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
@@ -407,7 +407,7 @@ contains
 
                 rr_parameters_inc = rr_parameters_inc + 7
                 rr_states_inc = rr_states_inc + 3
-            
+
                 ! 'gr6' module
             case ("gr6")
 
