@@ -374,7 +374,7 @@ DEFAULT_RR_PARAMETERS = dict(
             200,  # % cp
             500,  # % ct
             3e-4, # % alpha1
-            8e-2, # % alpha2
+            1e-3, # % alpha2
             500,  # % cl
             10,  # % be
             0,  # % kexc
@@ -433,7 +433,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
             (1e-6, 5e-4),  # % alpha1 
-            (1e-6, 1.),  # % alpha2
+            (1e-5, 1.),  # % alpha2
             (1e-6, 1e3),  # % cl
             (1e-3, 20),  # % be
             (-50, 50),  # % kexc
