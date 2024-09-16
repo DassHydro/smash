@@ -224,7 +224,7 @@ We also pass other options specific to the use of a NN:
 - ``optimize_options``
     - ``random_state``: a random seed used to initialize neural network weights.
     - ``learning_rate``: the learning rate used for weights updates during training.
-    - ``termination_crit``: the number of training ``epochs`` for the neural network and a positive number to stop training when the loss function does not decrease below the current optimal value for  ``early_stopping`` consecutive ``epochs``
+    - ``termination_crit``: the maximum number of training ``maxiter`` for the neural network and a positive number to stop training when the loss function does not decrease below the current optimal value for ``early_stopping`` consecutive iterations.
 
 - ``return_options``
     - ``net``: return the optimized neural network
@@ -238,9 +238,9 @@ We also pass other options specific to the use of a NN:
         model,
         mapping="ann",
         optimize_options={
-            "random_state": 23,
-            "learning_rate": 0.004,
-            "termination_crit": dict(epochs=100, early_stopping=20),
+            "random_state": 0,
+            "learning_rate": 0.003,
+            "termination_crit": dict(maxiter=80, early_stopping=20),
         },
         return_options={"net": True},
         common_options={"ncpu": ncpu},
@@ -253,9 +253,9 @@ We also pass other options specific to the use of a NN:
         model,
         mapping="ann",
         optimize_options={
-            "random_state": 23,
-            "learning_rate": 0.004,
-            "termination_crit": dict(epochs=100, early_stopping=20),
+            "random_state": 0,
+            "learning_rate": 0.003,
+            "termination_crit": dict(maxiter=80, early_stopping=20),
         },
         return_options={"net": True},
     )
@@ -269,14 +269,14 @@ Since we have returned the optimized neural network, we can visualize what it co
 
     opt_ann.net
 
-The information displayed tells us that the default neural network is composed of 2 hidden dense layers followed by ``ReLU`` activation functions 
-and a final layer followed by a ``Sigmoid`` function. To scale the network output to the boundary condition, a ``MinMaxScale`` function is applied. 
+The above information indicates that the default neural network is composed of 3 hidden dense layers, each followed by a ``ReLU`` activation function.
+The output layer is followed by a ``TanH`` (hyperbolic tangent) function and it outputs in :math:`\left]-1,1\right[` are scaled to given conceptual parameter bounds using a ``MinMaxScale`` function.
 Other information is available in the `smash.factory.Net` object, including the value of the cost function at each iteration.
 
 .. ipython:: python
 
     plt.plot(opt_ann.net.history["loss_train"]);
-    plt.xlabel("Epoch");
+    plt.xlabel("Iteration");
     plt.ylabel("$1-NSE$");
     plt.grid(alpha=.7, ls="--");
     @savefig user_guide.classical_uses.lez_regionalization.ann_J.png

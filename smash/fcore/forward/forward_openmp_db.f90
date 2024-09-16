@@ -6414,6 +6414,9 @@ CONTAINS
       CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
 &                                                        options, nbk(2)&
 &                                                       )
+    CASE ('ann') 
+      nbk(1) = 0
+      nbk(2) = 0
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, nbk(3))

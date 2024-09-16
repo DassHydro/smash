@@ -79,22 +79,23 @@ def evaluation(
 
     >>> model.optimize()
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
-        At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
-        At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
-        At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
-        At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
-        At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
-        At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
-        At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
+        At iterate     0    nfg =     1    J = 6.95010e-01    ddx = 0.64
+        At iterate     1    nfg =    30    J = 9.84107e-02    ddx = 0.64
+        At iterate     2    nfg =    59    J = 4.54087e-02    ddx = 0.32
+        At iterate     3    nfg =    88    J = 3.81818e-02    ddx = 0.16
+        At iterate     4    nfg =   117    J = 3.73617e-02    ddx = 0.08
+        At iterate     5    nfg =   150    J = 3.70873e-02    ddx = 0.02
+        At iterate     6    nfg =   183    J = 3.68004e-02    ddx = 0.02
+        At iterate     7    nfg =   216    J = 3.67635e-02    ddx = 0.01
+        At iterate     8    nfg =   240    J = 3.67277e-02    ddx = 0.01
         CONVERGENCE: DDX < 0.01
 
     Compute multiple evaluation metrics for all catchments
 
     >>> smash.evaluation(model, metric=["mae", "mse", "nse", "kge"])
-    array([[ 3.16965151, 44.78328323,  0.96327233,  0.94752783],
-           [ 1.07771611,  4.38410997,  0.90453297,  0.84582865],
-           [ 0.33045691,  0.50611502,  0.84956211,  0.8045246 ]])
+    array([[ 3.16766095, 44.77915192,  0.96327233,  0.94864655],
+           [ 1.07711864,  4.36171055,  0.90502125,  0.84566253],
+           [ 0.33053449,  0.50542408,  0.84976768,  0.8039571 ]])
 
     Add start and end evaluation dates
 
@@ -106,12 +107,12 @@ def evaluation(
 
     >>> smash.evaluation(model, metric="nse")
     array([[0.96327233],
-           [0.90453297],
-           [0.84956211]])
+           [0.90502125],
+           [0.84976768]])
     >>> smash.evaluation(model, metric="nse", start_eval=start_eval, end_eval=end_eval)
-    array([[0.9404493 ],
-           [0.86493075],
-           [0.76471144]])
+    array([[0.94048417],
+           [0.8667959 ],
+           [0.76593578]])
     """
     metric, start_eval, end_eval = _standardize_evaluation_args(metric, start_eval, end_eval, model.setup)
 

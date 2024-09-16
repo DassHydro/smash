@@ -9,7 +9,7 @@ In `smash` a forward/direct spatially distributed model is obtained by chaining 
 - (optional) a descriptors-to-parameters mapping :math:`\phi` either for parameters imposing spatial constrain and/or regional mapping between physical descriptor and model conceptual parameters, see :ref:`mapping section <math_num_documentation.mapping>`.
 - (optional) a ``snow`` operator :math:`\mathcal{M}_{snw}` generating a melt flux :math:`m_{lt}` which is then summed with the precipitation flux to feed the ``hydrological`` operator :math:`\mathcal{M}_{rr}`.
 - A ``hydrological`` production operator :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t` which feeds the routing operator. 
-- A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating propagation of discharge :math:`Q)`.
+- A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating propagation of discharge :math:`Q`.
 
 The operators chaining principle  is presented in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem.chaining>` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>` ) and the chaining fluxes are explicitated in the diagram below. The forward model obtained reads :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` .
 
