@@ -43,8 +43,8 @@ Simulation
    Model.multiset_estimate
    Model.bayesian_optimize
 
-Parameters/States
-*****************
+Parameters/States/Control
+*************************
 .. autosummary::
    :toctree: smash/
 
@@ -57,6 +57,8 @@ Parameters/States
    Model.set_rr_initial_states
    Model.set_serr_mu_parameters
    Model.set_serr_sigma_parameters
+   Model.set_control_optimize
+   Model.set_control_bayesian_optimize
    Model.get_rr_parameters_bounds
    Model.get_rr_initial_states_bounds
    Model.get_serr_mu_parameters_bounds

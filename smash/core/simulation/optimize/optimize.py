@@ -23,8 +23,8 @@ from smash.core.simulation.optimize._tools import (
     _get_parameters_b,
     _handle_bayesian_optimize_control_prior,
     _inf_norm,
-    _net_to_parameters,
-    _net_to_vect,
+    _net2vect,
+    _set_parameters_from_net,
 )
 
 # Used inside eval statement
@@ -815,7 +815,7 @@ def _ann_adaptive_optimize(
 
     # % Revert model parameters if early stopped (nn_parameters have been reverted inside net._fit_d2p)
     if istop:
-        _net_to_parameters(net, desc, optimize_options["parameters"], parameters)
+        _set_parameters_from_net(net, desc, optimize_options["parameters"], parameters)
 
     # % Reset control with ann mapping (do not apply to rr_parameters and rr_initial_states)
     wrap_parameters_to_control(
@@ -843,7 +843,7 @@ def _ann_adaptive_optimize(
         ret["net"] = net
 
     if "control_vector" in return_options["keys"]:
-        ret["control_vector"] = np.append(parameters.control.x, _net_to_vect(net))
+        ret["control_vector"] = np.append(parameters.control.x, _net2vect(net))
 
     if "projg" in return_options["keys"]:
         ret["projg"] = net.history["proj_grad"][istop - 1]
