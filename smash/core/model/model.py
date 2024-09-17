@@ -193,8 +193,8 @@ class Model:
 
         adjust_interception : `bool`, default True
             Whether or not to adjust the maximum capacity of the interception reservoir.
-            This option is only applicable if **hydrological_module** is set to ``'gr4'`` or ``'gr5'`` and
-            for a sub-daily simulation time step **dt**.
+            This option is available for any **hydrological_module** having the :math:`c_i` parameter
+            (i.e. ``'gr4'``, ``'gr5'``, ``'gr6'``, etc.) and for a sub-daily simulation time step **dt**.
 
         compute_mean_atmos : `bool`, default True
             Whether or not to compute mean atmospheric data for each gauge.
