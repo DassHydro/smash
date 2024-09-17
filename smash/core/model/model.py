@@ -2755,7 +2755,7 @@ class Model:
             None,  # callback
         )
 
-        # Cannot standardize 'control_vectol' here before initializing model._parameters.control
+        # Cannot standardize 'control_vector' here before initializing model._parameters.control
         # it will be checked later by Numpy when using setattr method
         _set_control(self, control_vector, *args)
 
@@ -2823,6 +2823,6 @@ class Model:
             None,  # callback
         )
 
-        # Cannot standardize 'control_vectol' here before initializing model._parameters.control
+        # Cannot standardize 'control_vector' here before initializing model._parameters.control
         # it will be checked later by Numpy when using setattr method
         _set_control(self, control_vector, *args)

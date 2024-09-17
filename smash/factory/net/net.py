@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from smash._constant import ADAPTIVE_OPTIMIZER, OPTIMIZABLE_NN_PARAMETERS, OPTIMIZER_CLASS
-from smash.core.simulation.optimize._tools import _inf_norm, _net_to_vect
+from smash.core.simulation.optimize._tools import _inf_norm, _net2vect
 from smash.core.simulation.optimize.optimize import Optimize
 from smash.factory.net._layers import (
     Activation,
@@ -622,7 +622,7 @@ class Net(object):
                     parameters,
                     wrap_options,
                 )
-                control = np.append(parameters.control.x, _net_to_vect(self))
+                control = np.append(parameters.control.x, _net2vect(self))
 
                 callback(
                     iopt=Optimize(

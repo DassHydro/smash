@@ -121,14 +121,14 @@ def _merge_net_control(ret: dict, optimize_options: dict):
         for layer in net.layers:
             if hasattr(layer, "_initialize"):
                 layer._initialize(None)
-        x = _net_to_vect(net)
+        x = _net2vect(net)
 
         ret["x"] = np.append(ret["x"], x)
 
         ret["x_bkg"] = np.append(ret["x_bkg"], x)  # no transformation applied to x
 
 
-def _net_to_vect(net: Net) -> np.ndarray:
+def _net2vect(net: Net) -> np.ndarray:
     x = []
 
     for layer in net.layers:
@@ -139,7 +139,7 @@ def _net_to_vect(net: Net) -> np.ndarray:
     return np.concatenate(x)
 
 
-def _vect_to_net(vect: np.ndarray, net: Net) -> Net:
+def _set_net_from_vect(vect: np.ndarray, net: Net):
     ind = 0
 
     for layer in net.layers:
@@ -150,10 +150,8 @@ def _vect_to_net(vect: np.ndarray, net: Net) -> Net:
             layer.bias = vect[ind : ind + layer.bias.size].reshape(layer.bias_shape)
             ind += layer.bias.size
 
-    return net
 
-
-def _net_to_parameters(
+def _set_parameters_from_net(
     net: Net, x: np.ndarray, calibrated_parameters: np.ndarray, parameters: ParametersDT
 ) -> bool:
     # % Forward propogation
@@ -207,7 +205,7 @@ def _set_control(
     net = optimize_options.get("net", None)
 
     if net is None:
-        # Could not fully standardize 'control_vectol' before initializing model._parameters.control
+        # Could not fully standardize 'control_vector' before initializing model._parameters.control
         # 'control_vector' can be checked by Numpy with setattr method applied to a Numpy array
         setattr(model._parameters.control, "x", control_vector)
 
@@ -216,7 +214,7 @@ def _set_control(
         )
 
     else:  # in case of using 'ann' mapping
-        ind = np.sum(model._parameters.control.nbk)
+        ind = model._parameters.control.n
 
         # Set Fortran control
         setattr(model._parameters.control, "x", control_vector[:ind])
@@ -230,7 +228,7 @@ def _set_control(
             if hasattr(layer, "_initialize"):
                 layer._initialize(None)
 
-        net = _vect_to_net(control_vector[ind:], net)  # set weight and bias with control values
+        _set_net_from_vect(control_vector[ind:], net)  # set weight and bias with control values
 
         l_desc = model._input_data.physio_data.l_descriptor
         u_desc = model._input_data.physio_data.u_descriptor
@@ -241,7 +239,7 @@ def _set_control(
         if net.layers[0].layer_name() == "Dense":
             desc = desc.reshape(-1, desc.shape[-1])
 
-        _net_to_parameters(
+        _set_parameters_from_net(
             net, desc, optimize_options["parameters"], model._parameters, model.mesh.flwdir.shape
         )
 
