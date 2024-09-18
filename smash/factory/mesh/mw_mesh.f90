@@ -54,7 +54,7 @@ contains
 
             row_imd = row + drow(i)
             col_imd = col + dcol(i)
-            
+
             ! % Bounds
             if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
 
@@ -66,7 +66,7 @@ contains
                 sink = .true.
                 return
             end if
-            
+
             call mask_upstream_cells(nrow, ncol, flwdir, row_imd, col_imd, mask, sink)
 
         end do
