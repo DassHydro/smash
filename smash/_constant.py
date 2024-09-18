@@ -424,6 +424,17 @@ DEFAULT_RR_INITIAL_STATES = dict(
 #################################
 
 # % Following RR_PARAMETERS order
+'''
+alpha1 (1e-6, 5e-4): range in Astagneau2022 (https://doi.org/10.1002/hyp.14676) is [0.01 - 0.1] * 10-3 s/mm  
+1e-6 corresponds to the zero case (gr4 or gr5)
+
+alpha2 (1e-5, 1.): range in Astagneau2022 is [0.02 - 0.08] * 10-3 s/mm 
+1e-5 corresponds to the zero case (gr4 or gr5)
+1 to have the max proportion of Pn inside the branch coefficent
+When alpha2 equals 1, the coefficient live between 0 and 1
+First test (Cance):
+we can see something on qd till 3.1e-1 
+'''
 DEFAULT_BOUNDS_RR_PARAMETERS = dict(
     zip(
         RR_PARAMETERS,
@@ -432,8 +443,8 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e2),  # % ci
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
-            (1e-6, 5e-4),  # % alpha1 
-            (1e-6, 1.),  # % alpha2
+            (1e-6, 5e-4),  # % alpha1
+            (1e-5, 1.),  # % alpha2
             (1e-6, 1e3),  # % cl
             (1e-3, 20),  # % be
             (-50, 50),  # % kexc
