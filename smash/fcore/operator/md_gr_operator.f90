@@ -91,6 +91,44 @@ contains
 
     end subroutine gr_production
 
+    subroutine gr_ri_production(pn, en, cp, beta, alpha1, hp, pr, perc, dt)
+
+        implicit none
+
+        real(sp), intent(in) :: pn, en, cp, beta, alpha1
+        real(sp), intent(in) :: dt
+        real(sp), intent(inout) :: hp
+        real(sp), intent(out) :: pr, perc
+
+        real(sp) :: inv_cp, ps, es, hp_imd
+        real(sp) :: lambda, gam, inv_lambda
+
+        inv_cp = 1._sp/cp
+        pr = 0._sp
+        gam = 1._sp - exp(-pn*alpha1)
+        lambda = sqrt(1._sp - gam)
+        inv_lambda = 1._sp/lambda
+
+        ps = cp*inv_lambda*tanh(lambda*pn*inv_cp)*(1._sp - (lambda*hp)**2) &
+        & /(1._sp + lambda*hp*tanh(lambda*pn*inv_cp)) - gam*dt
+
+        es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
+        & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
+
+        hp_imd = hp + (ps - es)*inv_cp
+
+        if (pn .gt. 0) then
+
+            pr = pn - (hp_imd - hp)*cp
+
+        end if
+
+        perc = (hp_imd*cp)*(1._sp - (1._sp + (hp_imd/beta)**4)**(-0.25_sp))
+
+        hp = hp_imd - perc*inv_cp
+
+    end subroutine gr_ri_production
+
     subroutine gr_exchange(fq_l, kexc, ht, l)
 
         implicit none
@@ -380,6 +418,104 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine gr4_time_step
+
+    subroutine gr4_ri_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_alpha1, ac_alpha2, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
+        real(sp), dimension(mesh%nac), intent(in) :: ac_alpha1, ac_alpha2
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k, time_step_returns
+        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, &
+        !$OMP&  ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
+
+                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+
+                    call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+                split = 0.9_sp*tanh(ac_alpha2(k)*pn)**2 + 0.1_sp
+
+                prr = (1._sp - split)*(pr + perc) + l
+                prd = split*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+    end subroutine gr4_ri_time_step
 
     subroutine gr4_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
     & weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -857,6 +993,105 @@ contains
         !$OMP end parallel do
 #endif
     end subroutine gr5_time_step
+
+    subroutine gr5_ri_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_alpha1, ac_alpha2, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(in) :: ac_alpha1, ac_alpha2
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k, time_step_returns
+        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, &
+        !$OMP& ac_alpha1, ac_alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
+
+                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+
+                    call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                split = 0.9_sp*tanh(ac_alpha2(k)*pn)**2 + 0.1_sp
+
+                prr = (1._sp - split)*(pr + perc) + l
+                prd = split*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+    end subroutine gr5_ri_time_step
 
     subroutine gr6_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_be, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)

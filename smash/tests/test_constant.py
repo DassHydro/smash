@@ -51,10 +51,12 @@ def test_module_name():
     # % Check hydrological module
     assert HYDROLOGICAL_MODULE == [
         "gr4",
+        "gr4_ri",
         "gr4_mlp",
         "gr4_ode",
         "gr4_ode_mlp",
         "gr5",
+        "gr5_ri",
         "gr6",
         "grc",
         "grd",
@@ -88,10 +90,12 @@ def test_module_parameters():
     # % Check hydrological module rr parameters
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
+        ["ci", "cp", "ct", "alpha1", "alpha2", "kexc"],  # % gr4_ri
         ["ci", "cp", "ct", "kexc"],  # % gr4_mlp
         ["ci", "cp", "ct", "kexc"],  # % gr4_ode
         ["ci", "cp", "ct", "kexc"],  # % gr4_ode_mlp
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
+        ["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"],  # % gr5_ri
         ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
         ["ci", "cp", "ct", "cl", "kexc"],  # % grc
         ["cp", "ct"],  # % grd
@@ -102,10 +106,12 @@ def test_module_parameters():
     # % Check hydrological module rr states
     assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == [
         ["hi", "hp", "ht"],  # % gr4
+        ["hi", "hp", "ht"],  # % gr4_ri
         ["hi", "hp", "ht"],  # % gr4_mlp
         ["hi", "hp", "ht"],  # % gr4_ode
         ["hi", "hp", "ht"],  # % gr4_ode_mlp
         ["hi", "hp", "ht"],  # % gr5
+        ["hi", "hp", "ht"],  # % gr5_ri
         ["hi", "hp", "ht", "he"],  # % gr6
         ["hi", "hp", "ht", "hl"],  # % grc
         ["hp", "ht"],  # % grd
@@ -116,10 +122,12 @@ def test_module_parameters():
     # % Check hydrological module rr internal fluxes
     assert list(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES.values()) == [
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4-ri
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4_mlp
         ["pn", "en", "lexc", "qt"],  # % gr4_ode
         ["pn", "en", "lexc", "qt"],  # % gr4_ode_mlp
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
+        ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5-ri
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
         ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"],  # % grc
         ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
@@ -146,6 +154,8 @@ def test_parameters():
         "ci",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc)
         "cp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
         "ct",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
+        "alpha1",  # % (gr4_ri, gr5_ri)
+        "alpha2",  # % (gr4_ri, gr5_ri)
         "cl",  # % grc
         "be",  # % gr6
         "kexc",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6)
@@ -170,9 +180,9 @@ def test_parameters():
     # % Check rainfall-runoff states
     assert RR_STATES == [
         "hs",  # % ssn
-        "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc)
-        "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
-        "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr6, grc, grd)
+        "hi",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6, grc)
+        "hp",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6, grc, grd)
+        "ht",  # % (gr4, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, gr6, grc, grd)
         "hl",  # % grc
         "he",  # % gr6
         "ha",  # % loieau
@@ -232,6 +242,8 @@ def test_feasible_domain():
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
+        (0, np.inf),  # % alpha1
+        (0, np.inf),  # % alpha2
         (0, np.inf),  # % cl
         (0, np.inf),  # % be
         (-np.inf, np.inf),  # % kexc
@@ -291,6 +303,8 @@ def test_default_parameters():
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
+        3e-4,  # % alpha1
+        1e-3,  # % alpha2
         500,  # % cl
         10,  # % be
         0,  # % kexc
@@ -350,6 +364,8 @@ def test_default_bounds_parameters():
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
+        (1e-6, 5e-4),  # % alpha1
+        (1e-5, 1.0),  # % alpha2
         (1e-6, 1e3),  # % cl
         (1e-3, 20),  # % be
         (-50, 50),  # % kexc
