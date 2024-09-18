@@ -440,7 +440,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     
     In context of high rainfall intensities triggering flash flood responses, it is crucial to account for fast dynamics related to surface/hypodermic runoff 
     and slower responses due to delayed/deeper flows (e.g. https://doi.org/10.5194/hess-26-5185-2022). 
-    Following :cite:p:`Astagneau_2022` for a lumped GR model, we introduce at pixel scale in smash a function to modify the partitionning between fast 
+    Following :cite:p:`Astagneau_2022` for a lumped GR model, we introduce at pixel scale in `smash` a function to modify the partitioning between fast 
     and slower transfert branches depending on rainfall intensity of the current time step only (small pixel size):
     
     .. math::
