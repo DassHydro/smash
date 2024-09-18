@@ -362,8 +362,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     **Production**
     
 
-    In the classical gr production reservoir formulation, the instantaneous production rate is the ratio between the state and the capacity of the reservoir :
-    :math:`\eta = \left( \frac{h_p}{c_p} \right)^2`. The integration of the complementary of :math:`\eta` the rainfall infiltration :math:`p_s`.
+    In the classical gr production reservoir formulation, the instantaneous production rate is the ratio between the state and the capacity of the reservoir,
+    :math:`\eta = \left( \frac{h_p}{c_p} \right)^2`. The infiltration flux :math:p_s is obtained by temporal integration as follows:
 
     .. math::
         :nowrap:
@@ -374,7 +374,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         
         \end{eqnarray}
         
-    We assume that the production reservoir receives a rainfall of :math:`p_n` at time :math:`t`, then
+    Assuming the neutralized rainfall :math:p_n constant over the current time step and thanks to analytically integrable function, the infiltration flux into the production reservoir is obtained:
 
     .. math::
         :nowrap:
