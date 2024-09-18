@@ -20,6 +20,7 @@ Mesh Generation
 .. autosummary::
       :toctree: smash/
 
+      detect_sink
       generate_mesh
 
 Neural Network Configuration

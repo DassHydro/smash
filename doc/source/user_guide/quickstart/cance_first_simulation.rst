@@ -61,7 +61,10 @@ the ``France_flwdir.tif`` contains the flow direction data on the whole France, 
     :align: center
     :width: 175
 
-Note: the flow directions must not contain well(s), i.e two consecutive cells flowing toward each other. Thus you must ensure that the flow directions are consistent from upstream to downstream.
+.. note::
+
+    The flow directions should not contain sink(s), i.e. consecutive cells flowing toward each other.
+    It is therefore important to ensure that flow directions are consistent from upstream to downstream.
 
 Gauge attributes
 ****************
@@ -400,8 +403,6 @@ An important step after generating the ``mesh`` is to check that the stations ha
 
 For this ``mesh``, we have a negative relative error on the simulated drainage area that varies from -0.3% for the most downstream gauge to -10% for the most upstream one
 (which can be explained by the fact that small upstream catchments are more sensitive to the relatively coarse ``mesh`` resolution).
-
-Note: the `smash.factory.generate_mesh` function first check the consitency of the flow directions (i.e the existence of well(s)). If some well(s) are detected, an error is printed and a dictionary with all necessary informations to identify the well(s) are returned. This check can be terned off by passing the flag `check_well=False` in the function `smash.factory.generate_mesh`.
 
 .. TODO FC link to automatic meshing
 
