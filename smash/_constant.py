@@ -52,8 +52,8 @@ def get_neurons_from_hydrological_module(hydrological_module: str, hidden_neuron
             # % fixed NN input size = 5 and fixed NN output size 5
             n_in, n_out = (5, 5)
         elif hydrological_module == "grc_mlp":
-            # % fixed NN input size = 5 and fixed NN output size 4
-            n_in, n_out = (5, 4)
+            # % fixed NN input size = 5 and fixed NN output size 5
+            n_in, n_out = (5, 5)
         elif hydrological_module == "grd_mlp":
             # % fixed NN input size = 4 and fixed NN output size 2
             n_in, n_out = (4, 2)
