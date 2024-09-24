@@ -32,6 +32,9 @@ def detect_sink(flwdir_path: FilePath, output_path: FilePath | None = None) -> n
     """
     Detect the sink cells in a flow direction file.
 
+    Sinks in flow direction lead to numerical issues in the routing scheme and should be removed before
+    generating the mesh.
+
     Parameters
     ----------
     flwdir_path : `str`
@@ -52,6 +55,10 @@ def detect_sink(flwdir_path: FilePath, output_path: FilePath | None = None) -> n
 
         - ``0``: non-sink cell
         - ``1``: sink cell
+
+    See Also
+    --------
+    smash.factory.generate_mesh : Automatic mesh generation.
 
     Examples
     --------
@@ -76,13 +83,13 @@ def detect_sink(flwdir_path: FilePath, output_path: FilePath | None = None) -> n
            [0, 0, 0, ..., 0, 0, 0]], dtype=int32)
 
     ``sink`` is a mask of sink cells. The value ``1`` represents a sink cell and ``0`` a non-sink cell. The
-    given flow direction file in the example does not contain any sink cells. ``sink`` is therefore a matrix
+    given flow direction file in the example does not contain any sink cell. ``sink`` is therefore a matrix
     of zeros.
 
     >>> np.all(sink == 0)
     np.True_
 
-    In this example, we are going to add a false sinks (2 cells) to show how they can be identified.
+    In this example, we are going to add a false sink (2 cells) to show how they can be identified.
 
     >>> sink[10, 10:12] = 1
     >>> np.all(sink == 0), np.count_nonzero(sink == 1)
@@ -303,6 +310,7 @@ def generate_mesh(
     See Also
     --------
     smash.Model : Primary data structure of the hydrological model `smash`.
+    smash.factory.detect_sink : Detect the sink cells in a flow direction file.
 
     Examples
     --------

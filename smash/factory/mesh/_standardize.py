@@ -11,7 +11,6 @@ import rasterio
 from smash.factory.mesh._tools import _get_transform
 
 if TYPE_CHECKING:
-    from typing import Tuple
 
     from smash.util._typing import AlphaNumeric, AnyTuple, FilePath, ListLike, Numeric
 
@@ -47,7 +46,7 @@ def _standardize_detect_sink_flwdir_path(flwdir_path: FilePath) -> str:
     return _standardize_flwdir_path(flwdir_path)
 
 
-def _standardize_detect_sink_output_path(output_path: FilePath | None) -> str:
+def _standardize_detect_sink_output_path(output_path: FilePath | None) -> str | None:
     return _standardize_output_path(output_path)
 
 
@@ -58,7 +57,7 @@ def _standardize_detect_sink_args(flwdir_path: FilePath, output_path: FilePath |
 
     output_path = _standardize_detect_sink_output_path(output_path)
 
-    return (flwdir_dataset, output_path)
+    return flwdir_dataset, output_path
 
 
 def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
@@ -132,7 +131,7 @@ def _standardize_generate_mesh_x_y_area(
     x: Numeric | ListLike,
     y: Numeric | ListLike,
     area: Numeric | ListLike,
-) -> Tuple[np.ndarray]:
+) -> tuple[np.ndarray]:
     if not isinstance(x, (int, float, list, tuple, np.ndarray)):
         raise TypeError(
             "x argument must be of Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
@@ -197,7 +196,7 @@ def _standardize_generate_mesh_max_depth(max_depth: Numeric) -> int:
     return max_depth
 
 
-def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int:
+def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int | None:
     if epsg is None:
         pass
 
@@ -239,4 +238,4 @@ def _standardize_generate_mesh_args(
 
     epsg = _standardize_generate_mesh_epsg(epsg)
 
-    return (flwdir_dataset, bbox, x, y, area, code, max_depth, epsg)
+    return flwdir_dataset, bbox, x, y, area, code, max_depth, epsg
