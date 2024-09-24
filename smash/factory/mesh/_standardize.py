@@ -11,7 +11,6 @@ import rasterio
 from smash.factory.mesh._tools import _get_transform
 
 if TYPE_CHECKING:
-
     from smash.util._typing import AlphaNumeric, AnyTuple, FilePath, ListLike, Numeric
 
 
