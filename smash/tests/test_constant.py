@@ -17,11 +17,13 @@ from smash._constant import (
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     HYDROLOGICAL_MODULE,
+    HYDROLOGICAL_MODULE_INOUT_NEURONS,
     HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     HYDROLOGICAL_MODULE_RR_PARAMETERS,
     HYDROLOGICAL_MODULE_RR_STATES,
     INPUT_DATA_FORMAT,
     MAX_DURATION,
+    NN_PARAMETERS_KEYS,
     PEAK_QUANT,
     RATIO_PET_HOURLY,
     ROUTING_MODULE,
@@ -234,6 +236,39 @@ def test_structural_error_parameters():
 
     # % Check serr sigma parameters
     assert SERR_SIGMA_PARAMETERS == ["sg0", "sg1", "sg2"]
+
+
+def test_parameterization_neural_network_structure():
+    # % Check nn_parameters keys
+    assert NN_PARAMETERS_KEYS == ["weight_1", "bias_1", "weight_2", "bias_2", "weight_3", "bias_3"]
+
+    # % Check in/out size of the parameterization NN
+    assert HYDROLOGICAL_MODULE_INOUT_NEURONS == dict(
+        zip(
+            HYDROLOGICAL_MODULE,
+            (
+                [
+                    (0, 0),  # % gr4
+                    (4, 4),  # % gr4_mlp
+                    (0, 0),  # % gr4_ri
+                    (0, 0),  # % gr4_ode
+                    (4, 5),  # % gr4_ode_mlp
+                    (0, 0),  # % gr5
+                    (4, 4),  # % gr5_mlp
+                    (0, 0),  # % gr5_ri
+                    (0, 0),  # % gr6
+                    (5, 5),  # % gr6_mlp
+                    (0, 0),  # % grc
+                    (5, 5),  # % grc_mlp
+                    (0, 0),  # % grd
+                    (4, 2),  # % grd_mlp
+                    (0, 0),  # % loieau
+                    (4, 3),  # % loieau_mlp
+                    (0, 0),  # % vic3l
+                ]
+            ),
+        )
+    )
 
 
 def test_feasible_domain():

@@ -13313,6 +13313,7 @@ CONTAINS
 &     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
 &     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
     ps = temp2
+! Range of correction coef: (0, 2)
     ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
     ps = (1._sp+fq_ps)*ps
     temp2 = TANH(en*inv_cp)
@@ -13324,6 +13325,7 @@ CONTAINS
 &     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
 &     1._sp-hp)*temp2+1._sp)
     es = temp
+! Range of correction coef: (0, 2)
     es_d = es*fq_es_d + (fq_es+1._sp)*es_d
     es = (1._sp+fq_es)*es
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
@@ -13380,10 +13382,12 @@ CONTAINS
     INTEGER :: branch
     inv_cp = 1._sp/cp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+! Range of correction coef: (0, 2)
     CALL PUSHREAL4(ps)
     ps = (1._sp+fq_ps)*ps
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+! Range of correction coef: (0, 2)
     CALL PUSHREAL4(es)
     es = (1._sp+fq_es)*es
     hp_imd = hp + (ps-es)*inv_cp
@@ -13465,9 +13469,11 @@ CONTAINS
     inv_cp = 1._sp/cp
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+! Range of correction coef: (0, 2)
     ps = (1._sp+fq_ps)*ps
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+! Range of correction coef: (0, 2)
     es = (1._sp+fq_es)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
@@ -13743,6 +13749,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: l
     REAL(sp), INTENT(OUT) :: l_d
     REAL(sp) :: temp
+! Range of correction coef: (0, 2)
     temp = ht**3.5_sp
     l_d = temp*(kexc*fq_l_d+(fq_l+1._sp)*kexc_d) + (fq_l+1._sp)*kexc*&
 &     3.5_sp*ht**2.5*ht_d
@@ -13760,6 +13767,7 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
+! Range of correction coef: (0, 2)
     REAL(sp) :: temp_b
     temp_b = ht**3.5_sp*l_b
     ht_b = ht_b + 3.5_sp*ht**2.5*(fq_l+1._sp)*kexc*l_b
@@ -13772,6 +13780,7 @@ CONTAINS
     REAL(sp), INTENT(IN) :: fq_l, kexc
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(OUT) :: l
+! Range of correction coef: (0, 2)
     l = (1._sp+fq_l)*kexc*ht**3.5_sp
   END SUBROUTINE GR_EXCHANGE
 
@@ -13787,6 +13796,7 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: ht_d
     REAL(sp), INTENT(OUT) :: l
     REAL(sp), INTENT(OUT) :: l_d
+! Range of correction coef: (0, 2)
     l_d = (ht-aexc)*(kexc*fq_l_d+(fq_l+1._sp)*kexc_d) + (fq_l+1._sp)*&
 &     kexc*(ht_d-aexc_d)
     l = (1._sp+fq_l)*kexc*(ht-aexc)
@@ -13804,6 +13814,7 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
+! Range of correction coef: (0, 2)
     REAL(sp) :: temp_b
     fq_l_b = fq_l_b + kexc*(ht-aexc)*l_b
     kexc_b = kexc_b + (fq_l+1._sp)*(ht-aexc)*l_b
@@ -13817,6 +13828,7 @@ CONTAINS
     REAL(sp), INTENT(IN) :: fq_l, kexc, aexc
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(OUT) :: l
+! Range of correction coef: (0, 2)
     l = (1._sp+fq_l)*kexc*(ht-aexc)
   END SUBROUTINE GR_THRESHOLD_EXCHANGE
 
@@ -14589,6 +14601,7 @@ CONTAINS
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
+! Range of correction pn, en: (0, 2)
     temp = (fq(2)+1._sp)*(-hp+2._sp)
     fhp_d = (1._sp-hp**2)*(pn*fq_d(1)+(fq(1)+1._sp)*pn_d) - (fq(1)+1._sp&
 &     )*pn*2*hp*hp_d - en*hp*((2._sp-hp)*fq_d(2)-(fq(2)+1._sp)*hp_d) - &
@@ -14604,6 +14617,7 @@ CONTAINS
       hp = 1._sp - 1.e-6_sp
       hp_d = 0.0_4
     END IF
+! Range of correction c0.9: (1, 0); kexc, ct: (0, 2)
     temp = (-(fq(3)*fq(3))+1._sp)*(hp*hp)
     temp0 = ht**3.5_sp
     temp1 = ht**5
@@ -14625,10 +14639,14 @@ CONTAINS
       ht_d = 0.0_4
     END IF
 !end do
+! Range of correction kexc: (0, 2)
     temp1 = ht**3.5_sp
     l_d = temp1*(kexc*fq_d(4)+(fq(4)+1._sp)*kexc_d) + (fq(4)+1._sp)*kexc&
 &     *3.5_sp*ht**2.5*ht_d
     l = (fq(4)+1._sp)*kexc*temp1
+! Range of correction ct: (0, 2)
+! Range of correction c0.1: (1, 10)
+! Range of correction pn: (0, 2)
     temp1 = ht**5
     temp0 = (fq(1)+1._sp)*pn*(hp*hp)
     temp = 0.9_sp*(fq(3)*fq(3)) + 0.1_sp
@@ -14667,6 +14685,7 @@ CONTAINS
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
+! Range of correction pn, en: (0, 2)
     fhp = (1._sp+fq(1))*pn*(1._sp-hp**2) - (1._sp+fq(2))*en*hp*(2._sp-hp&
 &     )
     CALL PUSHREAL4(hp)
@@ -14683,6 +14702,7 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
+! Range of correction c0.9: (1, 0); kexc, ct: (0, 2)
     fht = 0.9_sp*(1._sp-fq(3)**2)*(1._sp+fq(1))*pn*hp**2 + (1._sp+fq(4))&
 &     *kexc*ht**3.5_sp - (1._sp+fq(5))*ct*ht**5
     CALL PUSHREAL4(ht)
@@ -14772,18 +14792,24 @@ CONTAINS
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
+! Range of correction pn, en: (0, 2)
     fhp = (1._sp+fq(1))*pn*(1._sp-hp**2) - (1._sp+fq(2))*en*hp*(2._sp-hp&
 &     )
     hp = hp + dt*fhp*inv_cp
     IF (hp .LE. 0._sp) hp = 1.e-6_sp
     IF (hp .GE. 1._sp) hp = 1._sp - 1.e-6_sp
+! Range of correction c0.9: (1, 0); kexc, ct: (0, 2)
     fht = 0.9_sp*(1._sp-fq(3)**2)*(1._sp+fq(1))*pn*hp**2 + (1._sp+fq(4))&
 &     *kexc*ht**3.5_sp - (1._sp+fq(5))*ct*ht**5
     ht = ht + dt*fht/ct
     IF (ht .LE. 0._sp) ht = 1.e-6_sp
     IF (ht .GE. 1._sp) ht = 1._sp - 1.e-6_sp
 !end do
+! Range of correction kexc: (0, 2)
     l = (1._sp+fq(4))*kexc*ht**3.5_sp
+! Range of correction ct: (0, 2)
+! Range of correction c0.1: (1, 10)
+! Range of correction pn: (0, 2)
     q = (1._sp+fq(5))*ct*ht**5 + (0.1_sp+0.9_sp*fq(3)**2)*(1._sp+fq(1))*&
 &     pn*hp**2 + l
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP
@@ -15203,10 +15229,12 @@ CONTAINS
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Range of correction c0.9: (1, 0)
           temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
           prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
 &           , k)*output_layer_d(3, k)) + l_d
           prr = 0.9_sp*(temp*(pr+perc)) + l
+! Range of correction c0.1: (1, 10)
           temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
           prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
 &           , k) + temp*(pr_d+perc_d)
@@ -15371,8 +15399,10 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
           prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+! Range of correction c0.1: (1, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
@@ -15577,7 +15607,9 @@ CONTAINS
             perc = 0._sp
             l = 0._sp
           END IF
+! Range of correction c0.9: (1, 0)
           prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+! Range of correction c0.1: (1, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -17007,10 +17039,12 @@ CONTAINS
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Range of correction c0.9: (1, 0)
           temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
           prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
 &           , k)*output_layer_d(3, k)) + l_d
           prr = 0.9_sp*(temp*(pr+perc)) + l
+! Range of correction c0.1: (1, 10)
           temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
           prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
 &           , k) + temp*(pr_d+perc_d)
@@ -17175,8 +17209,10 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
           prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+! Range of correction c0.1: (1, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
@@ -17383,7 +17419,9 @@ CONTAINS
             perc = 0._sp
             l = 0._sp
           END IF
+! Range of correction c0.9: (1, 0)
           prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+! Range of correction c0.1: (1, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -18171,18 +18209,23 @@ CONTAINS
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Range of correction c0.6: (5/3, 1/3)
+! Range of correction c0.9: (1, 0)
           temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
           temp0 = -(0.4_sp*output_layer(4, k)) + 0.6_sp
           prr_d = 0.9_sp*(temp*(temp0*(pr_d+perc_d)-(pr+perc)*0.4_sp*&
 &           output_layer_d(4, k))-temp0*(pr+perc)*2*output_layer(3, k)*&
 &           output_layer_d(3, k)) + l_d
           prr = 0.9_sp*(temp0*(pr+perc)*temp) + l
+! Range of correction c0.4: (0, 2)
+! Range of correction c0.9: (1, 0)
           temp0 = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
           temp = (output_layer(4, k)+1._sp)*(pr+perc)
           pre_d = 0.9_sp*0.4_sp*(temp0*((pr+perc)*output_layer_d(4, k)+(&
 &           output_layer(4, k)+1._sp)*(pr_d+perc_d))-temp*2*output_layer&
 &           (3, k)*output_layer_d(3, k)) + l_d
           pre = 0.9_sp*0.4_sp*(temp*temp0) + l
+! Range of correction c0.1: (0, 10)
           temp0 = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + &
 &           0.1_sp
           prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
@@ -18356,12 +18399,17 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Range of correction c0.6: (5/3, 1/3)
+! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
           prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.4: (0, 2)
+! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(pre)
           pre = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
@@ -18586,10 +18634,15 @@ CONTAINS
             perc = 0._sp
             l = 0._sp
           END IF
+! Range of correction c0.6: (5/3, 1/3)
+! Range of correction c0.9: (1, 0)
           prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.4: (0, 2)
+! Range of correction c0.9: (1, 0)
           pre = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -19045,18 +19098,23 @@ CONTAINS
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Range of correction c0.6: (5/3, 1/3)
+! Range of correction c0.9: (1, 0)
           temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
           temp0 = -(0.4_sp*output_layer(4, k)) + 0.6_sp
           prr_d = 0.9_sp*(temp*(temp0*(pr_d+perc_d)-(pr+perc)*0.4_sp*&
 &           output_layer_d(4, k))-temp0*(pr+perc)*2*output_layer(3, k)*&
 &           output_layer_d(3, k)) + l_d
           prr = 0.9_sp*(temp0*(pr+perc)*temp) + l
+! Range of correction c0.4: (0, 2)
+! Range of correction c0.9: (1, 0)
           temp0 = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
           temp = (output_layer(4, k)+1._sp)*(pr+perc)
           prl_d = 0.9_sp*0.4_sp*(temp0*((pr+perc)*output_layer_d(4, k)+(&
 &           output_layer(4, k)+1._sp)*(pr_d+perc_d))-temp*2*output_layer&
 &           (3, k)*output_layer_d(3, k)) + l_d
           prl = 0.9_sp*0.4_sp*(temp*temp0) + l
+! Range of correction c0.1: (0, 10)
           temp0 = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + &
 &           0.1_sp
           prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
@@ -19227,12 +19285,17 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Range of correction c0.6: (5/3, 1/3)
+! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
           prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.4: (0, 2)
+! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prl)
           prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
@@ -19455,10 +19518,15 @@ CONTAINS
             perc = 0._sp
             l = 0._sp
           END IF
+! Range of correction c0.6: (5/3, 1/3)
+! Range of correction c0.9: (1, 0)
           prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.4: (0, 2)
+! Range of correction c0.9: (1, 0)
           prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
 &           output_layer(3, k)**2))*(pr+perc) + l
+! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -20697,10 +20765,12 @@ CONTAINS
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Range of correction c0.9: (1, 0)
           temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
           prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
 &           , k)*output_layer_d(3, k))
           prr = 0.9_sp*(temp*(pr+perc))
+! Range of correction c0.1: (0, 10)
           temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
           prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
 &           , k) + temp*(pr_d+perc_d)
@@ -20872,7 +20942,9 @@ CONTAINS
             perc = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Range of correction c0.9: (1, 0)
           prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc)
+! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(qr)
           CALL PUSHREAL4(ac_hc(k))
@@ -21100,7 +21172,9 @@ CONTAINS
             pr = 0._sp
             perc = 0._sp
           END IF
+! Range of correction c0.9: (1, 0)
           prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc)
+! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL GR_TRANSFER(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), &
 &                    qr)

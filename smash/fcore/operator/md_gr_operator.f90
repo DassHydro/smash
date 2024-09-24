@@ -78,11 +78,11 @@ contains
 
         ps = cp*(1._sp - hp*hp)*tanh(pn*inv_cp)/ &
         & (1._sp + hp*tanh(pn*inv_cp))
-        ps = (1._sp + fq_ps)*ps
+        ps = (1._sp + fq_ps)*ps  ! Range of correction coef: (0, 2)
 
         es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
         & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
-        es = (1._sp + fq_es)*es
+        es = (1._sp + fq_es)*es  ! Range of correction coef: (0, 2)
 
         hp_imd = hp + (ps - es)*inv_cp
 
@@ -144,7 +144,7 @@ contains
         real(sp), intent(inout) :: ht
         real(sp), intent(out) :: l
 
-        l = (1._sp + fq_l)*kexc*ht**3.5_sp
+        l = (1._sp + fq_l)*kexc*ht**3.5_sp  ! Range of correction coef: (0, 2)
 
     end subroutine gr_exchange
 
@@ -156,7 +156,7 @@ contains
         real(sp), intent(inout) :: ht
         real(sp), intent(out) :: l
 
-        l = (1._sp + fq_l)*kexc*(ht - aexc)
+        l = (1._sp + fq_l)*kexc*(ht - aexc)  ! Range of correction coef: (0, 2)
 
     end subroutine gr_threshold_exchange
 
@@ -306,7 +306,7 @@ contains
         !do i = 1, n_subtimesteps
 
         fhp = (1._sp + fq(1))*pn*(1._sp - hp**2) &
-        & - (1._sp + fq(2))*en*hp*(2._sp - hp)
+        & - (1._sp + fq(2))*en*hp*(2._sp - hp)  ! Range of correction pn, en: (0, 2)
 
         hp = hp + dt*fhp*inv_cp
 
@@ -315,7 +315,7 @@ contains
 
         fht = (0.9_sp*(1._sp - fq(3)**2))*(1._sp + fq(1))*pn*hp**2 &
         & + (1._sp + fq(4))*kexc*ht**3.5_sp &
-        & - (1._sp + fq(5))*ct*ht**5
+        & - (1._sp + fq(5))*ct*ht**5  ! Range of correction c0.9: (1, 0); kexc, ct: (0, 2)
 
         ht = ht + dt*fht/ct
 
@@ -324,10 +324,11 @@ contains
 
         !end do
 
-        l = (1._sp + fq(4))*kexc*ht**3.5_sp
+        l = (1._sp + fq(4))*kexc*ht**3.5_sp  ! Range of correction kexc: (0, 2)
 
-        q = (1._sp + fq(5))*ct*ht**5 &
-        & + (0.1_sp + 0.9_sp*fq(3)**2)*(1._sp + fq(1))*pn*hp**2 + l
+        q = (1._sp + fq(5))*ct*ht**5 &  ! Range of correction ct: (0, 2)
+        & + (0.1_sp + 0.9_sp*fq(3)**2) &  ! Range of correction c0.1: (1, 10)
+        & *(1._sp + fq(1))*pn*hp**2 + l  ! Range of correction pn: (0, 2)
 
     end subroutine gr_production_transfer_ode_mlp
 
@@ -543,8 +544,8 @@ contains
 
                 end if
 
-                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l  ! Range of correction c0.9: (1, 0)
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (1, 10)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
@@ -1119,8 +1120,8 @@ contains
 
                 end if
 
-                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l  ! Range of correction c0.9: (1, 0)
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (1, 10)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
@@ -1473,15 +1474,15 @@ contains
 
                 end if
 
-                prr = (0.6_sp - 0.4_sp*output_layer(4, k))* &
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &
+                prr = (0.6_sp - 0.4_sp*output_layer(4, k))* &  ! Range of correction c0.6: (5/3, 1/3)
+                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc) + l
 
-                pre = (0.4_sp*(1._sp + output_layer(4, k)))* &
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &
+                pre = (0.4_sp*(1._sp + output_layer(4, k)))* &  ! Range of correction c0.4: (0, 2)
+                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc) + l
 
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 call gr_exponential_transfer(pre, ac_be(k), ac_he(k), qe)
@@ -1730,15 +1731,15 @@ contains
 
                 end if
 
-                prr = (0.6_sp - 0.4_sp*output_layer(4, k))* &
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &
+                prr = (0.6_sp - 0.4_sp*output_layer(4, k))* &  ! Range of correction c0.6: (5/3, 1/3)
+                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc) + l
 
-                prl = (0.4_sp*(1._sp + output_layer(4, k)))* &
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &
+                prl = (0.4_sp*(1._sp + output_layer(4, k)))* &  ! Range of correction c0.4: (0, 2)
+                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc) + l
 
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 call gr_transfer(5._sp, ac_prcp(k), prl, ac_cl(k), ac_hl(k), ql)
@@ -2226,8 +2227,8 @@ contains
 
                 end if
 
-                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc)
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)
+                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc)  ! Range of correction c0.9: (1, 0)
+                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
 
                 call gr_transfer(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), qr)
 

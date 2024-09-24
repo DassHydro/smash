@@ -36,37 +36,12 @@ def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
 
 
 def get_neurons_from_hydrological_module(hydrological_module: str, hidden_neuron: np.ndarray) -> np.ndarray:
-    neurons = np.zeros(len(hidden_neuron) + 2, dtype=np.int32)
+    n_in, n_out = HYDROLOGICAL_MODULE_INOUT_NEURONS[hydrological_module]
+    neurons = [n_in] + [val for val in hidden_neuron if val > 0] + [n_out]
+    padded_neurons = np.zeros(len(hidden_neuron) + 2, dtype=np.int32)
+    padded_neurons[: len(neurons)] = neurons
 
-    if "mlp" in hydrological_module:
-        if hydrological_module == "gr4_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 4
-            n_in, n_out = (4, 4)
-        elif hydrological_module == "gr4_ode_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 5
-            n_in, n_out = (4, 5)
-        elif hydrological_module == "gr5_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 4
-            n_in, n_out = (4, 4)
-        elif hydrological_module == "gr6_mlp":
-            # % fixed NN input size = 5 and fixed NN output size 5
-            n_in, n_out = (5, 5)
-        elif hydrological_module == "grc_mlp":
-            # % fixed NN input size = 5 and fixed NN output size 5
-            n_in, n_out = (5, 5)
-        elif hydrological_module == "grd_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 2
-            n_in, n_out = (4, 2)
-        elif hydrological_module == "loieau_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 3
-            n_in, n_out = (4, 3)
-
-        neurons[0] = n_in
-        non_zero_hidden_neurons = [val for val in hidden_neuron if val > 0]
-        neurons[1 : 1 + len(non_zero_hidden_neurons)] = non_zero_hidden_neurons
-        neurons[1 + len(non_zero_hidden_neurons)] = n_out
-
-    return neurons
+    return padded_neurons
 
 
 ### FLOAT PRECISION FOR FLOAT COMPARISON ###
@@ -183,7 +158,6 @@ ROUTING_MODULE_NQZ = dict(
     zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
 )
 
-
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
@@ -261,6 +235,37 @@ STRUCTURE_RR_INTERNAL_FLUXES = dict(
     zip(
         STRUCTURE,
         [get_rr_internal_fluxes_from_structure(s) for s in STRUCTURE],
+    )
+)
+
+## PARAMETERIZATION NN STRUCTURE ##
+###################################
+
+# % Following HYDROLOGICAL_MODULE order
+HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        (
+            [
+                (0, 0),  # % gr4
+                (4, 4),  # % gr4_mlp
+                (0, 0),  # % gr4_ri
+                (0, 0),  # % gr4_ode
+                (4, 5),  # % gr4_ode_mlp
+                (0, 0),  # % gr5
+                (4, 4),  # % gr5_mlp
+                (0, 0),  # % gr5_ri
+                (0, 0),  # % gr6
+                (5, 5),  # % gr6_mlp
+                (0, 0),  # % grc
+                (5, 5),  # % grc_mlp
+                (0, 0),  # % grd
+                (4, 2),  # % grd_mlp
+                (0, 0),  # % loieau
+                (4, 3),  # % loieau_mlp
+                (0, 0),  # % vic3l
+            ]
+        ),
     )
 )
 
