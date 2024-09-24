@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import pytest
 
@@ -87,3 +89,15 @@ def test_bbox_padding():
 
     assert mesh_roff["xmin"] != mesh["xmin"], "overlap_read_data.uoff_xmin_neq"
     assert mesh_roff["ymax"] != mesh["ymax"], "overlap_read_data.uoff_ymax_neq"
+
+
+def test_detect_sink():
+    flwdir = smash.factory.load_dataset("flwdir")
+
+    sink = smash.factory.detect_sink(flwdir, "./tmp_flwdir_sink.tif")
+
+    # % Check detect_sink - There should be no sinks in the flow direction file
+    assert np.all(sink == 0), "detect_sink.all_zero"
+
+    # % Check detect_sink - A file with sinks should have been created
+    assert os.path.exists("./tmp_flwdir_sink.tif"), "detect_sink.file_exists"

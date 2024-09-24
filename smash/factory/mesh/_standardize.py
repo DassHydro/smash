@@ -11,12 +11,10 @@ import rasterio
 from smash.factory.mesh._tools import _get_transform
 
 if TYPE_CHECKING:
-    from typing import Tuple
-
     from smash.util._typing import AlphaNumeric, AnyTuple, FilePath, ListLike, Numeric
 
 
-def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
+def _standardize_flwdir_path(flwdir_path: FilePath) -> str:
     if not isinstance(flwdir_path, (str, os.PathLike)):
         raise TypeError("flwdir_path argument must be of FilePath type (str, PathLike[str])")
 
@@ -26,6 +24,43 @@ def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), flwdir_path)
 
     return flwdir_path
+
+
+def _standardize_output_path(output_path: FilePath | None) -> str | None:
+    if output_path is None:
+        return
+
+    if not isinstance(output_path, (str, os.PathLike)):
+        raise TypeError("output_path argument must be of FilePath type (str, PathLike[str])")
+
+    output_path = str(output_path)
+
+    if not os.path.exists(os.path.dirname(output_path)):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), os.path.dirname(output_path))
+
+    return output_path
+
+
+def _standardize_detect_sink_flwdir_path(flwdir_path: FilePath) -> str:
+    return _standardize_flwdir_path(flwdir_path)
+
+
+def _standardize_detect_sink_output_path(output_path: FilePath | None) -> str | None:
+    return _standardize_output_path(output_path)
+
+
+def _standardize_detect_sink_args(flwdir_path: FilePath, output_path: FilePath | None) -> AnyTuple:
+    flwdir_path = _standardize_detect_sink_flwdir_path(flwdir_path)
+
+    flwdir_dataset = rasterio.open(flwdir_path)
+
+    output_path = _standardize_detect_sink_output_path(output_path)
+
+    return flwdir_dataset, output_path
+
+
+def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
+    return _standardize_flwdir_path(flwdir_path)
 
 
 def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: ListLike) -> np.ndarray:
@@ -95,7 +130,7 @@ def _standardize_generate_mesh_x_y_area(
     x: Numeric | ListLike,
     y: Numeric | ListLike,
     area: Numeric | ListLike,
-) -> Tuple[np.ndarray]:
+) -> tuple[np.ndarray]:
     if not isinstance(x, (int, float, list, tuple, np.ndarray)):
         raise TypeError(
             "x argument must be of Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
@@ -160,7 +195,7 @@ def _standardize_generate_mesh_max_depth(max_depth: Numeric) -> int:
     return max_depth
 
 
-def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int:
+def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int | None:
     if epsg is None:
         pass
 
@@ -182,7 +217,6 @@ def _standardize_generate_mesh_args(
     code: str | ListLike | None,
     max_depth: Numeric,
     epsg: AlphaNumeric | None,
-    check_well: bool,
 ) -> AnyTuple:
     flwdir_path = _standardize_generate_mesh_flwdir_path(flwdir_path)
 
@@ -203,4 +237,4 @@ def _standardize_generate_mesh_args(
 
     epsg = _standardize_generate_mesh_epsg(epsg)
 
-    return (flwdir_dataset, bbox, x, y, area, code, max_depth, epsg, check_well)
+    return flwdir_dataset, bbox, x, y, area, code, max_depth, epsg
