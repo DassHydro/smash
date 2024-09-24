@@ -84,6 +84,9 @@ class Optimize:
     cost : `float`
         Cost value.
 
+    n_iter : `int`
+        Number of iterations performed.
+
     projg : `numpy.ndarray`
         Projected gradient value (infinity norm of the Jacobian matrix).
 
@@ -170,6 +173,9 @@ class BayesianOptimize:
     cost : `float`
         Cost value.
 
+    n_iter : `int`
+        Number of iterations performed.
+
     projg : `numpy.ndarray`
         Projected gradient value (infinity norm of the Jacobian matrix).
 
@@ -229,7 +235,7 @@ class _ScipyOptimizeCallback:
     def __init__(self, callback: callable | None, verbose: bool):
         self.verbose = verbose
 
-        self.iterations = 0
+        self.iteration = 0
 
         self.nfg = 1
         self.count_nfg = 0
@@ -244,11 +250,11 @@ class _ScipyOptimizeCallback:
         # % intermediate_result is required by callback function in scipy
         if self.verbose:
             print(
-                f"{' '*4}At iterate {self.iterations:>5}    nfg = {self.nfg:>5}    "
+                f"{' '*4}At iterate {self.iteration:>5}    nfg = {self.nfg:>5}    "
                 f"J = {self.cost:>.5e}    |proj g| = {self.projg:>.5e}"
             )
 
-        self.iterations += 1
+        self.iteration += 1
 
         self.nfg = self.count_nfg
 
@@ -262,6 +268,7 @@ class _ScipyOptimizeCallback:
                     {
                         "control_vector": intermediate_result.x.copy(),
                         "cost": intermediate_result.fun,
+                        "n_iter": self.iteration,
                         "projg": self.projg,
                     }
                 )
@@ -270,7 +277,7 @@ class _ScipyOptimizeCallback:
     def terminate(self, final_result: scipy_OptimizeResult):
         if self.verbose:
             print(
-                f"{' '*4}At iterate {self.iterations:>5}    nfg = {self.nfg:>5}    "
+                f"{' '*4}At iterate {self.iteration:>5}    nfg = {self.nfg:>5}    "
                 f"J = {self.cost:>.5e}    |proj g| = {self.projg:>.5e}"
             )
             print(f"{' '*4}{final_result.message}")
@@ -722,7 +729,9 @@ def _adaptive_optimize(
 
         if callback is not None:
             callback(
-                iopt=Optimize({"control_vector": np.copy(x), "cost": model._output.cost, "projg": projg})
+                iopt=Optimize(
+                    {"control_vector": np.copy(x), "cost": model._output.cost, "n_iter": ite, "projg": projg}
+                )
             )
 
         if wrap_options.comm.verbose:
@@ -738,7 +747,7 @@ def _adaptive_optimize(
         if opt_info["ite"] < maxiter:
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}Reverting to iteration {opt_info['ite']} with "
+                    f"{' '*4}Revert to iteration {opt_info['ite']} with "
                     f"J = {opt_info['cost']:.5e} due to early stopping"
                 )
 
@@ -762,6 +771,9 @@ def _adaptive_optimize(
 
     if "control_vector" in return_options["keys"]:
         ret["control_vector"] = x
+
+    if "n_iter" in return_options["keys"]:
+        ret["n_iter"] = opt_info.get("ite", maxiter)
 
     if "projg" in return_options["keys"]:
         ret["projg"] = projg
@@ -845,6 +857,9 @@ def _ann_adaptive_optimize(
     if "control_vector" in return_options["keys"]:
         ret["control_vector"] = np.append(parameters.control.x, _net2vect(net))
 
+    if "n_iter" in return_options["keys"]:
+        ret["n_iter"] = istop if istop else optimize_options["termination_crit"]["maxiter"]
+
     if "projg" in return_options["keys"]:
         ret["projg"] = net.history["proj_grad"][istop - 1]
 
@@ -895,7 +910,7 @@ def _lbfgsb_optimize(
     scipy_callback.terminate(res_optimize)
 
     # % Apply final control and forward run for updating final states
-    setattr(parameters.control, "x", res_optimize["x"])
+    setattr(parameters.control, "x", res_optimize.x)
 
     wrap_forward_run(
         model.setup,
@@ -910,7 +925,10 @@ def _lbfgsb_optimize(
     ret = {}
 
     if "control_vector" in return_options["keys"]:
-        ret["control_vector"] = res_optimize["x"]
+        ret["control_vector"] = res_optimize.x
+
+    if "n_iter" in return_options["keys"]:
+        ret["n_iter"] = res_optimize.nit
 
     if "projg" in return_options["keys"]:
         ret["projg"] = scipy_callback.projg
@@ -1069,11 +1087,12 @@ def _sbs_optimize(
         converged = ddx < 0.01
 
         if (iter % n == 0) or converged:
+            iteration = iter // n + (iter % n > 0)
+
             if callback is not None:
-                callback(iopt=Optimize({"control_vector": np.copy(z_wa), "cost": gx}))
+                callback(iopt=Optimize({"control_vector": np.copy(z_wa), "cost": gx, "n_iter": iteration}))
 
             if wrap_options.comm.verbose:
-                iteration = iter // n + (iter % n > 0)
                 print(
                     f"{' '*4}At iterate {iteration:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    "
                     f"ddx = {ddx:>4.2f}"
@@ -1097,6 +1116,9 @@ def _sbs_optimize(
 
     if "control_vector" in return_options["keys"]:
         ret["control_vector"] = z_wa
+
+    if "n_iter" in return_options["keys"]:
+        ret["n_iter"] = iteration
 
     if "serr_mu" in return_options["keys"]:
         ret["serr_mu"] = model.get_serr_mu().copy()

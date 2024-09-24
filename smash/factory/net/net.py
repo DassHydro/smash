@@ -630,7 +630,13 @@ class Net(object):
 
                 callback(
                     iopt=Optimize(
-                        {"control_vector": control, "cost": cost, "projg": projg, "net": self.copy()}
+                        {
+                            "control_vector": control,
+                            "cost": cost,
+                            "n_iter": ite,
+                            "projg": projg,
+                            "net": self.copy(),
+                        }
                     )
                 )
 
@@ -647,7 +653,7 @@ class Net(object):
             if opt_info["ite"] < maxiter:
                 if verbose:
                     print(
-                        f"{' '*4}Reverting to iteration {opt_info['ite']} with "
+                        f"{' '*4}Revert to iteration {opt_info['ite']} with "
                         f"J = {opt_info['cost']:.5e} due to early stopping"
                     )
 
