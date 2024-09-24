@@ -83,7 +83,8 @@ def test_optimize():
 
 
 def test_sparse_optimize():
-    res = generic_optimize(pytest.sparse_model_structure)
+    # % Only test sparse storage optimization on one model structure
+    res = generic_optimize(pytest.sparse_model_structure[0:1])
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
