@@ -121,6 +121,11 @@ def _merge_net_control(ret: dict, optimize_options: dict):
         for layer in net.layers:
             if hasattr(layer, "_initialize"):
                 layer._initialize(None)
+
+        # Reset random seed if random_state is previously set
+        if optimize_options["random_state"] is not None:
+            np.random.seed(None)
+
         x = _net2vect(net)
 
         ret["x"] = np.append(ret["x"], x)

@@ -2591,10 +2591,10 @@ class Model:
             self, value, initializer, random_state
         )
 
-        if (random_state is not None) and (initializer != "zeros") and (value is None):
-            np.random.seed(random_state)
-
         if value is None:
+            if random_state is not None:
+                np.random.seed(random_state)
+
             for i in range(self.setup.n_layers):
                 (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i+1}").shape
                 setattr(
@@ -2602,6 +2602,10 @@ class Model:
                     f"weight_{i+1}",
                     _initialize_nn_parameter(n_in, n_neuron, initializer),
                 )
+
+            # % Reset random seed if random_state is previously set
+            if random_state is not None:
+                np.random.seed(None)
 
         else:
             for i, val in enumerate(value):
@@ -2679,10 +2683,10 @@ class Model:
             self, value, initializer, random_state
         )
 
-        if (random_state is not None) and (initializer != "zeros") and (value is None):
-            np.random.seed(random_state)
-
         if value is None:
+            if random_state is not None:
+                np.random.seed(random_state)
+
             for i in range(self.setup.n_layers):
                 n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i+1}").shape[0]
                 setattr(
@@ -2690,6 +2694,10 @@ class Model:
                     f"bias_{i+1}",
                     _initialize_nn_parameter(1, n_neuron, initializer).flatten(),
                 )
+
+            # % Reset random seed if random_state is previously set
+            if random_state is not None:
+                np.random.seed(None)
 
         else:
             for i, val in enumerate(value):

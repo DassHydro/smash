@@ -408,4 +408,8 @@ def _generate_samples(
 
             ret_dict["_dst_" + p] = trunc_normal.pdf(ret_dict[p])
 
+    # % Reset random seed if random_state is previously set
+    if random_state is not None:
+        np.random.seed(None)
+
     return Samples(ret_dict)

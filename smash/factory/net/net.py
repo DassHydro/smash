@@ -510,6 +510,10 @@ class Net(object):
             if hasattr(layer, "_initialize"):
                 layer._initialize(opt)
 
+        # % Reset random seed if random_state is previously set
+        if random_state is not None:
+            np.random.seed(None)
+
     def _fit_d2p(
         self,
         x_train: np.ndarray,
@@ -713,16 +717,22 @@ class Net(object):
 
         value, random_state = _standardize_set_weight_args(self, value, random_state)
 
-        if (random_state is not None) and (value is None):
-            np.random.seed(random_state)
+        if value is None:
+            if random_state is not None:
+                np.random.seed(random_state)
 
-        i = 0
-        for layer in self.layers:
-            if hasattr(layer, "weight"):
-                if value is None:
+            for layer in self.layers:
+                if hasattr(layer, "weight"):
                     _set_initialized_wb_to_layer(layer, "weight")
 
-                else:
+            # % Reset random seed if random_state is previously set
+            if random_state is not None:
+                np.random.seed(None)
+
+        else:
+            i = 0
+            for layer in self.layers:
+                if hasattr(layer, "weight"):
                     layer.weight = value[i]
                     i += 1
 
@@ -784,16 +794,22 @@ class Net(object):
 
         value, random_state = _standardize_set_bias_args(self, value, random_state)
 
-        if (random_state is not None) and (value is None):
-            np.random.seed(random_state)
+        if value is None:
+            if random_state is not None:
+                np.random.seed(random_state)
 
-        i = 0
-        for layer in self.layers:
-            if hasattr(layer, "bias"):
-                if value is None:
+            for layer in self.layers:
+                if hasattr(layer, "bias"):
                     _set_initialized_wb_to_layer(layer, "bias")
 
-                else:
+            # % Reset random seed if random_state is previously set
+            if random_state is not None:
+                np.random.seed(None)
+
+        else:
+            i = 0
+            for layer in self.layers:
+                if hasattr(layer, "bias"):
                     layer.bias = value[i]
                     i += 1
 
