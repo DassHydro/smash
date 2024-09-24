@@ -644,6 +644,14 @@ RETURN_OPTIONS_BASE_DOC = {
         Whether to return cost value.
         """,
     ),
+    "n_iter": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return the number of iterations performed.
+        """,
+    ),
     "projg": (
         """
         `bool`, default False
@@ -872,6 +880,7 @@ callback : callable or None, default None
 
     - ``'control_vector'``: The current control vector.
     - ``'cost'``: The current cost value.
+    - ``'n_iter'``: The current number of iterations performed by the optimizer.
     - ``'projg'``: The current projected gradient, available if using gradient-based optimizers.
     - ``'net'``: The regionalization neural network state, available if using ``'ann'`` **mapping**.
 
@@ -1086,6 +1095,7 @@ callback : callable or None, default None
 
     - ``'control_vector'``: The current control vector.
     - ``'cost'``: The current cost value.
+    - ``'n_iter'``: The current number of iterations performed by the optimizer.
     - ``'projg'``: The current projected gradient, available if using gradient-based optimizers.
 
     >>> import numpy as np
@@ -1642,7 +1652,7 @@ Again, customize the optimization options and optimize the Model
     At iterate    45    nfg =    46    J = 6.45393e-02    |proj g| = 1.56155e-02
     At iterate    46    nfg =    47    J = 6.33092e-02    |proj g| = 1.72698e-02
     EARLY STOPPING: NO IMPROVEMENT for 5 CONSECUTIVE ITERATIONS
-    Reverting to iteration 41 with J = 5.12064e-02 due to early stopping
+    Revert to iteration 41 with J = 5.12064e-02 due to early stopping
 
 The training process was terminated after 46 iterations, where the loss did not decrease below the minimal
 value at iteration 41 for 5 consecutive iterations. The optimal parameters are thus recorded at iteration 41.
