@@ -239,6 +239,15 @@ class Model:
             to **start_time** and **end_time** dates.
             This option is only applicable if **read_prcp** is set to True.
 
+        prcp_date_pattern: `str`, default ''
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the model
+            timestep. for time-step lower than 86400s, prcp_date_pattern will be set to "%Y%m%d%H%M".
+            If dt is equal to 86400s prcp_date_pattern will be set to "%Y%m%d". The last 2 characters
+            of the datepattern can be the number of the occurence to match in the filename counting from 0.
+            (ex: %Y%m%d%H%1 will match the occurence 1 '2022033001' in the filename
+            arome_000100_2022033000_2022033001.tif)
+
         read_pet : `bool`, default False
             Whether or not to read potential evapotranspiration file(s).
 
@@ -268,6 +277,16 @@ class Model:
             This option makes it possible to specify the directory structure and allow faster access according
             to **start_time** and **end_time** dates.
             This option is only applicable if **read_pet** is set to True.
+
+        pet_date_pattern: `str`, default ''
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the
+            model timestep or the daily_interannual_pet option. For time-step lower than 86400s,
+            pet_date_pattern will be set to "%Y%m%d%H%M".If dt is equal to 86400s pet_date_pattern will
+            be set to "%Y%m%d". If daily_interannual_pet is True, pet_date_pattern is enforced to "%m%d".
+            The last 2 characters of the datepattern can be the number of the occurence to match in the
+            filename counting from 0. (ex: %Y%m%d%H%1 will match the occurence 1 '2022033001' in the filename
+            arome_000100_2022033000_2022033001.tif)
 
         daily_interannual_pet : `bool`, default False
             Whether or not to read daily interannual potential evapotranspiration.
@@ -306,6 +325,15 @@ class Model:
             This option is only applicable if **read_snow** is set to True and if **snow_module** is set to
             ``ssn``.
 
+        snow_date_pattern: `str`, default ''
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the model
+            timestep. for time-step lower than 86400s, snow_date_pattern will be set to "%Y%m%d%H%M".
+            If dt is equal to 86400s snow_date_pattern will be set to "%Y%m%d". The last 2 characters of the
+            datepattern can be the number of the occurence to match in the filename counting from 0.
+            (ex: %Y%m%d%H%1 will match the occurence 1 '2022033001' in the filename
+            arome_000100_2022033000_2022033001.tif)
+
         read_temp : `bool`, default False
             Whether or not to read temperature file(s).
 
@@ -332,6 +360,15 @@ class Model:
             to **start_time** and **end_time** dates.
             This option is only applicable if **read_temp** is set to True and if **snow_module** is set to
             ``ssn``.
+
+        temp_date_pattern: `str`, default ''
+            The date pattern (see the datetime documentation to define the pattern) to match in the
+            precipitation filename. If empty, the pattern will automatically defined according the model
+            timestep . for time-step lower than 86400s, temp_date_pattern will be set to "%Y%m%d%H%M".
+            If dt is equal to 86400s temp_date_pattern will be set to "%Y%m%d". The last 2 characters of the
+            datepattern can be the number of the occurence to match in the filename counting from 0.
+            (ex: %Y%m%d%H%1 will match the occurence 1 '2022033001' in the filename
+            arome_000100_2022033000_2022033001.tif)
 
         prcp_partitioning : `bool`, default False
             Whether or not to partition precipitation into liquid (precipitation) and solid (snow) parts.
