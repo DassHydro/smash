@@ -13294,16 +13294,16 @@ CONTAINS
 !   variations   of useful results: hp perc pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_D(fq_ps, fq_ps_d, fq_es, fq_es_d, pn, pn_d, &
-&   en, en_d, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, perc_d)
+&   en, en_d, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, perc_d, ps, es)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp), INTENT(IN) :: fq_ps_d, fq_es_d, pn_d, en_d, cp_d
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
-    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_d, hp_imd_d
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_d
@@ -13313,6 +13313,8 @@ CONTAINS
     REAL(sp) :: temp0
     REAL(sp) :: temp1
     REAL(sp) :: temp2
+    REAL(sp) :: ps_d
+    REAL(sp) :: es_d
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
@@ -13362,16 +13364,16 @@ CONTAINS
 !                pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_B(fq_ps, fq_ps_b, fq_es, fq_es_b, pn, pn_b, &
-&   en, en_b, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, perc_b)
+&   en, en_b, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, perc_b, ps, es)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp) :: fq_ps_b, fq_es_b, pn_b, en_b, cp_b
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
-    REAL(sp) :: pr, perc
+    REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_b, hp_imd_b
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_b
@@ -13391,6 +13393,8 @@ CONTAINS
     REAL(sp) :: temp_b4
     REAL(sp) :: temp_b5
     INTEGER :: branch
+    REAL(sp) :: ps_b
+    REAL(sp) :: es_b
     inv_cp = 1._sp/cp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
 ! Range of correction coef: (0, 2)
@@ -13479,12 +13483,13 @@ CONTAINS
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
   END SUBROUTINE GR_PRODUCTION_B
 
-  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc)
+  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc&
+&   , ps, es)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
+    REAL(sp) :: inv_cp, hp_imd
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwr1
@@ -14917,7 +14922,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -14933,9 +14938,9 @@ CONTAINS
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, &
 !$OMP&ac_ct_d, ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, &
-!$OMP&qd_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&prd, qr, qd), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d&
+!$OMP&, qr_d, qd_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14947,7 +14952,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -15012,7 +15018,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -15031,8 +15037,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE&
-!$OMP&(chunk_start, chunk_end)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd)&
+!$OMP&, PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -15049,7 +15055,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -15082,9 +15088,9 @@ CONTAINS
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, &
 !$OMP&ac_ct_b, ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, &
-!$OMP&qd_b), PRIVATE(branch, chunk_end, chunk_start)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&prd, qr, qd), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b&
+!$OMP&, qr_b, qd_b), PRIVATE(branch, chunk_end, chunk_start)
     CALL POPREAL4(en)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
@@ -15133,7 +15139,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -15165,7 +15171,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15177,8 +15183,9 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd), SCHEDULE&
-!$OMP&                                           (static)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd), &
+!$OMP&                                                   SCHEDULE(static&
+!$OMP&                                                   )
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15188,7 +15195,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -15269,7 +15276,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -15333,9 +15340,9 @@ CONTAINS
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, &
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_qt, pn, en), SHARED(output_layer_d, &
 !$OMP&ac_prcp_d, ac_cp_d, ac_ct_d, ac_kexc_d, ac_hp_d, ac_ht_d, ac_qt_d&
-!$OMP&, pn_d, en_d), PRIVATE(row, col, k, time_step_returns, pr, perc, l&
-!$OMP&, prr, prd, qr, qd), PRIVATE(pr_d, perc_d, l_d, prr_d, prd_d, qr_d&
-!$OMP&, qd_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&, pn_d, en_d), PRIVATE(row, col, k, time_step_returns, pr, perc, &
+!$OMP&ps, es, l, prr, prd, qr, qd), PRIVATE(pr_d, perc_d, l_d, prr_d, &
+!$OMP&prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15346,7 +15353,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
             CALL GR_EXCHANGE_D(output_layer(4, k), output_layer_d(4, k)&
 &                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
 &                        ), l, l_d)
@@ -15446,7 +15453,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
@@ -15512,8 +15519,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, &
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_qt, pn, en), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pr, perc, l, prr, prd, qr, qd), PRIVATE(&
-!$OMP&chunk_start, chunk_end)
+!$OMP&time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd), PRIVATE&
+!$OMP&(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -15529,7 +15536,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
 &                     )
             CALL PUSHCONTROL1B(1)
@@ -15570,9 +15577,10 @@ CONTAINS
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, &
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_qt, pn, en), SHARED(output_layer_b, &
 !$OMP&ac_prcp_b, ac_cp_b, ac_ct_b, ac_kexc_b, ac_hp_b, ac_ht_b, ac_qt_b&
-!$OMP&, pn_b, en_b), PRIVATE(row, col, k, time_step_returns, pr, perc, l&
-!$OMP&, prr, prd, qr, qd), PRIVATE(pr_b, perc_b, l_b, prr_b, prd_b, qr_b&
-!$OMP&, qd_b), PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
+!$OMP&, pn_b, en_b), PRIVATE(row, col, k, time_step_returns, pr, perc, &
+!$OMP&ps, es, l, prr, prd, qr, qd), PRIVATE(pr_b, perc_b, l_b, prr_b, &
+!$OMP&prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end, chunk_start), &
+!$OMP&PRIVATE(temp_b)
     CALL POPINTEGER4(k)
     CALL POPREAL4(prr)
     CALL POPREAL4(perc)
@@ -15632,7 +15640,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -15724,7 +15732,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15773,7 +15781,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, &
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_qt, pn, en), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pr, perc, l, prr, prd, qr, qd), SCHEDULE(static)
+!$OMP&time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd), SCHEDULE&
+!$OMP&                                           (static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15782,7 +15791,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
 &                     )
           ELSE
@@ -16954,7 +16963,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -16971,8 +16980,9 @@ CONTAINS
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, &
 !$OMP&ac_cp_d, ac_ct_d, ac_kexc_d, ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d&
 !$OMP&, ac_qt_d), PRIVATE(row, col, k, time_step_returns, pn, en, pr, &
-!$OMP&perc, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d&
-!$OMP&, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&perc, ps, es, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, pr_d, &
+!$OMP&perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(&
+!$OMP&                                       static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -16984,7 +16994,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -17050,7 +17061,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -17069,8 +17080,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE&
-!$OMP&(chunk_start, chunk_end)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd)&
+!$OMP&, PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -17087,7 +17098,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -17122,9 +17133,9 @@ CONTAINS
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, &
 !$OMP&ac_cp_b, ac_ct_b, ac_kexc_b, ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b&
 !$OMP&, ac_qt_b), PRIVATE(row, col, k, time_step_returns, pn, en, pr, &
-!$OMP&perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b&
-!$OMP&, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end, &
-!$OMP&chunk_start)
+!$OMP&perc, ps, es, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, pr_b, &
+!$OMP&perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end&
+!$OMP&, chunk_start)
     CALL POPREAL4(en)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
@@ -17174,7 +17185,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -17206,7 +17217,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17218,8 +17229,9 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd), SCHEDULE&
-!$OMP&                                           (static)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd), &
+!$OMP&                                                   SCHEDULE(static&
+!$OMP&                                                   )
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -17229,7 +17241,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -17311,7 +17323,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -17376,9 +17388,9 @@ CONTAINS
 !$OMP&ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en), SHARED(&
 !$OMP&output_layer_d, ac_prcp_d, ac_cp_d, ac_ct_d, ac_kexc_d, ac_aexc_d&
 !$OMP&, ac_hp_d, ac_ht_d, ac_qt_d, pn_d, en_d), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pr, perc, l, prr, prd, qr, qd), PRIVATE(pr_d, &
-!$OMP&perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(&
-!$OMP&                                       static)
+!$OMP&time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd), PRIVATE&
+!$OMP&(pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), &
+!$OMP&                                              SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -17389,7 +17401,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(output_layer(4, k), &
 &                                  output_layer_d(4, k), ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
@@ -17490,7 +17502,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
@@ -17556,8 +17568,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en), PRIVATE(row, col, &
-!$OMP&k, time_step_returns, pr, perc, l, prr, prd, qr, qd), PRIVATE(&
-!$OMP&chunk_start, chunk_end)
+!$OMP&k, time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd), &
+!$OMP&PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -17573,7 +17585,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -17615,9 +17627,9 @@ CONTAINS
 !$OMP&ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en), SHARED(&
 !$OMP&output_layer_b, ac_prcp_b, ac_cp_b, ac_ct_b, ac_kexc_b, ac_aexc_b&
 !$OMP&, ac_hp_b, ac_ht_b, ac_qt_b, pn_b, en_b), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pr, perc, l, prr, prd, qr, qd), PRIVATE(pr_b, &
-!$OMP&perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end&
-!$OMP&, chunk_start), PRIVATE(temp_b)
+!$OMP&time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd), PRIVATE&
+!$OMP&(pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start), PRIVATE(temp_b)
     CALL POPINTEGER4(k)
     CALL POPREAL4(prr)
     CALL POPREAL4(perc)
@@ -17678,7 +17690,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -17771,7 +17783,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17820,8 +17832,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en), PRIVATE(row, col, &
-!$OMP&k, time_step_returns, pr, perc, l, prr, prd, qr, qd), SCHEDULE(&
-!$OMP&                                      static)
+!$OMP&k, time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd), &
+!$OMP&                                              SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -17830,7 +17842,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
@@ -18265,7 +18277,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
+&   , qe
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d&
 &   , qd_d, qe_d
     INTRINSIC MAX
@@ -18283,9 +18296,10 @@ CONTAINS
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(&
 !$OMP&ac_prcp_d, ac_ci_d, ac_cp_d, ac_ct_d, ac_be_d, ac_kexc_d, &
 !$OMP&ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_he_d, ac_qt_d), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, pre, prd&
-!$OMP&, qr, qd, qe), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, pre_d&
-!$OMP&, prd_d, qr_d, qd_d, qe_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&pre, prd, qr, qd, qe), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, &
+!$OMP&prr_d, pre_d, prd_d, qr_d, qd_d, qe_d), PRIVATE(temp), SCHEDULE(&
+!$OMP&                                       static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -18297,7 +18311,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -18369,7 +18384,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
+&   , qe
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
 &   , qd_b, qe_b
     INTRINSIC MAX
@@ -18390,8 +18406,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_be, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row&
-!$OMP&, col, k, time_step_returns, pn, en, pr, perc, l, prr, pre, prd, &
-!$OMP&qr, qd, qe), PRIVATE(chunk_start, chunk_end)
+!$OMP&, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, pre&
+!$OMP&, prd, qr, qd, qe), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -18408,7 +18424,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -18448,10 +18464,10 @@ CONTAINS
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), SHARED(&
 !$OMP&ac_prcp_b, ac_ci_b, ac_cp_b, ac_ct_b, ac_be_b, ac_kexc_b, &
 !$OMP&ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_he_b, ac_qt_b), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, pre, prd&
-!$OMP&, qr, qd, qe), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b&
-!$OMP&, prd_b, qr_b, qd_b, qe_b), PRIVATE(branch, chunk_end, chunk_start&
-!$OMP&), PRIVATE(temp_b)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&pre, prd, qr, qd, qe), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, &
+!$OMP&prr_b, pre_b, prd_b, qr_b, qd_b, qe_b), PRIVATE(branch, chunk_end&
+!$OMP&, chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
     CALL POPREAL4(pre)
     CALL POPREAL4(prr)
@@ -18513,7 +18529,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -18546,7 +18562,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
+&   , qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18558,8 +18575,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_be, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt), PRIVATE(row&
-!$OMP&, col, k, time_step_returns, pn, en, pr, perc, l, prr, pre, prd, &
-!$OMP&qr, qd, qe), SCHEDULE(static)
+!$OMP&, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, pre&
+!$OMP&, prd, qr, qd, qe), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -18569,7 +18586,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -18655,7 +18672,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qe_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -18722,9 +18739,9 @@ CONTAINS
 !$OMP&, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_he, ac_qt, pn, en), SHARED(&
 !$OMP&output_layer_d, ac_prcp_d, ac_cp_d, ac_ct_d, ac_be_d, ac_kexc_d, &
 !$OMP&ac_aexc_d, ac_hp_d, ac_ht_d, ac_he_d, ac_qt_d, pn_d, en_d), &
-!$OMP&PRIVATE(row, col, k, time_step_returns, pr, perc, l, prr, pre, prd&
-!$OMP&, qr, qd, qe), PRIVATE(pr_d, perc_d, l_d, prr_d, pre_d, prd_d, &
-!$OMP&qr_d, qd_d, qe_d), PRIVATE(temp, temp0), SCHEDULE(static)
+!$OMP&PRIVATE(row, col, k, time_step_returns, pr, perc, ps, es, l, prr, &
+!$OMP&pre, prd, qr, qd, qe), PRIVATE(pr_d, perc_d, l_d, prr_d, pre_d, &
+!$OMP&prd_d, qr_d, qd_d, qe_d), PRIVATE(temp, temp0), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -18735,7 +18752,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(output_layer(5, k), &
 &                                  output_layer_d(5, k), ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
@@ -18852,7 +18869,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qe_b
     INTRINSIC MAX
     INTEGER :: branch
@@ -18922,8 +18939,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, ac_be&
 !$OMP&, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_he, ac_qt, pn, en), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pr, perc, l, prr, pre, prd, qr, qd&
-!$OMP&, qe), PRIVATE(chunk_start, chunk_end)
+!$OMP&row, col, k, time_step_returns, pr, perc, ps, es, l, prr, pre, prd&
+!$OMP&, qr, qd, qe), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -18939,7 +18956,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -18991,10 +19008,10 @@ CONTAINS
 !$OMP&, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_he, ac_qt, pn, en), SHARED(&
 !$OMP&output_layer_b, ac_prcp_b, ac_cp_b, ac_ct_b, ac_be_b, ac_kexc_b, &
 !$OMP&ac_aexc_b, ac_hp_b, ac_ht_b, ac_he_b, ac_qt_b, pn_b, en_b), &
-!$OMP&PRIVATE(row, col, k, time_step_returns, pr, perc, l, prr, pre, prd&
-!$OMP&, qr, qd, qe), PRIVATE(pr_b, perc_b, l_b, prr_b, pre_b, prd_b, &
-!$OMP&qr_b, qd_b, qe_b), PRIVATE(temp, branch, chunk_end, chunk_start), &
-!$OMP&PRIVATE(temp_b, temp_b0, temp_b1)
+!$OMP&PRIVATE(row, col, k, time_step_returns, pr, perc, ps, es, l, prr, &
+!$OMP&pre, prd, qr, qd, qe), PRIVATE(pr_b, perc_b, l_b, prr_b, pre_b, &
+!$OMP&prd_b, qr_b, qd_b, qe_b), PRIVATE(temp, branch, chunk_end, &
+!$OMP&chunk_start), PRIVATE(temp_b, temp_b0, temp_b1)
     CALL POPINTEGER4(k)
     CALL POPREAL4(pre)
     CALL POPREAL4(prr)
@@ -19073,7 +19090,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -19168,7 +19185,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19218,8 +19235,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, beta, ac_ct, ac_be&
 !$OMP&, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_he, ac_qt, pn, en), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pr, perc, l, prr, pre, prd, qr, qd&
-!$OMP&, qe), SCHEDULE(static)
+!$OMP&row, col, k, time_step_returns, pr, perc, ps, es, l, prr, pre, prd&
+!$OMP&, qr, qd, qe), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -19228,7 +19245,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
@@ -19293,7 +19310,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d&
 &   , ql_d, qd_d
     INTRINSIC MAX
@@ -19309,9 +19326,9 @@ CONTAINS
 !$OMP&ac_hi, ac_hp, ac_ht, ac_hl, ac_qt), SHARED(ac_prcp_d, ac_ci_d, &
 !$OMP&ac_cp_d, ac_ct_d, ac_cl_d, ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, &
 !$OMP&ac_hl_d, ac_qt_d), PRIVATE(row, col, k, time_step_returns, pn, en&
-!$OMP&, pr, perc, l, prr, prl, prd, qr, ql, qd), PRIVATE(pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d), PRIVATE&
-!$OMP&(temp), SCHEDULE(static)
+!$OMP&, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd), PRIVATE(pn_d, &
+!$OMP&en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d), &
+!$OMP&PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -19323,7 +19340,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -19393,7 +19411,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b&
 &   , ql_b, qd_b
     INTRINSIC MAX
@@ -19412,8 +19430,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_cl, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_hl, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd)&
-!$OMP&, PRIVATE(chunk_start, chunk_end)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prl, prd, qr&
+!$OMP&, ql, qd), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -19430,7 +19448,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -19470,9 +19488,9 @@ CONTAINS
 !$OMP&ac_hi, ac_hp, ac_ht, ac_hl, ac_qt), SHARED(ac_prcp_b, ac_ci_b, &
 !$OMP&ac_cp_b, ac_ct_b, ac_cl_b, ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, &
 !$OMP&ac_hl_b, ac_qt_b), PRIVATE(row, col, k, time_step_returns, pn, en&
-!$OMP&, pr, perc, l, prr, prl, prd, qr, ql, qd), PRIVATE(pn_b, en_b, &
-!$OMP&pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b), PRIVATE&
-!$OMP&(branch, chunk_end, chunk_start), PRIVATE(temp_b)
+!$OMP&, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd), PRIVATE(pn_b, &
+!$OMP&en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b), &
+!$OMP&PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
     CALL POPREAL4(prl)
     CALL POPREAL4(prr)
@@ -19533,7 +19551,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b)
+&                          perc, perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -19566,7 +19584,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19576,8 +19594,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_cl, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_hl, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd)&
-!$OMP&, SCHEDULE(static)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prl, prd, qr&
+!$OMP&, ql, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -19587,7 +19605,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -19672,7 +19690,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -19737,9 +19755,9 @@ CONTAINS
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt, pn, en), SHARED(&
 !$OMP&output_layer_d, ac_prcp_d, ac_cp_d, ac_ct_d, ac_cl_d, ac_kexc_d, &
 !$OMP&ac_hp_d, ac_ht_d, ac_hl_d, ac_qt_d, pn_d, en_d), PRIVATE(row, col&
-!$OMP&, k, time_step_returns, pr, perc, l, prr, prl, prd, qr, ql, qd), &
-!$OMP&PRIVATE(pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d)&
-!$OMP&, PRIVATE(temp, temp0), SCHEDULE(static)
+!$OMP&, k, time_step_returns, pr, perc, ps, es, l, prr, prl, prd, qr, ql&
+!$OMP&, qd), PRIVATE(pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d&
+!$OMP&, qd_d), PRIVATE(temp, temp0), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -19750,7 +19768,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), 1000._sp, ac_hp(k), ac_hp_d(k), &
-&                          pr, pr_d, perc, perc_d)
+&                          pr, pr_d, perc, perc_d, ps, es)
             CALL GR_EXCHANGE_D(output_layer(5, k), output_layer_d(5, k)&
 &                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
 &                        ), l, l_d)
@@ -19865,7 +19883,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
@@ -19933,8 +19951,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, ac_ct, ac_cl, &
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt, pn, en), PRIVATE(row, col, k&
-!$OMP&, time_step_returns, pr, perc, l, prr, prl, prd, qr, ql, qd), &
-!$OMP&PRIVATE(chunk_start, chunk_end)
+!$OMP&, time_step_returns, pr, perc, ps, es, l, prr, prl, prd, qr, ql, &
+!$OMP&qd), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -19950,7 +19968,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
             CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
 &                     )
             CALL PUSHCONTROL1B(1)
@@ -20003,10 +20021,10 @@ CONTAINS
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt, pn, en), SHARED(&
 !$OMP&output_layer_b, ac_prcp_b, ac_cp_b, ac_ct_b, ac_cl_b, ac_kexc_b, &
 !$OMP&ac_hp_b, ac_ht_b, ac_hl_b, ac_qt_b, pn_b, en_b), PRIVATE(row, col&
-!$OMP&, k, time_step_returns, pr, perc, l, prr, prl, prd, qr, ql, qd), &
-!$OMP&PRIVATE(pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b)&
-!$OMP&, PRIVATE(temp, branch, chunk_end, chunk_start), PRIVATE(temp_b, &
-!$OMP&temp_b0, temp_b1)
+!$OMP&, k, time_step_returns, pr, perc, ps, es, l, prr, prl, prd, qr, ql&
+!$OMP&, qd), PRIVATE(pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b&
+!$OMP&, qd_b), PRIVATE(temp, branch, chunk_end, chunk_start), PRIVATE(&
+!$OMP&temp_b, temp_b0, temp_b1)
     CALL POPINTEGER4(k)
     CALL POPREAL4(prl)
     CALL POPREAL4(prr)
@@ -20084,7 +20102,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k), &
-&                          pr, pr_b, perc, perc_b)
+&                          pr, pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -20179,7 +20197,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -20227,8 +20245,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, ac_ct, ac_cl, &
 !$OMP&ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt, pn, en), PRIVATE(row, col, k&
-!$OMP&, time_step_returns, pr, perc, l, prr, prl, prd, qr, ql, qd), &
-!$OMP&                                              SCHEDULE(static)
+!$OMP&, time_step_returns, pr, perc, ps, es, l, prr, prl, prd, qr, ql, &
+!$OMP&qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -20237,7 +20255,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
             CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
 &                     )
           ELSE
@@ -20298,7 +20316,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20312,9 +20330,9 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), &
 !$OMP&SHARED(ac_prcp_d, ac_cp_d, ac_ct_d, ac_hp_d, ac_ht_d, ac_qt_d), &
-!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, prr&
-!$OMP&, qr), PRIVATE(ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d), &
-!$OMP&PRIVATE(temp), SCHEDULE(static)
+!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, ps, &
+!$OMP&es, prr, qr), PRIVATE(ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d)&
+!$OMP&, PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -20339,7 +20357,8 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20387,7 +20406,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20403,8 +20422,8 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), &
-!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, prr&
-!$OMP&, qr), PRIVATE(chunk_start, chunk_end)
+!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, ps, &
+!$OMP&es, prr, qr), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -20434,7 +20453,7 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -20459,9 +20478,9 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), &
 !$OMP&SHARED(ac_prcp_b, ac_cp_b, ac_ct_b, ac_hp_b, ac_ht_b, ac_qt_b), &
-!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, prr&
-!$OMP&, qr), PRIVATE(ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b), &
-!$OMP&PRIVATE(branch, chunk_end, chunk_start)
+!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, ps, &
+!$OMP&es, prr, qr), PRIVATE(ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b)&
+!$OMP&, PRIVATE(branch, chunk_end, chunk_start)
     CALL POPREAL4(en)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
@@ -20496,7 +20515,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b)
+&                          perc, perc_b, ps, es)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -20536,7 +20555,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -20546,8 +20565,8 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), &
-!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, prr&
-!$OMP&, qr), SCHEDULE(static)
+!$OMP&PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, perc, ps, &
+!$OMP&es, prr, qr), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -20566,7 +20585,7 @@ CONTAINS
             END IF
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20634,7 +20653,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, prr, qr
+    REAL(sp) :: pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20713,8 +20732,8 @@ CONTAINS
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht&
 !$OMP&, ac_qt, ei, pn, en), SHARED(output_layer_d, ac_prcp_d, ac_cp_d, &
 !$OMP&ac_ct_d, ac_hp_d, ac_ht_d, ac_qt_d, ei_d, pn_d, en_d), PRIVATE(row&
-!$OMP&, col, k, time_step_returns, pr, perc, prr, qr), PRIVATE(pr_d, &
-!$OMP&perc_d, prr_d, qr_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&, col, k, time_step_returns, pr, perc, ps, es, prr, qr), PRIVATE(&
+!$OMP&pr_d, perc_d, prr_d, qr_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -20725,7 +20744,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), 1000._sp, ac_hp(k), ac_hp_d(k), &
-&                          pr, pr_d, perc, perc_d)
+&                          pr, pr_d, perc, perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20799,7 +20818,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, prr, qr
+    REAL(sp) :: pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20876,7 +20895,7 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht&
 !$OMP&, ac_qt, ei, pn, en), PRIVATE(row, col, k, time_step_returns, pr, &
-!$OMP&perc, prr, qr), PRIVATE(chunk_start, chunk_end)
+!$OMP&perc, ps, es, prr, qr), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -20889,7 +20908,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -20915,8 +20934,9 @@ CONTAINS
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht&
 !$OMP&, ac_qt, ei, pn, en), SHARED(output_layer_b, ac_prcp_b, ac_cp_b, &
 !$OMP&ac_ct_b, ac_hp_b, ac_ht_b, ac_qt_b, ei_b, pn_b, en_b), PRIVATE(row&
-!$OMP&, col, k, time_step_returns, pr, perc, prr, qr), PRIVATE(pr_b, &
-!$OMP&perc_b, prr_b, qr_b), PRIVATE(branch, chunk_end, chunk_start)
+!$OMP&, col, k, time_step_returns, pr, perc, ps, es, prr, qr), PRIVATE(&
+!$OMP&pr_b, perc_b, prr_b, qr_b), PRIVATE(branch, chunk_end, chunk_start&
+!$OMP&)
     CALL POPREAL4(prr)
     pr_b = 0.0_4
     perc_b = 0.0_4
@@ -20945,7 +20965,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k), &
-&                          pr, pr_b, perc, perc_b)
+&                          pr, pr_b, perc, perc_b, ps, es)
           END IF
         END IF
       END DO
@@ -21052,7 +21072,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, prr, qr
+    REAL(sp) :: pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -21109,7 +21129,7 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht&
 !$OMP&, ac_qt, ei, pn, en), PRIVATE(row, col, k, time_step_returns, pr, &
-!$OMP&perc, prr, qr), SCHEDULE(static)
+!$OMP&perc, ps, es, prr, qr), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -21118,7 +21138,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -21161,7 +21181,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -21178,9 +21198,9 @@ CONTAINS
 !$OMP&returns, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc&
 !$OMP&, ac_qt), SHARED(ac_prcp_d, ac_ca_d, ac_cc_d, ac_kb_d, ac_ha_d, &
 !$OMP&ac_hc_d, ac_qt_d), PRIVATE(row, col, k, time_step_returns, ei, pn&
-!$OMP&, en, pr, perc, prr, prd, qr, qd), PRIVATE(ei_d, pn_d, en_d, pr_d&
-!$OMP&, perc_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(static&
-!$OMP&                                    )
+!$OMP&, en, pr, perc, ps, es, prr, prd, qr, qd), PRIVATE(ei_d, pn_d, &
+!$OMP&en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), &
+!$OMP&                                              SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -21205,7 +21225,8 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_ca(k), ac_ca_d(k), beta, ac_ha(k&
-&                          ), ac_ha_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_ha_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -21262,7 +21283,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -21281,7 +21302,7 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc&
 !$OMP&, ac_qt), PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, &
-!$OMP&perc, prr, prd, qr, qd), PRIVATE(chunk_start, chunk_end)
+!$OMP&perc, ps, es, prr, prd, qr, qd), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -21311,7 +21332,7 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_ha(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc)
+&                        ac_ha(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -21349,9 +21370,9 @@ CONTAINS
 !$OMP&returns, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc&
 !$OMP&, ac_qt), SHARED(ac_prcp_b, ac_ca_b, ac_cc_b, ac_kb_b, ac_ha_b, &
 !$OMP&ac_hc_b, ac_qt_b), PRIVATE(row, col, k, time_step_returns, ei, pn&
-!$OMP&, en, pr, perc, prr, prd, qr, qd), PRIVATE(ei_b, pn_b, en_b, pr_b&
-!$OMP&, perc_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end, &
-!$OMP&chunk_start)
+!$OMP&, en, pr, perc, ps, es, prr, prd, qr, qd), PRIVATE(ei_b, pn_b, &
+!$OMP&en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
     CALL POPREAL4(qd)
     CALL POPREAL4(qr)
     CALL POPREAL4(en)
@@ -21402,7 +21423,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k), &
 &                          beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -21442,7 +21463,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -21455,7 +21476,7 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc&
 !$OMP&, ac_qt), PRIVATE(row, col, k, time_step_returns, ei, pn, en, pr, &
-!$OMP&perc, prr, prd, qr, qd), SCHEDULE(static)
+!$OMP&perc, ps, es, prr, prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -21474,7 +21495,7 @@ CONTAINS
             END IF
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc)
+&                        ac_ha(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -21550,7 +21571,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -21632,8 +21653,8 @@ CONTAINS
 !$OMP&, ac_ha, ac_hc, ac_qt, ei, pn, en), SHARED(output_layer_d, &
 !$OMP&ac_prcp_d, ac_ca_d, ac_cc_d, ac_kb_d, ac_ha_d, ac_hc_d, ac_qt_d, &
 !$OMP&ei_d, pn_d, en_d), PRIVATE(row, col, k, time_step_returns, pr, &
-!$OMP&perc, prr, prd, qr, qd), PRIVATE(pr_d, perc_d, prr_d, prd_d, qr_d&
-!$OMP&, qd_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&perc, ps, es, prr, prd, qr, qd), PRIVATE(pr_d, perc_d, prr_d, &
+!$OMP&prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -21644,7 +21665,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_ca(k), &
 &                          ac_ca_d(k), beta, ac_ha(k), ac_ha_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -21735,7 +21756,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -21815,7 +21836,7 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb&
 !$OMP&, ac_ha, ac_hc, ac_qt, ei, pn, en), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pr, perc, prr, prd, qr, qd), PRIVATE(&
+!$OMP&time_step_returns, pr, perc, ps, es, prr, prd, qr, qd), PRIVATE(&
 !$OMP&chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
@@ -21832,7 +21853,7 @@ CONTAINS
             CALL PUSHREAL4(ac_ha(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHREAL4(pr)
@@ -21876,8 +21897,9 @@ CONTAINS
 !$OMP&, ac_ha, ac_hc, ac_qt, ei, pn, en), SHARED(output_layer_b, &
 !$OMP&ac_prcp_b, ac_ca_b, ac_cc_b, ac_kb_b, ac_ha_b, ac_hc_b, ac_qt_b, &
 !$OMP&ei_b, pn_b, en_b), PRIVATE(row, col, k, time_step_returns, pr, &
-!$OMP&perc, prr, prd, qr, qd), PRIVATE(pr_b, perc_b, prr_b, prd_b, qr_b&
-!$OMP&, qd_b), PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
+!$OMP&perc, ps, es, prr, prd, qr, qd), PRIVATE(pr_b, perc_b, prr_b, &
+!$OMP&prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end, chunk_start), &
+!$OMP&PRIVATE(temp_b)
     CALL POPREAL4(qd)
     CALL POPINTEGER4(k)
     CALL POPREAL4(qr)
@@ -21936,7 +21958,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_ca(k), &
 &                          ac_ca_b(k), beta, ac_ha(k), ac_ha_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -22044,7 +22066,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -22103,7 +22125,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, output_layer, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb&
 !$OMP&, ac_ha, ac_hc, ac_qt, ei, pn, en), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pr, perc, prr, prd, qr, qd), SCHEDULE(static)
+!$OMP&time_step_returns, pr, perc, ps, es, prr, prd, qr, qd), SCHEDULE(&
+!$OMP&                                        static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -22112,7 +22135,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+&                        perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
