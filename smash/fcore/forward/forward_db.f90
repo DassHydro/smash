@@ -15666,7 +15666,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -15764,7 +15765,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -15903,7 +15905,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -17479,7 +17482,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -17578,7 +17582,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -17719,7 +17724,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&

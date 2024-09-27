@@ -15852,7 +15852,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -15871,9 +15872,9 @@ CONTAINS
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, &
 !$OMP&ac_ct_d, ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd, split), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d&
-!$OMP&, qr_d, qd_d, split_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&prd, qr, qd, split), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d&
+!$OMP&, prd_d, qr_d, qd_d, split_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15957,7 +15958,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -15977,8 +15979,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split), &
-!$OMP&PRIVATE(chunk_start, chunk_end)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+!$OMP&split), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -16038,10 +16040,10 @@ CONTAINS
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, &
 !$OMP&ac_ct_b, ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd, split), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b&
-!$OMP&, qr_b, qd_b, split_b), PRIVATE(branch, chunk_end, chunk_start), &
-!$OMP&PRIVATE(temp_b)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&prd, qr, qd, split), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b&
+!$OMP&, prd_b, qr_b, qd_b, split_b), PRIVATE(branch, chunk_end, &
+!$OMP&chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
     CALL POPREAL4(split)
     CALL POPREAL4(prr)
@@ -16139,7 +16141,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16152,8 +16155,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
 !$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, &
-!$OMP&time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split), &
-!$OMP&                                                  SCHEDULE(static)
+!$OMP&time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+!$OMP&split), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -17903,7 +17906,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -17923,9 +17927,9 @@ CONTAINS
 !$OMP&, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(&
 !$OMP&ac_prcp_d, ac_ci_d, ac_cp_d, ac_alpha1_d, ac_alpha2_d, ac_ct_d, &
 !$OMP&ac_kexc_d, ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE&
-!$OMP&(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd, split), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d&
-!$OMP&, qr_d, qd_d, split_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&(row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr&
+!$OMP&, prd, qr, qd, split), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, &
+!$OMP&prr_d, prd_d, qr_d, qd_d, split_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -18010,7 +18014,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -18030,8 +18035,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2&
 !$OMP&, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd, split), PRIVATE(chunk_start, chunk_end)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&prd, qr, qd, split), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -18093,10 +18098,10 @@ CONTAINS
 !$OMP&, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(&
 !$OMP&ac_prcp_b, ac_ci_b, ac_cp_b, ac_alpha1_b, ac_alpha2_b, ac_ct_b, &
 !$OMP&ac_kexc_b, ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE&
-!$OMP&(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd, split), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b&
-!$OMP&, qr_b, qd_b, split_b), PRIVATE(branch, chunk_end, chunk_start), &
-!$OMP&PRIVATE(temp_b)
+!$OMP&(row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr&
+!$OMP&, prd, qr, qd, split), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, &
+!$OMP&prr_b, prd_b, qr_b, qd_b, split_b), PRIVATE(branch, chunk_end, &
+!$OMP&chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
     CALL POPREAL4(split)
     CALL POPREAL4(prr)
@@ -18195,7 +18200,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -18208,8 +18214,8 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2&
 !$OMP&, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(&
-!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr&
-!$OMP&, qd, split), SCHEDULE(static)
+!$OMP&row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, &
+!$OMP&prd, qr, qd, split), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&

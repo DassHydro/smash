@@ -602,7 +602,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -615,7 +615,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, &
         !$OMP&  ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt) &
-        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -668,7 +668,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -1178,7 +1178,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1192,7 +1192,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, &
         !$OMP& ac_alpha1, ac_alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt) &
-        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
