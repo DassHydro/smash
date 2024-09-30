@@ -98,16 +98,16 @@ contains
 
     end subroutine gr_production
 
-    subroutine gr_ri_production(pn, en, cp, beta, alpha1, hp, pr, perc, dt)
+    subroutine gr_ri_production(pn, en, cp, beta, alpha1, hp, pr, perc, ps, es, dt)
 
         implicit none
 
         real(sp), intent(in) :: pn, en, cp, beta, alpha1
         real(sp), intent(in) :: dt
         real(sp), intent(inout) :: hp
-        real(sp), intent(out) :: pr, perc
+        real(sp), intent(out) :: pr, perc, ps, es
 
-        real(sp) :: inv_cp, ps, es, hp_imd
+        real(sp) :: inv_cp, hp_imd
         real(sp) :: lambda, gam, inv_lambda
 
         inv_cp = 1._sp/cp
@@ -629,7 +629,7 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, ps, es, setup%dt)
 
                     call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
 
@@ -1206,7 +1206,7 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, ps, es, setup%dt)
 
                     call gr_threshold_exchange(0._sp, ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 

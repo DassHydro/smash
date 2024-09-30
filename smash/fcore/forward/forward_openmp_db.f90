@@ -13514,17 +13514,17 @@ CONTAINS
 !   variations   of useful results: hp perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
   SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, &
-&   alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, dt)
+&   alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, ps, es, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, alpha1_d
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
-    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_d, hp_imd_d
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_d, gam_d, inv_lambda_d
     INTRINSIC EXP
@@ -13544,6 +13544,8 @@ CONTAINS
     REAL(sp) :: temp2
     REAL(sp) :: temp3
     REAL(sp) :: temp4
+    REAL(sp) :: ps_d
+    REAL(sp) :: es_d
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
@@ -13604,17 +13606,17 @@ CONTAINS
 !   gradient     of useful results: alpha1 hp cp pn perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
   SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, &
-&   alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, dt)
+&   alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, ps, es, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
     REAL(sp) :: pn_b, en_b, cp_b, alpha1_b
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
-    REAL(sp) :: pr, perc
+    REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_b, hp_imd_b
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_b, gam_b, inv_lambda_b
     INTRINSIC EXP
@@ -13642,6 +13644,8 @@ CONTAINS
     REAL(sp) :: temp_b4
     REAL(sp) :: temp_b5
     INTEGER :: branch
+    REAL(sp) :: ps_b
+    REAL(sp) :: es_b
     inv_cp = 1._sp/cp
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
@@ -13736,14 +13740,14 @@ CONTAINS
     alpha1_b = alpha1_b - pn*temp_b
   END SUBROUTINE GR_RI_PRODUCTION_B
 
-  SUBROUTINE GR_RI_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc, dt&
-& )
+  SUBROUTINE GR_RI_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc, ps&
+&   , es, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
+    REAL(sp) :: inv_cp, hp_imd
     REAL(sp) :: lambda, gam, inv_lambda
     INTRINSIC EXP
     INTRINSIC SQRT
@@ -15887,7 +15891,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
 &                             ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
-&                             pr_d, perc, perc_d, setup%dt)
+&                             pr_d, perc, perc_d, ps, es, setup%dt)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -15999,7 +16003,7 @@ CONTAINS
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -16107,7 +16111,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
 &                             ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
-&                             pr_b, perc, perc_b, setup%dt)
+&                             pr_b, perc, perc_b, ps, es, setup%dt)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -16166,7 +16170,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -17942,7 +17946,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
 &                             ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
-&                             pr_d, perc, perc_d, setup%dt)
+&                             pr_d, perc, perc_d, ps, es, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -18055,7 +18059,7 @@ CONTAINS
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -18166,7 +18170,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
 &                             ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
-&                             pr_b, perc, perc_b, setup%dt)
+&                             pr_b, perc, perc_b, ps, es, setup%dt)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -18225,7 +18229,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE

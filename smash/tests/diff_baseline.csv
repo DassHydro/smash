@@ -1,16 +1,8 @@
-commit 4989caec358cde9c251ffb711d8751e28ff0b5ad
-Author: asjeb <151923475+asjeb@users.noreply.github.com>
-Date:   Fri Sep 27 12:34:10 2024 +0200
+commit 88962c256a63ec8881d53c9aea9f056a74aa82fe
+Author: Apolline Elbaz <aelbaz@localhost.localdomain>
+Date:   Fri Sep 27 17:24:32 2024 +0200
 
-    update internal fluxes (#333)
-    
-    * update internal fluxes
-    
-    * fix format
-    
-    ---------
-    
-    Co-authored-by: Apolline Elbaz <aelbaz@localhost.localdomain>
+    fix ps/es gr-ri
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -579,43 +571,43 @@ internal_fluxes.zero-gr4_ode_mlp-lr.pn                         |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lr.qt                         |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lr.qup                        |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.en                              |NON MODIFIED
-internal_fluxes.zero-gr4_ri-kw.es                              |MODIFIED
-internal_fluxes.zero-gr4_ri-kw.lexc                            |MODIFIED
+internal_fluxes.zero-gr4_ri-kw.es                              |NON MODIFIED
+internal_fluxes.zero-gr4_ri-kw.lexc                            |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.perc                            |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.pn                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.pr                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.prd                             |NON MODIFIED
-internal_fluxes.zero-gr4_ri-kw.prr                             |MODIFIED
-internal_fluxes.zero-gr4_ri-kw.ps                              |NON MODIFIED
-internal_fluxes.zero-gr4_ri-kw.qd                              |MODIFIED
+internal_fluxes.zero-gr4_ri-kw.prr                             |NON MODIFIED
+internal_fluxes.zero-gr4_ri-kw.ps                              |MODIFIED
+internal_fluxes.zero-gr4_ri-kw.qd                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.qim1j                           |NON MODIFIED
-internal_fluxes.zero-gr4_ri-kw.qr                              |MODIFIED
-internal_fluxes.zero-gr4_ri-kw.qt                              |MODIFIED
+internal_fluxes.zero-gr4_ri-kw.qr                              |NON MODIFIED
+internal_fluxes.zero-gr4_ri-kw.qt                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lag0.en                            |NON MODIFIED
-internal_fluxes.zero-gr4_ri-lag0.es                            |MODIFIED
-internal_fluxes.zero-gr4_ri-lag0.lexc                          |MODIFIED
+internal_fluxes.zero-gr4_ri-lag0.es                            |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lag0.lexc                          |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lag0.perc                          |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lag0.pn                            |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lag0.pr                            |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lag0.prd                           |NON MODIFIED
-internal_fluxes.zero-gr4_ri-lag0.prr                           |MODIFIED
-internal_fluxes.zero-gr4_ri-lag0.ps                            |NON MODIFIED
-internal_fluxes.zero-gr4_ri-lag0.qd                            |MODIFIED
-internal_fluxes.zero-gr4_ri-lag0.qr                            |MODIFIED
-internal_fluxes.zero-gr4_ri-lag0.qt                            |MODIFIED
+internal_fluxes.zero-gr4_ri-lag0.prr                           |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lag0.ps                            |MODIFIED
+internal_fluxes.zero-gr4_ri-lag0.qd                            |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lag0.qr                            |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lag0.qt                            |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lag0.qup                           |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.en                              |NON MODIFIED
-internal_fluxes.zero-gr4_ri-lr.es                              |MODIFIED
-internal_fluxes.zero-gr4_ri-lr.lexc                            |MODIFIED
+internal_fluxes.zero-gr4_ri-lr.es                              |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lr.lexc                            |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.perc                            |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.pn                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.pr                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.prd                             |NON MODIFIED
-internal_fluxes.zero-gr4_ri-lr.prr                             |MODIFIED
-internal_fluxes.zero-gr4_ri-lr.ps                              |NON MODIFIED
-internal_fluxes.zero-gr4_ri-lr.qd                              |MODIFIED
-internal_fluxes.zero-gr4_ri-lr.qr                              |MODIFIED
-internal_fluxes.zero-gr4_ri-lr.qt                              |MODIFIED
+internal_fluxes.zero-gr4_ri-lr.prr                             |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lr.ps                              |MODIFIED
+internal_fluxes.zero-gr4_ri-lr.qd                              |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lr.qr                              |NON MODIFIED
+internal_fluxes.zero-gr4_ri-lr.qt                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.qup                             |NON MODIFIED
 internal_fluxes.zero-gr5-kw.en                                 |NON MODIFIED
 internal_fluxes.zero-gr5-kw.es                                 |NON MODIFIED
@@ -696,43 +688,43 @@ internal_fluxes.zero-gr5_mlp-lr.qr                             |NON MODIFIED
 internal_fluxes.zero-gr5_mlp-lr.qt                             |NON MODIFIED
 internal_fluxes.zero-gr5_mlp-lr.qup                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-kw.en                              |NON MODIFIED
-internal_fluxes.zero-gr5_ri-kw.es                              |MODIFIED
-internal_fluxes.zero-gr5_ri-kw.lexc                            |MODIFIED
+internal_fluxes.zero-gr5_ri-kw.es                              |NON MODIFIED
+internal_fluxes.zero-gr5_ri-kw.lexc                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-kw.perc                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-kw.pn                              |NON MODIFIED
 internal_fluxes.zero-gr5_ri-kw.pr                              |NON MODIFIED
 internal_fluxes.zero-gr5_ri-kw.prd                             |NON MODIFIED
-internal_fluxes.zero-gr5_ri-kw.prr                             |MODIFIED
-internal_fluxes.zero-gr5_ri-kw.ps                              |NON MODIFIED
-internal_fluxes.zero-gr5_ri-kw.qd                              |MODIFIED
+internal_fluxes.zero-gr5_ri-kw.prr                             |NON MODIFIED
+internal_fluxes.zero-gr5_ri-kw.ps                              |MODIFIED
+internal_fluxes.zero-gr5_ri-kw.qd                              |NON MODIFIED
 internal_fluxes.zero-gr5_ri-kw.qim1j                           |NON MODIFIED
-internal_fluxes.zero-gr5_ri-kw.qr                              |MODIFIED
-internal_fluxes.zero-gr5_ri-kw.qt                              |MODIFIED
+internal_fluxes.zero-gr5_ri-kw.qr                              |NON MODIFIED
+internal_fluxes.zero-gr5_ri-kw.qt                              |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lag0.en                            |NON MODIFIED
-internal_fluxes.zero-gr5_ri-lag0.es                            |MODIFIED
-internal_fluxes.zero-gr5_ri-lag0.lexc                          |MODIFIED
+internal_fluxes.zero-gr5_ri-lag0.es                            |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lag0.lexc                          |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lag0.perc                          |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lag0.pn                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lag0.pr                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lag0.prd                           |NON MODIFIED
-internal_fluxes.zero-gr5_ri-lag0.prr                           |MODIFIED
-internal_fluxes.zero-gr5_ri-lag0.ps                            |NON MODIFIED
-internal_fluxes.zero-gr5_ri-lag0.qd                            |MODIFIED
-internal_fluxes.zero-gr5_ri-lag0.qr                            |MODIFIED
-internal_fluxes.zero-gr5_ri-lag0.qt                            |MODIFIED
+internal_fluxes.zero-gr5_ri-lag0.prr                           |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lag0.ps                            |MODIFIED
+internal_fluxes.zero-gr5_ri-lag0.qd                            |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lag0.qr                            |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lag0.qt                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lag0.qup                           |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.en                              |NON MODIFIED
-internal_fluxes.zero-gr5_ri-lr.es                              |MODIFIED
-internal_fluxes.zero-gr5_ri-lr.lexc                            |MODIFIED
+internal_fluxes.zero-gr5_ri-lr.es                              |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lr.lexc                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.perc                            |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.pn                              |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.pr                              |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.prd                             |NON MODIFIED
-internal_fluxes.zero-gr5_ri-lr.prr                             |MODIFIED
-internal_fluxes.zero-gr5_ri-lr.ps                              |NON MODIFIED
-internal_fluxes.zero-gr5_ri-lr.qd                              |MODIFIED
-internal_fluxes.zero-gr5_ri-lr.qr                              |MODIFIED
-internal_fluxes.zero-gr5_ri-lr.qt                              |MODIFIED
+internal_fluxes.zero-gr5_ri-lr.prr                             |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lr.ps                              |MODIFIED
+internal_fluxes.zero-gr5_ri-lr.qd                              |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lr.qr                              |NON MODIFIED
+internal_fluxes.zero-gr5_ri-lr.qt                              |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.qup                             |NON MODIFIED
 internal_fluxes.zero-gr6-kw.en                                 |NON MODIFIED
 internal_fluxes.zero-gr6-kw.es                                 |NON MODIFIED
