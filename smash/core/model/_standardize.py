@@ -434,7 +434,6 @@ def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, *
     return descriptor_name
 
 
-<<<<<<< HEAD
 def _standardize_model_setup_read_imperviousness(read_imperviousness: bool, **kwargs) -> bool:
     return _standardize_model_setup_bool("read_imperviousness", read_imperviousness)
 
@@ -447,7 +446,7 @@ def _standardize_model_setup_imperviousness_file(
     read_imperviousness: bool, imperviousness_file: str, **kwargs
 ) -> str:
     return _standardize_model_setup_file(read_imperviousness, "imperviousness_file", imperviousness_file)
-=======
+
 def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **kwargs) -> np.ndarray:
     standardized_hidden_neuron = np.zeros(int(len(NN_PARAMETERS_KEYS) / 2) - 1, dtype=np.int32)
 
@@ -474,7 +473,6 @@ def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **
         )
 
     return standardized_hidden_neuron
->>>>>>> origin/main
 
 
 def _standardize_model_setup(setup: dict) -> dict:

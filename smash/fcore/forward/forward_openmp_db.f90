@@ -13507,17 +13507,17 @@ CONTAINS
 !  Differentiation of gr_ri_production in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hp perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
-  SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, &
-&   alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, dt)
+  SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, cp, &
+&   cp_d, beta, alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
+    REAL(sp), INTENT(IN) :: pn, en, cp, imperviousness, beta, alpha1
     REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, alpha1_d
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
     REAL(sp), INTENT(OUT) :: pr, perc
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
     REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_d, gam_d, inv_lambda_d
@@ -13579,8 +13579,9 @@ CONTAINS
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
-      pr_d = pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d
-      pr = pn - (hp_imd-hp)*cp
+      pr_d = (imperviousness+1.0)*pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp&
+&       )*cp_d
+      pr = pn - (hp_imd-hp)*cp + imperviousness*pn
     ELSE
       pr_d = 0.0_4
     END IF
@@ -13597,17 +13598,17 @@ CONTAINS
 !  Differentiation of gr_ri_production in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: alpha1 hp cp pn perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
-  SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, &
-&   alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, dt)
+  SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, cp, &
+&   cp_b, beta, alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
+    REAL(sp), INTENT(IN) :: pn, en, cp, imperviousness, beta, alpha1
     REAL(sp) :: pn_b, en_b, cp_b, alpha1_b
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
     REAL(sp) :: pr, perc
     REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
     REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_b, gam_b, inv_lambda_b
@@ -13670,7 +13671,7 @@ CONTAINS
 &     4
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      pn_b = pn_b + pr_b
+      pn_b = pn_b + (imperviousness+1.0)*pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
 !$OMP ATOMIC update
@@ -13730,14 +13731,14 @@ CONTAINS
     alpha1_b = alpha1_b - pn*temp_b
   END SUBROUTINE GR_RI_PRODUCTION_B
 
-  SUBROUTINE GR_RI_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc, dt&
-& )
+  SUBROUTINE GR_RI_PRODUCTION(pn, en, imperviousness, cp, beta, alpha1, &
+&   hp, pr, perc, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
+    REAL(sp), INTENT(IN) :: pn, en, cp, imperviousness, beta, alpha1
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
     REAL(sp) :: lambda, gam, inv_lambda
     INTRINSIC EXP
     INTRINSIC SQRT
@@ -13748,6 +13749,8 @@ CONTAINS
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
+    pne = (1._sp-imperviousness)*pn
+    ene = (1._sp-imperviousness)*en
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
@@ -13758,7 +13761,7 @@ CONTAINS
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
     hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
+    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp + imperviousness*pn
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
     perc = hp_imd*cp*(1._sp-pwr1)
@@ -15232,7 +15235,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr&
+&   , qd, split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -15251,20 +15255,22 @@ CONTAINS
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
 !$OMP&, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, ac_ct_d, &
 !$OMP&ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(row, col, &
-!$OMP&k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split&
-!$OMP&), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
-!$OMP&, split_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&k, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, &
+!$OMP&prd, qr, qd, split), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d&
+!$OMP&, prd_d, qr_d, qd_d, split_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
-&                             ac_cp_d(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, &
+&                             ac_cp(k), ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
 &                             pr_d, perc, perc_d, setup%dt)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
@@ -15337,7 +15343,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr&
+&   , qd, split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -15357,8 +15364,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
 !$OMP&, ac_ht, ac_qt), PRIVATE(row, col, k, time_step_returns, pn, en, &
-!$OMP&pr, perc, l, prr, prd, qr, qd, split), PRIVATE(chunk_start, &
-!$OMP&chunk_end)
+!$OMP&imperviousness, pr, perc, l, prr, prd, qr, qd, split), PRIVATE(&
+!$OMP&chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -15367,6 +15374,8 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
             CALL PUSHREAL4(pn)
@@ -15376,8 +15385,9 @@ CONTAINS
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, setup%dt&
+&                          )
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -15418,10 +15428,10 @@ CONTAINS
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
 !$OMP&, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, ac_ct_b, &
 !$OMP&ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(row, col, &
-!$OMP&k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split&
-!$OMP&), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
-!$OMP&, split_b), PRIVATE(branch, chunk_end, chunk_start), PRIVATE(&
-!$OMP&temp_b)
+!$OMP&k, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, &
+!$OMP&prd, qr, qd, split), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b&
+!$OMP&, prd_b, qr_b, qd_b, split_b), PRIVATE(branch, chunk_end, &
+!$OMP&chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
     CALL POPREAL4(split)
     CALL POPREAL4(prr)
@@ -15479,11 +15489,13 @@ CONTAINS
           ELSE
             CALL GR_EXCHANGE_B(0._sp, dummydiff_b, ac_kexc(k), ac_kexc_b&
 &                        (k), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
-&                             ac_cp_b(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, &
+&                             ac_cp(k), ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
 &                             pr_b, perc, perc_b, setup%dt)
             CALL POPREAL4(ac_hi(k))
@@ -15519,7 +15531,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr&
+&   , qd, split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15532,17 +15545,21 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
 !$OMP&, ac_ht, ac_qt), PRIVATE(row, col, k, time_step_returns, pn, en, &
-!$OMP&pr, perc, l, prr, prd, qr, qd, split), SCHEDULE(static)
+!$OMP&imperviousness, pr, perc, l, prr, prd, qr, qd, split), SCHEDULE(&
+!$OMP&                                       static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, setup%dt&
+&                          )
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -17287,7 +17304,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr&
+&   , qd, split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -17307,20 +17325,22 @@ CONTAINS
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, &
 !$OMP&ac_ci_d, ac_cp_d, ac_alpha1_d, ac_alpha2_d, ac_ct_d, ac_kexc_d, &
 !$OMP&ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(row, col, &
-!$OMP&k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split&
-!$OMP&), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
-!$OMP&, split_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&k, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, &
+!$OMP&prd, qr, qd, split), PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d&
+!$OMP&, prd_d, qr_d, qd_d, split_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
-&                             ac_cp_d(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, &
+&                             ac_cp(k), ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
 &                             pr_d, perc, perc_d, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), &
@@ -17394,7 +17414,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr&
+&   , qd, split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -17413,8 +17434,8 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k&
-!$OMP&, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)&
-!$OMP&, PRIVATE(chunk_start, chunk_end)
+!$OMP&, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, prd&
+!$OMP&, qr, qd, split), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -17423,6 +17444,8 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
             CALL PUSHREAL4(pn)
@@ -17432,8 +17455,9 @@ CONTAINS
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, setup%dt&
+&                          )
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
             CALL PUSHCONTROL1B(1)
@@ -17476,10 +17500,10 @@ CONTAINS
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, &
 !$OMP&ac_ci_b, ac_cp_b, ac_alpha1_b, ac_alpha2_b, ac_ct_b, ac_kexc_b, &
 !$OMP&ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(row, col, &
-!$OMP&k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split&
-!$OMP&), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
-!$OMP&, split_b), PRIVATE(branch, chunk_end, chunk_start), PRIVATE(&
-!$OMP&temp_b)
+!$OMP&k, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, &
+!$OMP&prd, qr, qd, split), PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b&
+!$OMP&, prd_b, qr_b, qd_b, split_b), PRIVATE(branch, chunk_end, &
+!$OMP&chunk_start), PRIVATE(temp_b)
     CALL POPREAL4(en)
     CALL POPREAL4(split)
     CALL POPREAL4(prr)
@@ -17538,11 +17562,13 @@ CONTAINS
             CALL GR_THRESHOLD_EXCHANGE_B(ac_kexc(k), ac_kexc_b(k), &
 &                                  ac_aexc(k), ac_aexc_b(k), ac_ht(k), &
 &                                  ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
-&                             ac_cp_b(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, &
+&                             ac_cp(k), ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
 &                             pr_b, perc, perc_b, setup%dt)
             CALL POPREAL4(ac_hi(k))
@@ -17578,7 +17604,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr&
+&   , qd, split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -17591,18 +17618,21 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, &
 !$OMP&ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k&
-!$OMP&, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)&
-!$OMP&, SCHEDULE(static)
+!$OMP&, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, prd&
+!$OMP&, qr, qd, split), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, setup%dt&
+&                          )
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
           ELSE

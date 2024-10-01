@@ -94,20 +94,24 @@ contains
 
     end subroutine gr_production
 
-    subroutine gr_ri_production(pn, en, cp, beta, alpha1, hp, pr, perc, dt)
+    subroutine gr_ri_production(pn, en, imperviousness, cp, beta, alpha1, hp, pr, perc, dt)
 
         implicit none
 
-        real(sp), intent(in) :: pn, en, cp, beta, alpha1
+        real(sp), intent(in) :: pn, en, cp, imperviousness, beta, alpha1
         real(sp), intent(in) :: dt
         real(sp), intent(inout) :: hp
         real(sp), intent(out) :: pr, perc
         
-        real(sp) :: inv_cp, ps, es, hp_imd
+        real(sp) :: inv_cp, ps, es, hp_imd, pne, ene
         real(sp) :: lambda, gam, inv_lambda
         
         inv_cp = 1._sp / cp
         pr = 0._sp
+
+        pne = (1._sp - imperviousness)*pn
+        ene = (1._sp - imperviousness)*en
+
         gam = 1._sp - exp(-pn * alpha1)
         lambda = sqrt(1._sp - gam)
         inv_lambda = 1._sp / lambda
@@ -122,7 +126,7 @@ contains
 
         if (pn .gt. 0) then
 
-            pr = pn - (hp_imd - hp)*cp
+            pr = pn - (hp_imd - hp)*cp + imperviousness*pn
 
         end if
 
@@ -444,7 +448,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -457,7 +461,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
         !$OMP& ac_qt) &
-        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+        !$OMP& private(row, col, k, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, prd, qr, qd, split)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -466,12 +470,14 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
+                imperviousness = input_data%physio_data%imperviousness(row, col)
+
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+                    call gr_ri_production(pn, en, imperviousness, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
                     
                     call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
 
@@ -1024,7 +1030,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1038,7 +1044,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_alpha1, ac_alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_qt) &
-        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+        !$OMP& private(row, col, k, time_step_returns, pn, en, imperviousness, pr, perc, l, prr, prd, qr, qd, split)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1047,12 +1053,14 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
+                imperviousness = input_data%physio_data%imperviousness(row, col)
+
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+                    call gr_ri_production(pn, en, imperviousness, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
 
                     call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
