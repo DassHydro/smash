@@ -98,16 +98,16 @@ contains
 
     end subroutine gr_production
 
-    subroutine gr_ri_production(pn, en, cp, beta, alpha1, hp, pr, perc, dt)
+    subroutine gr_ri_production(pn, en, cp, beta, alpha1, hp, pr, perc, ps, es, dt)
 
         implicit none
 
         real(sp), intent(in) :: pn, en, cp, beta, alpha1
         real(sp), intent(in) :: dt
         real(sp), intent(inout) :: hp
-        real(sp), intent(out) :: pr, perc
+        real(sp), intent(out) :: pr, perc, ps, es
 
-        real(sp) :: inv_cp, ps, es, hp_imd
+        real(sp) :: inv_cp, hp_imd
         real(sp) :: lambda, gam, inv_lambda
 
         inv_cp = 1._sp/cp
@@ -602,7 +602,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -615,7 +615,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, &
         !$OMP&  ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt) &
-        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -629,7 +629,7 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, ps, es, setup%dt)
 
                     call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
 
@@ -668,7 +668,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -1178,7 +1178,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1192,7 +1192,7 @@ contains
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, ac_ci, ac_cp, beta, &
         !$OMP& ac_alpha1, ac_alpha2, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt) &
-        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, l, prr, prd, qr, qd, split)
+        !$OMP& private(row, col, k, time_step_returns, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1206,7 +1206,7 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, setup%dt)
+                    call gr_ri_production(pn, en, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), pr, perc, ps, es, setup%dt)
 
                     call gr_threshold_exchange(0._sp, ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
@@ -1246,7 +1246,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/pn, en, pr, perc, l, prr, prd, qr, qd, ac_qt(k)/)
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
