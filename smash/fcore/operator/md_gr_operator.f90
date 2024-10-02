@@ -72,12 +72,12 @@ contains
         pne = (1._sp - imperviousness)*pn
         ene = (1._sp - imperviousness)*en
         
-        ps = cp*(1._sp - hp*hp)*tanh(pn*inv_cp)/ &
-        & (1._sp + hp*tanh(pn*inv_cp))
+        ps = cp*(1._sp - hp*hp)*tanh(pne*inv_cp)/ &
+        & (1._sp + hp*tanh(pne*inv_cp))
         ps = (1._sp + fq_ps)*ps
 
-        es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
-        & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
+        es = (hp*cp)*(2._sp - hp)*tanh(ene*inv_cp)/ &
+        & (1._sp + (1._sp - hp)*tanh(ene*inv_cp))
         es = (1._sp + fq_es)*es
 
         hp_imd = hp + (ps - es)*inv_cp
@@ -116,17 +116,17 @@ contains
         lambda = sqrt(1._sp - gam)
         inv_lambda = 1._sp / lambda
         
-        ps = cp * inv_lambda * tanh(lambda * pn * inv_cp) * (1._sp - (lambda * hp) ** 2) &
-        & / (1._sp + lambda * hp * tanh(lambda * pn * inv_cp)) - gam * dt
+        ps = cp * inv_lambda * tanh(lambda * pne * inv_cp) * (1._sp - (lambda * hp) ** 2) &
+        & / (1._sp + lambda * hp * tanh(lambda * pne * inv_cp)) - gam * dt
 
-        es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
-        & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
+        es = (hp*cp)*(2._sp - hp)*tanh(ene*inv_cp)/ &
+        & (1._sp + (1._sp - hp)*tanh(ene*inv_cp))
 
         hp_imd = hp + (ps - es)*inv_cp
 
-        if (pn .gt. 0) then
+        if (pne .gt. 0) then
 
-            pr = pn - (hp_imd - hp)*cp + imperviousness*pn
+            pr = pne - (hp_imd - hp)*cp + imperviousness*pn
 
         end if
 

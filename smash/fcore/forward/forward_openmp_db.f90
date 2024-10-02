@@ -13295,7 +13295,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: pr, perc
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
     REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d
+    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d, ene_d
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_d
@@ -13310,24 +13310,26 @@ CONTAINS
     pr = 0._sp
     pne_d = (1._sp-imperviousness)*pn_d
     pne = (1._sp-imperviousness)*pn
-    temp = TANH(pn*inv_cp)
-    temp0 = TANH(pn*inv_cp)
+    ene_d = (1._sp-imperviousness)*en_d
+    ene = (1._sp-imperviousness)*en
+    temp = TANH(pne*inv_cp)
+    temp0 = TANH(pne*inv_cp)
     temp1 = cp*(-(hp*hp)+1._sp)
     temp2 = temp1*temp0/(hp*temp+1._sp)
-    ps_d = (temp0*((1._sp-hp**2)*cp_d-cp*2*hp*hp_d)+temp1*(1.0-TANH(pn*&
-&     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
-&     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
+    ps_d = (temp0*((1._sp-hp**2)*cp_d-cp*2*hp*hp_d)+temp1*(1.0-TANH(pne*&
+&     inv_cp)**2)*(inv_cp*pne_d+pne*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
+&     TANH(pne*inv_cp)**2)*(inv_cp*pne_d+pne*inv_cp_d)))/(hp*temp+1._sp)
     ps = temp2
     ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
     ps = (1._sp+fq_ps)*ps
-    temp2 = TANH(en*inv_cp)
-    temp1 = TANH(en*inv_cp)
+    temp2 = TANH(ene*inv_cp)
+    temp1 = TANH(ene*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
     temp = temp0*temp1/((-hp+1._sp)*temp2+1._sp)
     es_d = (temp1*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp0*(1.0-&
-&     TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp*((1._sp-hp)*(&
-&     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
-&     1._sp-hp)*temp2+1._sp)
+&     TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp*((1._sp-hp)*&
+&     (1.0-TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp2*hp_d))&
+&     /((1._sp-hp)*temp2+1._sp)
     es = temp
     es_d = es*fq_es_d + (fq_es+1._sp)*es_d
     es = (1._sp+fq_es)*es
@@ -13366,7 +13368,7 @@ CONTAINS
     REAL(sp) :: pr, perc
     REAL(sp) :: pr_b, perc_b
     REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b
+    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b, ene_b
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_b
@@ -13388,13 +13390,275 @@ CONTAINS
     INTEGER :: branch
     inv_cp = 1._sp/cp
     pne = (1._sp-imperviousness)*pn
-    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+    ene = (1._sp-imperviousness)*en
+    ps = cp*(1._sp-hp*hp)*TANH(pne*inv_cp)/(1._sp+hp*TANH(pne*inv_cp))
     CALL PUSHREAL4(ps)
     ps = (1._sp+fq_ps)*ps
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
+    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
 &     inv_cp))
     CALL PUSHREAL4(es)
     es = (1._sp+fq_es)*es
+    hp_imd = hp + (ps-es)*inv_cp
+    IF (pne .GT. 0) THEN
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1 = pwx1**(-0.25_sp)
+    CALL PUSHREAL4(perc)
+    perc = hp_imd*cp*(1._sp-pwr1)
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1 = pwx1**(-0.25_sp)
+    inv_cp = 1._sp/cp
+    perc_b = perc_b - inv_cp*hp_b
+    inv_cp_b = -(perc*hp_b)
+    CALL POPREAL4(perc)
+!$OMP ATOMIC update
+    cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
+    pwr1_b = -(hp_imd*cp*perc_b)
+    pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
+    hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
+&     4
+    pne = (1._sp-imperviousness)*pn
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      pne_b = pr_b
+      hp_imd_b = hp_imd_b - cp*pr_b
+      hp_b = cp*pr_b
+!$OMP ATOMIC update
+      cp_b = cp_b - (hp_imd-hp)*pr_b
+!$OMP ATOMIC update
+      pn_b = pn_b + imperviousness*pr_b
+    ELSE
+      hp_b = 0.0_4
+      pne_b = 0.0_4
+    END IF
+    es_b = -(inv_cp*hp_imd_b)
+    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
+    CALL POPREAL4(es)
+!$OMP ATOMIC update
+    fq_es_b = fq_es_b + es*es_b
+    es_b = (fq_es+1._sp)*es_b
+    ene = (1._sp-imperviousness)*en
+    temp4 = TANH(ene*inv_cp)
+    temp3 = (-hp+1._sp)*temp4 + 1._sp
+    temp1 = TANH(ene*inv_cp)
+    temp0 = hp*cp*(-hp+2._sp)
+    temp_b3 = es_b/temp3
+    temp_b = (2._sp-hp)*temp1*temp_b3
+    temp_b0 = -(temp0*temp1*temp_b3/temp3)
+!$OMP ATOMIC update
+    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
+&     temp_b0
+    ps_b = inv_cp*hp_imd_b
+    temp_b4 = (1.0-TANH(ene*inv_cp)**2)*temp0*temp_b3
+    temp_b5 = (1.0-TANH(ene*inv_cp)**2)*(1._sp-hp)*temp_b0
+    ene_b = inv_cp*temp_b5 + inv_cp*temp_b4
+!$OMP ATOMIC update
+    cp_b = cp_b + hp*temp_b
+    CALL POPREAL4(ps)
+!$OMP ATOMIC update
+    fq_ps_b = fq_ps_b + ps*ps_b
+    ps_b = (fq_ps+1._sp)*ps_b
+    temp = TANH(pne*inv_cp)
+    temp0 = hp*temp + 1._sp
+    temp1 = TANH(pne*inv_cp)
+    temp2 = cp*(-(hp*hp)+1._sp)
+    temp_b = ps_b/temp0
+    temp_b0 = (1.0-TANH(pne*inv_cp)**2)*temp2*temp_b
+    temp_b1 = -(temp2*temp1*temp_b/temp0)
+!$OMP ATOMIC update
+    hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
+    temp_b2 = (1.0-TANH(pne*inv_cp)**2)*hp*temp_b1
+    inv_cp_b = inv_cp_b + ene*temp_b5 + ene*temp_b4 + pne*temp_b2 + pne*&
+&     temp_b0
+!$OMP ATOMIC update
+    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
+    pne_b = pne_b + inv_cp*temp_b2 + inv_cp*temp_b0
+!$OMP ATOMIC update
+    en_b = en_b + (1._sp-imperviousness)*ene_b
+!$OMP ATOMIC update
+    pn_b = pn_b + (1._sp-imperviousness)*pne_b
+  END SUBROUTINE GR_PRODUCTION_B
+
+  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, imperviousness, cp, &
+&   beta, hp, pr, perc)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, imperviousness, cp, &
+&   beta
+    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
+    INTRINSIC TANH
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwr1
+    inv_cp = 1._sp/cp
+    pr = 0._sp
+    pne = (1._sp-imperviousness)*pn
+    ene = (1._sp-imperviousness)*en
+    ps = cp*(1._sp-hp*hp)*TANH(pne*inv_cp)/(1._sp+hp*TANH(pne*inv_cp))
+    ps = (1._sp+fq_ps)*ps
+    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
+&     inv_cp))
+    es = (1._sp+fq_es)*es
+    hp_imd = hp + (ps-es)*inv_cp
+    IF (pne .GT. 0) pr = pne - (hp_imd-hp)*cp + imperviousness*pn
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1 = pwx1**(-0.25_sp)
+    perc = hp_imd*cp*(1._sp-pwr1)
+    hp = hp_imd - perc*inv_cp
+  END SUBROUTINE GR_PRODUCTION
+
+!  Differentiation of gr_ri_production in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
+!   variations   of useful results: hp perc pr
+!   with respect to varying inputs: alpha1 hp en cp pn
+  SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, cp, &
+&   cp_d, beta, alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, dt)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, imperviousness, beta, alpha1
+    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, alpha1_d
+    REAL(sp), INTENT(IN) :: dt
+    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(INOUT) :: hp_d
+    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp), INTENT(OUT) :: pr_d, perc_d
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
+    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d, ene_d
+    REAL(sp) :: lambda, gam, inv_lambda
+    REAL(sp) :: lambda_d, gam_d, inv_lambda_d
+    INTRINSIC EXP
+    INTRINSIC SQRT
+    INTRINSIC TANH
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: arg2
+    REAL(sp) :: arg2_d
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwx1_d
+    REAL(sp) :: pwr1
+    REAL(sp) :: pwr1_d
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+    REAL(sp) :: temp1
+    REAL(sp) :: temp2
+    REAL(sp) :: temp3
+    REAL(sp) :: temp4
+    inv_cp_d = -(cp_d/cp**2)
+    inv_cp = 1._sp/cp
+    pr = 0._sp
+    pne_d = (1._sp-imperviousness)*pn_d
+    pne = (1._sp-imperviousness)*pn
+    ene_d = (1._sp-imperviousness)*en_d
+    ene = (1._sp-imperviousness)*en
+    gam_d = EXP(-(pn*alpha1))*(alpha1*pn_d+pn*alpha1_d)
+    gam = 1._sp - EXP(-(pn*alpha1))
+    temp = SQRT(-gam + 1._sp)
+    IF (1._sp - gam .EQ. 0.0) THEN
+      lambda_d = 0.0_4
+    ELSE
+      lambda_d = -(gam_d/(2.0*temp))
+    END IF
+    lambda = temp
+    inv_lambda_d = -(lambda_d/lambda**2)
+    inv_lambda = 1._sp/lambda
+    arg1_d = inv_cp*(pne*lambda_d+lambda*pne_d) + lambda*pne*inv_cp_d
+    arg1 = lambda*pne*inv_cp
+    arg2_d = inv_cp*(pne*lambda_d+lambda*pne_d) + lambda*pne*inv_cp_d
+    arg2 = lambda*pne*inv_cp
+    temp = TANH(arg2)
+    temp0 = lambda*hp*temp + 1._sp
+    temp1 = -(lambda*hp*(lambda*hp)) + 1._sp
+    temp2 = cp*inv_lambda*temp1
+    temp3 = TANH(arg1)
+    temp4 = temp3*temp2/temp0
+    ps_d = (temp2*(1.0-TANH(arg1)**2)*arg1_d+temp3*(temp1*(inv_lambda*&
+&     cp_d+cp*inv_lambda_d)-cp*inv_lambda*2*lambda*hp*(hp*lambda_d+&
+&     lambda*hp_d))-temp4*(temp*(hp*lambda_d+lambda*hp_d)+lambda*hp*(1.0&
+&     -TANH(arg2)**2)*arg2_d))/temp0 - dt*gam_d
+    ps = temp4 - dt*gam
+    temp4 = TANH(ene*inv_cp)
+    temp3 = TANH(ene*inv_cp)
+    temp2 = hp*cp*(-hp+2._sp)
+    temp1 = temp2*temp3/((-hp+1._sp)*temp4+1._sp)
+    es_d = (temp3*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp2*(1.0-&
+&     TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp1*((1._sp-hp)&
+&     *(1.0-TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp4*hp_d)&
+&     )/((1._sp-hp)*temp4+1._sp)
+    es = temp1
+    hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
+    hp_imd = hp + (ps-es)*inv_cp
+    IF (pne .GT. 0) THEN
+      pr_d = pne_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d + &
+&       imperviousness*pn_d
+      pr = pne - (hp_imd-hp)*cp + imperviousness*pn
+    ELSE
+      pr_d = 0.0_4
+    END IF
+    pwx1_d = 4*hp_imd**3*hp_imd_d/beta**4
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1_d = -(0.25_sp*pwx1**(-1.25)*pwx1_d)
+    pwr1 = pwx1**(-0.25_sp)
+    perc_d = (1._sp-pwr1)*(cp*hp_imd_d+hp_imd*cp_d) - hp_imd*cp*pwr1_d
+    perc = hp_imd*cp*(1._sp-pwr1)
+    hp_d = hp_imd_d - inv_cp*perc_d - perc*inv_cp_d
+    hp = hp_imd - perc*inv_cp
+  END SUBROUTINE GR_RI_PRODUCTION_D
+
+!  Differentiation of gr_ri_production in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
+!   gradient     of useful results: alpha1 hp cp pn perc pr
+!   with respect to varying inputs: alpha1 hp en cp pn
+  SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, cp, &
+&   cp_b, beta, alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, dt)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, imperviousness, beta, alpha1
+    REAL(sp) :: pn_b, en_b, cp_b, alpha1_b
+    REAL(sp), INTENT(IN) :: dt
+    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(INOUT) :: hp_b
+    REAL(sp) :: pr, perc
+    REAL(sp) :: pr_b, perc_b
+    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
+    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b, ene_b
+    REAL(sp) :: lambda, gam, inv_lambda
+    REAL(sp) :: lambda_b, gam_b, inv_lambda_b
+    INTRINSIC EXP
+    INTRINSIC SQRT
+    INTRINSIC TANH
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
+    REAL(sp) :: arg2
+    REAL(sp) :: arg2_b
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwx1_b
+    REAL(sp) :: pwr1
+    REAL(sp) :: pwr1_b
+    REAL(sp) :: temp
+    REAL(sp) :: temp_b
+    REAL(sp) :: temp0
+    REAL(sp) :: temp_b0
+    REAL(sp) :: temp1
+    REAL(sp) :: temp2
+    REAL(sp) :: temp3
+    REAL(sp) :: temp_b1
+    REAL(sp) :: temp4
+    REAL(sp) :: temp_b2
+    REAL(sp) :: temp_b3
+    REAL(sp) :: temp_b4
+    REAL(sp) :: temp_b5
+    INTEGER :: branch
+    inv_cp = 1._sp/cp
+    pne = (1._sp-imperviousness)*pn
+    ene = (1._sp-imperviousness)*en
+    gam = 1._sp - EXP(-(pn*alpha1))
+    lambda = SQRT(1._sp - gam)
+    inv_lambda = 1._sp/lambda
+    arg1 = lambda*pne*inv_cp
+    arg2 = lambda*pne*inv_cp
+    ps = cp*inv_lambda*TANH(arg1)*(1._sp-(lambda*hp)**2)/(1._sp+lambda*&
+&     hp*TANH(arg2)) - gam*dt
+    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
+&     inv_cp))
     hp_imd = hp + (ps-es)*inv_cp
     IF (pne .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13424,265 +13688,15 @@ CONTAINS
       hp_b = cp*pr_b
 !$OMP ATOMIC update
       cp_b = cp_b - (hp_imd-hp)*pr_b
-!$OMP ATOMIC update
       pn_b = pn_b + imperviousness*pr_b
     ELSE
       hp_b = 0.0_4
       pne_b = 0.0_4
     END IF
     es_b = -(inv_cp*hp_imd_b)
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
-    CALL POPREAL4(es)
-!$OMP ATOMIC update
-    fq_es_b = fq_es_b + es*es_b
-    es_b = (fq_es+1._sp)*es_b
-    temp4 = TANH(en*inv_cp)
+    temp4 = TANH(ene*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
-    temp1 = TANH(en*inv_cp)
-    temp0 = hp*cp*(-hp+2._sp)
-    temp_b3 = es_b/temp3
-    temp_b = (2._sp-hp)*temp1*temp_b3
-    temp_b0 = -(temp0*temp1*temp_b3/temp3)
-!$OMP ATOMIC update
-    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
-&     temp_b0
-    ps_b = inv_cp*hp_imd_b
-    temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
-    temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
-!$OMP ATOMIC update
-    en_b = en_b + inv_cp*temp_b5 + inv_cp*temp_b4
-!$OMP ATOMIC update
-    cp_b = cp_b + hp*temp_b
-    CALL POPREAL4(ps)
-!$OMP ATOMIC update
-    fq_ps_b = fq_ps_b + ps*ps_b
-    ps_b = (fq_ps+1._sp)*ps_b
-    temp = TANH(pn*inv_cp)
-    temp0 = hp*temp + 1._sp
-    temp1 = TANH(pn*inv_cp)
-    temp2 = cp*(-(hp*hp)+1._sp)
-    temp_b = ps_b/temp0
-    temp_b0 = (1.0-TANH(pn*inv_cp)**2)*temp2*temp_b
-    temp_b1 = -(temp2*temp1*temp_b/temp0)
-!$OMP ATOMIC update
-    hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
-    temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4 + pn*temp_b2 + pn*&
-&     temp_b0
-!$OMP ATOMIC update
-    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
-!$OMP ATOMIC update
-    pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0 + (1._sp-&
-&     imperviousness)*pne_b
-  END SUBROUTINE GR_PRODUCTION_B
-
-  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, imperviousness, cp, &
-&   beta, hp, pr, perc)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, imperviousness, cp, &
-&   beta
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    INTRINSIC TANH
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwr1
-    inv_cp = 1._sp/cp
-    pr = 0._sp
-    pne = (1._sp-imperviousness)*pn
-    ene = (1._sp-imperviousness)*en
-    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-    ps = (1._sp+fq_ps)*ps
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
-&     inv_cp))
-    es = (1._sp+fq_es)*es
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pne .GT. 0) pr = pne - (hp_imd-hp)*cp + imperviousness*pn
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    perc = hp_imd*cp*(1._sp-pwr1)
-    hp = hp_imd - perc*inv_cp
-  END SUBROUTINE GR_PRODUCTION
-
-!  Differentiation of gr_ri_production in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
-!   variations   of useful results: hp perc pr
-!   with respect to varying inputs: alpha1 hp en cp pn
-  SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, cp, &
-&   cp_d, beta, alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, dt)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, imperviousness, beta, alpha1
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, alpha1_d
-    REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_d
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
-    REAL(sp) :: lambda, gam, inv_lambda
-    REAL(sp) :: lambda_d, gam_d, inv_lambda_d
-    INTRINSIC EXP
-    INTRINSIC SQRT
-    INTRINSIC TANH
-    REAL(sp) :: arg1
-    REAL(sp) :: arg1_d
-    REAL(sp) :: arg2
-    REAL(sp) :: arg2_d
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_d
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_d
-    REAL(sp) :: temp
-    REAL(sp) :: temp0
-    REAL(sp) :: temp1
-    REAL(sp) :: temp2
-    REAL(sp) :: temp3
-    REAL(sp) :: temp4
-    inv_cp_d = -(cp_d/cp**2)
-    inv_cp = 1._sp/cp
-    pr = 0._sp
-    gam_d = EXP(-(pn*alpha1))*(alpha1*pn_d+pn*alpha1_d)
-    gam = 1._sp - EXP(-(pn*alpha1))
-    temp = SQRT(-gam + 1._sp)
-    IF (1._sp - gam .EQ. 0.0) THEN
-      lambda_d = 0.0_4
-    ELSE
-      lambda_d = -(gam_d/(2.0*temp))
-    END IF
-    lambda = temp
-    inv_lambda_d = -(lambda_d/lambda**2)
-    inv_lambda = 1._sp/lambda
-    arg1_d = inv_cp*(pn*lambda_d+lambda*pn_d) + lambda*pn*inv_cp_d
-    arg1 = lambda*pn*inv_cp
-    arg2_d = inv_cp*(pn*lambda_d+lambda*pn_d) + lambda*pn*inv_cp_d
-    arg2 = lambda*pn*inv_cp
-    temp = TANH(arg2)
-    temp0 = lambda*hp*temp + 1._sp
-    temp1 = -(lambda*hp*(lambda*hp)) + 1._sp
-    temp2 = cp*inv_lambda*temp1
-    temp3 = TANH(arg1)
-    temp4 = temp3*temp2/temp0
-    ps_d = (temp2*(1.0-TANH(arg1)**2)*arg1_d+temp3*(temp1*(inv_lambda*&
-&     cp_d+cp*inv_lambda_d)-cp*inv_lambda*2*lambda*hp*(hp*lambda_d+&
-&     lambda*hp_d))-temp4*(temp*(hp*lambda_d+lambda*hp_d)+lambda*hp*(1.0&
-&     -TANH(arg2)**2)*arg2_d))/temp0 - dt*gam_d
-    ps = temp4 - dt*gam
-    temp4 = TANH(en*inv_cp)
-    temp3 = TANH(en*inv_cp)
-    temp2 = hp*cp*(-hp+2._sp)
-    temp1 = temp2*temp3/((-hp+1._sp)*temp4+1._sp)
-    es_d = (temp3*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp2*(1.0-&
-&     TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp1*((1._sp-hp)*(&
-&     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp4*hp_d))/((&
-&     1._sp-hp)*temp4+1._sp)
-    es = temp1
-    hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) THEN
-      pr_d = (imperviousness+1.0)*pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp&
-&       )*cp_d
-      pr = pn - (hp_imd-hp)*cp + imperviousness*pn
-    ELSE
-      pr_d = 0.0_4
-    END IF
-    pwx1_d = 4*hp_imd**3*hp_imd_d/beta**4
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1_d = -(0.25_sp*pwx1**(-1.25)*pwx1_d)
-    pwr1 = pwx1**(-0.25_sp)
-    perc_d = (1._sp-pwr1)*(cp*hp_imd_d+hp_imd*cp_d) - hp_imd*cp*pwr1_d
-    perc = hp_imd*cp*(1._sp-pwr1)
-    hp_d = hp_imd_d - inv_cp*perc_d - perc*inv_cp_d
-    hp = hp_imd - perc*inv_cp
-  END SUBROUTINE GR_RI_PRODUCTION_D
-
-!  Differentiation of gr_ri_production in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
-!   gradient     of useful results: alpha1 hp cp pn perc pr
-!   with respect to varying inputs: alpha1 hp en cp pn
-  SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, cp, &
-&   cp_b, beta, alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, dt)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, imperviousness, beta, alpha1
-    REAL(sp) :: pn_b, en_b, cp_b, alpha1_b
-    REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_b
-    REAL(sp) :: pr, perc
-    REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
-    REAL(sp) :: lambda, gam, inv_lambda
-    REAL(sp) :: lambda_b, gam_b, inv_lambda_b
-    INTRINSIC EXP
-    INTRINSIC SQRT
-    INTRINSIC TANH
-    REAL(sp) :: arg1
-    REAL(sp) :: arg1_b
-    REAL(sp) :: arg2
-    REAL(sp) :: arg2_b
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_b
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_b
-    REAL(sp) :: temp
-    REAL(sp) :: temp_b
-    REAL(sp) :: temp0
-    REAL(sp) :: temp_b0
-    REAL(sp) :: temp1
-    REAL(sp) :: temp2
-    REAL(sp) :: temp3
-    REAL(sp) :: temp_b1
-    REAL(sp) :: temp4
-    REAL(sp) :: temp_b2
-    REAL(sp) :: temp_b3
-    REAL(sp) :: temp_b4
-    REAL(sp) :: temp_b5
-    INTEGER :: branch
-    inv_cp = 1._sp/cp
-    gam = 1._sp - EXP(-(pn*alpha1))
-    lambda = SQRT(1._sp - gam)
-    inv_lambda = 1._sp/lambda
-    arg1 = lambda*pn*inv_cp
-    arg2 = lambda*pn*inv_cp
-    ps = cp*inv_lambda*TANH(arg1)*(1._sp-(lambda*hp)**2)/(1._sp+lambda*&
-&     hp*TANH(arg2)) - gam*dt
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
-&     inv_cp))
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) THEN
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    CALL PUSHREAL4(perc)
-    perc = hp_imd*cp*(1._sp-pwr1)
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    inv_cp = 1._sp/cp
-    perc_b = perc_b - inv_cp*hp_b
-    inv_cp_b = -(perc*hp_b)
-    CALL POPREAL4(perc)
-!$OMP ATOMIC update
-    cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
-    pwr1_b = -(hp_imd*cp*perc_b)
-    pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
-    hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
-&     4
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      pn_b = pn_b + (imperviousness+1.0)*pr_b
-      hp_imd_b = hp_imd_b - cp*pr_b
-      hp_b = cp*pr_b
-!$OMP ATOMIC update
-      cp_b = cp_b - (hp_imd-hp)*pr_b
-    ELSE
-      hp_b = 0.0_4
-    END IF
-    es_b = -(inv_cp*hp_imd_b)
-    temp4 = TANH(en*inv_cp)
-    temp3 = (-hp+1._sp)*temp4 + 1._sp
-    temp1 = TANH(en*inv_cp)
+    temp1 = TANH(ene*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
     temp_b1 = es_b/temp3
     temp_b0 = (2._sp-hp)*temp1*temp_b1
@@ -13691,13 +13705,13 @@ CONTAINS
     hp_b = hp_b + hp_imd_b + cp*temp_b0 - hp*cp*temp1*temp_b1 - temp4*&
 &     temp_b4
     ps_b = inv_cp*hp_imd_b
-    temp_b = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b1
-    temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b4
-    en_b = inv_cp*temp_b5 + inv_cp*temp_b
+    temp_b = (1.0-TANH(ene*inv_cp)**2)*temp0*temp_b1
+    temp_b5 = (1.0-TANH(ene*inv_cp)**2)*(1._sp-hp)*temp_b4
+    ene_b = inv_cp*temp_b5 + inv_cp*temp_b
 !$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b0
-    arg1 = lambda*pn*inv_cp
-    arg2 = lambda*pn*inv_cp
+    arg1 = lambda*pne*inv_cp
+    arg2 = lambda*pne*inv_cp
     inv_lambda = 1._sp/lambda
     temp = TANH(arg2)
     temp0 = lambda*hp*temp + 1._sp
@@ -13709,13 +13723,13 @@ CONTAINS
     temp_b1 = temp3*temp_b0
     temp_b3 = -(temp3*temp2*temp_b0/temp0)
     arg2_b = (1.0-TANH(arg2)**2)*lambda*hp*temp_b3
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b + &
-&     lambda*pn*arg2_b + lambda*pn*arg1_b
+    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + ene*temp_b5 + ene*temp_b + &
+&     lambda*pne*arg2_b + lambda*pne*arg1_b
 !$OMP ATOMIC update
     cp_b = cp_b + inv_lambda*temp1*temp_b1 - inv_cp_b/cp**2
     inv_lambda_b = cp*temp1*temp_b1
     temp_b2 = -(2*lambda*hp*cp*inv_lambda*temp_b1)
-    lambda_b = hp*temp*temp_b3 + hp*temp_b2 + pn*inv_cp*arg2_b + pn*&
+    lambda_b = hp*temp*temp_b3 + hp*temp_b2 + pne*inv_cp*arg2_b + pne*&
 &     inv_cp*arg1_b - inv_lambda_b/lambda**2
     IF (1._sp - gam .EQ. 0.0) THEN
       gam_b = -(dt*ps_b)
@@ -13724,11 +13738,12 @@ CONTAINS
     END IF
 !$OMP ATOMIC update
     hp_b = hp_b + lambda*temp*temp_b3 + lambda*temp_b2
+    pne_b = pne_b + lambda*inv_cp*arg2_b + lambda*inv_cp*arg1_b
     temp_b = -(EXP(-(pn*alpha1))*gam_b)
-    pn_b = pn_b + lambda*inv_cp*arg2_b + lambda*inv_cp*arg1_b - alpha1*&
-&     temp_b
+    pn_b = pn_b + (1._sp-imperviousness)*pne_b - alpha1*temp_b
 !$OMP ATOMIC update
     alpha1_b = alpha1_b - pn*temp_b
+    en_b = (1._sp-imperviousness)*ene_b
   END SUBROUTINE GR_RI_PRODUCTION_B
 
   SUBROUTINE GR_RI_PRODUCTION(pn, en, imperviousness, cp, beta, alpha1, &
@@ -13754,14 +13769,14 @@ CONTAINS
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
-    arg1 = lambda*pn*inv_cp
-    arg2 = lambda*pn*inv_cp
+    arg1 = lambda*pne*inv_cp
+    arg2 = lambda*pne*inv_cp
     ps = cp*inv_lambda*TANH(arg1)*(1._sp-(lambda*hp)**2)/(1._sp+lambda*&
 &     hp*TANH(arg2)) - gam*dt
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
+    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
 &     inv_cp))
     hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp + imperviousness*pn
+    IF (pne .GT. 0) pr = pne - (hp_imd-hp)*cp + imperviousness*pn
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
     perc = hp_imd*cp*(1._sp-pwr1)
