@@ -13305,6 +13305,7 @@ CONTAINS
     REAL(sp) :: inv_cp, hp_imd
     REAL(sp) :: inv_cp_d, hp_imd_d
     INTRINSIC TANH
+    INTRINSIC MIN
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_d
     REAL(sp) :: pwr1
@@ -13326,9 +13327,13 @@ CONTAINS
 &     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
 &     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
     ps = temp2
-! Range of correction coef: (0, 2)
-    ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
-    ps = (1._sp+fq_ps)*ps
+    IF (pn .GT. (1._sp+fq_ps)*ps) THEN
+      ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
+      ps = (1._sp+fq_ps)*ps
+    ELSE
+      ps_d = pn_d
+      ps = pn
+    END IF
     temp2 = TANH(en*inv_cp)
     temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
@@ -13338,14 +13343,18 @@ CONTAINS
 &     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
 &     1._sp-hp)*temp2+1._sp)
     es = temp
-! Range of correction coef: (0, 2)
-    es_d = es*fq_es_d + (fq_es+1._sp)*es_d
-    es = (1._sp+fq_es)*es
+    IF (en .GT. (1._sp+fq_es)*es) THEN
+      es_d = es*fq_es_d + (fq_es+1._sp)*es_d
+      es = (1._sp+fq_es)*es
+    ELSE
+      es_d = en_d
+      es = en
+    END IF
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
-      pr_d = pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d
-      pr = pn - (hp_imd-hp)*cp
+      pr_d = pn_d - ps_d
+      pr = pn - ps
     ELSE
       pr_d = 0.0_4
     END IF
@@ -13375,6 +13384,7 @@ CONTAINS
     REAL(sp) :: inv_cp, hp_imd
     REAL(sp) :: inv_cp_b, hp_imd_b
     INTRINSIC TANH
+    INTRINSIC MIN
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_b
     REAL(sp) :: pwr1
@@ -13397,14 +13407,24 @@ CONTAINS
     REAL(sp) :: es_b
     inv_cp = 1._sp/cp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-! Range of correction coef: (0, 2)
-    CALL PUSHREAL4(ps)
-    ps = (1._sp+fq_ps)*ps
+    IF (pn .GT. (1._sp+fq_ps)*ps) THEN
+      CALL PUSHREAL4(ps)
+      ps = (1._sp+fq_ps)*ps
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      ps = pn
+      CALL PUSHCONTROL1B(1)
+    END IF
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
-! Range of correction coef: (0, 2)
-    CALL PUSHREAL4(es)
-    es = (1._sp+fq_es)*es
+    IF (en .GT. (1._sp+fq_es)*es) THEN
+      CALL PUSHREAL4(es)
+      es = (1._sp+fq_es)*es
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      es = en
+      CALL PUSHCONTROL1B(1)
+    END IF
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13431,40 +13451,52 @@ CONTAINS
     IF (branch .EQ. 0) THEN
 !$OMP ATOMIC update
       pn_b = pn_b + pr_b
-      hp_imd_b = hp_imd_b - cp*pr_b
-      hp_b = cp*pr_b
-!$OMP ATOMIC update
-      cp_b = cp_b - (hp_imd-hp)*pr_b
+      ps_b = -pr_b
     ELSE
-      hp_b = 0.0_4
+      ps_b = 0.0_4
     END IF
+    hp_b = hp_imd_b
+    ps_b = ps_b + inv_cp*hp_imd_b
     es_b = -(inv_cp*hp_imd_b)
     inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
-    CALL POPREAL4(es)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL4(es)
 !$OMP ATOMIC update
-    fq_es_b = fq_es_b + es*es_b
-    es_b = (fq_es+1._sp)*es_b
+      fq_es_b = fq_es_b + es*es_b
+      es_b = (fq_es+1._sp)*es_b
+    ELSE
+!$OMP ATOMIC update
+      en_b = en_b + es_b
+      es_b = 0.0_4
+    END IF
     temp4 = TANH(en*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
     temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
     temp_b3 = es_b/temp3
     temp_b = (2._sp-hp)*temp1*temp_b3
+    temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
     temp_b0 = -(temp0*temp1*temp_b3/temp3)
 !$OMP ATOMIC update
-    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
-&     temp_b0
-    ps_b = inv_cp*hp_imd_b
-    temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
+    hp_b = hp_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*temp_b0
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
 !$OMP ATOMIC update
     en_b = en_b + inv_cp*temp_b5 + inv_cp*temp_b4
+    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4
 !$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b
-    CALL POPREAL4(ps)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL4(ps)
 !$OMP ATOMIC update
-    fq_ps_b = fq_ps_b + ps*ps_b
-    ps_b = (fq_ps+1._sp)*ps_b
+      fq_ps_b = fq_ps_b + ps*ps_b
+      ps_b = (fq_ps+1._sp)*ps_b
+    ELSE
+!$OMP ATOMIC update
+      pn_b = pn_b + ps_b
+      ps_b = 0.0_4
+    END IF
     temp = TANH(pn*inv_cp)
     temp0 = hp*temp + 1._sp
     temp1 = TANH(pn*inv_cp)
@@ -13475,12 +13507,11 @@ CONTAINS
 !$OMP ATOMIC update
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4 + pn*temp_b2 + pn*&
-&     temp_b0
-!$OMP ATOMIC update
-    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
 !$OMP ATOMIC update
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
+    inv_cp_b = inv_cp_b + pn*temp_b2 + pn*temp_b0
+!$OMP ATOMIC update
+    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
   END SUBROUTINE GR_PRODUCTION_B
 
   SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc&
@@ -13491,19 +13522,26 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp) :: inv_cp, hp_imd
     INTRINSIC TANH
+    INTRINSIC MIN
     REAL(sp) :: pwx1
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-! Range of correction coef: (0, 2)
-    ps = (1._sp+fq_ps)*ps
+    IF (pn .GT. (1._sp+fq_ps)*ps) THEN
+      ps = (1._sp+fq_ps)*ps
+    ELSE
+      ps = pn
+    END IF
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
-! Range of correction coef: (0, 2)
-    es = (1._sp+fq_es)*es
+    IF (en .GT. (1._sp+fq_es)*es) THEN
+      es = (1._sp+fq_es)*es
+    ELSE
+      es = en
+    END IF
     hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
+    IF (pn .GT. 0) pr = pn - ps
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
     perc = hp_imd*cp*(1._sp-pwr1)

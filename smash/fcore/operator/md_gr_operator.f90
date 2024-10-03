@@ -78,17 +78,17 @@ contains
 
         ps = cp*(1._sp - hp*hp)*tanh(pn*inv_cp)/ &
         & (1._sp + hp*tanh(pn*inv_cp))
-        ps = (1._sp + fq_ps)*ps  ! Range of correction coef: (0, 2)
+        ps = min(pn, (1._sp + fq_ps)*ps)  ! Range of correction coef: (0, 2)
 
         es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
         & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
-        es = (1._sp + fq_es)*es  ! Range of correction coef: (0, 2)
+        es = min(en, (1._sp + fq_es)*es)  ! Range of correction coef: (0, 2)
 
         hp_imd = hp + (ps - es)*inv_cp
 
         if (pn .gt. 0) then
 
-            pr = pn - (hp_imd - hp)*cp
+            pr = pn - ps
 
         end if
 
