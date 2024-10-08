@@ -14,6 +14,7 @@ dependencies:
     - numpy
     - f90wrap
     - versioneer[toml]
+    - geopandas
     - rasterio
     - pandas
     - h5py

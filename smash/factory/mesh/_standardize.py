@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import rasterio
 
-from smash.factory.mesh._tools import _get_transform
+from smash.factory.mesh._tools import _get_transform, _load_shp_dataset
 
 if TYPE_CHECKING:
     from smash.util._typing import AlphaNumeric, AnyTuple, FilePath, ListLike, Numeric
@@ -183,6 +183,21 @@ def _standardize_generate_mesh_code(x: np.ndarray, code: str | ListLike | None) 
     return code
 
 
+def _standardize_generate_mesh_shp_path(shp_path: FilePath | None) -> str | None:
+    if shp_path is None:
+        return shp_path
+
+    if not isinstance(shp_path, (str, os.PathLike)):
+        raise TypeError("shp_path argument must be of FilePath type (str, PathLike[str])")
+
+    shp_path = str(shp_path)
+
+    if not os.path.exists(shp_path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), shp_path)
+
+    return shp_path
+
+
 def _standardize_generate_mesh_max_depth(max_depth: Numeric) -> int:
     if not isinstance(max_depth, (int, float)):
         raise TypeError("max_depth argument must be of Numeric type (int, float)")
@@ -215,6 +230,7 @@ def _standardize_generate_mesh_args(
     y: Numeric | ListLike | None,
     area: Numeric | ListLike | None,
     code: str | ListLike | None,
+    shp_path: FilePath | None,
     max_depth: Numeric,
     epsg: AlphaNumeric | None,
 ) -> AnyTuple:
@@ -233,8 +249,12 @@ def _standardize_generate_mesh_args(
 
         code = _standardize_generate_mesh_code(x, code)
 
+    shp_path = _standardize_generate_mesh_shp_path(shp_path)
+
+    shp_dataset = _load_shp_dataset(shp_path, code) if shp_path else None
+
     max_depth = _standardize_generate_mesh_max_depth(max_depth)
 
     epsg = _standardize_generate_mesh_epsg(epsg)
 
-    return flwdir_dataset, bbox, x, y, area, code, max_depth, epsg
+    return flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg
