@@ -1,7 +1,15 @@
 from __future__ import annotations
 
+import warnings
+from typing import TYPE_CHECKING
+
+import geopandas as gpd
 import numpy as np
+import pandas as pd
 import rasterio
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 def _xy_to_rowcol(x: float, y: float, xmin: float, ymax: float, xres: float, yres: float) -> tuple:
@@ -109,3 +117,40 @@ def _get_crs(flwdir_dataset: rasterio.DatasetReader, epsg: int) -> rasterio.CRS:
                 "the 'epsg' argument"
             )
     return crs
+
+
+def _get_shp_dataset_sql_clauses(code: np.ndarray) -> Generator[str, None, None]:
+    # Split the code array into chunks of 4000 elements to avoid SQL querie limit
+    if code.size == 1:
+        yield f"code = '{code[0]}'"
+    else:
+        chunk_size = 4000
+        for i in range(0, code.size, chunk_size):
+            yield f"code IN {tuple(code[i:i + chunk_size].tolist())}"
+
+
+def _load_shp_dataset(shp_path: str, code: np.ndarray) -> gpd.GeoDataFrame:
+    # Fast reading of only one line to retrieve the shapefile columns
+    if "code" not in gpd.read_file(shp_path, max_features=1).columns:
+        raise ValueError("Shapefile must contain at least a 'code' column")
+
+    # Load the shapefile dataset with only the 'code' and 'geometry' columns with a subset based on the given
+    # code.
+    shp_dataset = pd.concat(
+        [
+            gpd.read_file(shp_path, columns=["code", "geometry"], where=clause)
+            for clause in _get_shp_dataset_sql_clauses(code)
+        ]
+    )
+    shp_dataset.reset_index(drop=True, inplace=True)
+
+    missing_code = [str(c) for c in np.setdiff1d(code, shp_dataset["code"])]
+
+    if missing_code:
+        warnings.warn(
+            f"Missing shapefile geometry for the code: {missing_code}. The "
+            f"area-based method will be used instead of the contour-based one",
+            stacklevel=2,
+        )
+
+    return shp_dataset

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import rasterio
+import rasterio.features
 
 from smash.factory.mesh._libmesh import mw_mesh
 from smash.factory.mesh._standardize import (
@@ -22,6 +23,8 @@ from smash.factory.mesh._tools import (
 
 if TYPE_CHECKING:
     from typing import Any
+
+    import geopandas as gpd
 
     from smash.util._typing import AlphaNumeric, FilePath, ListLike, Numeric
 
@@ -147,6 +150,7 @@ def generate_mesh(
     y: Numeric | ListLike[float] | None = None,
     area: Numeric | ListLike[float] | None = None,
     code: str | ListLike[str] | None = None,
+    shp_path: FilePath | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
 ) -> dict[str, Any]:
@@ -188,12 +192,18 @@ def generate_mesh(
     code : `str`, list[str, ...] or None, default None
         The code of the catchment(s) to mesh.
         The **code** size must be equal to **x**, **y** and **area**.
-        In case of bouding box meshing, the **code** argument is not used.
 
         .. note::
             If not given, the default code is:
 
             ``['_c0', '_c1', ..., '_cn-1']`` with :math:`n`, the number of gauges (i.e. the size of **x**)
+
+    shp_path : `str` or None, default None
+        Path to the shapefile containing the contours of the catchment(s) to mesh.
+        The shapefile must contain a ``code`` field to identify each catchment based on the **code** argument.
+        The shapefile must be in the same projection as the flow direction file.
+        For all the catchments in the shapefile, the ``contour-based`` method will be applied instead of the
+        ``area-based`` one.
 
     max_depth : `int`, default 1
         The maximum depth accepted by the algorithm to find the catchment outlet.
@@ -210,7 +220,7 @@ def generate_mesh(
         The ``EPSG`` value of the flow directions file. By default, if the projection is well
         defined in the flow directions file. It is not necessary to provide the value of
         the ``EPSG``. On the other hand, if the projection is not well defined in the flow directions file
-        (i.e. in ``ASCII`` file). The **epsg** argument must be filled in.
+        (i.e. in ``ASCII`` file), the **epsg** argument must be filled in.
 
     Returns
     -------
@@ -360,7 +370,7 @@ def generate_mesh(
     (1000.0, 906044, 0)
     """
 
-    args = _standardize_generate_mesh_args(flwdir_path, bbox, x, y, area, code, max_depth, epsg)
+    args = _standardize_generate_mesh_args(flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg)
 
     return _generate_mesh(*args)
 
@@ -371,6 +381,7 @@ def _generate_mesh_from_xy(
     y: np.ndarray,
     area: np.ndarray,
     code: np.ndarray,
+    shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int,
 ) -> dict:
@@ -415,9 +426,21 @@ def _generate_mesh_from_xy(
         dy_win = dy[slice_win]
         flwdir_win = flwdir[slice_win]
 
-        mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln(
-            flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
-        )
+        if shp_dataset is not None and code[ind] in shp_dataset["code"].values:
+            transform = rasterio.transform.Affine(
+                xres, 0, xmin + slice_win[1].start * xres, 0, -yres, ymax - slice_win[0].start * yres
+            )
+            geometry = shp_dataset.loc[shp_dataset["code"] == code[ind], "geometry"]
+            mask = rasterio.features.rasterize(
+                [(geom, 1) for geom in geometry], out_shape=flwdir_win.shape, transform=transform, fill=0
+            )
+            mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln_contour_based(
+                flwdir_win, mask, row_win, col_win, max_depth
+            )
+        else:
+            mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln_area_based(
+                flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
+            )
 
         row_dln[ind] = row_dln_win + slice_win[0].start  # % srow
         col_dln[ind] = col_dln_win + slice_win[1].start  # % scol
@@ -568,10 +591,11 @@ def _generate_mesh(
     y: np.ndarray | None,
     area: np.ndarray | None,
     code: np.ndarray | None,
+    shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int | None,
 ) -> dict:
     if bbox is not None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
-        return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
+        return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, shp_dataset, max_depth, epsg)
