@@ -118,6 +118,7 @@ contains
                     cycle
                 end if
 
+                !% Compare "observed" area (area) with the "computed" area (sum(mask_dln_imd*dx*dy))
                 tol = abs(area - sum(mask_dln_imd*dx*dy))/area
 
                 if (tol .ge. min_tol) cycle
@@ -183,6 +184,7 @@ contains
                     cycle
                 end if
 
+                !% Compare "observed" contour (mask) with the "computed" contour (mask_dln_imd)
                 tol = sum(abs(mask - mask_dln_imd))
 
                 if (tol .ge. min_tol) cycle
