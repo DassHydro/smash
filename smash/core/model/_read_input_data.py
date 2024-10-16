@@ -120,6 +120,57 @@ def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> np.ndarray:
 
     return arr
 
+def _read_windowed_raster_sm(path: FilePath, mesh: MeshDT) -> np.ndarray:
+    gdal.UseExceptions()
+    ds = gdal.Open(path)
+
+    # Get the GeoTransform information
+    transform = ds.GetGeoTransform()
+
+    # Calculate the target resolution (1 km)
+    target_resolution = 1000  # in meters
+    xres_target = target_resolution
+    yres_target = -target_resolution
+    # Calculate the target dimensions based on xmin, ymax, ncol, and nrow
+    target_width = int(mesh.ncol)
+    target_height = int(mesh.nrow)
+
+    # Calculate the target origin (top-left corner)
+    target_xmin = mesh.xmin
+    target_ymax = mesh.ymax
+
+    # Update the new GeoTransform with the target origin
+    new_transform = (target_xmin, xres_target, transform[2], target_ymax, transform[4], yres_target)
+
+    # Create a new dataset for the resampled data
+    driver = gdal.GetDriverByName('MEM')
+    ds_resampled = driver.Create('', target_width, target_height, 1, gdal.GDT_Float32)
+    
+    # Set the new GeoTransform
+    ds_resampled.SetGeoTransform(new_transform)
+
+    # Set the projection
+    ds_resampled.SetProjection(ds.GetProjection())
+
+    # Perform the resampling
+    gdal.ReprojectImage(ds, ds_resampled, ds.GetProjection(), ds_resampled.GetProjection(), gdal.GRA_NearestNeighbour)
+
+    # Read the resampled array
+    band =  ds_resampled.GetRasterBand(1)
+    nodata = band.GetNoDataValue()
+
+    arr_resampled = band.ReadAsArray()
+
+    # Close the datasets
+    ds = None
+    ds_resampled = None
+
+    # Handle nodata values if needed
+    arr_resampled = np.where(arr_resampled == nodata, -99.0, arr_resampled)
+
+
+    return arr_resampled
+
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     start_time = pd.Timestamp(setup.start_time)
@@ -220,6 +271,99 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if miss:
         warnings.warn(f"Missing {len(miss)} precipitation file(s) for date(s): {miss}", stacklevel=2)
+
+
+def _read_sm(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+    date_range = pd.date_range(
+        start=setup.start_time,
+        end=setup.end_time,
+        freq=f"{int(setup.dt)}s",
+    )[1:]
+    miss = []
+
+    if setup.sm_format == "tif":
+        files = _get_atmos_files(
+            setup.sm_directory, setup.sm_format, setup.sm_access, date_range
+        )
+        for i, date in enumerate(tqdm(date_range, desc="</> Reading soil moisture")):
+            ind = _find_index_files_containing_date(files, date, setup.dt)
+
+            if ind == -1:
+                miss.append(date.strftime("%Y-%m-%d %H:%M"))
+                if setup.sparse_storage:
+                    matrix = np.zeros(
+                        shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
+                    )
+                    matrix.fill(np.float32(-99))
+                    wrap_matrix_to_sparse_matrix(
+                        mesh,
+                        matrix,
+                        np.float32(-99),
+                        input_data.atmos_data.sparse_sm[i],
+                    )
+
+                else:
+                    input_data.atmos_data.sm[..., i] = np.float32(-99)
+
+            else:
+                matrix = (
+                    _read_windowed_raster_sm(files[ind], mesh)
+                    * setup.sm_conversion_factor
+                )
+
+                if setup.sparse_storage:
+                    wrap_matrix_to_sparse_matrix(
+                        mesh,
+                        matrix,
+                        np.float32(0),
+                        input_data.atmos_data.sparse_sm[i],
+                    )
+
+                else:
+                    input_data.atmos_data.sm[..., i] = matrix
+
+                files = files[ind + 1 :]
+
+        # standardize input_data.atmos_data.sparse_sm
+        if setup.sparse_storage:
+            result = []
+
+            for i in range(len(input_data.atmos_data.sparse_sm)):
+                result.extend(input_data.atmos_data.sparse_sm[i].values)
+
+            min_sm = np.nanmin(result)
+            max_sm = np.nanmax(result)
+
+            for i in range(len(input_data.atmos_data.sparse_sm)):
+                input_data.atmos_data.sparse_sm[i].values = (input_data.atmos_data.sparse_sm[i].values - min_sm)/(max_sm - min_sm)
+
+        # standardize input_data.atmos_data.sm
+        else:
+            result = np.empty(np.shape(input_data.atmos_data.sm))
+
+            for i in range(np.shape(input_data.atmos_data.sm)[2]):
+                # Apply np.where using the mask for each value
+                result[:, :, i] = np.where(mesh.active_cell==0, np.nan, input_data.atmos_data.sm[:,:,i])
+                result[:, :, i] = np.where(input_data.atmos_data.sm[:,:,i]==-99, np.nan, input_data.atmos_data.sm[:,:,i])
+
+            min_sm = np.nanmin(result)
+            max_sm = np.nanmax(result)
+
+            for i in range(np.shape(input_data.atmos_data.sm)[2]):
+                result[:, :, i] = (result[:, :, i] - min_sm)/(max_sm - min_sm)
+
+            result = np.where(np.isnan(result), -99, result)
+
+            input_data.atmos_data.sm = result
+            
+
+    # % WIP
+    elif setup.sm_format == "nc":
+        raise NotImplementedError("NetCDF format not implemented yet")
+
+    if miss:
+        warnings.warn(f"Missing {len(miss)} soil moisture file(s) for date(s)")
+
 
 
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -465,11 +609,11 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             input_data.physio_data.l_descriptor[i] = np.min(input_data.physio_data.descriptor[..., i])
             input_data.physio_data.u_descriptor[i] = np.max(input_data.physio_data.descriptor[..., i])
             # % Check if descriptors are uniform
-            if input_data.physio_data.l_descriptor[i] == input_data.physio_data.u_descriptor[i]:
-                raise ValueError(
-                    f"Reading spatially uniform descriptor '{name}'. It must be removed to perform "
-                    f"optimization"
-                )
+            # if input_data.physio_data.l_descriptor[i] == input_data.physio_data.u_descriptor[i]:
+            #     raise ValueError(
+            #         f"Reading spatially uniform descriptor '{name}'. It must be removed to perform "
+            #         f"optimization"
+            #     )
 
     if miss:
         warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}", stacklevel=2)

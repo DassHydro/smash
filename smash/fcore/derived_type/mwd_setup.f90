@@ -41,6 +41,11 @@
 !%          ``temp_format``            Temperature format
 !%          ``temp_directory``         Temperature directory path
 !%          ``temp_access``            Temperature access tree
+!%          ``read_sm`   `             Read soil moisture                                     (default: .false.)        
+!%          ``sm_format``              Soil moisture format                                   (default: 'tif')
+!%          ``sm_conversion_factor``   Soil moisture format conversion factor                 (default: 1)
+!%          ``sm_directory``           Soil moisture directory path                           (default: '...')
+!%          ``sm_access``              Soil moisture access tree
 !%          ``prcp_partitioning``      Precipitation partitioning
 !%          ``sparse_storage``         Forcing sparse storage
 !%          ``read_descriptor``        Read descriptor map(s)
@@ -118,6 +123,13 @@ module mwd_setup
         character(lchar) :: temp_directory = "..." !$F90W char
         character(lchar) :: temp_access = "..." !$F90W char
 
+        logical :: read_sm = .false.
+        character(lchar) :: sm_format = "..." !$F90W char
+        real(sp) :: sm_conversion_factor = 1._sp
+        character(lchar) :: sm_directory = "..." !$F90W char
+        character(lchar) :: sm_access = "..." !$F90W char
+        character(lchar) :: sm_metric = "..." !$F90W char
+
         logical :: prcp_partitioning = .false.
 
         logical :: sparse_storage = .false.
@@ -138,6 +150,8 @@ module mwd_setup
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
         integer :: nqz = -99
+        integer :: maxiter = -99
+
 
     end type SetupDT
 

@@ -13,14 +13,17 @@
 !%          ``pet``                  Potential evapotranspiration field          [mm]
 !%          ``snow``                 Snow field                                  [mm]
 !%          ``temp``                 Temperature field                           [°C]
+!%          ``sm``                   Soil moisture field                         [%]
 !%          ``sparse_prcp``          Sparse precipitation field                  [mm]
 !%          ``sparse_pet``           Sparse potential evapotranspiration field   [mm]
 !%          ``sparse_snow``          Sparse snow field                           [mm]
 !%          ``sparse_temp``          Sparse temperature field                    [°C]
+!%          ``sparse_sm``            Sparse soil moisture field                  [%]
 !%          ``mean_prcp``            Mean precipitation at gauge                 [mm]
 !%          ``mean_pet``             Mean potential evapotranspiration at gauge  [mm]
 !%          ``mean_snow``            Mean snow at gauge                          [mm]
 !%          ``mean_temp``            Mean temperature at gauge                   [°C]
+!%          ``mean_sm``              Mean soil moisture at gauge                 [%]
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -44,16 +47,19 @@ module mwd_atmos_data
         real(sp), dimension(:, :, :), allocatable :: pet
         real(sp), dimension(:, :, :), allocatable :: snow
         real(sp), dimension(:, :, :), allocatable :: temp
+        real(sp), dimension(:, :, :), allocatable :: sm
 
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_prcp
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_pet
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_snow
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_temp
+        type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_sm
 
         real(sp), dimension(:, :), allocatable :: mean_prcp
         real(sp), dimension(:, :), allocatable :: mean_pet
         real(sp), dimension(:, :), allocatable :: mean_snow
         real(sp), dimension(:, :), allocatable :: mean_temp
+        real(sp), dimension(:, :), allocatable :: mean_sm
 
     end type Atmos_DataDT
 
@@ -81,6 +87,12 @@ contains
                 call Sparse_MatrixDT_initialise_array(this%sparse_temp, 0, .true., -99._sp)
             end if
 
+            if (setup%read_sm) then
+                allocate (this%sparse_sm(setup%ntime_step))
+                call Sparse_MatrixDT_initialise_array(this%sparse_sm, 0, .true., -99._sp)
+                
+            end if
+
         else
 
             allocate (this%prcp(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -95,6 +107,10 @@ contains
                 this%temp = -99._sp
             end if
 
+            if (setup%read_sm) then
+                allocate (this%sm(mesh%nrow, mesh%ncol, setup%ntime_step))
+                this%sm = -99._sp
+            end if
         end if
 
         allocate (this%mean_prcp(mesh%ng, setup%ntime_step))
@@ -107,6 +123,11 @@ contains
             this%mean_snow = -99._sp
             allocate (this%mean_temp(mesh%ng, setup%ntime_step))
             this%mean_temp = -99._sp
+        end if
+
+        if (setup%read_sm) then
+            allocate (this%mean_sm(mesh%ng, setup%ntime_step))
+            this%mean_sm = -99._sp
         end if
 
     end subroutine Atmos_DataDT_initialise

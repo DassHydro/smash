@@ -36,7 +36,7 @@ contains
 
         implicit none
 
-        type(SetupDT), intent(in) :: setup
+        type(SetupDT), intent(inout) :: setup
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters
@@ -78,14 +78,25 @@ contains
         task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
 
         if (options%comm%verbose) then
-            write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
-            & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+            write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2,2(4x,a,f14.6))') &
+            & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx,&
+            &"Jobs_q =", output%cost_jobs_q, "Jobs_sm =", output%cost_jobs_sm
         end if
 
         if (returns%iter_cost_flag) then
             allocate (returns%iter_cost(options%optimize%maxiter + 1))
             returns%iter_cost(1) = gx
         end if
+
+        ! allocate (output%array_cost(options%optimize%maxiter + 1))
+        ! allocate (output%array_cost_jobs_q(options%optimize%maxiter + 1))
+        ! allocate (output%array_cost_jobs_sm(options%optimize%maxiter + 1))
+        ! allocate (output%array_cost_jreg(options%optimize%maxiter + 1))
+
+        output%array_cost(1) = gx
+        output%array_cost_jobs_q(1) = output%cost_jobs_q
+        output%array_cost_jobs_sm(1) = output%cost_jobs_sm
+        output%array_cost_jreg(1) = output%cost_jreg
 
         do iter = 1, options%optimize%maxiter*n
 
@@ -190,11 +201,18 @@ contains
             if (mod(iter, n) .eq. 0) then
 
                 if (options%comm%verbose) then
-                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
-                    & "At iterate", (iter/n), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2,2(4x,a,f14.6))') &
+                    & "At iterate", (iter/n), "nfg = ", nfg,&
+                    & "J =", gx, "ddx =", ddx,&
+                    &"Jobs_q =", output%cost_jobs_q, "Jobs_sm =", output%cost_jobs_sm
                 end if
 
                 if (returns%iter_cost_flag) returns%iter_cost(iter/n + 1) = gx
+
+                output%array_cost(iter/n + 1) = gx
+                output%array_cost_jobs_q(iter/n + 1) = output%cost_jobs_q
+                output%array_cost_jobs_sm(iter/n + 1) = output%cost_jobs_sm
+                output%array_cost_jreg(iter/n + 1) = output%cost_jreg
 
             end if
 
@@ -226,6 +244,13 @@ contains
 
         if (returns%iter_cost_flag) call reallocate(returns%iter_cost, iter/n + 1)
 
+        call reallocate(output%array_cost, iter/n + 1)
+        call reallocate(output%array_cost_jobs_q, iter/n + 1)
+        call reallocate(output%array_cost_jobs_sm, iter/n + 1)
+        call reallocate(output%array_cost_jreg, iter/n + 1)
+
+        setup%maxiter = iter/n
+
         call ControlDT_finalise(parameters%control)
 
         if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
@@ -236,7 +261,7 @@ contains
 
         implicit none
 
-        type(SetupDT), intent(in) :: setup
+        type(SetupDT), intent(inout) :: setup
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters
@@ -275,6 +300,11 @@ contains
 
         if (returns%iter_cost_flag) allocate (returns%iter_cost(options%optimize%maxiter + 1))
         if (returns%iter_projg_flag) allocate (returns%iter_projg(options%optimize%maxiter + 1))
+        
+        ! allocate (output%array_cost(options%optimize%maxiter + 1))
+        ! allocate (output%array_cost_jobs_q(options%optimize%maxiter + 1))
+        ! allocate (output%array_cost_jobs_sm(options%optimize%maxiter + 1))
+        ! allocate (output%array_cost_jreg(options%optimize%maxiter + 1))
 
         x_wa = real(parameters%control%x, dp)
         l_wa = real(parameters%control%l, dp)
@@ -297,16 +327,25 @@ contains
                 f = real(output%cost, dp)
                 g = real(parameters_b%control%x, dp)
 
+                
                 if (task(4:8) .eq. "START") then
 
                     call projgr(n, l_wa, x_wa, parameters%control%nbd, x_wa, g, projg)
                     if (returns%iter_cost_flag) returns%iter_cost(1) = real(f, sp)
                     if (returns%iter_projg_flag) returns%iter_projg(1) = real(projg, sp)
+                    
+                    output%array_cost(1) = real(f, sp)
+                    output%array_cost_jobs_q(1) = output%cost_jobs_q
+                    output%array_cost_jreg(1) = output%cost_jreg
+                    output%array_cost_jobs_sm(1) = output%cost_jobs_sm
 
                     if (options%comm%verbose) then
 
                         write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", projg
+                        & "At iterate", 0, "nfg = ", 1, &
+                        & "J =", f,  "Jobs =", output%cost, "Jreg =", output%cost_jreg, &
+                        &"Jobs_q =", output%cost_jobs_q, "Jobs_sm =", output%cost_jobs_sm, &
+                        &"|proj g| =", projg
 
                     end if
 
@@ -317,13 +356,21 @@ contains
                 if (returns%iter_cost_flag) returns%iter_cost(isave(30) + 1) = real(f, sp)
                 if (returns%iter_projg_flag) returns%iter_projg(isave(30) + 1) = real(dsave(13), sp)
 
+                output%array_cost(isave(30) + 1) = real(f, sp)
+                output%array_cost_jobs_q(isave(30) + 1) = output%cost_jobs_q
+                output%array_cost_jreg(isave(30) + 1) = output%cost_jreg
+                output%array_cost_jobs_sm(isave(30) + 1) = output%cost_jobs_sm
+
                 if (options%comm%verbose) then
 
-                    write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
-                    & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    write (*, '(4x,a,4x,i3,4x,a,i5,5(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", isave(30), "nfg = ", isave(34), &
+                        &"J =", f, "Jobs =", output%cost, "Jreg =", output%cost_jreg, &
+                        &"Jobs_q =", output%cost_jobs_q, "Jobs_sm =", output%cost_jobs_sm, &
+                        &"|proj g| =", dsave(13)
 
                 end if
-
+                
                 if (isave(30) .ge. options%optimize%maxiter) task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
 
                 if (dsave(13) .le. 1.d-10*(1.0d0 + abs(f))) task = "STOP: THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL"
@@ -345,6 +392,13 @@ contains
         if (returns%iter_cost_flag) call reallocate(returns%iter_cost, isave(30) + 1)
         if (returns%iter_projg_flag) call reallocate(returns%iter_projg, isave(30) + 1)
 
+        call reallocate(output%array_cost, isave(30) + 1)
+        call reallocate(output%array_cost_jobs_q, isave(30) + 1)
+        call reallocate(output%array_cost_jobs_sm, isave(30) + 1)
+        call reallocate(output%array_cost_jreg, isave(30) + 1)
+
+        setup%maxiter = isave(30)
+
         call ControlDT_finalise(parameters%control)
 
         if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
@@ -355,7 +409,7 @@ contains
 
         implicit none
 
-        type(SetupDT), intent(in) :: setup
+        type(SetupDT), intent(inout) :: setup
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters
@@ -446,7 +500,7 @@ contains
 
         implicit none
 
-        type(SetupDT), intent(in) :: setup
+        type(SetupDT), intent(inout) :: setup
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters

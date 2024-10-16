@@ -44,7 +44,7 @@ class Net(object):
     def __init__(self):
         self.layers = []
 
-        self.history = {"loss_train": [], "loss_valid": [], "proj_grad": []}
+        self.history = {"loss_train": [], "loss_valid": [], "proj_grad": [], "loss_q": [], "loss_sm": []}
 
         self._opt = None
 
@@ -349,11 +349,16 @@ class Net(object):
             y_pred = self._forward_pass(x_train)
 
             # calculate the gradient of the loss function wrt y_pred
-            init_loss_grad = _hcost_prime(y_pred, parameters, mask, instance, wrap_options, wrap_returns)
+            init_loss_grad = _hcost_prime(
+                y_pred, parameters, mask, instance, wrap_options, wrap_returns
+            )
 
             # compute loss
-            loss = _hcost(instance)
+            loss, loss_q, loss_sm = _hcost(instance)
+
             self.history["loss_train"].append(loss)
+            self.history["loss_q"].append(loss_q)
+            self.history["loss_sm"].append(loss_sm)
 
             # save optimal weights if early stopping is used
             if early_stopping:
@@ -388,7 +393,11 @@ class Net(object):
                 ret.append(f"{' ' * 4}At epoch")
                 ret.append("{:3}".format(epo + 1))
                 ret.append("J =" + "{:10.6f}".format(loss))
-                ret.append("|proj g| =" + "{:10.6f}".format(self.history["proj_grad"][-1]))
+                ret.append("J_q =" + "{:10.6f}".format(loss_q))
+                ret.append("J_sm =" + "{:10.6f}".format(loss_sm))
+                ret.append(
+                    "|proj g| =" + "{:10.6f}".format(self.history["proj_grad"][-1])
+                )
 
                 tqdm.write((" " * 4).join(ret))
 
@@ -397,6 +406,11 @@ class Net(object):
                 if hasattr(layer, "_initialize"):
                     layer.weight = np.copy(layer._weight)
                     layer.bias = np.copy(layer._bias)
+            
+        self.history["loss_train"][epo:epochs+1] = np.full(epochs+1 - epo, loss)
+        self.history["loss_q"][epo:epochs+1] = np.full(epochs+1 - epo, loss_q)
+        self.history["loss_sm"][epo:epochs+1] = np.full(epochs+1 - epo, loss_sm)
+
 
     def _forward_pass(self, x_train: np.ndarray, training: bool = True):
         layer_output = x_train

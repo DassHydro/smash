@@ -524,6 +524,12 @@ DEFAULT_MODEL_SETUP = {
     "prcp_conversion_factor": 1,
     "prcp_directory": None,
     "prcp_access": "",
+    "read_sm": False,
+    "sm_format": "tif",
+    "sm_conversion_factor": 1,
+    "sm_directory": None,
+    "sm_access": "",
+    "sm_metric": "rmse",
     "read_pet": False,
     "pet_format": "tif",
     "pet_conversion_factor": 1,
@@ -545,6 +551,7 @@ DEFAULT_MODEL_SETUP = {
     "descriptor_format": "tif",
     "descriptor_directory": None,
     "descriptor_name": None,
+    "maxiter": 100,
 }
 
 
@@ -898,11 +905,12 @@ MODEL_DDT_IO_ATTR_KEYS = {
     ],
     "response_data": ["q"],
     "physio_data": ["descriptor"],
-    "atmos_data": ["mean_prcp", "mean_pet", "mean_snow", "mean_temp"],
+    "atmos_data": ["sm"],
     "rr_parameters": ["keys", "values"],
     "rr_initial_states": ["keys", "values"],
     "serr_mu_parameters": ["keys", "values"],
     "serr_sigma_parameters": ["keys", "values"],
     "response": ["q"],
     "rr_final_states": ["keys", "values"],
+    "output": ["hp_domain", "array_cost_jobs_sm", "array_cost_jobs_q", "array_cost"],
 }

@@ -29,10 +29,37 @@ module mwd_cost
     use mwd_output !% only: OutputDT
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
+    ! use mwd_sparse_matrix_manipulation
 
     implicit none
 
 contains
+
+    subroutine vector_to_matrix(mesh, ac_vector, matrix, n)
+
+        implicit none
+
+        type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: n
+        real(sp), dimension(n), intent(in) :: ac_vector
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: matrix
+        integer :: row, col, k
+
+        matrix = -99.0_sp
+
+        if (n .gt. 0) then
+
+            do col = 1, mesh%ncol
+                do row = 1, mesh%nrow
+
+                    k = mesh%rowcol_to_ind_ac(row, col)
+                    if (k .lt. 0) cycle
+                    matrix(row, col) = ac_vector(k)
+
+                end do
+            end do
+        end if
+    end subroutine vector_to_matrix
 
     function get_range_event(mask_event, i_event) result(res)
 
@@ -74,6 +101,7 @@ contains
         character(lchar), intent(in) :: tfm
         real(sp), dimension(:), intent(inout) :: qo, qs
 
+        integer :: i
         real(sp) :: mean_qo, e
         logical, dimension(size(qo)) :: mask
 
@@ -163,18 +191,18 @@ contains
         & sigma_funk, sigma_gamma, sigma_gamma_prior, log_post, log_prior, log_lkh, log_h, feas, isnull)
 
         ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
-        output%cost = -1._sp*real(log_post, sp)/size(obs)
+        output%cost = -1._sp*log_post/size(obs)
 
         !$AD start-exclude
         if (returns%cost_flag) returns%cost = output%cost
-        if (returns%log_lkh_flag) returns%log_lkh = real(log_lkh, sp)
-        if (returns%log_prior_flag) returns%log_prior = real(log_prior, sp)
-        if (returns%log_h_flag) returns%log_h = real(log_h, sp)
+        if (returns%log_lkh_flag) returns%log_lkh = log_lkh
+        if (returns%log_prior_flag) returns%log_prior = log_prior
+        if (returns%log_h_flag) returns%log_h = log_h
         !$AD end-exclude
 
     end subroutine bayesian_compute_cost
 
-    subroutine classical_compute_jobs(setup, mesh, input_data, output, options, jobs)
+    subroutine classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
         implicit none
 
@@ -183,6 +211,7 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(OutputDT), intent(in) :: output
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         real(sp), intent(inout) :: jobs
 
         integer :: i, j, k, n_computed_event
@@ -426,7 +455,7 @@ contains
 
     end subroutine classical_compute_jobs
 
-    subroutine classical_compute_jreg(setup, mesh, input_data, parameters, options, jreg)
+    subroutine classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
 
         implicit none
 
@@ -435,6 +464,7 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(in) :: parameters
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(in) :: returns
         real(sp), intent(inout) :: jreg
 
         integer :: i
@@ -472,6 +502,74 @@ contains
 
     end subroutine classical_compute_jreg
 
+
+    subroutine compute_jobs_sm(setup, mesh, input_data, returns, options, output, jobs_sm)
+
+        !% Notes
+        !% -----
+        !%
+        !% Jobs soil moisture computation subroutine
+        !%
+        !% Given SetupDT, MeshDT, Input_DataDT, OutputDT,
+        !% it returns the result of Jobs computation
+        !%
+        !% Jobs_sm = f(sm*,hp)
+        !%
+        !% See Also
+        !% --------
+        !% 
+        !% 
+        !% 
+        !% 
+        !% 
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(ReturnsDT), intent(in) :: returns
+        type(Input_DataDT), intent(in) :: input_data
+        type(OutputDT), intent(in) :: output
+        type(OptionsDT) :: options
+        real(sp), intent(out) :: jobs_sm
+        real(sp), dimension(mesh%nrow, mesh%ncol, setup%ntime_step - options%cost%end_warmup + 1) :: smobs, smsim
+        integer :: t, i
+
+        jobs_sm = 0._sp
+
+        smsim = output%hp_domain(:, :, options%cost%end_warmup:setup%ntime_step)
+
+        i = 1
+        
+        if(setup%sparse_storage) then
+
+            do t=options%cost%end_warmup, setup%ntime_step
+
+                call vector_to_matrix(mesh, input_data%atmos_data%sparse_sm(t)%values, smobs(:, :, i), &
+                & input_data%atmos_data%sparse_sm(t)%n)
+                i = i + 1
+
+            end do
+        
+        else
+            smobs = input_data%atmos_data%sm(:, :, options%cost%end_warmup:setup%ntime_step)
+        
+        end if
+
+        select case(setup%sm_metric)    
+        ! case("temporal_basin_average")
+        !     jobs_sm = temporal_basin_average(smsim, smobs, mesh%active_cell)
+        ! case("spatial_bias_accounting")
+        !     jobs_sm = spatial_bias_accounting(smsim, smobs, mesh%active_cell)
+        case("spatial_bias_insensitive")
+            call spatial_bias_insensitive(smsim, smobs, jobs_sm, mesh%active_cell, mesh%nac)
+        case("rmse")
+            jobs_sm = mse_2d(smsim, smobs, mesh%active_cell)
+        end select
+
+    end subroutine compute_jobs_sm
+
+
     subroutine classical_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
         implicit none
@@ -484,22 +582,38 @@ contains
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
 
-        real(sp) :: jobs, jreg
+        real(sp) :: jobs, jreg, jobs_sm
 
         jobs = 0._sp
         jreg = 0._sp
+        jobs_sm = 0._sp
 
-        call classical_compute_jobs(setup, mesh, input_data, output, options, jobs)
+        call classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
-        call classical_compute_jreg(setup, mesh, input_data, parameters, options, jreg)
+        call classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
 
-        output%cost = jobs + options%cost%wjreg*jreg
+
+        if (setup%read_sm) then
+
+            call compute_jobs_sm(setup, mesh, input_data, returns, options, output, jobs_sm)
+            ! jobs = 0._sp
+            ! jreg = 0._sp
+
+        end if
+
+        output%cost = (jobs + options%cost%wjreg*jreg)*(jobs + options%cost%wjreg*jreg) + jobs_sm*jobs_sm
+        output%cost_jreg = jreg
+        output%cost_jobs_q = jobs
+        output%cost_jobs_sm = jobs_sm
 
         !$AD start-exclude
         if (returns%cost_flag) returns%cost = output%cost
         if (returns%jobs_flag) returns%jobs = jobs
         if (returns%jreg_flag) returns%jreg = jreg
-        !$AD end-exclude
+
+
+        ! !$AD end-exclude
+
 
     end subroutine classical_compute_cost
 

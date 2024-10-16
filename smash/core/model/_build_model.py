@@ -18,12 +18,13 @@ from smash._constant import (
     STRUCTURE_RR_STATES,
 )
 from smash.core.model._read_input_data import (
-    _read_descriptor,
-    _read_pet,
-    _read_prcp,
     _read_qobs,
+    _read_prcp,
+    _read_pet,
     _read_snow,
     _read_temp,
+    _read_descriptor,
+    _read_sm,
 )
 from smash.fcore._mw_atmos_statistic import (
     compute_mean_atmos as wrap_compute_mean_atmos,
@@ -95,6 +96,9 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if setup.read_temp:
         _read_temp(setup, mesh, input_data)
+
+    if setup.read_sm:
+        _read_sm(setup, mesh, input_data)
 
     if setup.prcp_partitioning:
         wrap_compute_prcp_partitioning(setup, mesh, input_data)  # % Fortran subroutine
@@ -183,3 +187,4 @@ def _build_output(
 ):
     # % Build final states
     output.rr_final_states.keys = STRUCTURE_RR_STATES[setup.structure]
+

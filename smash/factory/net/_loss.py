@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def _hcost(instance: Model):
-    return instance._output.cost
+    return instance._output.cost, instance._output.cost_jobs_q, instance._output.cost_jobs_sm
 
 
 def _hcost_prime(

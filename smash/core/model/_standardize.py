@@ -70,6 +70,11 @@ def _standardize_model_setup_format(key: str, value: str) -> str:
 
     return value
 
+def _standardize_model_setup_metric(key: str, value: str) -> str:
+    if not isinstance(value, str):
+        raise TypeError(f"{key} sm metric must be a str")
+
+    return value
 
 def _standardize_model_setup_conversion_factor(key: str, value: Numeric) -> float:
     if isinstance(value, (int, float)):
@@ -267,7 +272,57 @@ def _standardize_model_setup_prcp_directory(read_prcp: bool, prcp_directory: str
 def _standardize_model_setup_prcp_access(prcp_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("prcp_access", prcp_access)
 
+###############################################""
+def _standardize_model_setup_read_sm(read_sm: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("read_sm", read_sm)
 
+
+def _standardize_model_setup_sm_format(sm_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("sm_format", sm_format)
+
+
+def _standardize_model_setup_sm_conversion_factor(
+    sm_conversion_factor: str, **kwargs
+) -> str:
+    return _standardize_model_setup_conversion_factor(
+        "sm_conversion_factor", sm_conversion_factor
+    )
+
+
+def _standardize_model_setup_sm_directory(
+    read_sm: bool, sm_directory: str | None, **kwargs
+) -> str:
+    return _standardize_model_setup_directory(
+        read_sm, "sm_directory", sm_directory
+    )
+
+
+def _standardize_model_setup_maxiter(maxiter: Numeric, **kwargs) -> int:
+    if isinstance(maxiter, (int, float)):
+        maxiter = int(maxiter)
+        if maxiter <= 0:
+            raise ValueError("dt model setup must be greater than 0")
+    else:
+        raise TypeError("dt model setup must be of Numeric type (int, float)")
+
+    return maxiter
+
+# def _standardize_model_setup_optimize_maxiter(
+#     maxiter: str, **kwargs
+# ) -> str:
+#     return _standardize_model_setup_maxiter(
+#         "maxiter", maxiter
+#     )
+
+
+def _standardize_model_setup_sm_access(sm_access: str, **kwargs) -> str:
+    return _standardize_model_setup_access("sm_access", sm_access)
+
+
+def _standardize_model_setup_sm_metric(sm_metric: str, **kwargs) -> str:
+    return _standardize_model_setup_metric("sm_metric", sm_metric)
+
+###############################################""
 def _standardize_model_setup_read_pet(read_pet: bool, **kwrags) -> bool:
     return _standardize_model_setup_bool("read_pet", read_pet)
 

@@ -77,7 +77,6 @@ CONTAINS
     INTRINSIC LOG
     REAL(mrk) :: temp
 ! Initialize
-    loglkh = 0._mrk
     feas = .true.
     isnull = .false.
 ! Compute
@@ -112,7 +111,6 @@ CONTAINS
           temp = (obs(t, s)-sim(t, s)-mu)*(obs(t, s)-sim(t, s)-mu)/v
           loglkh_d = loglkh_d - 0.5_mrk*(v_d/v+(2*(obs(t, s)-sim(t, s)-&
 &           mu)*(-sim_d(t, s)-mu_d)-temp*v_d)/v)
-          loglkh = loglkh - 0.5_mrk*(LOG(pi*2._mrk)+LOG(v)+temp)
         END IF
       END DO
     END DO
@@ -294,7 +292,6 @@ CONTAINS
     TYPE(PRIORTYPE) :: dummytheta_prior(SIZE(theta_prior), 1)
     INTRINSIC SIZE
 ! Initialize
-    logprior = 0.0_mrk
 ! theta
     dummytheta_d = 0.0_8
     dummytheta_d(:, 1) = theta_d
@@ -306,21 +303,17 @@ CONTAINS
       logprior_d = 0.0_8
     ELSE
       logprior_d = pdf_d
-      logprior = logprior + pdf
 ! mu hyperparameters
       CALL COMPUTE_LOGPRIOR_ENGINE_D(mu_gamma, mu_gamma_d, &
 &                              mu_gamma_prior, pdf, pdf_d, feas, isnull)
       IF (.NOT.((.NOT.feas) .OR. isnull)) THEN
         logprior_d = logprior_d + pdf_d
-        logprior = logprior + pdf
 ! sigma hyperparameters
         CALL COMPUTE_LOGPRIOR_ENGINE_D(sigma_gamma, sigma_gamma_d, &
 &                                sigma_gamma_prior, pdf, pdf_d, feas, &
 &                                isnull)
-        IF (.NOT.((.NOT.feas) .OR. isnull)) THEN
-          logprior_d = logprior_d + pdf_d
-          logprior = logprior + pdf
-        END IF
+        IF (.NOT.((.NOT.feas) .OR. isnull)) logprior_d = logprior_d + &
+&           pdf_d
       END IF
     END IF
   END SUBROUTINE COMPUTE_LOGPRIOR_D
@@ -464,7 +457,6 @@ CONTAINS
     REAL(mrk) :: loglkh_d
     REAL(mrk) :: logprior_d
 ! Initialize
-    logpost = undefrn
 ! Prior
     CALL COMPUTE_LOGPRIOR_D(theta, theta_d, theta_prior, mu_gamma, &
 &                     mu_gamma_d, mu_gamma_prior, sigma_gamma, &
@@ -487,7 +479,6 @@ CONTAINS
         ELSE
 ! Posterior
           logpost_d = loglkh_d + logprior_d
-          logpost = loglkh + logprior + logh
         END IF
       END IF
     END IF
@@ -611,7 +602,6 @@ CONTAINS
     CHARACTER(len=250) :: mess
     INTRINSIC SIZE
 ! Initialize
-    logprior = 0.0_mrk
     feas = .true.
     isnull = .false.
 ! No prior <=> flat prior
@@ -628,7 +618,6 @@ CONTAINS
           IF (err .GT. 0) feas = .false.
 ! return removed for Tapenade
           logprior_d = logprior_d + pdf_d
-          logprior = logprior + pdf
         END DO
       END DO
     END IF
@@ -1038,7 +1027,6 @@ CONTAINS
 ! Exponentiate if loga=.false.
       IF (.NOT.loga) THEN
         IF (isnull) THEN
-          pdf = 0.0_mrk
           pdf_d = 0.0_8
         ELSE
           pdf_d = EXP(pdf)*pdf_d
@@ -2699,6 +2687,750 @@ CONTAINS
     res = result1/n
   END FUNCTION MSE
 
+!  Differentiation of mse_2d in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: x
+  FUNCTION MSE_2D_D(x, x_d, y, mask, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x_d
+    INTRINSIC SIZE
+    INTEGER, DIMENSION(SIZE(x, 1), SIZE(x, 2)), INTENT(IN) :: mask
+    REAL(sp) :: res, temp_res
+    REAL(sp) :: res_d
+    INTEGER :: counter
+    INTEGER :: i, j, k
+    INTRINSIC SQRT
+    REAL(sp) :: temp
+    res = 0._sp
+    counter = 0
+    res_d = 0.0_4
+    DO k=1,SIZE(x, 3)
+      DO i=1,SIZE(x, 1)
+        DO j=1,SIZE(x, 2)
+          IF (y(i, j, k) .GE. 0._sp) THEN
+            res_d = res_d + 2*(x(i, j, k)-y(i, j, k))*x_d(i, j, k)
+            res = res + (x(i, j, k)-y(i, j, k))*(x(i, j, k)-y(i, j, k))
+            counter = counter + 1
+          END IF
+        END DO
+      END DO
+    END DO
+! read(*,*)
+    temp = SQRT(res/counter)
+    IF (res/counter .EQ. 0.0) THEN
+      res_d = 0.0_4
+    ELSE
+      res_d = res_d/(2.0*temp*counter)
+    END IF
+    res = temp
+  END FUNCTION MSE_2D_D
+
+!  Differentiation of mse_2d in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res
+!   with respect to varying inputs: x
+  SUBROUTINE MSE_2D_B(x, x_b, y, mask, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:, :, :) :: x_b
+    INTRINSIC SIZE
+    INTEGER, DIMENSION(SIZE(x, 1), SIZE(x, 2)), INTENT(IN) :: mask
+    REAL(sp) :: res, temp_res
+    REAL(sp) :: res_b
+    INTEGER :: counter
+    INTEGER :: i, j, k
+    INTRINSIC SQRT
+    INTEGER :: ad_to
+    INTEGER :: branch
+    INTEGER :: ad_to0
+    INTEGER :: ad_to1
+    res = 0._sp
+    counter = 0
+    DO k=1,SIZE(x, 3)
+      DO i=1,SIZE(x, 1)
+        DO j=1,SIZE(x, 2)
+          IF (y(i, j, k) .GE. 0._sp) THEN
+            res = res + (x(i, j, k)-y(i, j, k))*(x(i, j, k)-y(i, j, k))
+            counter = counter + 1
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
+      END DO
+      CALL PUSHINTEGER4(i - 1)
+    END DO
+    CALL PUSHINTEGER4(k - 1)
+    IF (res/counter .EQ. 0.0) THEN
+      res_b = 0.0_4
+    ELSE
+      res_b = res_b/(counter*2.0*SQRT(res/counter))
+    END IF
+    x_b = 0.0_4
+    CALL POPINTEGER4(ad_to1)
+    DO k=ad_to1,1,-1
+      CALL POPINTEGER4(ad_to0)
+      DO i=ad_to0,1,-1
+        CALL POPINTEGER4(ad_to)
+        DO j=ad_to,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) x_b(i, j, k) = x_b(i, j, k) + 2*(x(i, j, k)&
+&             -y(i, j, k))*res_b
+        END DO
+      END DO
+    END DO
+  END SUBROUTINE MSE_2D_B
+
+  FUNCTION MSE_2D(x, y, mask) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x, y
+    INTRINSIC SIZE
+    INTEGER, DIMENSION(SIZE(x, 1), SIZE(x, 2)), INTENT(IN) :: mask
+    REAL(sp) :: res, temp_res
+    INTEGER :: counter
+    INTEGER :: i, j, k
+    INTRINSIC SQRT
+    res = 0._sp
+    counter = 0
+    DO k=1,SIZE(x, 3)
+      DO i=1,SIZE(x, 1)
+        DO j=1,SIZE(x, 2)
+          IF (y(i, j, k) .GE. 0._sp) THEN
+            res = res + (x(i, j, k)-y(i, j, k))*(x(i, j, k)-y(i, j, k))
+            counter = counter + 1
+          END IF
+        END DO
+      END DO
+    END DO
+! read(*,*)
+    res = SQRT(res/counter)
+  END FUNCTION MSE_2D
+
+!  Differentiation of spatial_efficiency in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: alpha sig
+!   with respect to varying inputs: x
+  SUBROUTINE SPATIAL_EFFICIENCY_D(x, x_d, y, sig, sig_d, alpha, alpha_d&
+&   , active_cell)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x_d
+    REAL(sp) :: sum_x, sum_y, mean_x, mean_y, std_x, std_y, rms, sum_xx&
+&   , sum_yy
+    REAL(sp) :: sum_x_d, mean_x_d, std_x_d, rms_d, sum_xx_d
+    REAL(sp), INTENT(INOUT) :: sig, alpha
+    REAL(sp), INTENT(INOUT) :: sig_d, alpha_d
+    INTEGER :: i, j, counter
+    INTEGER, DIMENSION(:, :), INTENT(IN) :: active_cell
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: temp
+    sum_x = 0._sp
+    sum_y = 0._sp
+    counter = 0
+    sum_x_d = 0.0_4
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          sum_x_d = sum_x_d + x_d(i, j)
+          sum_x = sum_x + x(i, j)
+          sum_y = sum_y + y(i, j)
+          counter = counter + 1
+        END IF
+      END DO
+    END DO
+    mean_x_d = sum_x_d/counter
+    mean_x = sum_x/counter
+    mean_y = sum_y/counter
+! print *, '-------------------------------------------------'
+! print *, 'mean x'
+! print*, mean_x
+! print *, 'mean y'
+! print*, mean_y
+! compute the standard deviations
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    counter = 0
+    sum_xx_d = 0.0_4
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          sum_xx_d = sum_xx_d + 2*(x(i, j)-mean_x)*(x_d(i, j)-mean_x_d)
+          sum_xx = sum_xx + (x(i, j)-mean_x)*(x(i, j)-mean_x)
+          sum_yy = sum_yy + (y(i, j)-mean_y)*(y(i, j)-mean_y)
+          counter = counter + 1
+        END IF
+      END DO
+    END DO
+    temp = SQRT(sum_xx/counter)
+    IF (sum_xx/counter .EQ. 0.0) THEN
+      std_x_d = 0.0_4
+    ELSE
+      std_x_d = sum_xx_d/(2.0*temp*counter)
+    END IF
+    std_x = temp
+    std_y = SQRT(sum_yy/counter)
+! print *, 'std_x'
+! print*, std_x
+! print *, 'std_y'
+! print*, std_y
+    temp = std_x/(std_y*mean_x)
+    sig_d = mean_y*(std_x_d-temp*std_y*mean_x_d)/(std_y*mean_x)
+    sig = mean_y*temp
+! print *, 'sig'
+! print *, sig
+! print *, '-------------------------------------------------'
+    rms = 0._sp
+    counter = 0
+    rms_d = 0.0_4
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          temp = (x(i, j)-mean_x)/std_x
+          rms_d = rms_d + 2*(temp-(y(i, j)-mean_y)/std_y)*(x_d(i, j)-&
+&           mean_x_d-temp*std_x_d)/std_x
+          rms = rms + (temp-(y(i, j)-mean_y)/std_y)*(temp-(y(i, j)-&
+&           mean_y)/std_y)
+          counter = counter + 1
+        END IF
+      END DO
+    END DO
+    temp = SQRT(rms/counter)
+    IF (rms/counter .EQ. 0.0) THEN
+      result1_d = 0.0_4
+    ELSE
+      result1_d = rms_d/(2.0*temp*counter)
+    END IF
+    result1 = temp
+    alpha_d = -result1_d
+    alpha = 1 - result1
+  END SUBROUTINE SPATIAL_EFFICIENCY_D
+
+!  Differentiation of spatial_efficiency in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: alpha x sig
+!   with respect to varying inputs: x
+  SUBROUTINE SPATIAL_EFFICIENCY_B(x, x_b, y, sig, sig_b, alpha, alpha_b&
+&   , active_cell)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:, :) :: x_b
+    REAL(sp) :: sum_x, sum_y, mean_x, mean_y, std_x, std_y, rms, sum_xx&
+&   , sum_yy
+    REAL(sp) :: sum_x_b, mean_x_b, std_x_b, rms_b, sum_xx_b
+    REAL(sp), INTENT(INOUT) :: sig, alpha
+    REAL(sp), INTENT(INOUT) :: sig_b, alpha_b
+    INTEGER :: i, j, counter
+    INTEGER, DIMENSION(:, :), INTENT(IN) :: active_cell
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    REAL(sp) :: temp
+    REAL(sp) :: temp_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+    INTEGER :: ad_to0
+    INTEGER :: ad_to1
+    INTEGER :: ad_to2
+    INTEGER :: ad_to3
+    INTEGER :: ad_to4
+    sum_x = 0._sp
+    sum_y = 0._sp
+    counter = 0
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          sum_x = sum_x + x(i, j)
+          sum_y = sum_y + y(i, j)
+          counter = counter + 1
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      CALL PUSHINTEGER4(j - 1)
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    mean_x = sum_x/counter
+    mean_y = sum_y/counter
+! print *, '-------------------------------------------------'
+! print *, 'mean x'
+! print*, mean_x
+! print *, 'mean y'
+! print*, mean_y
+! compute the standard deviations
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    CALL PUSHINTEGER4(counter)
+    counter = 0
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          sum_xx = sum_xx + (x(i, j)-mean_x)*(x(i, j)-mean_x)
+          sum_yy = sum_yy + (y(i, j)-mean_y)*(y(i, j)-mean_y)
+          counter = counter + 1
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      CALL PUSHINTEGER4(j - 1)
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    std_x = SQRT(sum_xx/counter)
+    std_y = SQRT(sum_yy/counter)
+! print *, 'std_x'
+! print*, std_x
+! print *, 'std_y'
+! print*, std_y
+! print *, 'sig'
+! print *, sig
+! print *, '-------------------------------------------------'
+    rms = 0._sp
+    CALL PUSHINTEGER4(counter)
+    counter = 0
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          rms = rms + ((x(i, j)-mean_x)/std_x-(y(i, j)-mean_y)/std_y)*((&
+&           x(i, j)-mean_x)/std_x-(y(i, j)-mean_y)/std_y)
+          counter = counter + 1
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      CALL PUSHINTEGER4(j - 1)
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    result1_b = -alpha_b
+    IF (rms/counter .EQ. 0.0) THEN
+      rms_b = 0.0_4
+    ELSE
+      rms_b = result1_b/(counter*2.0*SQRT(rms/counter))
+    END IF
+    std_x_b = 0.0_4
+    mean_x_b = 0.0_4
+    CALL POPINTEGER4(ad_to4)
+    DO i=ad_to4,1,-1
+      CALL POPINTEGER4(ad_to3)
+      DO j=ad_to3,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          temp = (x(i, j)-mean_x)/std_x
+          temp_b = 2*(temp-(y(i, j)-mean_y)/std_y)*rms_b/std_x
+          x_b(i, j) = x_b(i, j) + temp_b
+          mean_x_b = mean_x_b - temp_b
+          std_x_b = std_x_b - temp*temp_b
+        END IF
+      END DO
+    END DO
+    CALL POPINTEGER4(counter)
+    temp_b = mean_y*sig_b/(std_y*mean_x)
+    std_x_b = std_x_b + temp_b
+    mean_x_b = mean_x_b - std_x*temp_b/mean_x
+    IF (sum_xx/counter .EQ. 0.0) THEN
+      sum_xx_b = 0.0_4
+    ELSE
+      sum_xx_b = std_x_b/(counter*2.0*SQRT(sum_xx/counter))
+    END IF
+    CALL POPINTEGER4(ad_to2)
+    DO i=ad_to2,1,-1
+      CALL POPINTEGER4(ad_to1)
+      DO j=ad_to1,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          temp_b = 2*(x(i, j)-mean_x)*sum_xx_b
+          x_b(i, j) = x_b(i, j) + temp_b
+          mean_x_b = mean_x_b - temp_b
+        END IF
+      END DO
+    END DO
+    CALL POPINTEGER4(counter)
+    sum_x_b = mean_x_b/counter
+    CALL POPINTEGER4(ad_to0)
+    DO i=ad_to0,1,-1
+      CALL POPINTEGER4(ad_to)
+      DO j=ad_to,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) x_b(i, j) = x_b(i, j) + sum_x_b
+      END DO
+    END DO
+  END SUBROUTINE SPATIAL_EFFICIENCY_B
+
+  SUBROUTINE SPATIAL_EFFICIENCY(x, y, sig, alpha, active_cell)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x, y
+    REAL(sp) :: sum_x, sum_y, mean_x, mean_y, std_x, std_y, rms, sum_xx&
+&   , sum_yy
+    REAL(sp), INTENT(INOUT) :: sig, alpha
+    INTEGER :: i, j, counter
+    INTEGER, DIMENSION(:, :), INTENT(IN) :: active_cell
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    sum_x = 0._sp
+    sum_y = 0._sp
+    counter = 0
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          sum_x = sum_x + x(i, j)
+          sum_y = sum_y + y(i, j)
+          counter = counter + 1
+        END IF
+      END DO
+    END DO
+    mean_x = sum_x/counter
+    mean_y = sum_y/counter
+! print *, '-------------------------------------------------'
+! print *, 'mean x'
+! print*, mean_x
+! print *, 'mean y'
+! print*, mean_y
+! compute the standard deviations
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    counter = 0
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          sum_xx = sum_xx + (x(i, j)-mean_x)*(x(i, j)-mean_x)
+          sum_yy = sum_yy + (y(i, j)-mean_y)*(y(i, j)-mean_y)
+          counter = counter + 1
+        END IF
+      END DO
+    END DO
+    std_x = SQRT(sum_xx/counter)
+    std_y = SQRT(sum_yy/counter)
+! print *, 'std_x'
+! print*, std_x
+! print *, 'std_y'
+! print*, std_y
+    sig = std_x/mean_x/(std_y/mean_y)
+! print *, 'sig'
+! print *, sig
+! print *, '-------------------------------------------------'
+    rms = 0._sp
+    counter = 0
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          rms = rms + ((x(i, j)-mean_x)/std_x-(y(i, j)-mean_y)/std_y)*((&
+&           x(i, j)-mean_x)/std_x-(y(i, j)-mean_y)/std_y)
+          counter = counter + 1
+        END IF
+      END DO
+    END DO
+    result1 = SQRT(rms/counter)
+    alpha = 1 - result1
+  END SUBROUTINE SPATIAL_EFFICIENCY
+
+! function compute_trace(x,y) result(res)
+!     implicit none
+!     real(sp), dimension(:,:), intent(in) :: x, y
+!     real(sp), dimension(size(y,2),size(y,1)) :: y_transpose
+!     real(sp), dimension(size(x,1), size(x,1)) :: z
+!     real(sp) :: res
+!     integer :: i, j, k
+!     ! Compute the transpose of Y
+!     do i = 1, size(y,1)
+!         do j = 1, size(y,2)
+!             y_transpose(j, i) = y(i, j)
+!         end do
+!     end do
+!     ! Multiply X by the transpose of Y
+!     z = 0.0
+!     do i = 1, size(x, 1)
+!         do j = 1, size(x, 1)
+!             do k = 1, size(x, 2)
+!                 z(i, j) = z(i, j) + x(i, k) * y_transpose(k, j)
+!             end do
+!         end do
+!     end do
+!     ! Compute the trace of Z
+!     res = 0
+!     do i=1, size(z,1)
+!         if (z(i,i) .ge. 0._sp) then
+!             res = res + z(i,i)
+!         end if
+!     end do
+! end function compute_trace
+  FUNCTION CHECK_MATRIX_EXISTS(x) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
+    INTEGER :: res
+    INTEGER :: i, j
+    INTRINSIC SIZE
+    res = 0
+    DO i=1,SIZE(x, 1)
+      DO j=1,SIZE(x, 2)
+        IF (x(i, j) .GE. 0) THEN
+          res = 1
+          GOTO 100
+        END IF
+      END DO
+ 100  IF (res .EQ. 1) GOTO 110
+    END DO
+ 110 CONTINUE
+  END FUNCTION CHECK_MATRIX_EXISTS
+
+  SUBROUTINE FLATTEN_AND_MASK(input, output, active_cell)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: input
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: output
+    INTEGER, DIMENSION(:, :), INTENT(IN) :: active_cell
+    INTEGER :: i, j, count
+    INTRINSIC SIZE
+    count = 0
+    DO i=1,SIZE(input, 1)
+      DO j=1,SIZE(input, 2)
+        IF (active_cell(i, j) .EQ. 1) THEN
+          count = count + 1
+          output(count) = input(i, j)
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE FLATTEN_AND_MASK
+
+  SUBROUTINE SPEARMAN_RANK_CORRELATION(x, y, spearman_coeff)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y
+    REAL(sp), INTENT(OUT) :: spearman_coeff
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(x)) :: rank_x, rank_y
+    REAL(sp) :: d
+    INTEGER :: i, n
+    n = SIZE(x)
+! Calculate ranks for x and y
+    CALL RANKDATA(x, rank_x)
+    CALL RANKDATA(y, rank_y)
+! Calculate the differences between ranks
+    d = 0._sp
+    DO i=1,n
+      d = d + (rank_x(i)-rank_y(i))*(rank_x(i)-rank_y(i))
+    END DO
+! Calculate Spearman correlation coefficient
+    spearman_coeff = 1.0 - 6.0*d/(n*(n*n-1.0))
+  END SUBROUTINE SPEARMAN_RANK_CORRELATION
+
+  SUBROUTINE RANKDATA(data, ranked)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: data(:)
+    REAL(sp), INTENT(INOUT) :: ranked(:)
+    INTEGER :: i, j, count, n
+    REAL(sp) :: temp
+    INTRINSIC SIZE
+    n = SIZE(data)
+    ranked = 0.0
+    DO i=1,n
+      count = 0
+      temp = data(i)
+      DO j=1,n
+        IF (data(j) .LE. temp) count = count + 1
+      END DO
+      ranked(i) = count
+    END DO
+  END SUBROUTINE RANKDATA
+
+!  Differentiation of spatial_bias_insensitive in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: x
+  SUBROUTINE SPATIAL_BIAS_INSENSITIVE_D(x, x_d, y, res, res_d, &
+&   active_cell, nac)
+    IMPLICIT NONE
+! res = res/counter 
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x_d
+    INTEGER, DIMENSION(:, :), INTENT(IN) :: active_cell
+    REAL(sp), INTENT(INOUT) :: res
+    REAL(sp), INTENT(INOUT) :: res_d
+    REAL(sp) :: sig, alpha, rs, trace, trace_x, trace_y
+    REAL(sp) :: sig_d, alpha_d
+    INTEGER :: k, n, counter, flag_exists, nac
+    REAL(sp), DIMENSION(nac) :: flattened_x, flattened_y
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: temp
+    res = 0._sp
+    n = SIZE(x, 3)
+    counter = 0
+    res_d = 0.0_4
+    DO k=1,n
+      flag_exists = CHECK_MATRIX_EXISTS(y(:, :, k))
+      IF (flag_exists .EQ. 1) THEN
+        CALL FLATTEN_AND_MASK(x(:, :, k), flattened_x, active_cell)
+        CALL FLATTEN_AND_MASK(y(:, :, k), flattened_y, active_cell)
+        CALL SPEARMAN_RANK_CORRELATION(flattened_x, flattened_y, rs)
+! trace = compute_trace(x(:,:,k), y(:,:,k))
+! trace_x = compute_trace(x(:,:,k), x(:,:,k))
+! trace_y = compute_trace(y(:,:,k), y(:,:,k))
+! rs = trace/(trace_x * trace_y)
+        CALL SPATIAL_EFFICIENCY_D(x(:, :, k), x_d(:, :, k), y(:, :, k), &
+&                           sig, sig_d, alpha, alpha_d, active_cell)
+! print *,'----------------------------------------------------------'
+! print *, alpha
+! print *, sig
+! print *, rs
+! print *, (1 - sqrt((rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+        arg1_d = 2*(sig-1)*sig_d + 2*(alpha-1)*alpha_d
+        arg1 = (rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)
+        temp = SQRT(arg1)
+        IF (arg1 .EQ. 0.0) THEN
+          result1_d = 0.0_4
+        ELSE
+          result1_d = arg1_d/(2.0*temp)
+        END IF
+        result1 = temp
+        res_d = res_d - result1_d
+        res = res + (1-result1)
+! res = res + (1 - sqrt((sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+        counter = counter + 1
+! print *,'----------------------------------------------------------'
+      END IF
+    END DO
+! print *,'##################################################################'
+! print *, res
+! print *, counter
+! print *,'##################################################################'
+    res_d = -(res_d/counter)
+    res = 1 - res/counter
+  END SUBROUTINE SPATIAL_BIAS_INSENSITIVE_D
+
+!  Differentiation of spatial_bias_insensitive in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res
+!   with respect to varying inputs: x
+  SUBROUTINE SPATIAL_BIAS_INSENSITIVE_B(x, x_b, y, res, res_b, &
+&   active_cell, nac)
+    IMPLICIT NONE
+! res = res/counter 
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:, :, :) :: x_b
+    INTEGER, DIMENSION(:, :), INTENT(IN) :: active_cell
+    REAL(sp), INTENT(INOUT) :: res
+    REAL(sp), INTENT(INOUT) :: res_b
+    REAL(sp) :: sig, alpha, rs, trace, trace_x, trace_y
+    REAL(sp) :: sig_b, alpha_b
+    INTEGER :: k, n, counter, flag_exists, nac
+    REAL(sp), DIMENSION(nac) :: flattened_x, flattened_y
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    INTEGER :: branch
+    n = SIZE(x, 3)
+    counter = 0
+    DO k=1,n
+      flag_exists = CHECK_MATRIX_EXISTS(y(:, :, k))
+      IF (flag_exists .EQ. 1) THEN
+        CALL FLATTEN_AND_MASK(x(:, :, k), flattened_x, active_cell)
+        CALL FLATTEN_AND_MASK(y(:, :, k), flattened_y, active_cell)
+        CALL SPEARMAN_RANK_CORRELATION(flattened_x, flattened_y, rs)
+! trace = compute_trace(x(:,:,k), y(:,:,k))
+! trace_x = compute_trace(x(:,:,k), x(:,:,k))
+! trace_y = compute_trace(y(:,:,k), y(:,:,k))
+! rs = trace/(trace_x * trace_y)
+        CALL PUSHREAL4(alpha)
+        CALL PUSHREAL4(sig)
+        CALL SPATIAL_EFFICIENCY(x(:, :, k), y(:, :, k), sig, alpha, &
+&                         active_cell)
+! print *,'----------------------------------------------------------'
+! print *, alpha
+! print *, sig
+! print *, rs
+! print *, (1 - sqrt((rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+        CALL PUSHREAL4(arg1)
+        arg1 = (rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)
+! res = res + (1 - sqrt((sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+        counter = counter + 1
+! print *,'----------------------------------------------------------'
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    res_b = -(res_b/counter)
+    x_b = 0.0_4
+    DO k=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        result1_b = -res_b
+        IF (arg1 .EQ. 0.0) THEN
+          arg1_b = 0.0_4
+        ELSE
+          arg1_b = result1_b/(2.0*SQRT(arg1))
+        END IF
+        CALL POPREAL4(arg1)
+        sig_b = 2*(sig-1)*arg1_b
+        alpha_b = 2*(alpha-1)*arg1_b
+        CALL POPREAL4(sig)
+        CALL POPREAL4(alpha)
+        CALL SPATIAL_EFFICIENCY_B(x(:, :, k), x_b(:, :, k), y(:, :, k), &
+&                           sig, sig_b, alpha, alpha_b, active_cell)
+      END IF
+    END DO
+  END SUBROUTINE SPATIAL_BIAS_INSENSITIVE_B
+
+  SUBROUTINE SPATIAL_BIAS_INSENSITIVE(x, y, res, active_cell, nac)
+    IMPLICIT NONE
+! res = res/counter 
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: x, y
+    INTEGER, DIMENSION(:, :), INTENT(IN) :: active_cell
+    REAL(sp), INTENT(INOUT) :: res
+    REAL(sp) :: sig, alpha, rs, trace, trace_x, trace_y
+    INTEGER :: k, n, counter, flag_exists, nac
+    REAL(sp), DIMENSION(nac) :: flattened_x, flattened_y
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: result1
+    res = 0._sp
+    n = SIZE(x, 3)
+    counter = 0
+    DO k=1,n
+      flag_exists = CHECK_MATRIX_EXISTS(y(:, :, k))
+      IF (flag_exists .EQ. 1) THEN
+        CALL FLATTEN_AND_MASK(x(:, :, k), flattened_x, active_cell)
+        CALL FLATTEN_AND_MASK(y(:, :, k), flattened_y, active_cell)
+        rs = 0._sp
+        CALL SPEARMAN_RANK_CORRELATION(flattened_x, flattened_y, rs)
+        sig = 0._sp
+        alpha = 0._sp
+! trace = compute_trace(x(:,:,k), y(:,:,k))
+! trace_x = compute_trace(x(:,:,k), x(:,:,k))
+! trace_y = compute_trace(y(:,:,k), y(:,:,k))
+! rs = trace/(trace_x * trace_y)
+        CALL SPATIAL_EFFICIENCY(x(:, :, k), y(:, :, k), sig, alpha, &
+&                         active_cell)
+! print *,'----------------------------------------------------------'
+! print *, alpha
+! print *, sig
+! print *, rs
+! print *, (1 - sqrt((rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+        arg1 = (rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)
+        result1 = SQRT(arg1)
+        res = res + (1-result1)
+! res = res + (1 - sqrt((sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+        counter = counter + 1
+! print *,'----------------------------------------------------------'
+      END IF
+    END DO
+! print *,'##################################################################'
+! print *, res
+! print *, counter
+! print *,'##################################################################'
+    res = 1 - res/counter
+  END SUBROUTINE SPATIAL_BIAS_INSENSITIVE
+
 !  Differentiation of rmse in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
@@ -3126,10 +3858,19 @@ MODULE MWD_OUTPUT_DIFF
       TYPE(RESPONSEDT) :: response
       TYPE(RR_STATESDT) :: rr_final_states
       REAL(sp) :: cost
+      REAL(sp) :: cost_jobs_q
+      REAL(sp) :: cost_jreg
+      REAL(sp) :: cost_jobs_sm
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: array_cost
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: array_cost_jobs_q
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: array_cost_jreg
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: array_cost_jobs_sm
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: hp_domain
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
       TYPE(RESPONSEDT) :: response
       REAL(sp) :: cost
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: hp_domain
   END TYPE OUTPUTDT_DIFF
 
 CONTAINS
@@ -3140,6 +3881,11 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     CALL RESPONSEDT_INITIALISE(this%response, setup, mesh)
     CALL RR_STATESDT_INITIALISE(this%rr_final_states, setup, mesh)
+    ALLOCATE(this%hp_domain(mesh%nrow, mesh%ncol, setup%ntime_step))
+    ALLOCATE(this%array_cost(setup%maxiter+1))
+    ALLOCATE(this%array_cost_jobs_q(setup%maxiter+1))
+    ALLOCATE(this%array_cost_jobs_sm(setup%maxiter+1))
+    ALLOCATE(this%array_cost_jreg(setup%maxiter+1))
   END SUBROUTINE OUTPUTDT_INITIALISE
 
   SUBROUTINE OUTPUTDT_COPY(this, this_copy)
@@ -9106,6 +9852,24 @@ MODULE MWD_COST_DIFF
   IMPLICIT NONE
 
 CONTAINS
+  SUBROUTINE VECTOR_TO_MATRIX(mesh, ac_vector, matrix, n)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: n
+    REAL(sp), DIMENSION(n), INTENT(IN) :: ac_vector
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: matrix
+    INTEGER :: row, col, k
+    matrix = -99.0_sp
+    IF (n .GT. 0) THEN
+      DO col=1,mesh%ncol
+        DO row=1,mesh%nrow
+          k = mesh%rowcol_to_ind_ac(row, col)
+          IF (k .GE. 0) matrix(row, col) = ac_vector(k)
+        END DO
+      END DO
+    END IF
+  END SUBROUTINE VECTOR_TO_MATRIX
+
   FUNCTION GET_RANGE_EVENT(mask_event, i_event) RESULT (RES)
     IMPLICIT NONE
     INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
@@ -9137,6 +9901,7 @@ CONTAINS
     CHARACTER(len=lchar), INTENT(IN) :: tfm
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_d
+    INTEGER :: i
     REAL(sp) :: mean_qo, e
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(qo)) :: mask
@@ -9177,6 +9942,7 @@ CONTAINS
     CHARACTER(len=lchar), INTENT(IN) :: tfm
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_b
+    INTEGER :: i
     REAL(sp) :: mean_qo, e
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(qo)) :: mask
@@ -9205,6 +9971,7 @@ CONTAINS
     IMPLICIT NONE
     CHARACTER(len=lchar), INTENT(IN) :: tfm
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
+    INTEGER :: i
     REAL(sp) :: mean_qo, e
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(qo)) :: mask
@@ -9321,7 +10088,7 @@ CONTAINS
 &                   )
 ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
     temp = SIZE(obs)
-    output_d%cost = -(REAL(log_post_d, sp)/temp)
+    output_d%cost = -(log_post_d/temp)
   END SUBROUTINE BAYESIAN_COMPUTE_COST_D
 
 !  Differentiation of bayesian_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -9512,7 +10279,7 @@ CONTAINS
 &                  sigma_gamma_prior, log_post, log_prior, log_lkh, &
 &                  log_h, feas, isnull)
 ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
-    output%cost = -(1._sp*REAL(log_post, sp)/SIZE(obs))
+    output%cost = -(1._sp*log_post/SIZE(obs))
   END SUBROUTINE BAYESIAN_COMPUTE_COST
 
 !  Differentiation of classical_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
@@ -9520,7 +10287,7 @@ CONTAINS
 !   with respect to varying inputs: *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
-&   output_d, options, jobs, jobs_d)
+&   output_d, options, returns, jobs, jobs_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -9528,6 +10295,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(IN) :: output
     TYPE(OUTPUTDT), INTENT(IN) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), INTENT(INOUT) :: jobs
     REAL(sp), INTENT(INOUT) :: jobs_d
     INTEGER :: i, j, k, n_computed_event
@@ -9878,11 +10646,13 @@ CONTAINS
       jobs_d = QUANTILE1D_R_D(jobs_gauge(1:k), jobs_gauge_d(1:k), abs0, &
 &       jobs)
     ELSE
+      jobs = 0._sp
       jobs_d = 0.0_4
       DO i=1,mesh%ng
         DO j=1,options%cost%njoc
           temp = options%cost%wgauge(i)*options%cost%wjobs_cmpt(j)
           jobs_d = jobs_d + temp*jobs_cmpt_values_d(i, j)
+          jobs = jobs + temp*jobs_cmpt_values(i, j)
         END DO
       END DO
     END IF
@@ -9893,7 +10663,7 @@ CONTAINS
 !   with respect to varying inputs: *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
-&   output_b, options, jobs, jobs_b)
+&   output_b, options, returns, jobs, jobs_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -9901,6 +10671,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(IN) :: output
     TYPE(OUTPUTDT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), INTENT(INOUT) :: jobs
     REAL(sp), INTENT(INOUT) :: jobs_b
     INTEGER :: i, j, k, n_computed_event
@@ -10704,13 +11475,14 @@ CONTAINS
   END SUBROUTINE CLASSICAL_COMPUTE_JOBS_B
 
   SUBROUTINE CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, &
-&   options, jobs)
+&   options, returns, jobs)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OUTPUTDT), INTENT(IN) :: output
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), INTENT(INOUT) :: jobs
     INTEGER :: i, j, k, n_computed_event
     REAL(sp), DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
@@ -10999,7 +11771,7 @@ CONTAINS
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, &
-&   parameters, parameters_d, options, options_d, jreg, jreg_d)
+&   parameters, parameters_d, options, options_d, returns, jreg, jreg_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -11008,6 +11780,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
+    TYPE(RETURNSDT), INTENT(IN) :: returns
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_d
     INTEGER :: i
@@ -11054,7 +11827,7 @@ CONTAINS
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, &
-&   parameters, parameters_b, options, options_b, jreg, jreg_b)
+&   parameters, parameters_b, options, options_b, returns, jreg, jreg_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -11063,6 +11836,7 @@ CONTAINS
     TYPE(PARAMETERSDT) :: parameters_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(OPTIONSDT_DIFF) :: options_b
+    TYPE(RETURNSDT), INTENT(IN) :: returns
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_b
     INTEGER :: i
@@ -11167,13 +11941,14 @@ CONTAINS
   END SUBROUTINE CLASSICAL_COMPUTE_JREG_B
 
   SUBROUTINE CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters&
-&   , options, jreg)
+&   , options, returns, jreg)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(IN) :: returns
     REAL(sp), INTENT(INOUT) :: jreg
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
@@ -11203,16 +11978,187 @@ CONTAINS
     END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG
 
+!  Differentiation of compute_jobs_sm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: jobs_sm
+!   with respect to varying inputs: *(output.hp_domain)
+!   Plus diff mem management of: output.hp_domain:in
+  SUBROUTINE COMPUTE_JOBS_SM_D(setup, mesh, input_data, returns, options&
+&   , output, output_d, jobs_sm, jobs_sm_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(RETURNSDT), INTENT(IN) :: returns
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    TYPE(OUTPUTDT), INTENT(IN) :: output_d
+    TYPE(OPTIONSDT) :: options
+    REAL(sp), INTENT(OUT) :: jobs_sm
+    REAL(sp), INTENT(OUT) :: jobs_sm_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%ntime_step-options%&
+&   cost%end_warmup+1) :: smobs, smsim
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%ntime_step-options%&
+&   cost%end_warmup+1) :: smsim_d
+    INTEGER :: t, i
+    jobs_sm = 0._sp
+    smsim_d = output_d%hp_domain(:, :, options%cost%end_warmup:setup%&
+&     ntime_step)
+    smsim = output%hp_domain(:, :, options%cost%end_warmup:setup%&
+&     ntime_step)
+    i = 1
+    IF (setup%sparse_storage) THEN
+      DO t=options%cost%end_warmup,setup%ntime_step
+        CALL VECTOR_TO_MATRIX(mesh, input_data%atmos_data%sparse_sm(t)%&
+&                       values, smobs(:, :, i), input_data%atmos_data%&
+&                       sparse_sm(t)%n)
+        i = i + 1
+      END DO
+    ELSE
+      smobs = input_data%atmos_data%sm(:, :, options%cost%end_warmup:&
+&       setup%ntime_step)
+    END IF
+    SELECT CASE  (setup%sm_metric) 
+    CASE ('spatial_bias_insensitive') 
+! case("temporal_basin_average")
+!     jobs_sm = temporal_basin_average(smsim, smobs, mesh%active_cell)
+! case("spatial_bias_accounting")
+!     jobs_sm = spatial_bias_accounting(smsim, smobs, mesh%active_cell)
+      CALL SPATIAL_BIAS_INSENSITIVE_D(smsim, smsim_d, smobs, jobs_sm, &
+&                               jobs_sm_d, mesh%active_cell, mesh%nac)
+    CASE ('rmse') 
+      jobs_sm_d = MSE_2D_D(smsim, smsim_d, smobs, mesh%active_cell, &
+&       jobs_sm)
+    CASE DEFAULT
+      jobs_sm_d = 0.0_4
+    END SELECT
+  END SUBROUTINE COMPUTE_JOBS_SM_D
+
+!  Differentiation of compute_jobs_sm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: jobs_sm
+!   with respect to varying inputs: *(output.hp_domain)
+!   Plus diff mem management of: output.hp_domain:in
+  SUBROUTINE COMPUTE_JOBS_SM_B(setup, mesh, input_data, returns, options&
+&   , output, output_b, jobs_sm, jobs_sm_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(RETURNSDT), INTENT(IN) :: returns
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    TYPE(OUTPUTDT) :: output_b
+    TYPE(OPTIONSDT) :: options
+    REAL(sp) :: jobs_sm
+    REAL(sp) :: jobs_sm_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%ntime_step-options%&
+&   cost%end_warmup+1) :: smobs, smsim
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%ntime_step-options%&
+&   cost%end_warmup+1) :: smsim_b
+    INTEGER :: t, i
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: branch
+    smsim = output%hp_domain(:, :, options%cost%end_warmup:setup%&
+&     ntime_step)
+    i = 1
+    IF (setup%sparse_storage) THEN
+      DO t=options%cost%end_warmup,setup%ntime_step
+        CALL VECTOR_TO_MATRIX(mesh, input_data%atmos_data%sparse_sm(t)%&
+&                       values, smobs(:, :, i), input_data%atmos_data%&
+&                       sparse_sm(t)%n)
+        CALL PUSHINTEGER4(i)
+        i = i + 1
+      END DO
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+      smobs = input_data%atmos_data%sm(:, :, options%cost%end_warmup:&
+&       setup%ntime_step)
+    END IF
+    SELECT CASE  (setup%sm_metric) 
+    CASE ('spatial_bias_insensitive') 
+! case("temporal_basin_average")
+!     jobs_sm = temporal_basin_average(smsim, smobs, mesh%active_cell)
+! case("spatial_bias_accounting")
+!     jobs_sm = spatial_bias_accounting(smsim, smobs, mesh%active_cell)
+      CALL SPATIAL_BIAS_INSENSITIVE(smsim, smobs, jobs_sm, mesh%&
+&                             active_cell, mesh%nac)
+      smsim = output%hp_domain(:, :, options%cost%end_warmup:setup%&
+&       ntime_step)
+      CALL SPATIAL_BIAS_INSENSITIVE_B(smsim, smsim_b, smobs, jobs_sm, &
+&                               jobs_sm_b, mesh%active_cell, mesh%nac)
+    CASE ('rmse') 
+      res = MSE_2D(smsim, smobs, mesh%active_cell)
+      smsim = output%hp_domain(:, :, options%cost%end_warmup:setup%&
+&       ntime_step)
+      smsim_b = 0.0_4
+      res_b = jobs_sm_b
+      CALL MSE_2D_B(smsim, smsim_b, smobs, mesh%active_cell, res_b)
+    CASE DEFAULT
+      smsim_b = 0.0_4
+    END SELECT
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      DO t=setup%ntime_step,options%cost%end_warmup,-1
+        CALL POPINTEGER4(i)
+      END DO
+    END IF
+    output_b%hp_domain = 0.0_4
+    output_b%hp_domain(:, :, options%cost%end_warmup:setup%ntime_step)&
+&    = output_b%hp_domain(:, :, options%cost%end_warmup:setup%ntime_step&
+&     ) + smsim_b
+  END SUBROUTINE COMPUTE_JOBS_SM_B
+
+  SUBROUTINE COMPUTE_JOBS_SM(setup, mesh, input_data, returns, options, &
+&   output, jobs_sm)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(RETURNSDT), INTENT(IN) :: returns
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    TYPE(OPTIONSDT) :: options
+    REAL(sp), INTENT(OUT) :: jobs_sm
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%ntime_step-options%&
+&   cost%end_warmup+1) :: smobs, smsim
+    INTEGER :: t, i
+    jobs_sm = 0._sp
+    smsim = output%hp_domain(:, :, options%cost%end_warmup:setup%&
+&     ntime_step)
+    i = 1
+    IF (setup%sparse_storage) THEN
+      DO t=options%cost%end_warmup,setup%ntime_step
+        CALL VECTOR_TO_MATRIX(mesh, input_data%atmos_data%sparse_sm(t)%&
+&                       values, smobs(:, :, i), input_data%atmos_data%&
+&                       sparse_sm(t)%n)
+        i = i + 1
+      END DO
+    ELSE
+      smobs = input_data%atmos_data%sm(:, :, options%cost%end_warmup:&
+&       setup%ntime_step)
+    END IF
+    SELECT CASE  (setup%sm_metric) 
+    CASE ('spatial_bias_insensitive') 
+! case("temporal_basin_average")
+!     jobs_sm = temporal_basin_average(smsim, smobs, mesh%active_cell)
+! case("spatial_bias_accounting")
+!     jobs_sm = spatial_bias_accounting(smsim, smobs, mesh%active_cell)
+      CALL SPATIAL_BIAS_INSENSITIVE(smsim, smobs, jobs_sm, mesh%&
+&                             active_cell, mesh%nac)
+    CASE ('rmse') 
+      jobs_sm = MSE_2D(smsim, smobs, mesh%active_cell)
+    END SELECT
+  END SUBROUTINE COMPUTE_JOBS_SM
+
 !  Differentiation of classical_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
+!                *(output.hp_domain)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.hp_domain:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_D(setup, mesh, input_data, &
 &   parameters, parameters_d, output, output_d, options, options_d, &
 &   returns)
@@ -11227,26 +12173,38 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp) :: jobs, jreg
-    REAL(sp) :: jobs_d, jreg_d
+    REAL(sp) :: jobs, jreg, jobs_sm
+    REAL(sp) :: jobs_d, jreg_d, jobs_sm_d
+    jreg = 0._sp
+    jobs_sm = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
-&                           output_d, options, jobs, jobs_d)
+&                           output_d, options, returns, jobs, jobs_d)
     CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
-&                           parameters_d, options, options_d, jreg, &
-&                           jreg_d)
-    output_d%cost = jobs_d + options%cost%wjreg*jreg_d
+&                           parameters_d, options, options_d, returns, &
+&                           jreg, jreg_d)
+    IF (setup%read_sm) THEN
+      CALL COMPUTE_JOBS_SM_D(setup, mesh, input_data, returns, options, &
+&                      output, output_d, jobs_sm, jobs_sm_d)
+! jobs = 0._sp
+! jreg = 0._sp
+    ELSE
+      jobs_sm_d = 0.0_4
+    END IF
+    output_d%cost = 2*(jobs+options%cost%wjreg*jreg)*(jobs_d+options%&
+&     cost%wjreg*jreg_d) + 2*jobs_sm*jobs_sm_d
   END SUBROUTINE CLASSICAL_COMPUTE_COST_D
 
 !  Differentiation of classical_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
+!                *(output.hp_domain)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.hp_domain:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_B(setup, mesh, input_data, &
 &   parameters, parameters_b, output, output_b, options, options_b, &
 &   returns)
@@ -11261,10 +12219,14 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(OPTIONSDT_DIFF) :: options_b
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp) :: jobs, jreg
-    REAL(sp) :: jobs_b, jreg_b
+    REAL(sp) :: jobs, jreg, jobs_sm
+    REAL(sp) :: jobs_b, jreg_b, jobs_sm_b
+    REAL(sp) :: temp_b
+    INTEGER :: branch
+    jreg = 0._sp
+    jobs_sm = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
-&                         , jobs)
+&                         , returns, jobs)
     CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
 &                 , 1))
     CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(parameters&
@@ -11276,9 +12238,27 @@ CONTAINS
 &                 parameters%rr_initial_states%values, 2)*SIZE(&
 &                 parameters%rr_initial_states%values, 3))
     CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                         options, jreg)
-    jobs_b = output_b%cost
-    jreg_b = options%cost%wjreg*output_b%cost
+&                         options, returns, jreg)
+    IF (setup%read_sm) THEN
+      CALL COMPUTE_JOBS_SM(setup, mesh, input_data, returns, options, &
+&                    output, jobs_sm)
+! jobs = 0._sp
+! jreg = 0._sp
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    temp_b = 2*(jobs+options%cost%wjreg*jreg)*output_b%cost
+    jobs_sm_b = 2*jobs_sm*output_b%cost
+    jobs_b = temp_b
+    jreg_b = options%cost%wjreg*temp_b
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL COMPUTE_JOBS_SM_B(setup, mesh, input_data, returns, options, &
+&                      output, output_b, jobs_sm, jobs_sm_b)
+    ELSE
+      output_b%hp_domain = 0.0_4
+    END IF
     CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
 &                parameters%rr_initial_states%values, 1)*SIZE(parameters&
 &                %rr_initial_states%values, 2)*SIZE(parameters%&
@@ -11289,10 +12269,10 @@ CONTAINS
     CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, &
 &                1))
     CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
-&                           parameters_b, options, options_b, jreg, &
-&                           jreg_b)
+&                           parameters_b, options, options_b, returns, &
+&                           jreg, jreg_b)
     CALL CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
-&                           output_b, options, jobs, jobs_b)
+&                           output_b, options, returns, jobs, jobs_b)
   END SUBROUTINE CLASSICAL_COMPUTE_COST_B
 
   SUBROUTINE CLASSICAL_COMPUTE_COST(setup, mesh, input_data, parameters&
@@ -11305,14 +12285,25 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp) :: jobs, jreg
+    REAL(sp) :: jobs, jreg, jobs_sm
     jobs = 0._sp
     jreg = 0._sp
+    jobs_sm = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
-&                         , jobs)
+&                         , returns, jobs)
     CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                         options, jreg)
-    output%cost = jobs + options%cost%wjreg*jreg
+&                         options, returns, jreg)
+    IF (setup%read_sm) THEN
+      CALL COMPUTE_JOBS_SM(setup, mesh, input_data, returns, options, &
+&                    output, jobs_sm)
+! jobs = 0._sp
+! jreg = 0._sp
+    END IF
+    output%cost = (jobs+options%cost%wjreg*jreg)*(jobs+options%cost%&
+&     wjreg*jreg) + jobs_sm*jobs_sm
+    output%cost_jreg = jreg
+    output%cost_jobs_q = jobs
+    output%cost_jobs_sm = jobs_sm
   END SUBROUTINE CLASSICAL_COMPUTE_COST
 
 !  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
@@ -11320,12 +12311,13 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
+!                *(output.hp_domain)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.hp_domain:in options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, options_d, returns)
     IMPLICIT NONE
@@ -11355,12 +12347,13 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
+!                *(output.hp_domain)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.hp_domain:in options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, options_b, returns)
     IMPLICIT NONE
@@ -11382,6 +12375,7 @@ CONTAINS
 &                            returns)
       parameters_b%rr_parameters%values = 0.0_4
       parameters_b%rr_initial_states%values = 0.0_4
+      output_b%hp_domain = 0.0_4
     ELSE
       CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
 &                   x, 1))
@@ -11574,6 +12568,65 @@ CONTAINS
       END DO
     END DO
   END SUBROUTINE MATRIX_TO_AC_VECTOR
+
+!  Differentiation of ac_vector_to_matrix in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: matrix
+!   with respect to varying inputs: ac_vector matrix
+  SUBROUTINE AC_VECTOR_TO_MATRIX_D(mesh, ac_vector, ac_vector_d, matrix&
+&   , matrix_d)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_vector
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_vector_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: matrix_d
+    INTEGER :: row, col, k
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        k = mesh%rowcol_to_ind_ac(row, col)
+        IF (k .NE. -99) THEN
+          matrix_d(row, col) = ac_vector_d(k)
+          matrix(row, col) = ac_vector(k)
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE AC_VECTOR_TO_MATRIX_D
+
+!  Differentiation of ac_vector_to_matrix in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: matrix
+!   with respect to varying inputs: ac_vector matrix
+  SUBROUTINE AC_VECTOR_TO_MATRIX_B(mesh, ac_vector, ac_vector_b, matrix&
+&   , matrix_b)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_vector
+    REAL(sp), DIMENSION(mesh%nac) :: ac_vector_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: matrix_b
+    INTEGER :: row, col, k
+    INTEGER :: branch
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        k = mesh%rowcol_to_ind_ac(row, col)
+        IF (k .EQ. -99) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+    END DO
+    ac_vector_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
+          ac_vector_b(k) = ac_vector_b(k) + matrix_b(row, col)
+          matrix_b(row, col) = 0.0_4
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE AC_VECTOR_TO_MATRIX_B
 
   SUBROUTINE AC_VECTOR_TO_MATRIX(mesh, ac_vector, matrix)
     IMPLICIT NONE
@@ -17091,14 +18144,15 @@ CONTAINS
 !   variations   of useful results: *(checkpoint_variable.ac_rr_states)
 !                *(checkpoint_variable.ac_mlt) *(checkpoint_variable.ac_qtz)
 !                *(checkpoint_variable.ac_qz) *(output.response.q)
+!                *(output.hp_domain)
 !   with respect to varying inputs: *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.hp_domain)
 !   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.hp_domain:in
   SUBROUTINE SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters&
 &   , output, output_d, options, returns, checkpoint_variable, &
 &   checkpoint_variable_d, start_time_step, end_time_step)
@@ -17194,6 +18248,9 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+3) = h3_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+! convert from 1d to 2d
+        CALL AC_VECTOR_TO_MATRIX_D(mesh, h2, h2_d, output%hp_domain(:, :&
+&                            , t), output_d%hp_domain(:, :, t))
         rr_parameters_inc = rr_parameters_inc + 4
         rr_states_inc = rr_states_inc + 3
       CASE ('gr5') 
@@ -17378,6 +18435,8 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+4) = h4_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+4) = h4
+        CALL AC_VECTOR_TO_MATRIX_D(mesh, h2, h2_d, output%hp_domain(:, :&
+&                            , t), output_d%hp_domain(:, :, t))
         rr_parameters_inc = rr_parameters_inc + 9
         rr_states_inc = rr_states_inc + 4
       END SELECT
@@ -17430,15 +18489,15 @@ CONTAINS
 !   gradient     of useful results: *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.hp_domain)
 !   with respect to varying inputs: *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.hp_domain)
 !   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.hp_domain:in
   SUBROUTINE SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters&
 &   , output, output_b, options, returns, checkpoint_variable, &
 &   checkpoint_variable_b, start_time_step, end_time_step)
@@ -17533,6 +18592,8 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+! convert from 1d to 2d
+        CALL AC_VECTOR_TO_MATRIX(mesh, h2, output%hp_domain(:, :, t))
         CALL PUSHINTEGER4(rr_parameters_inc)
         rr_parameters_inc = rr_parameters_inc + 4
         CALL PUSHINTEGER4(rr_states_inc)
@@ -17687,6 +18748,7 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         checkpoint_variable%ac_rr_states(:, rr_states_inc+4) = h4
+        CALL AC_VECTOR_TO_MATRIX(mesh, h2, output%hp_domain(:, :, t))
         CALL PUSHINTEGER4(rr_parameters_inc)
         rr_parameters_inc = rr_parameters_inc + 9
         CALL PUSHINTEGER4(rr_states_inc)
@@ -17791,14 +18853,15 @@ CONTAINS
           IF (branch .EQ. 1) THEN
             CALL POPINTEGER4(rr_states_inc)
             CALL POPINTEGER4(rr_parameters_inc)
+            CALL AC_VECTOR_TO_MATRIX_B(mesh, h2, h2_b, output%hp_domain(&
+&                                :, :, t), output_b%hp_domain(:, :, t))
             h3_b = 0.0_4
             h3_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3&
 &             )
             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
 &             0.0_4
-            h2_b = 0.0_4
-            h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2&
-&             )
+            h2_b = h2_b + checkpoint_variable_b%ac_rr_states(:, &
+&             rr_states_inc+2)
             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
 &             0.0_4
             h1_b = 0.0_4
@@ -17956,14 +19019,16 @@ CONTAINS
       ELSE
         CALL POPINTEGER4(rr_states_inc)
         CALL POPINTEGER4(rr_parameters_inc)
+        CALL AC_VECTOR_TO_MATRIX_B(mesh, h2, h2_b, output%hp_domain(:, :&
+&                            , t), output_b%hp_domain(:, :, t))
         h4_b = 0.0_4
         h4_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+4)
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+4) = 0.0_4
         h3_b = 0.0_4
         h3_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3)
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = 0.0_4
-        h2_b = 0.0_4
-        h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
+        h2_b = h2_b + checkpoint_variable_b%ac_rr_states(:, &
+&         rr_states_inc+2)
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
         h1_b = 0.0_4
         h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
@@ -18117,6 +19182,8 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
+! convert from 1d to 2d
+        CALL AC_VECTOR_TO_MATRIX(mesh, h2, output%hp_domain(:, :, t))
         rr_parameters_inc = rr_parameters_inc + 4
         rr_states_inc = rr_states_inc + 3
       CASE ('gr5') 
@@ -18240,6 +19307,7 @@ CONTAINS
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
         checkpoint_variable%ac_rr_states(:, rr_states_inc+4) = h4
+        CALL AC_VECTOR_TO_MATRIX(mesh, h2, output%hp_domain(:, :, t))
         rr_parameters_inc = rr_parameters_inc + 9
         rr_states_inc = rr_states_inc + 4
       END SELECT
@@ -18279,11 +19347,12 @@ CONTAINS
   END SUBROUTINE SIMULATION_CHECKPOINT
 
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(output.response.q) *(output.hp_domain)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
+!                output.hp_domain:in
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -18354,6 +19423,7 @@ CONTAINS
 &                          checkpoint_variable_d%ac_rr_states(:, i))
     END DO
     output_d%response%q = 0.0_4
+    output_d%hp_domain = 0.0_4
 ! % Checkpoints loop
     DO i=1,ncheckpoint
       start_time_step = (i-1)*checkpoint_size + 1
@@ -18369,10 +19439,12 @@ CONTAINS
 !  Differentiation of simulation in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
+!                *(output.hp_domain)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
+!                output.hp_domain:in
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -18580,13 +19652,13 @@ END MODULE MD_SIMULATION_DIFF
 !                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
 !                *(parameters.serr_mu_parameters.values):(loc)
 !                *(parameters.serr_sigma_parameters.values):(loc)
-!                *(output.response.q):(loc) output.cost:out
+!                *(output.response.q):(loc) output.cost:out *(output.hp_domain):(loc)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.hp_domain:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, options_d, returns)
 !% only: sp
@@ -18643,12 +19715,13 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                *(parameters.serr_mu_parameters.values):(loc)
 !                *(parameters.serr_sigma_parameters.values):(loc)
 !                *(output.response.q):(loc) output.cost:in-killed
+!                *(output.hp_domain):(loc)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.hp_domain:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, options_b, returns)
 !% only: sp

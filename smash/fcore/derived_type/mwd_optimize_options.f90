@@ -125,6 +125,8 @@ contains
 
         allocate (this%u_serr_sigma_parameters(setup%nsep_sigma))
         this%u_serr_sigma_parameters = -99._sp
+        
+        this%maxiter = setup%maxiter
 
     end subroutine Optimize_OptionsDT_initialise
 

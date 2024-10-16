@@ -994,9 +994,6 @@ class Model:
         Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
         ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
-        >>> setup["serr_mu_mapping"] = "Linear"
-        >>> model = smash.Model(setup, mesh)
-
         Access to Model structural error mu parameters
 
         >>> model.serr_mu_parameters

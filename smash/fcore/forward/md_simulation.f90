@@ -188,6 +188,9 @@ contains
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
 
+                ! convert from 1d to 2d
+                call ac_vector_to_matrix(mesh, h2, output%hp_domain(:, :, t))
+
                 rr_parameters_inc = rr_parameters_inc + 4
                 rr_states_inc = rr_states_inc + 3
 
@@ -311,6 +314,8 @@ contains
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) = h4
+
+                call ac_vector_to_matrix(mesh, h2, output%hp_domain(:, :, t))
 
                 rr_parameters_inc = rr_parameters_inc + 9
                 rr_states_inc = rr_states_inc + 4

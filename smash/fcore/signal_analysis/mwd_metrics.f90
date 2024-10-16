@@ -315,6 +315,320 @@ contains
 
     end function mse
 
+    function mse_2d(x, y, mask) result(res)
+    
+        implicit none
+        real(sp), dimension(:, :, :), intent(in) :: x, y
+        integer, dimension(size(x, 1), size(x, 2)), intent(in) :: mask
+        real(sp) :: res, temp_res
+        
+        integer :: counter
+        integer :: i, j, k
+        
+        res = 0._sp
+        counter = 0
+
+        do k=1, size(x, 3)
+
+            do i=1, size(x, 1)
+
+                do j=1, size(x, 2)
+                    
+                    if (y(i,j,k) .ge. 0._sp) then
+        
+                        res = res + (x(i,j,k) - y(i,j,k))*(x(i,j,k) - y(i,j,k))
+                        counter = counter + 1
+
+                    end if  
+                                                
+                end do
+            end do
+
+
+            ! read(*,*)
+
+        end do
+
+        res = sqrt(res/counter)
+    
+    end function mse_2d
+
+    subroutine spatial_efficiency(x, y, sig, alpha, active_cell)
+    
+        real(sp), dimension(:,:), intent(in) :: x, y
+        real(sp) :: sum_x, sum_y, mean_x, mean_y, std_x, std_y, rms, sum_xx, sum_yy
+        real(sp), intent(inout) :: sig, alpha
+        integer :: i,j,counter
+        integer, dimension(:, :), intent(in) :: active_cell
+
+        sum_x = 0._sp
+        sum_y = 0._sp
+        counter = 0
+
+        do i=1, size(x, 1)
+            do j=1, size(x,2)
+
+                if (active_cell(i,j)==1) then
+
+                    sum_x = sum_x + x(i,j)
+                    sum_y = sum_y + y(i,j)
+                    counter = counter + 1
+
+                end if
+            end do
+        end do
+
+        mean_x = sum_x / counter
+        mean_y = sum_y / counter
+
+        ! print *, '-------------------------------------------------'
+        ! print *, 'mean x'
+        ! print*, mean_x
+
+        ! print *, 'mean y'
+        ! print*, mean_y
+
+        ! compute the standard deviations
+
+        sum_xx = 0._sp
+        sum_yy = 0._sp
+        counter = 0
+
+        do i=1, size(x, 1)
+            do j=1, size(x,2)
+
+                if (active_cell(i,j)==1) then
+
+                    sum_xx = sum_xx + (x(i,j) - mean_x)*(x(i,j) - mean_x)
+                    sum_yy = sum_yy + (y(i,j) - mean_y)*(y(i,j) - mean_y)
+                    counter = counter + 1
+
+                end if
+            end do
+        end do
+
+        std_x = sqrt(sum_xx / counter)
+        std_y = sqrt(sum_yy / counter)
+
+        ! print *, 'std_x'
+        ! print*, std_x
+
+        ! print *, 'std_y'
+        ! print*, std_y
+
+        sig = (std_x/mean_x)/(std_y/mean_y)
+        ! print *, 'sig'
+        ! print *, sig
+
+        ! print *, '-------------------------------------------------'
+
+        rms = 0._sp
+        counter = 0
+        do i = 1, size(x,1)
+            do j = 1, size(x,2)
+
+                if (active_cell(i,j)==1) then
+
+                    rms = rms + &
+                    & ((x(i,j) - mean_x)/std_x - (y(i,j) - mean_y)/std_y)*((x(i,j) - mean_x)/std_x - (y(i,j) - mean_y)/std_y)
+                    counter = counter + 1
+                end if
+
+            end do
+        end do
+
+        alpha = 1 - sqrt(rms/counter)
+        
+    end subroutine spatial_efficiency
+
+    ! function compute_trace(x,y) result(res)
+
+    !     implicit none
+    !     real(sp), dimension(:,:), intent(in) :: x, y
+    !     real(sp), dimension(size(y,2),size(y,1)) :: y_transpose
+    !     real(sp), dimension(size(x,1), size(x,1)) :: z
+    !     real(sp) :: res
+    !     integer :: i, j, k
+
+    !     ! Compute the transpose of Y
+    !     do i = 1, size(y,1)
+    !         do j = 1, size(y,2)
+    !             y_transpose(j, i) = y(i, j)
+    !         end do
+    !     end do
+
+    !     ! Multiply X by the transpose of Y
+    !     z = 0.0
+    !     do i = 1, size(x, 1)
+    !         do j = 1, size(x, 1)
+    !             do k = 1, size(x, 2)
+    !                 z(i, j) = z(i, j) + x(i, k) * y_transpose(k, j)
+    !             end do
+    !         end do
+    !     end do
+
+    !     ! Compute the trace of Z
+    !     res = 0
+    !     do i=1, size(z,1)
+    !         if (z(i,i) .ge. 0._sp) then
+    !             res = res + z(i,i)
+    !         end if
+    !     end do
+
+    ! end function compute_trace
+
+    function check_matrix_exists(x) result(res)
+        implicit none
+        real(sp), dimension(:,:), intent(in) :: x
+        integer :: res
+        integer :: i,j
+
+        res = 0
+
+        do i=1, size(x,1)
+            do j=1, size(x,2)
+        
+                if(x(i,j) .ge. 0) then
+                    res=1
+                    exit
+                end if
+
+            end do
+            
+            if(res == 1) then 
+                exit   
+            end if
+
+        end do
+    end function check_matrix_exists
+
+    subroutine flatten_and_mask(input, output, active_cell)
+        real(sp), dimension(:, :), intent(in) :: input
+        real(sp), dimension(:), intent(inout) :: output
+        integer, dimension(:, :), intent(in) :: active_cell
+
+
+        integer :: i, j, count
+
+        count = 0
+
+        do i = 1, size(input, 1)
+            do j = 1, size(input, 2)
+                if (active_cell(i,j)==1) then
+                    count = count + 1
+                    output(count) = input(i, j)
+                end if
+            end do
+        end do
+        
+    end subroutine flatten_and_mask
+
+
+    subroutine spearman_rank_correlation(x, y, spearman_coeff)
+        real(sp), dimension(:), intent(in) :: x
+        real(sp), dimension(:), intent(in) :: y
+        real(sp), intent(out) :: spearman_coeff
+        real(sp), dimension(size(x)) :: rank_x, rank_y
+        real(sp) :: d
+        integer :: i, n
+
+        n = size(x)
+
+        ! Calculate ranks for x and y
+        call rankdata(x, rank_x)
+        call rankdata(y, rank_y)
+
+        ! Calculate the differences between ranks
+        d = 0._sp
+        do i=1, n
+            d = d + (rank_x(i) - rank_y(i))*(rank_x(i) - rank_y(i))
+        end do
+        
+        ! Calculate Spearman correlation coefficient
+        spearman_coeff = 1.0 - ((6.0 * d)/(n * (n*n - 1.0)))
+    end subroutine spearman_rank_correlation
+
+    subroutine rankdata(data, ranked)
+        real(sp), intent(in) :: data(:)
+        real(sp), intent(inout) :: ranked(:)
+        integer :: i, j, count, n
+        real(sp) :: temp
+
+        n = size(data)
+        ranked = 0.0
+
+        do i = 1, n
+            count = 0
+            temp = data(i)
+
+            do j = 1, n
+                if (data(j) <= temp) then
+                    count = count + 1
+                end if
+            end do
+
+            ranked(i) = count
+        end do
+    end subroutine rankdata
+
+
+
+    subroutine spatial_bias_insensitive(x, y, res, active_cell, nac)
+    
+        real(sp), dimension(:, :, :), intent(in) :: x, y
+        integer, dimension(:, :), intent(in) :: active_cell
+        real(sp), intent(inout) :: res
+        real(sp) :: sig, alpha, rs, trace, trace_x, trace_y
+        integer :: k, n, counter, flag_exists, nac
+        real(sp), dimension(nac) :: flattened_x, flattened_y
+        
+        res = 0._sp
+        n = size(x, 3)
+        counter = 0
+
+        do k=1, n
+
+            flag_exists = check_matrix_exists(y(:,:,k))
+        
+            if(flag_exists==1) then
+
+                call flatten_and_mask(x(:,:,k), flattened_x, active_cell)
+                call flatten_and_mask(y(:,:,k), flattened_y, active_cell)
+                rs = 0._sp
+                call spearman_rank_correlation(flattened_x, flattened_y, rs)
+
+                sig = 0._sp
+                alpha = 0._sp
+                ! trace = compute_trace(x(:,:,k), y(:,:,k))
+                ! trace_x = compute_trace(x(:,:,k), x(:,:,k))
+                ! trace_y = compute_trace(y(:,:,k), y(:,:,k))
+                ! rs = trace/(trace_x * trace_y)
+                call spatial_efficiency(x(:,:,k), y(:,:,k), sig, alpha, active_cell)
+
+                ! print *,'----------------------------------------------------------'
+                ! print *, alpha
+                ! print *, sig
+                ! print *, rs
+                ! print *, (1 - sqrt((rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+                res = res + (1 - sqrt((rs-1)*(rs-1) + (sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+                ! res = res + (1 - sqrt((sig-1)*(sig-1) + (alpha-1)*(alpha-1)))
+
+                counter = counter + 1
+                ! print *,'----------------------------------------------------------'
+
+            end if
+        end do
+        ! print *,'##################################################################'
+        ! print *, res
+        ! print *, counter
+        ! print *,'##################################################################'
+
+        res =  1 - res/counter  
+        ! res = res/counter 
+
+    end subroutine spatial_bias_insensitive
+
+
     function rmse(x, y) result(res)
 
         !% Notes
