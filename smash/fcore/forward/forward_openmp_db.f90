@@ -13295,7 +13295,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: pr, perc
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
     REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d, ene_d
+    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_d
@@ -13308,10 +13308,9 @@ CONTAINS
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
     pne_d = (1._sp-imperviousness)*pn_d
     pne = (1._sp-imperviousness)*pn
-    ene_d = (1._sp-imperviousness)*en_d
-    ene = (1._sp-imperviousness)*en
     temp = TANH(pne*inv_cp)
     temp0 = TANH(pne*inv_cp)
     temp1 = cp*(-(hp*hp)+1._sp)
@@ -13322,17 +13321,20 @@ CONTAINS
     ps = temp2
     ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
     ps = (1._sp+fq_ps)*ps
-    temp2 = TANH(ene*inv_cp)
-    temp1 = TANH(ene*inv_cp)
+    temp2 = TANH(en*inv_cp)
+    temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
     temp = temp0*temp1/((-hp+1._sp)*temp2+1._sp)
     es_d = (temp1*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp0*(1.0-&
-&     TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp*((1._sp-hp)*&
-&     (1.0-TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp2*hp_d))&
-&     /((1._sp-hp)*temp2+1._sp)
+&     TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp*((1._sp-hp)*(&
+&     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
+&     1._sp-hp)*temp2+1._sp)
     es = temp
     es_d = es*fq_es_d + (fq_es+1._sp)*es_d
     es = (1._sp+fq_es)*es
+! no evaporation over impervious part of a cell 
+    es_d = (1._sp-imperviousness)*es_d
+    es = (1._sp-imperviousness)*es
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pne .GT. 0) THEN
@@ -13368,7 +13370,7 @@ CONTAINS
     REAL(sp) :: pr, perc
     REAL(sp) :: pr_b, perc_b
     REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b, ene_b
+    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b
     INTRINSIC TANH
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_b
@@ -13389,15 +13391,17 @@ CONTAINS
     REAL(sp) :: temp_b5
     INTEGER :: branch
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
     pne = (1._sp-imperviousness)*pn
-    ene = (1._sp-imperviousness)*en
     ps = cp*(1._sp-hp*hp)*TANH(pne*inv_cp)/(1._sp+hp*TANH(pne*inv_cp))
     CALL PUSHREAL4(ps)
     ps = (1._sp+fq_ps)*ps
-    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
+    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
     CALL PUSHREAL4(es)
     es = (1._sp+fq_es)*es
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pne .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13436,14 +13440,14 @@ CONTAINS
     END IF
     es_b = -(inv_cp*hp_imd_b)
     inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
+    es_b = (1._sp-imperviousness)*es_b
     CALL POPREAL4(es)
 !$OMP ATOMIC update
     fq_es_b = fq_es_b + es*es_b
     es_b = (fq_es+1._sp)*es_b
-    ene = (1._sp-imperviousness)*en
-    temp4 = TANH(ene*inv_cp)
+    temp4 = TANH(en*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
-    temp1 = TANH(ene*inv_cp)
+    temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
     temp_b3 = es_b/temp3
     temp_b = (2._sp-hp)*temp1*temp_b3
@@ -13452,9 +13456,10 @@ CONTAINS
     hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
 &     temp_b0
     ps_b = inv_cp*hp_imd_b
-    temp_b4 = (1.0-TANH(ene*inv_cp)**2)*temp0*temp_b3
-    temp_b5 = (1.0-TANH(ene*inv_cp)**2)*(1._sp-hp)*temp_b0
-    ene_b = inv_cp*temp_b5 + inv_cp*temp_b4
+    temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
+    temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
+!$OMP ATOMIC update
+    en_b = en_b + inv_cp*temp_b5 + inv_cp*temp_b4
 !$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b
     CALL POPREAL4(ps)
@@ -13471,13 +13476,11 @@ CONTAINS
 !$OMP ATOMIC update
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pne*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + ene*temp_b5 + ene*temp_b4 + pne*temp_b2 + pne*&
+    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4 + pne*temp_b2 + pne*&
 &     temp_b0
 !$OMP ATOMIC update
     cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
     pne_b = pne_b + inv_cp*temp_b2 + inv_cp*temp_b0
-!$OMP ATOMIC update
-    en_b = en_b + (1._sp-imperviousness)*ene_b
 !$OMP ATOMIC update
     pn_b = pn_b + (1._sp-imperviousness)*pne_b
   END SUBROUTINE GR_PRODUCTION_B
@@ -13495,13 +13498,15 @@ CONTAINS
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
     pne = (1._sp-imperviousness)*pn
-    ene = (1._sp-imperviousness)*en
     ps = cp*(1._sp-hp*hp)*TANH(pne*inv_cp)/(1._sp+hp*TANH(pne*inv_cp))
     ps = (1._sp+fq_ps)*ps
-    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
+    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
     es = (1._sp+fq_es)*es
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pne .GT. 0) pr = pne - (hp_imd-hp)*cp + imperviousness*pn
     pwx1 = 1._sp + (hp_imd/beta)**4
@@ -13524,7 +13529,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: pr, perc
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
     REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d, ene_d
+    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d, pne_d
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_d, gam_d, inv_lambda_d
     INTRINSIC EXP
@@ -13547,10 +13552,9 @@ CONTAINS
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
     pne_d = (1._sp-imperviousness)*pn_d
     pne = (1._sp-imperviousness)*pn
-    ene_d = (1._sp-imperviousness)*en_d
-    ene = (1._sp-imperviousness)*en
     gam_d = EXP(-(pn*alpha1))*(alpha1*pn_d+pn*alpha1_d)
     gam = 1._sp - EXP(-(pn*alpha1))
     temp = SQRT(-gam + 1._sp)
@@ -13577,15 +13581,18 @@ CONTAINS
 &     lambda*hp_d))-temp4*(temp*(hp*lambda_d+lambda*hp_d)+lambda*hp*(1.0&
 &     -TANH(arg2)**2)*arg2_d))/temp0 - dt*gam_d
     ps = temp4 - dt*gam
-    temp4 = TANH(ene*inv_cp)
-    temp3 = TANH(ene*inv_cp)
+    temp4 = TANH(en*inv_cp)
+    temp3 = TANH(en*inv_cp)
     temp2 = hp*cp*(-hp+2._sp)
     temp1 = temp2*temp3/((-hp+1._sp)*temp4+1._sp)
     es_d = (temp3*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp2*(1.0-&
-&     TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp1*((1._sp-hp)&
-&     *(1.0-TANH(ene*inv_cp)**2)*(inv_cp*ene_d+ene*inv_cp_d)-temp4*hp_d)&
-&     )/((1._sp-hp)*temp4+1._sp)
+&     TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp1*((1._sp-hp)*(&
+&     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp4*hp_d))/((&
+&     1._sp-hp)*temp4+1._sp)
     es = temp1
+! no evaporation over impervious part of a cell 
+    es_d = (1._sp-imperviousness)*es_d
+    es = (1._sp-imperviousness)*es
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pne .GT. 0) THEN
@@ -13619,7 +13626,7 @@ CONTAINS
     REAL(sp) :: pr, perc
     REAL(sp) :: pr_b, perc_b
     REAL(sp) :: inv_cp, ps, es, hp_imd, pne, ene
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b, ene_b
+    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b, pne_b
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_b, gam_b, inv_lambda_b
     INTRINSIC EXP
@@ -13648,8 +13655,8 @@ CONTAINS
     REAL(sp) :: temp_b5
     INTEGER :: branch
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
     pne = (1._sp-imperviousness)*pn
-    ene = (1._sp-imperviousness)*en
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
@@ -13657,8 +13664,10 @@ CONTAINS
     arg2 = lambda*pne*inv_cp
     ps = cp*inv_lambda*TANH(arg1)*(1._sp-(lambda*hp)**2)/(1._sp+lambda*&
 &     hp*TANH(arg2)) - gam*dt
-    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
+    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pne .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13694,9 +13703,10 @@ CONTAINS
       pne_b = 0.0_4
     END IF
     es_b = -(inv_cp*hp_imd_b)
-    temp4 = TANH(ene*inv_cp)
+    es_b = (1._sp-imperviousness)*es_b
+    temp4 = TANH(en*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
-    temp1 = TANH(ene*inv_cp)
+    temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
     temp_b1 = es_b/temp3
     temp_b0 = (2._sp-hp)*temp1*temp_b1
@@ -13705,9 +13715,9 @@ CONTAINS
     hp_b = hp_b + hp_imd_b + cp*temp_b0 - hp*cp*temp1*temp_b1 - temp4*&
 &     temp_b4
     ps_b = inv_cp*hp_imd_b
-    temp_b = (1.0-TANH(ene*inv_cp)**2)*temp0*temp_b1
-    temp_b5 = (1.0-TANH(ene*inv_cp)**2)*(1._sp-hp)*temp_b4
-    ene_b = inv_cp*temp_b5 + inv_cp*temp_b
+    temp_b = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b1
+    temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b4
+    en_b = inv_cp*temp_b5 + inv_cp*temp_b
 !$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b0
     arg1 = lambda*pne*inv_cp
@@ -13723,7 +13733,7 @@ CONTAINS
     temp_b1 = temp3*temp_b0
     temp_b3 = -(temp3*temp2*temp_b0/temp0)
     arg2_b = (1.0-TANH(arg2)**2)*lambda*hp*temp_b3
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + ene*temp_b5 + ene*temp_b + &
+    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b + &
 &     lambda*pne*arg2_b + lambda*pne*arg1_b
 !$OMP ATOMIC update
     cp_b = cp_b + inv_lambda*temp1*temp_b1 - inv_cp_b/cp**2
@@ -13743,7 +13753,6 @@ CONTAINS
     pn_b = pn_b + (1._sp-imperviousness)*pne_b - alpha1*temp_b
 !$OMP ATOMIC update
     alpha1_b = alpha1_b - pn*temp_b
-    en_b = (1._sp-imperviousness)*ene_b
   END SUBROUTINE GR_RI_PRODUCTION_B
 
   SUBROUTINE GR_RI_PRODUCTION(pn, en, imperviousness, cp, beta, alpha1, &
@@ -13764,8 +13773,8 @@ CONTAINS
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
     pne = (1._sp-imperviousness)*pn
-    ene = (1._sp-imperviousness)*en
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
@@ -13773,8 +13782,10 @@ CONTAINS
     arg2 = lambda*pne*inv_cp
     ps = cp*inv_lambda*TANH(arg1)*(1._sp-(lambda*hp)**2)/(1._sp+lambda*&
 &     hp*TANH(arg2)) - gam*dt
-    es = hp*cp*(2._sp-hp)*TANH(ene*inv_cp)/(1._sp+(1._sp-hp)*TANH(ene*&
+    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pne .GT. 0) pr = pne - (hp_imd-hp)*cp + imperviousness*pn
     pwx1 = 1._sp + (hp_imd/beta)**4

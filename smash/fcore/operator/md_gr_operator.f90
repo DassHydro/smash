@@ -69,16 +69,19 @@ contains
         inv_cp = 1._sp/cp
         pr = 0._sp
 
+        ! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
         pne = (1._sp - imperviousness)*pn
-        ene = (1._sp - imperviousness)*en
         
         ps = cp*(1._sp - hp*hp)*tanh(pne*inv_cp)/ &
         & (1._sp + hp*tanh(pne*inv_cp))
         ps = (1._sp + fq_ps)*ps
 
-        es = (hp*cp)*(2._sp - hp)*tanh(ene*inv_cp)/ &
-        & (1._sp + (1._sp - hp)*tanh(ene*inv_cp))
+        es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
+        & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
         es = (1._sp + fq_es)*es
+        
+        ! no evaporation over impervious part of a cell 
+        es = (1._sp - imperviousness)*es
 
         hp_imd = hp + (ps - es)*inv_cp
 
@@ -108,9 +111,9 @@ contains
         
         inv_cp = 1._sp / cp
         pr = 0._sp
-
+        
+        ! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
         pne = (1._sp - imperviousness)*pn
-        ene = (1._sp - imperviousness)*en
 
         gam = 1._sp - exp(-pn * alpha1)
         lambda = sqrt(1._sp - gam)
@@ -119,8 +122,11 @@ contains
         ps = cp * inv_lambda * tanh(lambda * pne * inv_cp) * (1._sp - (lambda * hp) ** 2) &
         & / (1._sp + lambda * hp * tanh(lambda * pne * inv_cp)) - gam * dt
 
-        es = (hp*cp)*(2._sp - hp)*tanh(ene*inv_cp)/ &
-        & (1._sp + (1._sp - hp)*tanh(ene*inv_cp))
+        es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
+        & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
+        
+        ! no evaporation over impervious part of a cell 
+        es = (1._sp - imperviousness)*es
 
         hp_imd = hp + (ps - es)*inv_cp
 
