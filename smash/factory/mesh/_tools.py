@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+from typing import Any
+
+import geopandas as gpd
 import numpy as np
+import pandas as pd
+import pyflwdir
 import rasterio
+import rasterio.features
+from shapely.geometry import Point, Polygon
 
 
 def _xy_to_rowcol(x: float, y: float, xmin: float, ymax: float, xres: float, yres: float) -> tuple:
@@ -109,3 +116,293 @@ def _get_crs(flwdir_dataset: rasterio.DatasetReader, epsg: int) -> rasterio.CRS:
                 "the 'epsg' argument"
             )
     return crs
+
+
+def _switch_flwdir_convention(flwdir: np.ndarray, convention: str) -> np.ndarray:
+    if convention == "smash-d8":
+        conditions = [
+            (flwdir == 1),
+            (flwdir == 2),
+            (flwdir == 3),
+            (flwdir == 4),
+            (flwdir == 5),
+            (flwdir == 6),
+            (flwdir == 7),
+            (flwdir == 8),
+        ]
+
+        values = [64, 128, 1, 2, 4, 8, 16, 32]
+
+        flwdir_converted = np.select(conditions, values, 0).astype(np.uint8)
+
+    elif convention == "d8-smash":
+        conditions = [
+            (flwdir == 64),
+            (flwdir == 128),
+            (flwdir == 1),
+            (flwdir == 2),
+            (flwdir == 4),
+            (flwdir == 8),
+            (flwdir == 16),
+            (flwdir == 32),
+        ]
+
+        values = [1, 2, 3, 4, 5, 6, 7, 8]
+
+        flwdir_converted = np.select(conditions, values, 0).astype(np.int32)
+
+    return flwdir_converted
+
+
+def _d8_idx(idx0: int, shape: tuple[int, int]) -> np.ndarray:
+    """Returns linear indices of eight neighboring cells"""
+    nrow, ncol = shape
+    # assume c-style row-major
+    r = idx0 // ncol
+    c = idx0 % ncol
+    idxs_lst = []
+    for dr in range(-1, 2):
+        for dc in range(-1, 2):
+            if dr == 0 and dc == 0:  # skip pit -> return empty array
+                continue
+            r_us, c_us = r + dr, c + dc
+            if r_us >= 0 and r_us < nrow and c_us >= 0 and c_us < ncol:  # check bounds
+                idx = r_us * ncol + c_us
+                idxs_lst.append(idx)
+    return np.array(idxs_lst)
+
+
+def _get_main_river_line(river_line: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    def _mark_connected_lines(
+        row: gpd.GeoDataFrame, river_line: gpd.GeoDataFrame, current_group: int
+    ) -> None:
+        connected = river_line[river_line.geometry.touches(row.geometry)]
+        for idx, row_connected in connected.iterrows():
+            if river_line.at[idx, "group"] == -1:
+                river_line.at[idx, "group"] = current_group
+                _mark_connected_lines(row_connected, river_line, current_group)
+
+    river_line["group"] = -1
+    current_group = 0
+
+    for idx, row in river_line.iterrows():
+        if river_line.at[idx, "group"] == -1:
+            river_line.at[idx, "group"] = current_group
+            _mark_connected_lines(row, river_line, current_group)
+            current_group += 1
+
+    main_group = river_line.groupby("group").size().idxmax()
+
+    main_river_line = river_line[river_line["group"] == main_group].copy()
+    main_river_line.drop(columns=["group"], inplace=True)
+
+    return main_river_line
+
+
+def _get_river_line(river_line_path: str, rr_mesh: dict[str, Any]) -> gpd.GeoDataFrame:
+    transform = rasterio.transform.from_origin(
+        rr_mesh["xmin"], rr_mesh["ymax"], rr_mesh["xres"], rr_mesh["yres"]
+    )
+    shapes = rasterio.features.shapes(
+        rr_mesh["active_cell"], mask=rr_mesh["active_cell"].astype(bool), transform=transform
+    )
+
+    lriver_line = []
+    for s in shapes:
+        rl_mask = Polygon(s[0]["coordinates"][0])
+        rl = gpd.read_file(river_line_path, mask=rl_mask, columns=["geometry"])
+        rl = _get_main_river_line(rl)
+        rl["geometry"] = rl.geometry.explode()
+        lriver_line.append(rl)
+
+    return gpd.GeoDataFrame(pd.concat(lriver_line, ignore_index=True))
+
+
+def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict[str, Any]) -> np.ndarray:
+    transform = rasterio.transform.from_origin(
+        rr_mesh["xmin"], rr_mesh["ymax"], rr_mesh["xres"], rr_mesh["yres"]
+    )
+    latlon = rr_mesh["epsg"] == 4326
+
+    flwdir = pyflwdir.from_array(
+        _switch_flwdir_convention(rr_mesh["flwdir"], "smash-d8"),
+        ftype="d8",
+        transform=transform,
+        latlon=latlon,
+        cache=True,
+    )
+
+    selected_path = {}
+    # Iterate over each line segment in the river GeoDataFrame
+    for rl in river_line["geometry"]:
+        # Extract line coordinates
+        line_coords = list(rl.coords)
+
+        # Determine the starting point of the current line segment
+        start_point = Point(line_coords[0][0], line_coords[0][1])
+
+        # Transform the starting point coordinates to raster cell coordinates
+        start_cell_col, start_cell_row = map(int, ~flwdir.transform * (start_point.x, start_point.y))
+
+        # Get the linear index of the start cell
+        start_cell_idx = start_cell_row * flwdir.shape[1] + start_cell_col
+
+        # Get the indices of the eight neighboring cells of the start cell
+        neighbors_cells_idxs = _d8_idx(start_cell_idx, flwdir.shape)
+        neighbors_cells_idxs = neighbors_cells_idxs[np.isin(neighbors_cells_idxs, flwdir.idxs_seq)]
+
+        # Define flow path source cells as the start cell and its eight neighbors
+        source_cells = np.concatenate(([start_cell_idx], neighbors_cells_idxs))
+
+        # Compute flow paths starting from the source cells
+        flwpaths, _ = flwdir.path(idxs=source_cells)
+
+        flwpaths_analysis = {}
+        for fp in flwpaths:
+            count = sum(
+                sum(1 for x, y, *_ in line_coords if x_min <= x < x_max and y_min <= y < y_max)
+                for cell in fp
+                for row, col in [np.unravel_index(cell, flwdir.shape)]
+                for x_min, y_max in [flwdir.transform * (col, row)]
+                for x_max, y_min in [flwdir.transform * (col + 1, row + 1)]
+            )
+            flwpaths_analysis[fp[0]] = count
+
+        # Select the start cell index of the flow path with the highest number of line segment points
+        best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])
+
+        # Store the selected path of the best start cell index
+        selected_path[best_cell_idx] = flwpaths[np.where(source_cells == best_cell_idx)[0][0]]
+
+    # Identify upstream cells from the selected paths, excluding invalid cells and outlet
+    flow_path_upstream_cells = [
+        cell for cell in list(selected_path.keys()) if cell in flwdir.idxs_seq and cell != flwdir.idxs_pit[0]
+    ]
+
+    # Compute the flow path
+    flwpath = np.unique(np.concatenate(list(selected_path.values())))
+    flwpath = flwpath[np.isin(flwpath, flwdir.idxs_seq)]
+    flwpath_rowcol = np.unravel_index(flwpath, flwdir.shape)
+    flwpath_mask = np.zeros(flwdir.shape, dtype=bool)
+    flwpath_mask[flwpath_rowcol] = True
+
+    # Extract inflow cell indices from the final flow path mask
+    inflows_idxs = flwdir.inflow_idxs(flwpath_mask)
+
+    # Separate inflows into upstream and lateral inflows based on whether their downstream cell is in the
+    # flow path upstream cells
+    lat_inflows_idxs = [
+        inflow_point
+        for inflow_point in inflows_idxs
+        if flwdir.idxs_ds[inflow_point] not in flow_path_upstream_cells
+    ]
+    # lateral_inflows_rowcol = np.unravel_index(lateral_inflows, flwdir.shape)
+    up_inflows_idxs = [
+        inflow_point
+        for inflow_point in inflows_idxs
+        if flwdir.idxs_ds[inflow_point] in flow_path_upstream_cells
+    ]
+
+    # Get flow distance
+    flwdst = flwdir.distnc.ravel()
+
+    # Get stream segments
+    streams = flwdir.streams(mask=flwpath_mask)
+
+    for stream in streams:
+        coords = np.array(stream["geometry"]["coordinates"])
+        stream["properties"]["rowcols"] = [
+            tuple(map(np.int32, reversed(~flwdir.transform * coord))) for coord in coords
+        ]
+        stream["properties"]["idxs"] = [
+            np.ravel_multi_index(rowcol, flwdir.shape) for rowcol in stream["properties"]["rowcols"]
+        ]
+
+        stream["properties"]["midpoint_coordinates"] = (coords[:-1] + coords[1:]) / 2
+        stream["properties"]["midpoint_rowcols"] = stream["properties"]["rowcols"][:-1]
+        stream["properties"]["midpoint_idxs"] = stream["properties"]["idxs"][:-1]
+        stream["properties"]["nmidpoints"] = len(stream["properties"]["midpoint_coordinates"])
+
+    # Populate cross sections
+    cross_sections = []
+    for stream in streams:
+        for i in range(stream["properties"]["nmidpoints"]):
+            x = flwdst[stream["properties"]["midpoint_idxs"][i]] - np.hypot(
+                *(stream["geometry"]["coordinates"][i] - stream["properties"]["midpoint_coordinates"][i])
+            )
+            # Hardcoded bathymetry value with 0.001 m/m slope
+            bathy = x * 1e-3
+
+            # Lateral inflows
+            cs_lat_idxs = [
+                inflow
+                for inflow in lat_inflows_idxs
+                if flwdir.idxs_ds[inflow] == stream["properties"]["idxs"][i]
+            ]
+            nlat = len(cs_lat_idxs)
+            cs_lat_rowcols = np.empty(shape=(nlat, 2), dtype=np.int32)
+            for j, inflow in enumerate(cs_lat_idxs):
+                cs_lat_rowcols[j] = np.unravel_index(inflow, flwdir.shape)
+
+            # Upstream inflows
+            cs_up_idxs = [
+                inflow
+                for inflow in up_inflows_idxs
+                if flwdir.idxs_ds[inflow] == stream["properties"]["idxs"][i]
+            ]
+            nup = len(cs_up_idxs)
+            cs_up_rowcols = np.empty(shape=(nup, 2), dtype=np.int32)
+            for j, inflow in enumerate(cs_up_idxs):
+                cs_up_rowcols[j] = np.unravel_index(inflow, flwdir.shape)
+
+            cross_sections.append(
+                {
+                    "coord": stream["properties"]["midpoint_coordinates"][i],
+                    "rowcol": stream["properties"]["midpoint_rowcols"][i],
+                    "x": x,
+                    "bathy": bathy,
+                    "nlevels": 1,
+                    "strickler": np.empty(shape=(1,), dtype=np.float32),
+                    "level_heights": np.empty(shape=(1,), dtype=np.float32),
+                    "level_widths": np.empty(shape=(1,), dtype=np.float32),
+                    "nlat": nlat,
+                    "lat_rowcols": cs_lat_rowcols,
+                    "nup": nup,
+                    "up_rowcols": cs_up_rowcols,
+                }
+            )
+
+    # Populate segments
+    segments = []
+    for i, stream in enumerate(streams):
+        ds_seg = np.array(
+            [
+                j
+                for j, other_stream in enumerate(streams)
+                if other_stream["properties"]["idx"] == stream["properties"]["idx_ds"] and i != j
+            ]
+        )
+        us_seg = np.array(
+            [
+                j
+                for j, other_stream in enumerate(streams)
+                if other_stream["properties"]["idx_ds"] == stream["properties"]["idx"] and i != j
+            ]
+        )
+
+        cs_idxs = [np.ravel_multi_index(cs["rowcol"], flwdir.shape) for cs in cross_sections]
+        first_cs = np.argwhere(cs_idxs == stream["properties"]["midpoint_idxs"][0]).item()
+        last_cs = np.argwhere(cs_idxs == stream["properties"]["midpoint_idxs"][-1]).item()
+
+        segments.append(
+            {
+                "first_cross_section": first_cs,
+                "last_cross_section": last_cs,
+                "nds_seg": len(ds_seg),
+                "ds_segment": ds_seg,
+                "nus_seg": len(us_seg),
+                "us_segment": us_seg,
+            }
+        )
+
+    return cross_sections, segments
