@@ -2764,7 +2764,7 @@ class Model:
         )
 
         # Cannot standardize 'control_vector' here before initializing model._parameters.control
-        # it will be checked later by Numpy when using setattr method
+        # it will be checked later after calling wrap_parameters_to_control
         _set_control(self, control_vector, *args)
 
     @_model_multiset_estimate_doc_substitution
@@ -2832,5 +2832,5 @@ class Model:
         )
 
         # Cannot standardize 'control_vector' here before initializing model._parameters.control
-        # it will be checked later by Numpy when using setattr method
+        # it will be checked later after calling wrap_parameters_to_control
         _set_control(self, control_vector, *args)
