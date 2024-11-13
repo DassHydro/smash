@@ -102,6 +102,9 @@ class Optimize:
         wjreg_opt : `float`
             The optimal wjreg value.
 
+        wjreg_approx: `float`
+            The approximative wjreg value evaluated with one optimization cycle only.
+
         distance : `numpy.ndarray`
             An array of shape *(6,)* representing the L-Curve distance for each optimization cycle
             (the maximum distance corresponds to the optimal wjreg).
@@ -379,8 +382,8 @@ def _optimize_lcurve_wjreg(
     distance, wjreg = _get_lcurve_wjreg_best(cost_arr, jobs_arr, jreg_arr, wjreg_arr)
 
     lcurve = {
-        "wjreg_approx": wjreg_fast,
         "wjreg_opt": wjreg,
+        "wjreg_approx": wjreg_fast,
         "distance": distance,
         "cost": cost_arr,
         "jobs": jobs_arr,
