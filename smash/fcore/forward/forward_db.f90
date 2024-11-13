@@ -18785,8 +18785,8 @@ CONTAINS
           END IF
           prr_d = 0.9_sp*0.6_sp*(pr_d+perc_d) + l_d
           prr = 0.6_sp*0.9_sp*(pr+perc) + l
-          prl_d = 0.9_sp*0.4_sp*(pr_d+perc_d) + l_d
-          prl = 0.4_sp*0.9_sp*(pr+perc) + l
+          prl_d = 0.9_sp*0.4_sp*(pr_d+perc_d)
+          prl = 0.4_sp*0.9_sp*(pr+perc)
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
@@ -18883,7 +18883,7 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = 0.6_sp*0.9_sp*(pr+perc) + l
           CALL PUSHREAL4(prl)
-          prl = 0.4_sp*0.9_sp*(pr+perc) + l
+          prl = 0.4_sp*0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
@@ -18930,9 +18930,9 @@ CONTAINS
           temp_b = 0.9_sp*0.4_sp*prl_b
           pr_b = 0.1_sp*prd_b + temp_b
           perc_b = 0.1_sp*prd_b + temp_b
-          l_b = l_b + prl_b + prr_b
           CALL POPREAL4(prr)
           temp_b = 0.9_sp*0.6_sp*prr_b
+          l_b = l_b + prr_b
           pr_b = pr_b + temp_b
           perc_b = perc_b + temp_b
           CALL POPCONTROL1B(branch)
@@ -19001,7 +19001,7 @@ CONTAINS
             l = 0._sp
           END IF
           prr = 0.6_sp*0.9_sp*(pr+perc) + l
-          prl = 0.4_sp*0.9_sp*(pr+perc) + l
+          prl = 0.4_sp*0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
