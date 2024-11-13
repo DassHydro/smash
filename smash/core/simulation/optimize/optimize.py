@@ -336,7 +336,6 @@ def _optimize_lcurve_wjreg(
         returns,
     )
     jobs_max = returns.jobs
-
     # % Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
     _apply_optimizer(model, wparameters, options, returns, optimize_options, return_options, callback=None)
@@ -380,6 +379,7 @@ def _optimize_lcurve_wjreg(
     distance, wjreg = _get_lcurve_wjreg_best(cost_arr, jobs_arr, jreg_arr, wjreg_arr)
 
     lcurve = {
+        "wjreg_approx": wjreg_fast,
         "wjreg_opt": wjreg,
         "distance": distance,
         "cost": cost_arr,
