@@ -54,7 +54,6 @@ SNOW_MODULE = ["zero", "ssn"]
 
 HYDROLOGICAL_MODULE = [
     "gr4",
-    "gr4_ri",
     "gr4_mlp",
     "gr4_ri",
     "gr4_ode",
