@@ -163,8 +163,8 @@ def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> tuple[np.ndarray, dic
         ys = pyoff - yoff
         xe = xs + pwin_xsize
         ye = ys + pwin_ysize
-        arr_xslice = slice(int(xs * 1 / xres_ratio), int(xe * 1 / xres_ratio))
-        arr_yslice = slice(int(ys * 1 / yres_ratio), int(ye * 1 / yres_ratio))
+        arr_xslice = slice(int(np.rint(xs * 1 / xres_ratio)), int(np.rint(xe * 1 / xres_ratio)))
+        arr_yslice = slice(int(np.rint(ys * 1 / yres_ratio)), int(np.rint(ye * 1 / yres_ratio)))
 
         # % Reading and writting into buffer
         ds.read(

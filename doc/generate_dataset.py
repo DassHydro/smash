@@ -25,7 +25,7 @@ if __name__ == "__main__":
         "--tar",
         default=False,
         action="store_true",
-        help="Skip tests to include",
+        help="output as tar format",
     )
 
     args = parser.parse_args()

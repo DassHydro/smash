@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import inspect
 import warnings
 from typing import TYPE_CHECKING
 
-from smash._constant import MAPPING
+from smash._constant import GRADIENT_BASED_OPTIMIZER, HEURISTIC_OPTIMIZER, MAPPING
 from smash.core.simulation._standardize import (
     _standardize_simulation_common_options,
     _standardize_simulation_cost_options,
@@ -39,12 +40,30 @@ def _standardize_bayesian_optimize_mapping(mapping: str) -> str:
 def _standardize_optimize_optimizer(mapping: str, optimizer: str, setup: SetupDT) -> str:
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
-    if setup.n_layers > 0 and optimizer == "sbs":
+    if setup.n_layers > 0 and optimizer in HEURISTIC_OPTIMIZER:
         warnings.warn(
-            f"The SBS optimizer may not be suitable for the {setup.hydrological_module} module", stacklevel=2
+            f"{optimizer} optimizer may not be suitable for the {setup.hydrological_module} module. "
+            f"Other choices might be more appropriate: {GRADIENT_BASED_OPTIMIZER}",
+            stacklevel=2,
         )
 
     return optimizer
+
+
+def _standardize_optimize_callback(callback: callable | None) -> callable | None:
+    if callback is None:
+        pass
+
+    elif callable(callback):
+        cb_signature = inspect.signature(callback)
+
+        if "iopt" not in cb_signature.parameters:
+            raise ValueError("Callback function is required to have an 'iopt' argument")
+
+    else:
+        raise TypeError("callback argument must be callable")
+
+    return callback
 
 
 def _standardize_optimize_args(
@@ -55,6 +74,7 @@ def _standardize_optimize_args(
     cost_options: dict | None,
     common_options: dict | None,
     return_options: dict | None,
+    callback: callable | None,
 ) -> AnyTuple:
     func_name = "optimize"
     # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
@@ -83,6 +103,8 @@ def _standardize_optimize_args(
     # % Finalize return_options
     _standardize_simulation_return_options_finalize(model, return_options)
 
+    callback = _standardize_optimize_callback(callback)
+
     return (
         mapping,
         optimizer,
@@ -90,6 +112,7 @@ def _standardize_optimize_args(
         cost_options,
         common_options,
         return_options,
+        callback,
     )
 
 
@@ -101,6 +124,7 @@ def _standardize_bayesian_optimize_args(
     cost_options: dict | None,
     common_options: dict | None,
     return_options: dict | None,
+    callback: callable | None,
 ) -> AnyTuple:
     func_name = "bayesian_optimize"
 
@@ -130,6 +154,8 @@ def _standardize_bayesian_optimize_args(
     # % Finalize return_options
     _standardize_simulation_return_options_finalize(model, return_options)
 
+    callback = _standardize_optimize_callback(callback)
+
     return (
         mapping,
         optimizer,
@@ -137,4 +163,5 @@ def _standardize_bayesian_optimize_args(
         cost_options,
         common_options,
         return_options,
+        callback,
     )

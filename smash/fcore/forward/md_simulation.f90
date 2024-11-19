@@ -21,8 +21,10 @@ module md_simulation
     use mwd_returns !% only: ReturnsDT
     use md_checkpoint_variable !% only: Checkpoint_VariableDT
     use md_snow_operator !% only: ssn_time_step
-    use md_gr_operator !% only: gr4_time_step, gr4_mlp_time_step, gr4_ode_time_step, &
-    !% & gr4_ode_mlp_time_step, gr5_time_step, gr6_time_step, grc_time_step, grd_time_step, loieau_time_step
+    use md_gr_operator !% only: gr4_time_step, gr4_mlp_time_step, gr4_ri_time_step, gr4_ode_time_step, &
+    !% & gr4_ode_mlp_time_step, gr5_time_step, gr5_mlp_time_step, gr5_ri_time_step, gr6_time_step, &
+    !% & gr6_mlp_time_step, grc_time_step, grc_mlp_time_step, grd_time_step, grd_mlp_time_step,
+    !% & loieau_time_step, loieau_mlp_time_step
     use md_vic3l_operator !% only: vic3l_time_step
     use md_routing_operator !% only: lag0_time_step, lr_time_step, kw_time_step
     use mwd_sparse_matrix_manipulation !% only: matrix_to_ac_vector, &
@@ -199,40 +201,6 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 4
                 rr_states_inc = rr_states_inc + 3
 
-                ! 'gr4_ri' module
-            case ("gr4_ri")
-
-                ! % To avoid potential aliasing tapenade warning (DF02)
-                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
-                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
-                h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
-
-                call gr4_ri_time_step( &
-                    setup, &
-                    mesh, &
-                    input_data, &
-                    options, &
-                    returns, &
-                    t, &
-                    checkpoint_variable%ac_mlt, &
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % ct
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % alpha1
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 5), & ! % alpha2
-                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 6), & ! % kexc
-                    h1, & ! % hi
-                    h2, & ! % hp
-                    h3, & ! % ht
-                    checkpoint_variable%ac_qtz(:, setup%nqz))
-
-                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
-                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
-                checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
-
-                rr_parameters_inc = rr_parameters_inc + 6
-                rr_states_inc = rr_states_inc + 3
-
                 ! 'gr4_mlp' module
             case ("gr4_mlp")
 
@@ -269,6 +237,40 @@ contains
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
 
                 rr_parameters_inc = rr_parameters_inc + 4
+                rr_states_inc = rr_states_inc + 3
+
+                ! 'gr4_ri' module
+            case ("gr4_ri")
+
+                ! % To avoid potential aliasing tapenade warning (DF02)
+                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
+                h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
+
+                call gr4_ri_time_step( &
+                    setup, &
+                    mesh, &
+                    input_data, &
+                    options, &
+                    returns, &
+                    t, &
+                    checkpoint_variable%ac_mlt, &
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % ct
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % alpha1
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 5), & ! % alpha2
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 6), & ! % kexc
+                    h1, & ! % hi
+                    h2, & ! % hp
+                    h3, & ! % ht
+                    checkpoint_variable%ac_qtz(:, setup%nqz))
+
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
+
+                rr_parameters_inc = rr_parameters_inc + 6
                 rr_states_inc = rr_states_inc + 3
 
                 ! 'gr4_ode' module
@@ -374,8 +376,50 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 3
             
-            case ("gr5_ri")
             
+                ! 'gr5_mlp' module
+            case ("gr5_mlp")
+
+                ! % To avoid potential aliasing tapenade warning (DF02)
+                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
+                h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
+
+                call gr5_mlp_time_step( &
+                    setup, &
+                    mesh, &
+                    input_data, &
+                    options, &
+                    returns, &
+                    t, &
+                    parameters%nn_parameters%weight_1, &
+                    parameters%nn_parameters%bias_1, &
+                    parameters%nn_parameters%weight_2, &
+                    parameters%nn_parameters%bias_2, &
+                    parameters%nn_parameters%weight_3, &
+                    parameters%nn_parameters%bias_3, &
+                    checkpoint_variable%ac_mlt, &
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % ct
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % kexc
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 5), & ! % aexc
+                    h1, & ! % hi
+                    h2, & ! % hp
+                    h3, & ! % ht
+                    checkpoint_variable%ac_qtz(:, setup%nqz))
+
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
+
+                rr_parameters_inc = rr_parameters_inc + 5
+                rr_states_inc = rr_states_inc + 3
+
+
+                ! 'gr5_ri' module
+            case ("gr5_ri")
+
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
                 h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
@@ -407,7 +451,8 @@ contains
 
                 rr_parameters_inc = rr_parameters_inc + 7
                 rr_states_inc = rr_states_inc + 3
-            
+
+                
                 ! 'gr6' module
             case ("gr6")
 
@@ -424,6 +469,49 @@ contains
                     options, &
                     returns, &
                     t, &
+                    checkpoint_variable%ac_mlt, &
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % ct
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % be
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 5), & ! % kexc
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 6), & ! % aexc
+                    h1, & ! % hi
+                    h2, & ! % hp
+                    h3, & ! % ht
+                    h4, & ! % he
+                    checkpoint_variable%ac_qtz(:, setup%nqz))
+
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) = h4
+
+                rr_parameters_inc = rr_parameters_inc + 6
+                rr_states_inc = rr_states_inc + 4
+
+                ! 'gr6_mlp' module
+            case ("gr6_mlp")
+
+                ! % To avoid potential aliasing tapenade warning (DF02)
+                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
+                h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
+                h4 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) ! % he
+
+                call gr6_mlp_time_step( &
+                    setup, &
+                    mesh, &
+                    input_data, &
+                    options, &
+                    returns, &
+                    t, &
+                    parameters%nn_parameters%weight_1, &
+                    parameters%nn_parameters%bias_1, &
+                    parameters%nn_parameters%weight_2, &
+                    parameters%nn_parameters%bias_2, &
+                    parameters%nn_parameters%weight_3, &
+                    parameters%nn_parameters%bias_3, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
@@ -481,6 +569,48 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 4
 
+                ! 'grc_mlp' module
+            case ("grc_mlp")
+
+                ! % To avoid potential aliasing tapenade warning (DF02)
+                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
+                h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
+                h4 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) ! % hl
+
+                call grc_mlp_time_step( &
+                    setup, &
+                    mesh, &
+                    input_data, &
+                    options, &
+                    returns, &
+                    t, &
+                    parameters%nn_parameters%weight_1, &
+                    parameters%nn_parameters%bias_1, &
+                    parameters%nn_parameters%weight_2, &
+                    parameters%nn_parameters%bias_2, &
+                    parameters%nn_parameters%weight_3, &
+                    parameters%nn_parameters%bias_3, &
+                    checkpoint_variable%ac_mlt, &
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ci
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cp
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % ct
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % cl
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 5), & ! % kexc
+                    h1, & ! % hi
+                    h2, & ! % hp
+                    h3, & ! % ht
+                    h4, & ! % hl
+                    checkpoint_variable%ac_qtz(:, setup%nqz))
+
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) = h3
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 4) = h4
+
+                rr_parameters_inc = rr_parameters_inc + 5
+                rr_states_inc = rr_states_inc + 4
+
                 ! 'grd' module
             case ("grd")
 
@@ -508,6 +638,39 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 2
                 rr_states_inc = rr_states_inc + 2
 
+                ! 'grd_mlp' module
+            case ("grd_mlp")
+
+                ! % To avoid potential aliasing tapenade warning (DF02)
+                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hp
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % ht
+
+                call grd_mlp_time_step( &
+                    setup, &
+                    mesh, &
+                    input_data, &
+                    options, &
+                    returns, &
+                    t, &
+                    parameters%nn_parameters%weight_1, &
+                    parameters%nn_parameters%bias_1, &
+                    parameters%nn_parameters%weight_2, &
+                    parameters%nn_parameters%bias_2, &
+                    parameters%nn_parameters%weight_3, &
+                    parameters%nn_parameters%bias_3, &
+                    checkpoint_variable%ac_mlt, &
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % cp
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % ct
+                    h1, & ! % hp
+                    h2, & ! % ht
+                    checkpoint_variable%ac_qtz(:, setup%nqz))
+
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
+
+                rr_parameters_inc = rr_parameters_inc + 2
+                rr_states_inc = rr_states_inc + 2
+
                 ! 'loieau' module
             case ("loieau")
 
@@ -522,6 +685,40 @@ contains
                     options, &
                     returns, &
                     t, &
+                    checkpoint_variable%ac_mlt, &
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ca
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cc
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % kb
+                    h1, & ! % ha
+                    h2, & ! % hc
+                    checkpoint_variable%ac_qtz(:, setup%nqz))
+
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
+
+                rr_parameters_inc = rr_parameters_inc + 3
+                rr_states_inc = rr_states_inc + 2
+
+                ! 'loieau_mlp' module
+            case ("loieau_mlp")
+
+                ! % To avoid potential aliasing tapenade warning (DF02)
+                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % ha
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hc
+
+                call loieau_mlp_time_step( &
+                    setup, &
+                    mesh, &
+                    input_data, &
+                    options, &
+                    returns, &
+                    t, &
+                    parameters%nn_parameters%weight_1, &
+                    parameters%nn_parameters%bias_1, &
+                    parameters%nn_parameters%weight_2, &
+                    parameters%nn_parameters%bias_2, &
+                    parameters%nn_parameters%weight_3, &
+                    parameters%nn_parameters%bias_3, &
                     checkpoint_variable%ac_mlt, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ca
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cc

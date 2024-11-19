@@ -153,7 +153,6 @@ class Dense(Layer):
         if self.bias is None:
             _set_initialized_wb_to_layer(self, "bias")
 
-        # Set optimizer
         self._weight_opt = copy.copy(optimizer)
         self._bias_opt = copy.copy(optimizer)
 
@@ -203,8 +202,9 @@ class Conv2D(Layer):
 
         self.weight = None
         self.weight_shape = (filters, input_shape[-1] * np.prod(filter_shape))
-        # The real shape of W in this case is (filters, depth, height, width),
-        # which is simplified as (filters, depth*height*width)
+        # The real W shape of a Conv2D layer is (filters, depth, height, width)
+        # = (filters, input_shape[-1], **filter_shape),
+        # which is reshaped as (filters, depth*height*width)
 
         self.bias = None
         self.bias_shape = (1, filters)
@@ -212,13 +212,12 @@ class Conv2D(Layer):
         self.kernel_initializer = kernel_initializer
         self.bias_initializer = bias_initializer
 
-    def _initialize(self, optimizer):
+    def _initialize(self, optimizer: callable):
         if self.weight is None:
             _set_initialized_wb_to_layer(self, "weight")
         if self.bias is None:
             _set_initialized_wb_to_layer(self, "bias")
 
-        # Set optimizer
         self._weight_opt = copy.copy(optimizer)
         self._bias_opt = copy.copy(optimizer)
 

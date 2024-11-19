@@ -9,7 +9,7 @@ In `smash` a forward/direct spatially distributed model is obtained by chaining 
 - (optional) a descriptors-to-parameters mapping :math:`\phi` either for parameters imposing spatial constrain and/or regional mapping between physical descriptor and model conceptual parameters, see :ref:`mapping section <math_num_documentation.mapping>`.
 - (optional) a ``snow`` operator :math:`\mathcal{M}_{snw}` generating a melt flux :math:`m_{lt}` which is then summed with the precipitation flux to feed the ``hydrological`` operator :math:`\mathcal{M}_{rr}`.
 - A ``hydrological`` production operator :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t` which feeds the routing operator. 
-- A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating propagation of discharge :math:`Q)`.
+- A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating propagation of discharge :math:`Q`.
 
 The operators chaining principle  is presented in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem.chaining>` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>` ) and the chaining fluxes are explicitated in the diagram below. The forward model obtained reads :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` .
 
@@ -351,8 +351,120 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
 
 
-.. _math_num_documentation.forward_structure.hydrological_module.gr6:
+.. _math_num_documentation.forward_structure.hydrological_module.gr5_ri:
 
+.. dropdown:: gr5_ri (Génie Rural 5 with rainfall intensity terms)
+    :animate: fade-in-slide-down
+
+    This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
+
+        
+    **Production**
+    
+
+    In the classical gr production reservoir formulation, the instantaneous production rate is the ratio between the state and the capacity of the reservoir,
+    :math:`\eta = \left( \frac{h_p}{c_p} \right)^2`. The infiltration flux :math:p_s is obtained by temporal integration as follows:
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &p_s = \int_{t-\Delta t}^{t} (1 - \eta) dt \\
+        
+        \end{eqnarray}
+        
+    Assuming the neutralized rainfall :math:p_n constant over the current time step and thanks to analytically integrable function, the infiltration flux into the production reservoir is obtained:
+
+    .. math::
+        :nowrap:
+        
+        \begin{eqnarray}
+
+            &p_s = & c_p \tanh\left(\frac{p_n}{c_p}\right) \frac{1 - \left( \frac{h_p}{c_p} \right)^2}{1 + \frac{h_p}{c_p} \tanh\left( \frac{p_n}{c_p} \right)} \\
+            
+        \end{eqnarray}
+
+    To improve runoff production by a gr reservoir, 
+    even with low production level in dry condition, 
+    in the case of high rainfall intensity, :cite:p:`Astagneau_2022` suggests a modification 
+    of the infiltration rate :math:p_s depending on rainfall intensity :math:p_n:
+    :math:`\eta = \left( 1 - \gamma \right) \left( \frac{h_p}{c_p} \right)^2 + \gamma` with :math:`\gamma = 1 - \exp(-p_n \times \alpha_1)`
+    and :math:`\alpha_1` in :math:`mm` per time unit.
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+        &p_s& &=& &\int_{t-\Delta t}^{t} (1 - \eta) dt\\
+
+        && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \left(\frac{h_p}{c_p} \right)^2 \right) dt - \int_{t-\Delta t}^{t} \gamma dt\\
+        
+        && &=& &\left[ \frac{ c_p }{ \sqrt{1-\gamma} } \tanh \left( \frac{\sqrt{1-\gamma} \  h_p}{c_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
+        
+        \end{eqnarray}
+
+
+    We denote :math:`\lambda := \sqrt{1 - \gamma}`, then
+
+    .. math::
+        :nowrap:
+        
+        \begin{eqnarray}
+
+        \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) - \tanh\left( \lambda \frac{h_p}{c_p} \right) &=& 
+        \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+        &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \lambda \frac{h_p}{c_p} \right) + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \lambda \frac{h_p}{c_p} \right) \tanh \left( \lambda \frac{p_n}{c_p} \right) } \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+        &\sim& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \lambda \frac{h_p}{c_p} + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right) }  \lambda \frac{h_p}{c_p} \right) \\
+        &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)}
+        \end{eqnarray}
+        
+    Thus
+
+    .. math::
+        :nowrap:
+        
+        \begin{eqnarray}
+
+        p_s &=& \frac{c_p}{\lambda} \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)} - \gamma \Delta t
+        \end{eqnarray}
+
+
+    .. note::
+
+        Note that if :math:`\alpha_1 = 0`, we return to the general writting of the instantaneous production rate.
+        
+        
+    **Transfer**
+    
+    In context of high rainfall intensities triggering flash flood responses, it is crucial to account for fast dynamics related to surface/hypodermic runoff 
+    and slower responses due to delayed/deeper flows (e.g. :cite:p:`hess-22-5317-2018`). 
+    Following :cite:p:`Astagneau_2022` for a lumped GR model, we introduce at pixel scale in `smash` a function to modify the partitioning between fast 
+    and slower transfert branches depending on rainfall intensity of the current time step only (small pixel size):
+    
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &p_{rr}& =& (1 - Q_9)(p_r + p_{erc}) + l_{exc}\\
+            &p_{rd}& =& Q_9(p_r + p_{erc}) \\
+            &Q_9& =& 0.9 \tanh(\alpha_2 p_n)^2 + 0.1
+            
+        \end{eqnarray}
+
+    with :math:`\alpha_2` in :math:`mm` per time unit.
+
+
+    .. note::
+
+        If :math:`\alpha_2 = 0`, we return to the ``gr-4/gr-5`` writting of the transfer.
+        If :math:`\alpha_2 = \alpha_1 = 0`, it is equivalent to ``gr-5`` structure.
+        
+
+
+.. _math_num_documentation.forward_structure.hydrological_module.gr6:
 
 .. dropdown:: gr6 (Génie Rural 6)
     :animate: fade-in-slide-down

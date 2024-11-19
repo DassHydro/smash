@@ -41,7 +41,7 @@ class MultisetEstimate:
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
 
-    internal_fluxes: `dict[str, numpy.ndarray]`
+    internal_fluxes : `dict[str, numpy.ndarray]`
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 
@@ -51,7 +51,7 @@ class MultisetEstimate:
     jobs : `float`
         Cost observation component value.
 
-    lcurve_multiset : dict[str, Any]
+    lcurve_multiset : `dict[str, Any]`
         A dictionary containing the multiset estimate L-curve data. The elements are:
 
         alpha : `float` or `numpy.ndarray`
@@ -110,7 +110,7 @@ def multiset_estimate(
     if ret_multiset_estimate is None:
         return wmodel
     else:
-        return wmodel, ret_multiset_estimate
+        return (wmodel, ret_multiset_estimate)
 
 
 def _multiset_estimate(

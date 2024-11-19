@@ -36,22 +36,12 @@ def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
 
 
 def get_neurons_from_hydrological_module(hydrological_module: str, hidden_neuron: np.ndarray) -> np.ndarray:
-    neurons = np.zeros(len(hidden_neuron) + 2, dtype=np.int32)
+    n_in, n_out = HYDROLOGICAL_MODULE_INOUT_NEURONS[hydrological_module]
+    neurons = [n_in] + [val for val in hidden_neuron if val > 0] + [n_out]
+    padded_neurons = np.zeros(len(hidden_neuron) + 2, dtype=np.int32)
+    padded_neurons[: len(neurons)] = neurons
 
-    if "mlp" in hydrological_module:
-        if hydrological_module == "gr4_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 4
-            n_in, n_out = (4, 4)
-        elif hydrological_module == "gr4_ode_mlp":
-            # % fixed NN input size = 4 and fixed NN output size 5
-            n_in, n_out = (4, 5)
-
-        neurons[0] = n_in
-        non_zero_hidden_neurons = [val for val in hidden_neuron if val > 0]
-        neurons[1 : 1 + len(non_zero_hidden_neurons)] = non_zero_hidden_neurons
-        neurons[1 + len(non_zero_hidden_neurons)] = n_out
-
-    return neurons
+    return padded_neurons
 
 
 ### FLOAT PRECISION FOR FLOAT COMPARISON ###
@@ -66,14 +56,20 @@ HYDROLOGICAL_MODULE = [
     "gr4",
     "gr4_ri",
     "gr4_mlp",
+    "gr4_ri",
     "gr4_ode",
     "gr4_ode_mlp",
     "gr5",
+    "gr5_mlp",
     "gr5_ri",
     "gr6",
+    "gr6_mlp",
     "grc",
+    "grc_mlp",
     "grd",
+    "grd_mlp",
     "loieau",
+    "loieau_mlp",
     "vic3l",
 ]
 
@@ -97,20 +93,18 @@ SNOW_MODULE_RR_PARAMETERS = dict(
 HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
     zip(
         HYDROLOGICAL_MODULE,
-        [
-            ["ci", "cp", "ct", "kexc"],  # % gr4
-            ["ci", "cp", "ct", "alpha1", "alpha2", "kexc"],  # % gr4_ri
-            ["ci", "cp", "ct", "kexc"],  # % gr4_mlp
-            ["ci", "cp", "ct", "kexc"],  # % gr4_ode
-            ["ci", "cp", "ct", "kexc"],  # % gr4_ode_mlp
-            ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
-            ["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"],  # % gr5_ri
-            ["ci", "cp", "ct", "be", "kexc", "aexc"],  # % gr6
-            ["ci", "cp", "ct", "cl", "kexc"],  # % grc
-            ["cp", "ct"],  # % grd
-            ["ca", "cc", "kb"],  # % loieau
-            ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
-        ],
+        (
+            [["ci", "cp", "ct", "kexc"]] * 2  # % gr4, gr4_mlp,
+            + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc"]]  # % gr4_ri
+            + [["ci", "cp", "ct", "kexc"]] * 2  # % gr4_ode, gr4_ode_mlp
+            + [["ci", "cp", "ct", "kexc", "aexc"]] * 2  # % gr5, gr5_mlp
+            + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"]]  # % gr5_ri
+            + [["ci", "cp", "ct", "be", "kexc", "aexc"]] * 2  # % gr6, gr6_mlp
+            + [["ci", "cp", "ct", "cl", "kexc"]] * 2  # % grc, grc_mlp
+            + [["cp", "ct"]] * 2  # % grd, grd_mlp
+            + [["ca", "cc", "kb"]] * 2  # % loieau, loieau_mlp
+            + [["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"]]  # % vic3l
+        ),
     )
 )
 
@@ -141,20 +135,14 @@ SNOW_MODULE_RR_STATES = dict(
 HYDROLOGICAL_MODULE_RR_STATES = dict(
     zip(
         HYDROLOGICAL_MODULE,
-        [
-            ["hi", "hp", "ht"],  # % gr4
-            ["hi", "hp", "ht"],  # % gr4_ri
-            ["hi", "hp", "ht"],  # % gr4_mlp
-            ["hi", "hp", "ht"],  # % gr4_ode
-            ["hi", "hp", "ht"],  # % gr4_ode_mlp
-            ["hi", "hp", "ht"],  # % gr5
-            ["hi", "hp", "ht"],  # % gr5_ri
-            ["hi", "hp", "ht", "he"],  # % gr6
-            ["hi", "hp", "ht", "hl"],  # % grc
-            ["hp", "ht"],  # % grd
-            ["ha", "hc"],  # % loieau
-            ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
-        ],
+        (
+            [["hi", "hp", "ht"]] * 8  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri
+            + [["hi", "hp", "ht", "he"]] * 2  # % gr6, gr6_mlp
+            + [["hi", "hp", "ht", "hl"]] * 2  # % grc, grc_mlp
+            + [["hp", "ht"]] * 2  # % grd, grd_mlp
+            + [["ha", "hc"]] * 2  # % loieau, loieau_mlp
+            + [["hcl", "husl", "hmsl", "hbsl"]]  # % vic3l
+        ),
     )
 )
 
@@ -171,7 +159,6 @@ ROUTING_MODULE_NQZ = dict(
     zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
 )
 
-
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
@@ -187,20 +174,21 @@ SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
 HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
         HYDROLOGICAL_MODULE,
-        [
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4-ri
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr4_mlp
-            ["pn", "en", "lexc", "qt"],  # % gr4_ode
-            ["pn", "en", "lexc", "qt"],  # % gr4_ode_mlp
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"],  # % gr5-ri
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"],  # % gr6
-            ["pn", "en", "pr", "perc", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"],  # % grc
-            ["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"],  # % grd
-            ["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"],  # % loieau
-            ["pn", "en", "qr", "qb", "qt"],  # % vic3l
-        ],
+        (
+            [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            * 3  # % gr4, gr4_mlp, gr4_ri
+            + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ode_mlp
+            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            * 3  # % gr5, gr5_mlp, gr5_ri
+            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
+            * 2  # % gr6, gr6_mlp
+            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
+            * 2  # % grc, grc_mlp
+            + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
+            + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
+            * 2  # % loieau, loieau_mlp
+            + [["pn", "en", "qr", "qb", "qt"]]  # % vic3l
+        ),
     )
 )
 
@@ -253,23 +241,56 @@ STRUCTURE_RR_INTERNAL_FLUXES = dict(
     )
 )
 
+## PARAMETERIZATION NN STRUCTURE ##
+###################################
+
+# % Following HYDROLOGICAL_MODULE order
+HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        (
+            [
+                (0, 0),  # % gr4
+                (4, 4),  # % gr4_mlp
+                (0, 0),  # % gr4_ri
+                (0, 0),  # % gr4_ode
+                (4, 5),  # % gr4_ode_mlp
+                (0, 0),  # % gr5
+                (4, 4),  # % gr5_mlp
+                (0, 0),  # % gr5_ri
+                (0, 0),  # % gr6
+                (5, 5),  # % gr6_mlp
+                (0, 0),  # % grc
+                (5, 5),  # % grc_mlp
+                (0, 0),  # % grd
+                (4, 2),  # % grd_mlp
+                (0, 0),  # % loieau
+                (4, 3),  # % loieau_mlp
+                (0, 0),  # % vic3l
+            ]
+        ),
+    )
+)
+
 ## PARAMETERS NAME ###
 ######################
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6)
-    "cp",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
-    "ct",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
-    "alpha1", # % (gr4_ri, gr5_ri)
-    "alpha2", # % (gr4_ri, gr5_ri)
-    "cl",  # % grc
-    "be",  # % (gr6)
-    "kexc",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6)
-    "aexc",  # % (gr5, gr5_ri, gr6)
-    "ca",  # % loieau
-    "cc",  # % loieau
-    "kb",  # % loieau
+    "ci",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
+    "cp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    # % grd, grd_mlp
+    "ct",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    # %grd, grd_mlp
+    "alpha1",  # % gr4_ri, gr5_ri
+    "alpha2",  # % gr4_ri, gr5_ri
+    "cl",  # % grc, grc_mlp
+    "be",  # % gr6, gr6_mlp
+    "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp, grc, grc_mlp
+    "aexc",  # % gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp
+    "ca",  # % loieau, loieau_mlp
+    "cc",  # % loieau, loieau_mlp
+    "kb",  # % loieau, loieau_mlp
     "b",  # % vic3l
     "cusl",  # % vic3l
     "cmsl",  # % vic3l
@@ -286,13 +307,15 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6)
-    "hp",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
-    "ht",  # % (gr4, gr4_ri, gr4_mlp, gr4_ode, gr4_ode_mlp, gr5, gr5_ri, grc, gr6, grd)
-    "hl",  # % grc
-    "he",  # % gr6
-    "ha",  # % loieau
-    "hc",  # % loieau
+    "hi",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
+    "hp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    # % grd, grd_mlp
+    "ht",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    # % grd, grd_mlp
+    "hl",  # % grc, grc_mlp
+    "he",  # % gr6, gr6_mlp
+    "ha",  # % loieau, loieau_mlp
+    "hc",  # % loieau, loieau_mlp
     "hcl",  # % vic3l
     "husl",  # % vic3l
     "hmsl",  # % vic3l
@@ -312,8 +335,8 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % ci
             (0, np.inf),  # % cp
             (0, np.inf),  # % ct
-            (0, np.inf), # % alpha1
-            (0, np.inf), # % alpha2
+            (0, np.inf),  # % alpha1
+            (0, np.inf),  # % alpha2
             (0, np.inf),  # % cl
             (0, np.inf),  # % be
             (-np.inf, np.inf),  # % kexc
@@ -777,9 +800,7 @@ WB_INITIALIZER = [
     "zeros",
 ]
 
-PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
-
-PY_OPTIMIZER = [opt.lower() for opt in PY_OPTIMIZER_CLASS]
+OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
 
 ACTIVATION_FUNCTION_CLASS = [
     "Sigmoid",
@@ -819,9 +840,11 @@ REGIONAL_MAPPING = ["multi-linear", "multi-polynomial", "ann"]
 
 MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
 
-F90_OPTIMIZER = ["sbs", "lbfgsb"]
+ADAPTIVE_OPTIMIZER = [opt.lower() for opt in OPTIMIZER_CLASS]
+GRADIENT_BASED_OPTIMIZER = ["lbfgsb"] + ADAPTIVE_OPTIMIZER
+HEURISTIC_OPTIMIZER = ["sbs"]
 
-OPTIMIZER = F90_OPTIMIZER + PY_OPTIMIZER
+OPTIMIZER = HEURISTIC_OPTIMIZER + GRADIENT_BASED_OPTIMIZER
 
 # % Following MAPPING order
 # % The first optimizer for each mapping is used as default optimizer
@@ -829,21 +852,11 @@ MAPPING_OPTIMIZER = dict(
     zip(
         MAPPING,
         [
-            F90_OPTIMIZER,
-            ["lbfgsb"],
-            ["lbfgsb"],
-            ["lbfgsb"],
-            PY_OPTIMIZER,
-        ],
-    )
-)
-
-F90_OPTIMIZER_CONTROL_TFM = dict(
-    zip(
-        F90_OPTIMIZER,
-        [
-            ["sbs", "normalize", "keep"],
-            ["normalize", "keep"],
+            OPTIMIZER,  # for uniform mapping (all optimizers are possible, default is sbs)
+            *(
+                [GRADIENT_BASED_OPTIMIZER] * 3
+            ),  # for distributed, multi-linear, multi-polynomial mappings (default is lbfgsb)
+            ADAPTIVE_OPTIMIZER,  # for ann mapping (default is adam)
         ],
     )
 )
@@ -863,11 +876,11 @@ GAUGE_ALIAS = ["dws", "all"]
 DEFAULT_TERMINATION_CRIT = dict(
     **dict(
         zip(
-            F90_OPTIMIZER,
+            ["sbs", "lbfgsb"],
             [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
         )
     ),
-    **dict(zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])),
+    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -905,6 +918,22 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
         "control_tfm",
         "termination_crit",
     ],
+    **dict(
+        zip(
+            itertools.product(["uniform", "distributed"], ADAPTIVE_OPTIMIZER),
+            2
+            * len(ADAPTIVE_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "control_tfm",
+                    "learning_rate",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),  # product between 2 mappings (uniform, distributed) and all adaptive optimizers
     ("multi-linear", "lbfgsb"): [
         "parameters",
         "bounds",
@@ -921,8 +950,25 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ],
     **dict(
         zip(
-            [("ann", optimizer) for optimizer in PY_OPTIMIZER],
-            len(PY_OPTIMIZER)
+            itertools.product(["multi-linear", "multi-polynomial"], ADAPTIVE_OPTIMIZER),
+            2
+            * len(ADAPTIVE_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "control_tfm",
+                    "descriptor",
+                    "learning_rate",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),  # product between 2 mappings (multi-linear, multi-polynomial) and all adaptive optimizers
+    **dict(
+        zip(
+            [("ann", optimizer) for optimizer in ADAPTIVE_OPTIMIZER],
+            len(ADAPTIVE_OPTIMIZER)
             * [
                 [
                     "parameters",
@@ -934,7 +980,16 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),
+    ),  # ann mapping and all adaptive optimizers
+}
+
+OPTIMIZER_CONTROL_TFM = {
+    (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
+    if optimizer == "sbs"
+    else ["normalize", "keep"]  # in case of ann mapping
+    if mapping != "ann"
+    else ["keep"]  # other cases
+    for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
 }
 
 DEFAULT_SIMULATION_COST_OPTIONS = {
@@ -982,11 +1037,11 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "rr_states": False,
         "q_domain": False,
         "internal_fluxes": False,
-        "iter_cost": False,
-        "iter_projg": False,
         "control_vector": False,
         "net": False,
         "cost": False,
+        "n_iter": False,
+        "projg": False,
         "jobs": False,
         "jreg": False,
         "lcurve_wjreg": False,
@@ -996,10 +1051,10 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "rr_states": False,
         "q_domain": False,
         "internal_fluxes": False,
-        "iter_cost": False,
-        "iter_projg": False,
         "control_vector": False,
         "cost": False,
+        "n_iter": False,
+        "projg": False,
         "log_lkh": False,
         "log_prior": False,
         "log_h": False,

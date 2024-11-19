@@ -45,6 +45,10 @@ from smash.core.simulation._doc import (
     _model_optimize_doc_substitution,
     _multiset_estimate_doc_appender,
     _optimize_doc_appender,
+    _set_control_bayesian_optimize_doc_appender,
+    _set_control_bayesian_optimize_doc_substitution,
+    _set_control_optimize_doc_appender,
+    _set_control_optimize_doc_substitution,
 )
 from smash.core.simulation.estimate._standardize import (
     _standardize_multiset_estimate_args,
@@ -54,6 +58,7 @@ from smash.core.simulation.optimize._standardize import (
     _standardize_bayesian_optimize_args,
     _standardize_optimize_args,
 )
+from smash.core.simulation.optimize._tools import _set_control
 from smash.core.simulation.optimize.optimize import (
     _bayesian_optimize,
     _optimize,
@@ -120,15 +125,12 @@ class Model:
         hydrological_module : `str`, default 'gr4'
             Name of hydrological module. Should be one of:
 
-            - ``'gr4'``
-            - ``'gr4_mlp'``
-            - ``'gr4_ode'``
-            - ``'gr4_ode_mlp'``
-            - ``'gr5'``
-            - ``'gr6'``
-            - ``'grc'``
-            - ``'grd'``
-            - ``'loieau'``
+            - ``'gr4'``, ``'gr4_mlp'``, ``'gr4_ri'``, ``'gr4_ode'``, ``'gr4_ode_mlp'``
+            - ``'gr5'``, ``'gr5_mlp'``, ``'gr5_ri'``
+            - ``'gr6'``, ``'gr6_mlp'``
+            - ``'grc'``, ``'grc_mlp'``
+            - ``'grd'``, ``'grd_mlp'``
+            - ``'loieau'``, ``'loieau_mlp'``
             - ``'vic3l'``
 
             .. hint::
@@ -193,8 +195,8 @@ class Model:
 
         adjust_interception : `bool`, default True
             Whether or not to adjust the maximum capacity of the interception reservoir.
-            This option is only applicable if **hydrological_module** is set to ``'gr4'`` or ``'gr5'`` and
-            for a sub-daily simulation time step **dt**.
+            This option is available for any **hydrological_module** having the :math:`c_i` parameter
+            (i.e. ``'gr4'``, ``'gr5'``, ``'gr6'``, etc.) and for a sub-daily simulation time step **dt**.
 
         compute_mean_atmos : `bool`, default True
             Whether or not to compute mean atmospheric data for each gauge.
@@ -1507,6 +1509,7 @@ class Model:
 
         Generate the random grid
 
+        >>> import numpy as np
         >>> np.random.seed(99)
         >>> random_arr = np.random.randint(10, 500, shape)
         >>> random_arr
@@ -1693,6 +1696,7 @@ class Model:
 
         Generate the random grid
 
+        >>> import numpy as np
         >>> np.random.seed(99)
         >>> random_arr = np.random.rand(*shape)
         >>> random_arr
@@ -2584,10 +2588,10 @@ class Model:
             self, value, initializer, random_state
         )
 
-        if (random_state is not None) and (initializer != "zeros") and (value is None):
-            np.random.seed(random_state)
-
         if value is None:
+            if random_state is not None:
+                np.random.seed(random_state)
+
             for i in range(self.setup.n_layers):
                 (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i+1}").shape
                 setattr(
@@ -2595,6 +2599,10 @@ class Model:
                     f"weight_{i+1}",
                     _initialize_nn_parameter(n_in, n_neuron, initializer),
                 )
+
+            # % Reset random seed if random_state is previously set
+            if random_state is not None:
+                np.random.seed(None)
 
         else:
             for i, val in enumerate(value):
@@ -2672,10 +2680,10 @@ class Model:
             self, value, initializer, random_state
         )
 
-        if (random_state is not None) and (initializer != "zeros") and (value is None):
-            np.random.seed(random_state)
-
         if value is None:
+            if random_state is not None:
+                np.random.seed(random_state)
+
             for i in range(self.setup.n_layers):
                 n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i+1}").shape[0]
                 setattr(
@@ -2683,6 +2691,10 @@ class Model:
                     f"bias_{i+1}",
                     _initialize_nn_parameter(1, n_neuron, initializer).flatten(),
                 )
+
+            # % Reset random seed if random_state is previously set
+            if random_state is not None:
+                np.random.seed(None)
 
         else:
             for i, val in enumerate(value):
@@ -2712,6 +2724,7 @@ class Model:
         cost_options: dict[str, Any] | None = None,
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,
+        callback: callable | None = None,
     ) -> Optimize | None:
         args_options = [
             deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
@@ -2722,9 +2735,37 @@ class Model:
             mapping,
             optimizer,
             *args_options,
+            callback,
         )
 
         return _optimize(self, *args)
+
+    @_set_control_optimize_doc_substitution
+    @_set_control_optimize_doc_appender
+    def set_control_optimize(
+        self,
+        control_vector: np.ndarray,
+        mapping: str = "uniform",
+        optimizer: str | None = None,
+        optimize_options: dict[str, Any] | None = None,
+    ):
+        optimize_options = deepcopy(optimize_options)
+
+        # % Only get mapping, optimizer, optimize_options and cost_options
+        *args, _, _, _ = _standardize_optimize_args(
+            self,
+            mapping,
+            optimizer,
+            optimize_options,
+            None,  # cost_options
+            None,  # common_options
+            None,  # return_options
+            None,  # callback
+        )
+
+        # Cannot standardize 'control_vector' here before initializing model._parameters.control
+        # it will be checked later after calling wrap_parameters_to_control
+        _set_control(self, control_vector, *args)
 
     @_model_multiset_estimate_doc_substitution
     @_multiset_estimate_doc_appender
@@ -2751,6 +2792,7 @@ class Model:
         cost_options: dict[str, Any] | None = None,
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,
+        callback: callable | None = None,
     ) -> BayesianOptimize | None:
         args_options = [
             deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
@@ -2761,6 +2803,34 @@ class Model:
             mapping,
             optimizer,
             *args_options,
+            callback,
         )
 
         return _bayesian_optimize(self, *args)
+
+    @_set_control_bayesian_optimize_doc_substitution
+    @_set_control_bayesian_optimize_doc_appender
+    def set_control_bayesian_optimize(
+        self,
+        control_vector: np.ndarray,
+        mapping: str = "uniform",
+        optimizer: str | None = None,
+        optimize_options: dict[str, Any] | None = None,
+        cost_options: dict[str, Any] | None = None,
+    ):
+        args_options = [deepcopy(arg) for arg in [optimize_options, cost_options]]
+
+        # % Only get mapping, optimizer, optimize_options and cost_options
+        *args, _, _, _ = _standardize_bayesian_optimize_args(
+            self,
+            mapping,
+            optimizer,
+            *args_options,
+            None,  # common_options
+            None,  # return_options
+            None,  # callback
+        )
+
+        # Cannot standardize 'control_vector' here before initializing model._parameters.control
+        # it will be checked later after calling wrap_parameters_to_control
+        _set_control(self, control_vector, *args)
