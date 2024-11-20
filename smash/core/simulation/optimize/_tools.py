@@ -275,7 +275,7 @@ def _get_lcurve_wjreg_best(
 
     max_distance = 0.0
     distance = np.zeros(shape=cost_arr.size)
-    wjreg=0.0
+    wjreg = 0.0
 
     for i in range(cost_arr.size):
         lcurve_y = (jreg_arr[i] - jreg_min) / (jreg_max - jreg_min)

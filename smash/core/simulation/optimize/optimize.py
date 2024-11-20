@@ -347,7 +347,7 @@ def _optimize_lcurve_wjreg(
     jobs_min = returns.jobs
     jreg_min = 0.0
     jreg_max = returns.jreg
-    wjreg_fast=0.0
+    wjreg_fast = 0.0
 
     if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.0:
         wjreg_fast = (jobs_max - jobs_min) / jreg_max
