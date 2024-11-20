@@ -1737,7 +1737,7 @@ contains
 
                 prl = (0.4_sp*(1._sp + output_layer(4, k)))* &  ! Range of correction c0.4: (0, 2)
                 & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
-                & (pr + perc) + l
+                & (pr + perc)
 
                 prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
 
