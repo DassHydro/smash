@@ -19,12 +19,12 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
         if model.setup.snow_module_present:
             continue
 
+        instance = model.copy()  # to preserve the default hybrid model before setting NN params
         # % Hybrid forward hydrological model with NN
         if model.setup.n_layers > 0:
-            model.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
+            instance.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
 
-        instance, ret = smash.forward_run(
-            model,
+        ret = instance.forward_run(
             common_options={"verbose": False, "ncpu": ncpu},
             return_options={
                 "cost": True,
@@ -96,3 +96,44 @@ def test_multiple_forward_run():
 
     # % Check that forward run discharge is equivalent to multiple forward run discharge
     assert np.allclose(frq, mfr.q, atol=1e-06, equal_nan=True), "multiple_forward_run.q"
+
+
+def test_forward_run_mlp():
+    ncpu = min(5, max(1, os.cpu_count() - 1))
+
+    # test some multi layer perceptron models versus classical models
+    # TODO: add ode and ode_mlp once implicit Euler for neural ode is implemented
+    mlp_to_cls_structure = {
+        "zero-gr4_mlp-lr": "zero-gr4-lr",
+        "zero-gr5_mlp-lr": "zero-gr5-lr",
+        "zero-gr6_mlp-lr": "zero-gr6-lr",
+        "zero-grd_mlp-lr": "zero-grd-lr",
+        "zero-grc_mlp-lr": "zero-grc-lr",
+        "zero-loieau_mlp-lr": "zero-loieau-lr",
+    }
+    all_structure = [model.setup.structure for model in pytest.model_structure]
+    for mlp_structure, cls_structure in mlp_to_cls_structure.items():
+        mlp_idx = all_structure.index(mlp_structure)
+        cls_idx = all_structure.index(cls_structure)
+        mlp_model = pytest.model_structure[mlp_idx]
+        cls_model = pytest.model_structure[cls_idx]
+        mlp_instance, mlp_ret = smash.forward_run(
+            mlp_model,
+            common_options={"verbose": False, "ncpu": ncpu},
+            return_options={
+                "cost": True,
+            },
+        )
+        cls_instance, cls_ret = smash.forward_run(
+            cls_model,
+            common_options={"verbose": False, "ncpu": ncpu},
+            return_options={
+                "cost": True,
+            },
+        )
+        assert np.allclose(
+            mlp_instance.response.q[:], cls_instance.response.q[:], atol=1e-06, equal_nan=True
+        ), f"forward_run_mlp.{mlp_model.setup.structure}.q"
+        assert np.allclose(
+            mlp_ret.cost, cls_ret.cost, atol=1e-06, equal_nan=True
+        ), f"forward_run_mlp.{mlp_model.setup.structure}.cost"
