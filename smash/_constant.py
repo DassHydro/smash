@@ -396,7 +396,7 @@ DEFAULT_RR_PARAMETERS = dict(
             200,  # % cp
             500,  # % ct
             3e-4, # % alpha1
-            1e-4, # % alpha2
+            1e-3, # % alpha2
             500,  # % cl
             10,  # % be
             0,  # % kexc
