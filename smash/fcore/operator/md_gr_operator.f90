@@ -1509,6 +1509,8 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
+                imperviousness = input_data%physio_data%imperviousness(row, col)
+
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
                     call gr_production(output_layer(1, k), output_layer(2, k), &
@@ -1770,6 +1772,8 @@ contains
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
                 k = mesh%rowcol_to_ind_ac(row, col)
+
+                imperviousness = input_data%physio_data%imperviousness(row, col)
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
