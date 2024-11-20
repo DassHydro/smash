@@ -19403,8 +19403,8 @@ CONTAINS
           temp = (output_layer(4, k)+1._sp)*(pr+perc)
           prl_d = 0.9_sp*0.4_sp*(temp0*((pr+perc)*output_layer_d(4, k)+(&
 &           output_layer(4, k)+1._sp)*(pr_d+perc_d))-temp*2*output_layer&
-&           (3, k)*output_layer_d(3, k)) + l_d
-          prl = 0.9_sp*0.4_sp*(temp*temp0) + l
+&           (3, k)*output_layer_d(3, k))
+          prl = 0.9_sp*0.4_sp*(temp*temp0)
 ! Range of correction c0.1: (0, 10)
           temp0 = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + &
 &           0.1_sp
@@ -19587,9 +19587,8 @@ CONTAINS
 &           output_layer(3, k)**2))*(pr+perc) + l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
-          CALL PUSHREAL4(prl)
           prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+&           output_layer(3, k)**2))*(pr+perc)
 ! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
@@ -19629,6 +19628,8 @@ CONTAINS
             prd_b = 0.0_4
           END IF
           temp = -(0.4_sp*output_layer(4, k)) + 0.6_sp
+          prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
+&           output_layer(3, k)**2))*(pr+perc)
           CALL POPREAL4(ac_hl(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prl, prl_b, ac_cl(k), &
 &                      ac_cl_b(k), ac_hl(k), ac_hl_b(k), ql, ql_b)
@@ -19638,13 +19639,11 @@ CONTAINS
           temp_b1 = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
           pr_b = temp_b1
           perc_b = temp_b1
-          CALL POPREAL4(prl)
           temp_b0 = 0.9_sp*0.4_sp*prl_b
           output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
 &           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(&
 &           output_layer(4, k)+1._sp)*(pr+perc)*temp_b0 - 2*output_layer&
 &           (3, k)*temp*(pr+perc)*0.9_sp*prr_b
-          l_b = l_b + prl_b + prr_b
           temp_b = (1._sp-output_layer(3, k)**2)*temp_b0
           output_layer_b(4, k) = output_layer_b(4, k) + (pr+perc)*temp_b
           temp_b1 = (output_layer(4, k)+1._sp)*temp_b
@@ -19652,6 +19651,7 @@ CONTAINS
           temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
           pr_b = pr_b + temp_b1 + temp*temp_b
           perc_b = perc_b + temp_b1 + temp*temp_b
+          l_b = l_b + prr_b
           output_layer_b(4, k) = output_layer_b(4, k) - 0.4_sp*(pr+perc)&
 &           *temp_b
           CALL POPCONTROL1B(branch)
@@ -19827,7 +19827,7 @@ CONTAINS
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
           prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+&           output_layer(3, k)**2))*(pr+perc)
 ! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
