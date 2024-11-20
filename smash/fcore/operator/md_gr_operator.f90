@@ -1633,7 +1633,7 @@ contains
                 end if
 
                 prr = 0.6_sp*0.9_sp*(pr + perc) + l
-                prl = 0.4_sp*0.9_sp*(pr + perc) + l
+                prl = 0.4_sp*0.9_sp*(pr + perc)
                 prd = 0.1_sp*(pr + perc)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
