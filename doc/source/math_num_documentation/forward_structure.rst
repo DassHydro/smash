@@ -666,7 +666,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \begin{eqnarray}
             &p_{rr}(x, t)& &=& &0.6 \times 0.9(p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
-            &p_{rl}(x, t)& &=& &0.4 \times 0.9(p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+            &p_{rl}(x, t)& &=& &0.4 \times 0.9(p_r(x, t) + p_{erc}(x, t)) \\
             &p_{rd}(x, t)& &=& &0.1(p_r(x, t) + p_{erc}(x, t))
         \end{eqnarray}
 
