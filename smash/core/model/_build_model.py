@@ -20,12 +20,10 @@ from smash._constant import (
     STRUCTURE_RR_STATES,
 )
 from smash.core.model._read_input_data import (
+    _read_atmos_data,
     _read_descriptor,
-    _read_pet,
-    _read_prcp,
+    _read_interannual_pet,
     _read_qobs,
-    _read_snow,
-    _read_temp,
 )
 from smash.fcore._mw_atmos_statistic import (
     compute_mean_atmos as wrap_compute_mean_atmos,
@@ -88,16 +86,19 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     with rasterio.Env():
         if setup.read_prcp:
-            _read_prcp(setup, mesh, input_data)
+            _read_atmos_data(setup, mesh, input_data, atmos_data="prcp")
 
         if setup.read_pet:
-            _read_pet(setup, mesh, input_data)
+            if setup.daily_interannual_pet:
+                _read_interannual_pet(setup, mesh, input_data)
+            else:
+                _read_atmos_data(setup, mesh, input_data, atmos_data="pet")
 
         if setup.read_snow:
-            _read_snow(setup, mesh, input_data)
+            _read_atmos_data(setup, mesh, input_data, atmos_data="snow")
 
         if setup.read_temp:
-            _read_temp(setup, mesh, input_data)
+            _read_atmos_data(setup, mesh, input_data, atmos_data="temp")
 
         if setup.read_descriptor:
             _read_descriptor(setup, mesh, input_data)

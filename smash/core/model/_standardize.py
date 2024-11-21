@@ -109,6 +109,26 @@ def _standardize_model_setup_access(key: str, value: str) -> str:
     return value
 
 
+def _standardize_model_date_pattern(key: str, value: str) -> str:
+    if len(value) > 0:
+        if not isinstance(value, str):
+            raise TypeError(f"{key} model setup must be a str")
+
+        if not value.startswith("%"):
+            raise ValueError(f"{value} must start by character %")
+
+        sample = value.split("%")
+        sample.pop(0)
+
+        for s in sample:
+            if not isinstance(s, str) and len(s) > 1:
+                raise ValueError(
+                    f"%{s} in {value} must start by character % following by a unique letter: Ex: %Y%m%d%H%M"
+                )
+
+    return value
+
+
 def _standardize_model_setup_snow_module(snow_module: str, **kwargs) -> str:
     if isinstance(snow_module, str):
         if snow_module.lower() in SNOW_MODULE:
@@ -287,6 +307,10 @@ def _standardize_model_setup_prcp_access(prcp_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("prcp_access", prcp_access)
 
 
+def _standardize_model_setup_prcp_date_pattern(prcp_date_pattern: str, **kwargs) -> str:
+    return _standardize_model_date_pattern("prcp_date_pattern", prcp_date_pattern)
+
+
 def _standardize_model_setup_read_pet(read_pet: bool, **kwrags) -> bool:
     return _standardize_model_setup_bool("read_pet", read_pet)
 
@@ -305,6 +329,10 @@ def _standardize_model_setup_pet_directory(read_pet: bool, pet_directory: str | 
 
 def _standardize_model_setup_pet_access(pet_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("pet_access", pet_access)
+
+
+def _standardize_model_setup_pet_date_pattern(pet_date_pattern: str, **kwargs) -> str:
+    return _standardize_model_date_pattern("pet_date_pattern", pet_date_pattern)
 
 
 def _standardize_model_setup_daily_interannual_pet(daily_interannual_pet: bool, **kwargs) -> bool:
@@ -336,6 +364,10 @@ def _standardize_model_setup_snow_access(snow_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("snow_access", snow_access)
 
 
+def _standardize_model_setup_snow_date_pattern(snow_date_pattern: str, **kwargs) -> str:
+    return _standardize_model_date_pattern("snow_date_pattern", snow_date_pattern)
+
+
 def _standardize_model_setup_read_temp(snow_module: str, read_temp: bool, **kwrags) -> bool:
     read_temp = _standardize_model_setup_bool("read_temp", read_temp)
 
@@ -355,6 +387,10 @@ def _standardize_model_setup_temp_directory(read_temp: bool, temp_directory: str
 
 def _standardize_model_setup_temp_access(temp_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("temp_access", temp_access)
+
+
+def _standardize_model_setup_temp_date_pattern(temp_date_pattern: str, **kwargs) -> str:
+    return _standardize_model_date_pattern("temp_date_pattern", temp_date_pattern)
 
 
 def _standardize_model_setup_prcp_partitioning(
@@ -499,6 +535,16 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["n_routing_fluxes"] = len(ROUTING_MODULE_RR_INTERNAL_FLUXES[setup["routing_module"]])
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
     setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")
+
+    for var in ["prcp_date_pattern", "snow_date_pattern", "temp_date_pattern", "pet_date_pattern"]:
+        if setup[var] == "":
+            if setup["dt"] == 86_400:
+                setup[var] = "%Y%m%d"
+            else:
+                setup[var] = "%Y%m%d%H%M"
+
+    if setup["daily_interannual_pet"]:
+        setup["pet_date_pattern"] = ""
 
 
 # % We assume that users use smash.factory.generate_mesh to generate the mesh
