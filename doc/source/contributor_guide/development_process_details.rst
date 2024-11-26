@@ -1767,7 +1767,7 @@ section of `NumPy <https://numpy.org/doc/stable/index.html>`__. Below is a summa
 
 .. code-block:: shell
 
-    # Make a new branch based on numpy/smash/1.0.x,
+    # Make a new branch based on smash/maintenance/1.0.x,
     # backport-420 is our new name for the branch.
     git checkout -b backport-420 maintenance/1.0.x
 

@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.util._typing import FilePath
 
-__all__ = ["save_model", "read_model"]
+__all__ = ["read_model", "save_model"]
 
 
 def save_model(model: Model, path: FilePath):

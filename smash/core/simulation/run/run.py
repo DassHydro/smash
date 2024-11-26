@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.factory.samples.samples import Samples
 
-__all__ = ["MultipleForwardRun", "ForwardRun", "forward_run", "multiple_forward_run"]
+__all__ = ["ForwardRun", "MultipleForwardRun", "forward_run", "multiple_forward_run"]
 
 
 class MultipleForwardRun:
