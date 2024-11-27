@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from smash.core.model.model import Model
 
-__all__ = ["default_optimize_options", "default_bayesian_optimize_options"]
+__all__ = ["default_bayesian_optimize_options", "default_optimize_options"]
 
 
 @_smash_default_optimize_options_doc_substitution

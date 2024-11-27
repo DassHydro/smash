@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from smash.core.model.model import Model
 
-__all__ = ["optimize_control_info", "bayesian_optimize_control_info"]
+__all__ = ["bayesian_optimize_control_info", "optimize_control_info"]
 
 
 @_smash_optimize_control_info_doc_substitution
