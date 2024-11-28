@@ -25,6 +25,7 @@ md_f90_sources = [
     'forward/md_simulation.f90',
 
     'operator/md_gr_operator.f90',
+    'operator/md_hy1d_operator.f90',
     'operator/md_neural_network.f90',
     'operator/md_routing_operator.f90',
     'operator/md_snow_operator.f90',

@@ -19,13 +19,13 @@ module mwd_segment
 
     type SegmentDT
 
-        integer :: first_cross_section
-        integer :: last_cross_section
+        integer :: first_cross_section !$F90W index
+        integer :: last_cross_section !$F90W index
 
         integer :: nds_seg
-        integer, dimension(:), allocatable :: ds_segment
+        integer, dimension(:), allocatable :: ds_segment !$F90W index-array
         integer :: nus_seg
-        integer, dimension(:), allocatable :: us_segment
+        integer, dimension(:), allocatable :: us_segment !$F90W index-array
 
     end type SegmentDT
 

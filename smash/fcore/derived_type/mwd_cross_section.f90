@@ -20,7 +20,7 @@ module mwd_cross_section
     type Cross_SectionDT
 
         real(sp), dimension(2) :: coord
-        integer, dimension(2) :: rowcol
+        integer, dimension(2) :: rowcol !$F90W index-array
         real(sp) :: x
         real(sp) :: bathy
         integer :: nlevels
@@ -29,9 +29,9 @@ module mwd_cross_section
         real(sp), dimension(:), allocatable :: level_widths
 
         integer :: nlat
-        integer, dimension(:, :), allocatable :: lat_rowcols
+        integer, dimension(:, :), allocatable :: lat_rowcols !$F90W index-array
         integer :: nup
-        integer, dimension(:, :), allocatable :: up_rowcols
+        integer, dimension(:, :), allocatable :: up_rowcols !$F90W index-array
 
     end type Cross_SectionDT
 

@@ -382,8 +382,6 @@ def _generate_mesh(
 
     if hy1d_options:
         rr_mesh.update(_generate_hy1d_mesh(rr_mesh, **hy1d_options))
-        # hy1d_mesh = _generate_hy1d_mesh(rr_mesh, **hy1d_options)
-        # return {"rr_mesh": rr_mesh, "hy1d_mesh": hy1d_mesh}
     else:
         rr_mesh.update({"ncs": 0, "nseg": 0})
     return rr_mesh

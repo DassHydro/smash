@@ -200,6 +200,23 @@ MODULE_RR_INTERNAL_FLUXES = dict(
     **ROUTING_MODULE_RR_INTERNAL_FLUXES,
 )
 
+### HYDRAULIC MODULE ###
+########################
+
+HY1D_MODULE = ["zero", "kw", "non_inertial"]
+
+# % Following SNOW_MODULE order
+HY1D_MODULE_PARAMETERS = dict(
+    zip(
+        HY1D_MODULE,
+        [
+            [],  # % zero
+            ["a", "b", "bathy", "strickler"],  # % kw
+            ["a", "b", "bathy", "strickler"],  # % non_inertial
+        ],
+    )
+)
+
 ### STRUCTURE ###
 #################
 
@@ -671,6 +688,7 @@ DEFAULT_MODEL_SETUP = {
     "snow_module": "zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
+    "hy1d_module": "zero",
     "hidden_neuron": 16,
     "serr_mu_mapping": "Zero",
     "serr_sigma_mapping": "Linear",
