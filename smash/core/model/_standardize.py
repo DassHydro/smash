@@ -15,6 +15,7 @@ from smash._constant import (
     FEASIBLE_RR_PARAMETERS,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
+    HY1D_MODULE,
     HYDROLOGICAL_MODULE,
     HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
@@ -153,6 +154,21 @@ def _standardize_model_setup_routing_module(routing_module: str, **kwargs) -> st
         raise TypeError("routing_module model setup must be a str")
 
     return routing_module
+
+
+def _standardize_model_setup_hy1d_module(hy1d_module: str, **kwargs) -> str:
+    if isinstance(hy1d_module, str):
+        if hy1d_module.lower() in HY1D_MODULE:
+            hy1d_module = hy1d_module.lower()
+        else:
+            raise ValueError(
+                f"Unknown hydraulic 1D module '{hy1d_module}' for hy1d_module in model setup. "
+                f"Choices: {HY1D_MODULE}"
+            )
+    else:
+        raise TypeError("hy1d_module model setup must be a str")
+
+    return hy1d_module
 
 
 def _standardize_model_setup_serr_mu_mapping(serr_mu_mapping: str, **kwargs) -> str:

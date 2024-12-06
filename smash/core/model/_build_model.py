@@ -72,6 +72,18 @@ def _map_dict_to_fortran_derived_type(dct: dict, fdt: FortranDerivedType, skip: 
             else:
                 _map_dict_to_fortran_derived_type(value, fdt)
 
+        # Assume list is used to store FortranDerivedTypeArray. We check that this is a list of
+        # dictionary to be sure that we are dealing with a FortranDerivedTypeArray
+        elif isinstance(value, list):
+            for i, sub_value in enumerate(value):
+                if isinstance(sub_value, dict):
+                    sub_fdt = getattr(fdt, key)[i]
+                    _map_dict_to_fortran_derived_type(sub_value, sub_fdt)
+
+                # % Should be unreachable
+                else:
+                    pass
+
         else:
             if hasattr(fdt, key):
                 setattr(fdt, key, value)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import errno
 import os
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import rasterio
@@ -24,6 +24,18 @@ def _standardize_flwdir_path(flwdir_path: FilePath) -> str:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), flwdir_path)
 
     return flwdir_path
+
+
+def _standardize_river_line_path(river_line_path: FilePath) -> str:
+    if not isinstance(river_line_path, (str, os.PathLike)):
+        raise TypeError("river_line_path argument must be of FilePath type (str, PathLike[str])")
+
+    river_line_path = str(river_line_path)
+
+    if not os.path.exists(river_line_path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), river_line_path)
+
+    return river_line_path
 
 
 def _standardize_output_path(output_path: FilePath | None) -> str | None:
@@ -52,18 +64,16 @@ def _standardize_detect_sink_output_path(output_path: FilePath | None) -> str | 
 def _standardize_detect_sink_args(flwdir_path: FilePath, output_path: FilePath | None) -> AnyTuple:
     flwdir_path = _standardize_detect_sink_flwdir_path(flwdir_path)
 
-    flwdir_dataset = rasterio.open(flwdir_path)
-
     output_path = _standardize_detect_sink_output_path(output_path)
 
-    return flwdir_dataset, output_path
+    return flwdir_path, output_path
 
 
-def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
+def _standardize_generate_rr_mesh_flwdir_path(flwdir_path: FilePath) -> str:
     return _standardize_flwdir_path(flwdir_path)
 
 
-def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: ListLike) -> np.ndarray:
+def _standardize_generate_rr_mesh_bbox(flwdir_path: str, bbox: ListLike) -> np.ndarray:
     # % Bounding Box (xmin, xmax, ymin, ymax)
 
     if not isinstance(bbox, (list, tuple, np.ndarray)):
@@ -80,7 +90,8 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox
     if bbox[2] > bbox[3]:
         raise ValueError(f"bbox ymin ({bbox[2]}) is greater than ymax ({bbox[3]})")
 
-    xmin, xmax, xres, ymin, ymax, yres = _get_transform(flwdir_dataset)
+    with rasterio.open(flwdir_path) as flwdir_dataset:
+        xmin, xmax, xres, ymin, ymax, yres = _get_transform(flwdir_dataset)
 
     if bbox[0] < xmin:
         warnings.warn(
@@ -125,8 +136,8 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox
     return bbox
 
 
-def _standardize_generate_mesh_x_y_area(
-    flwdir_dataset: rasterio.DatasetReader,
+def _standardize_generate_rr_mesh_x_y_area(
+    flwdir_path: str,
     x: Numeric | ListLike,
     y: Numeric | ListLike,
     area: Numeric | ListLike,
@@ -153,7 +164,8 @@ def _standardize_generate_mesh_x_y_area(
     if (x.size != y.size) or (y.size != area.size):
         raise ValueError(f"Inconsistent sizes between x ({x.size}), y ({y.size}) and area ({area.size})")
 
-    xmin, xmax, _, ymin, ymax, _ = _get_transform(flwdir_dataset)
+    with rasterio.open(flwdir_path) as flwdir_dataset:
+        xmin, xmax, _, ymin, ymax, _ = _get_transform(flwdir_dataset)
 
     if np.any((x < xmin) | (x > xmax)):
         raise ValueError(f"x {x} value(s) out of flow directions bounds {xmin, xmax}")
@@ -167,7 +179,7 @@ def _standardize_generate_mesh_x_y_area(
     return x, y, area
 
 
-def _standardize_generate_mesh_code(x: np.ndarray, code: str | ListLike | None) -> np.ndarray:
+def _standardize_generate_rr_mesh_code(x: np.ndarray, code: str | ListLike | None) -> np.ndarray:
     if code is None:
         code = np.array([f"_c{i}" for i in range(x.size)])
 
@@ -183,7 +195,7 @@ def _standardize_generate_mesh_code(x: np.ndarray, code: str | ListLike | None) 
     return code
 
 
-def _standardize_generate_mesh_max_depth(max_depth: Numeric) -> int:
+def _standardize_generate_rr_mesh_max_depth(max_depth: Numeric) -> int:
     if not isinstance(max_depth, (int, float)):
         raise TypeError("max_depth argument must be of Numeric type (int, float)")
 
@@ -195,7 +207,7 @@ def _standardize_generate_mesh_max_depth(max_depth: Numeric) -> int:
     return max_depth
 
 
-def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int | None:
+def _standardize_generate_rr_mesh_epsg(epsg: AlphaNumeric | None) -> int | None:
     if epsg is None:
         pass
 
@@ -208,7 +220,7 @@ def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int | None:
     return epsg
 
 
-def _standardize_generate_mesh_args(
+def _standardize_generate_rr_mesh_args(
     flwdir_path: FilePath,
     bbox: ListLike | None,
     x: Numeric | ListLike | None,
@@ -218,23 +230,58 @@ def _standardize_generate_mesh_args(
     max_depth: Numeric,
     epsg: AlphaNumeric | None,
 ) -> AnyTuple:
-    flwdir_path = _standardize_generate_mesh_flwdir_path(flwdir_path)
-
-    flwdir_dataset = rasterio.open(flwdir_path)
+    flwdir_path = _standardize_generate_rr_mesh_flwdir_path(flwdir_path)
 
     if x is None and bbox is None:
         raise ValueError("bbox argument or (x, y, area) arguments must be defined")
 
     if bbox is not None:
-        bbox = _standardize_generate_mesh_bbox(flwdir_dataset, bbox)
+        bbox = _standardize_generate_rr_mesh_bbox(flwdir_path, bbox)
 
     else:
-        x, y, area = _standardize_generate_mesh_x_y_area(flwdir_dataset, x, y, area)
+        x, y, area = _standardize_generate_rr_mesh_x_y_area(flwdir_path, x, y, area)
 
-        code = _standardize_generate_mesh_code(x, code)
+        code = _standardize_generate_rr_mesh_code(x, code)
 
-    max_depth = _standardize_generate_mesh_max_depth(max_depth)
+    max_depth = _standardize_generate_rr_mesh_max_depth(max_depth)
 
-    epsg = _standardize_generate_mesh_epsg(epsg)
+    epsg = _standardize_generate_rr_mesh_epsg(epsg)
 
-    return flwdir_dataset, bbox, x, y, area, code, max_depth, epsg
+    return flwdir_path, bbox, x, y, area, code, max_depth, epsg
+
+
+def _standardize_generate_hy1d_mesh_river_line_path(river_line_path: FilePath) -> str:
+    return _standardize_river_line_path(river_line_path)
+
+
+def _standardize_generate_hy1d_mesh_args(river_line_path: FilePath) -> AnyTuple:
+    river_line_path = _standardize_generate_hy1d_mesh_river_line_path(river_line_path)
+
+    return (river_line_path,)
+
+
+def _standardize_generate_mesh_rr_options(rr_options: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(rr_options, dict):
+        raise TypeError("rr_options argument must be of dict type")
+
+    return rr_options
+
+
+def _standardize_generate_mesh_hy1d_options(hy1d_options: dict[str, Any] | None) -> dict[str, Any] | None:
+    if hy1d_options is None:
+        return
+
+    if not isinstance(hy1d_options, dict):
+        raise TypeError("hy1d_options argument must be of dict type")
+
+    return hy1d_options
+
+
+def _standardize_generate_mesh_args(
+    rr_options: dict[str, Any], hy1d_options: dict[str, Any] | None
+) -> AnyTuple:
+    rr_options = _standardize_generate_mesh_rr_options(rr_options)
+
+    hy1d_options = _standardize_generate_mesh_hy1d_options(hy1d_options)
+
+    return rr_options, hy1d_options
