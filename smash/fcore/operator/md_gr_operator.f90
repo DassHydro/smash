@@ -37,7 +37,7 @@ module md_gr_operator
     use mwd_returns !% only: ReturnsDT
     use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
     use md_algebra !% only: solve_linear_system_2vars
-    use md_neural_network !% only: forward_mlp
+    use md_neural_network !% only: forward_mlp, forward_and_backward_mlp
 
     implicit none
 
@@ -225,18 +225,15 @@ contains
 
         real(sp), dimension(2, 2) :: jacob
         real(sp), dimension(2) :: dh, delta_h
-        real(sp) :: inv_cp, hp0, ht0, dt, fhp, fht, tmp_j
+        real(sp) :: inv_cp, inv_ct, hp0, ht0, dt, fhp, fht
         logical :: converged
         integer :: j
         integer :: maxiter = 10
-        ! integer :: n_subtimesteps = 2
 
         inv_cp = 1._sp/cp
+        inv_ct = 1._sp/ct
 
-        ! dt = 1._sp/real(n_subtimesteps, sp)
         dt = 1._sp
-
-        ! do i = 1, n_subtimesteps
 
         hp0 = hp
         ht0 = ht
@@ -246,20 +243,16 @@ contains
 
         do while ((.not. converged) .and. (j .lt. maxiter))
 
-            fhp = (1._sp - hp**2)*pn - hp*(2._sp - hp)*en
-            dh(1) = hp - hp0 - dt*fhp*inv_cp
+            fhp = ((1._sp - hp**2)*pn - hp*(2._sp - hp)*en)*inv_cp
+            dh(1) = hp - hp0 - dt*fhp
 
-            fht = ct*ht**5 - 0.9_sp*pn*hp**2 - kexc*ht**3.5_sp
-            dh(2) = ht - ht0 + dt*fht/ct  ! fht here is -fht
+            fht = (0.9_sp*pn*hp**2 - ct*ht**5 + kexc*ht**3.5_sp)*inv_ct
+            dh(2) = ht - ht0 - dt*fht
 
-            jacob(1, 1) = 1._sp + dt*2._sp*(hp*(pn - en) + en)*inv_cp
-
-            jacob(1, 2) = 0._sp
-
-            jacob(2, 1) = dt*1.8_sp*pn*hp/ct
-
-            tmp_j = 5._sp*ht**4 - 3.5_sp*kexc*(ht**2.5_sp)/ct
-            jacob(2, 2) = 1._sp + dt*tmp_j
+            jacob(1, 1) = 1._sp + dt*2._sp*(hp*(pn - en) + en)*inv_cp  ! 1 - dt*nabla_hp(fhp)
+            jacob(1, 2) = 0._sp  ! -dt*nabla_ht(fhp)
+            jacob(2, 1) = -dt*1.8_sp*pn*hp*inv_ct  ! -dt*nabla_hp(fht)
+            jacob(2, 2) = 1._sp - dt*(3.5_sp*kexc*(ht**2.5_sp) - 5._sp*ct*ht**4)*inv_ct  ! 1 - dt*nabla_ht(fht)
 
             call solve_linear_system_2vars(jacob, delta_h, dh)
 
@@ -276,53 +269,83 @@ contains
 
         end do
 
-        ! end do
-
         l = kexc*ht**3.5_sp
 
         q = ct*ht**5 + 0.1_sp*pn*hp**2 + l
 
     end subroutine gr_production_transfer_ode
 
-    subroutine gr_production_transfer_ode_mlp(fq, pn, en, cp, ct, kexc, hp, ht, q, l)
-        !% Solve state-space ODE system with explicit Euler and MLP
+    subroutine gr_production_transfer_ode_mlp(fq, jacobian_nn, pn, en, cp, ct, kexc, hp, ht, q, l)
+        !% Solve state-space neural ODE system with implicit Euler
 
         implicit none
 
         real(sp), dimension(5), intent(in) :: fq  ! fixed NN output size
+        real(sp), dimension(size(fq), 4), intent(in) :: jacobian_nn  ! fixed NN input size
         real(sp), intent(in) :: pn, en, cp, ct, kexc
         real(sp), intent(inout) :: hp, ht, q
         real(sp), intent(out) :: l
 
-        real(sp) :: inv_cp, dt, fhp, fht
-        ! integer :: i
-        ! integer :: n_subtimesteps = 4
+        real(sp), dimension(2, 2) :: jacob
+        real(sp), dimension(2) :: dh, delta_h
+        real(sp) :: inv_cp, inv_ct, hp0, ht0, dt, fhp, fht
+        logical :: converged
+        integer :: j
+        integer :: maxiter = 10
 
         inv_cp = 1._sp/cp
+        inv_ct = 1._sp/ct
 
-        ! dt = 1._sp/real(n_subtimesteps, sp)
         dt = 1._sp
 
-        !do i = 1, n_subtimesteps
+        hp0 = hp
+        ht0 = ht
 
-        fhp = (1._sp + fq(1))*pn*(1._sp - hp**2) &
-        & - (1._sp + fq(2))*en*hp*(2._sp - hp)  ! Range of correction pn, en: (0, 2)
+        converged = .false.
+        j = 0
 
-        hp = hp + dt*fhp*inv_cp
+        do while ((.not. converged) .and. (j .lt. maxiter))
 
-        if (hp .le. 0._sp) hp = 1.e-6_sp
-        if (hp .ge. 1._sp) hp = 1._sp - 1.e-6_sp
+            ! Range of correction for the two terms: (0, 2)
+            fhp = ((1._sp - hp**2)*pn*(1._sp + fq(1)) - hp*(2._sp - hp)*en*(1._sp + fq(2)))*inv_cp
+            dh(1) = hp - hp0 - dt*fhp
 
-        fht = (0.9_sp*(1._sp - fq(3)**2))*(1._sp + fq(1))*pn*hp**2 &
-        & + (1._sp + fq(4))*kexc*ht**3.5_sp &
-        & - (1._sp + fq(5))*ct*ht**5  ! Range of correction c0.9: (1, 0); kexc, ct: (0, 2)
+            ! Range of correction c0.9: (1, 0), for the remaining terms: (0, 2)
+            fht = (0.9_sp*(1._sp - fq(3)**2)*pn*hp**2 - (1._sp + fq(5))*ct*ht**5 &
+            & + (kexc*ht**3.5_sp)*(1._sp + fq(4)))*inv_ct
+            dh(2) = ht - ht0 - dt*fht
 
-        ht = ht + dt*fht/ct
+            ! 1 - dt*nabla_hp(fhp)
+            jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn(1, 1)*(1 - hp**2) - 2._sp*hp*(1._sp + fq(1))) &
+            & - en*(jacobian_nn(2, 1)*hp*(2._sp - hp) + 2._sp*(1._sp - hp)*(1._sp + fq(2))))*inv_cp
 
-        if (ht .le. 0._sp) ht = 1.e-6_sp
-        if (ht .ge. 1._sp) ht = 1._sp - 1.e-6_sp
+            ! -dt*nabla_ht(fhp)
+            jacob(1, 2) = -dt*(pn*jacobian_nn(1, 2)*(1 - hp**2) &
+            & - en*jacobian_nn(2, 2)*hp*(2._sp - hp))*inv_cp
 
-        !end do
+            ! -dt*nabla_hp(fht)
+            jacob(2, 1) = -dt*(1.8_sp*pn*(hp*(1._sp - fq(3)**2) - jacobian_nn(3, 1)*fq(3)*hp**2) &
+            & - jacobian_nn(5, 1)*ct*ht**5 + jacobian_nn(4, 1)*kexc*ht**3.5_sp)*inv_ct
+
+            ! 1 - dt*nabla_ht(fht)
+            jacob(2, 2) = 1._sp - dt*(3.5_sp*(1._sp + fq(4))*kexc*ht**2.5 + jacobian_nn(4, 2)*ht**3.5 &
+            & - 1.8_sp*fq(3)*jacobian_nn(3, 2)*pn*hp**2 &
+            & - 5._sp*(1._sp + fq(5))*ct*ht**4 - jacobian_nn(5, 2)*ht**5)*inv_ct
+
+            call solve_linear_system_2vars(jacob, delta_h, dh)
+
+            hp = hp + delta_h(1)
+            if (hp .le. 0._sp) hp = 1.e-6_sp
+            if (hp .ge. 1._sp) hp = 1._sp - 1.e-6_sp
+
+            ht = ht + delta_h(2)
+            if (ht .le. 0._sp) ht = 1.e-6_sp
+            if (ht .ge. 1._sp) ht = 1._sp - 1.e-6_sp
+
+            converged = (sqrt((delta_h(1)/hp)**2 + (delta_h(2)/ht)**2) .lt. 1.e-6_sp)
+            j = j + 1
+
+        end do
 
         l = (1._sp + fq(4))*kexc*ht**3.5_sp  ! Range of correction kexc: (0, 2)
 
@@ -709,7 +732,7 @@ contains
         ! Interception with OPENMP
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
+        !$OMP& shared(mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
         !$OMP& private(row, col, k)
 #endif
         do col = 1, mesh%ncol
@@ -744,8 +767,8 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
-                call gr_production_transfer_ode(pn(k), en(k), ac_cp(k), ac_ct(k), &
-                & ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
+                call gr_production_transfer_ode(pn(k), en(k), ac_cp(k), ac_ct(k), ac_kexc(k), &
+                & ac_hp(k), ac_ht(k), ac_qt(k), l)
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
@@ -799,6 +822,7 @@ contains
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), setup%neurons(1), mesh%nac) :: jacobian_nn
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
         real(sp) :: l
@@ -849,8 +873,8 @@ contains
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
                     input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
-                    call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k))
+                    call forward_and_backward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
+                    & input_layer, output_layer(:, k), jacobian_nn(:, :, k))
 
                 else
                     output_layer(:, k) = 0._sp
@@ -860,13 +884,7 @@ contains
             end do
         end do
 
-        ! Production and transfer with OPENMP
-#ifdef _OPENMP
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_cp, ac_ct, ac_kexc, &
-        !$OMP& ac_hp, ac_ht, ac_qt, pn, en) &
-        !$OMP& private(row, col, k, time_step_returns, l)
-#endif
+        ! Production and transfer without OPENMP
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -874,8 +892,8 @@ contains
 
                 k = mesh%rowcol_to_ind_ac(row, col)
 
-                call gr_production_transfer_ode_mlp(output_layer(:, k), pn(k), en(k), &
-                & ac_cp(k), ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
+                call gr_production_transfer_ode_mlp(output_layer(:, k), jacobian_nn(:, :, k), &
+                & pn(k), en(k), ac_cp(k), ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
@@ -901,9 +919,6 @@ contains
                 !$AD end-exclude
             end do
         end do
-#ifdef _OPENMP
-        !$OMP end parallel do
-#endif
 
     end subroutine gr4_ode_mlp_time_step
 
