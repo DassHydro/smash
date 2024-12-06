@@ -102,9 +102,9 @@ def test_forward_run_mlp():
     ncpu = min(5, max(1, os.cpu_count() - 1))
 
     # % Test some multi layer perceptron models versus classical models
-    # % TODO: add ode and ode_mlp once implicit Euler for neural ode is implemented
     mlp_to_cls_structure = {
         "zero-gr4_mlp-lr": "zero-gr4-lr",
+        "zero-gr4_ode_mlp-lr": "zero-gr4_ode-lr",
         "zero-gr5_mlp-lr": "zero-gr5-lr",
         "zero-gr6_mlp-lr": "zero-gr6-lr",
         "zero-grd_mlp-lr": "zero-grd-lr",
