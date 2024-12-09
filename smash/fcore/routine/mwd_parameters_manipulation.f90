@@ -6,10 +6,12 @@
 !%      - get_serr_mu
 !%      - get_serr_sigma
 !%      - get_rr_parameters
+!%      - get_hy1d_parameters
 !%      - get_rr_states
 !%      - get_serr_mu_parameters
 !%      - get_serr_sigma_parameters
 !%      - set_rr_parameters
+!%      - set_hy1d_parameters
 !%      - set_rr_states
 !%      - set_serr_mu_parameters
 !%      - set_serr_sigma_parameters
@@ -26,6 +28,7 @@
 !%      - control_tfm
 !%      - inv_control_tfm
 !%      - uniform_rr_parameters_get_control_size
+!%      - uniform_hy1d_parameters_get_control_size  !pag
 !%      - uniform_rr_initial_states_get_control_size
 !%      - distributed_rr_parameters_get_control_size
 !%      - distributed_rr_initial_states_get_control_size
@@ -37,6 +40,7 @@
 !%      - nn_parameters_get_control_size
 !%      - get_control_sizes
 !%      - uniform_rr_parameters_fill_control
+!%      - uniform_hy1d_parameters_fill_control       !pag
 !%      - uniform_rr_initial_states_fill_control
 !%      - distributed_rr_parameters_fill_control
 !%      - distributed_rr_initial_states_fill_control
@@ -50,6 +54,7 @@
 !%      - fill_control
 !%      - uniform_rr_parameters_fill_parameters
 !%      - uniform_rr_initial_states_fill_parameters
+!%      - uniform_hy1d_parameters_fill_parameters
 !%      - distributed_rr_parameters_fill_parameters
 !%      - distributed_rr_initial_states_fill_parameters
 !%      - multi_linear_rr_parameters_fill_parameters
@@ -71,6 +76,7 @@ module mwd_parameters_manipulation
     use mwd_parameters !% only: ParametersDT
     use mwd_rr_parameters !% only: RR_ParametersDT
     use mwd_rr_states !% only: RR_StatesDT
+    use mwd_hy1d_parameters !% only: HY1D_ParametersDT
     use mwd_serr_mu_parameters !% only: SErr_Mu_ParametersDT
     use mwd_serr_sigma_parameters !% only: SErr_Sigma_ParametersDT
     use mwd_output !% only: OutputDT
@@ -159,6 +165,32 @@ contains
         ! Should be unreachable
 
     end subroutine get_rr_parameters
+
+    subroutine get_hy1d_parameters(hy1d_parameters, key, vle)
+
+        implicit none
+
+        type(HY1D_ParametersDT), intent(in) :: hy1d_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:), intent(inout) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(hy1d_parameters%keys)
+
+            if (trim(hy1d_parameters%keys(i)) .eq. key) then
+
+                vle = hy1d_parameters%values(:, i)
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine get_hy1d_parameters
 
     subroutine get_rr_states(rr_states, key, vle)
 
@@ -263,6 +295,32 @@ contains
         ! Should be unreachable
 
     end subroutine set_rr_parameters
+
+    subroutine set_hy1d_parameters(hy1d_parameters, key, vle)
+
+        implicit none
+
+        type(HY1D_ParametersDT), intent(inout) :: hy1d_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:), intent(in) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(hy1d_parameters%keys)
+
+            if (trim(hy1d_parameters%keys(i)) .eq. key) then
+
+                hy1d_parameters%values(:, i) = vle
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine set_hy1d_parameters
 
     subroutine set_rr_states(rr_states, key, vle)
 
@@ -595,6 +653,17 @@ contains
 
     end subroutine uniform_rr_parameters_get_control_size
 
+    subroutine uniform_hy1d_parameters_get_control_size(options, n)
+
+        implicit none
+
+        type(OptionsDT), intent(in) :: options
+        integer, intent(inout) :: n
+
+        n = sum(options%optimize%hy1d_parameters)
+
+    end subroutine uniform_hy1d_parameters_get_control_size
+
     subroutine uniform_rr_initial_states_get_control_size(options, n)
 
         implicit none
@@ -778,6 +847,7 @@ contains
 
             call uniform_rr_parameters_get_control_size(options, nbk(1))
             call uniform_rr_initial_states_get_control_size(options, nbk(2))
+            call uniform_hy1d_parameters_get_control_size(options, nbk(6))
 
         case ("distributed")
 
@@ -841,6 +911,36 @@ contains
         end do
 
     end subroutine uniform_rr_parameters_fill_control
+
+    subroutine uniform_hy1d_parameters_fill_control(setup, mesh, parameters, options)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(ParametersDT), intent(inout) :: parameters
+        type(OptionsDT), intent(in) :: options
+
+        integer :: i, j
+
+        ! HY1D parameters is the sixth control kind
+        j = sum(parameters%control%nbk(1:5))
+
+        do i = 1, setup%nhy1dp
+
+            if (options%optimize%hy1D_parameters(i) .eq. 0) cycle
+
+            j = j + 1
+
+            parameters%control%x(j) = sum(parameters%hy1d_parameters%values(:, i))
+            parameters%control%l(j) = options%optimize%l_hy1d_parameters(i)
+            parameters%control%u(j) = options%optimize%u_hy1d_parameters(i)
+            parameters%control%nbd(j) = 2
+            parameters%control%name(j) = trim(parameters%hy1d_parameters%keys(i))//"-0"
+
+        end do
+
+    end subroutine uniform_hy1d_parameters_fill_control
 
     subroutine uniform_rr_initial_states_fill_control(setup, mesh, parameters, options)
 
@@ -1357,6 +1457,7 @@ contains
 
             call uniform_rr_parameters_fill_control(setup, mesh, parameters, options)
             call uniform_rr_initial_states_fill_control(setup, mesh, parameters, options)
+            call uniform_hy1d_parameters_fill_control(setup, mesh, parameters, options)
 
         case ("distributed")
 
@@ -1420,6 +1521,32 @@ contains
         end do
 
     end subroutine uniform_rr_parameters_fill_parameters
+
+    subroutine uniform_hy1d_parameters_fill_parameters(setup, mesh, parameters, options)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(ParametersDT), intent(inout) :: parameters
+        type(OptionsDT), intent(in) :: options
+
+        integer :: i, j
+
+        ! HY1D parameters is the sixth control kind
+        j = sum(parameters%control%nbk(1:5))
+
+        do i = 1, setup%nhy1dp
+
+            if (options%optimize%hy1d_parameters(i) .eq. 0) cycle
+
+            j = j + 1
+
+            parameters%hy1d_parameters%values(:, i) = parameters%control%x(j)
+
+        end do
+
+    end subroutine uniform_hy1d_parameters_fill_parameters
 
     subroutine uniform_rr_initial_states_fill_parameters(setup, mesh, parameters, options)
 
@@ -1879,6 +2006,7 @@ contains
 
             call uniform_rr_parameters_fill_parameters(setup, mesh, parameters, options)
             call uniform_rr_initial_states_fill_parameters(setup, mesh, parameters, options)
+            call uniform_hy1d_parameters_fill_parameters(setup, mesh, parameters, options)
 
         case ("distributed")
 

@@ -15,4 +15,6 @@ module md_constant
     integer, parameter :: dp = 8
     integer, parameter :: lchar = 128
 
+    real(sp), parameter :: gravity = 9.81_sp
+
 end module md_constant

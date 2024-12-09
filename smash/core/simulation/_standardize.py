@@ -21,6 +21,7 @@ from smash._constant import (
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     GAUGE_ALIAS,
+    HY1D_MODULE_PARAMETERS,
     JOBS_CMPT,
     JOBS_CMPT_TFM,
     JREG_CMPT,
@@ -35,6 +36,7 @@ from smash._constant import (
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
     OPTIMIZER_CLASS,
     OPTIMIZER_CONTROL_TFM,
+    OPTIMIZABLE_HY1D_PARAMETERS,
     REGIONAL_MAPPING,
     RR_PARAMETERS,
     RR_STATES,
@@ -125,6 +127,7 @@ def _standardize_simulation_optimize_options_parameters(
     model: Model, func_name: str, parameters: str | ListLike | None, **kwargs
 ) -> np.ndarray:
     is_bayesian = "bayesian" in func_name
+    is_hy1d = "non_inertial" in model.setup.hy1d_module or "kw" in model.setup.hy1d_module
 
     available_rr_parameters = [
         key for key in STRUCTURE_RR_PARAMETERS[model.setup.structure] if OPTIMIZABLE_RR_PARAMETERS[key]
@@ -146,6 +149,14 @@ def _standardize_simulation_optimize_options_parameters(
 
     available_parameters = available_rr_parameters + available_rr_initial_states + available_nn_parameters
 
+    if is_hy1d:
+        available_hy1d_parameters = [
+            key
+            for key in HY1D_MODULE_PARAMETERS[model.setup.hy1d_module]
+            if OPTIMIZABLE_HY_PARAMETERS[key]  # pag
+        ]
+        available_parameters.extend(available_hy1d_parameters)
+
     if is_bayesian:
         available_parameters.extend(available_serr_mu_parameters + available_serr_sigma_parameters)
 
@@ -154,6 +165,9 @@ def _standardize_simulation_optimize_options_parameters(
 
         if is_bayesian:
             default_parameters += available_serr_mu_parameters + available_serr_sigma_parameters
+
+        if is_hy1d:
+            default_parameters += available_hy1d_parameters
 
         parameters = np.array(default_parameters, ndmin=1)
 
@@ -216,6 +230,7 @@ def _standardize_simulation_optimize_options_bounds(
 
     parameters_bounds = dict(
         **model.get_rr_parameters_bounds(),
+        **model.get_hy1d_parameters_bounds(),
         **model.get_rr_initial_states_bounds(),
         **model.get_serr_mu_parameters_bounds(),
         **model.get_serr_sigma_parameters_bounds(),
@@ -232,6 +247,9 @@ def _standardize_simulation_optimize_options_bounds(
             low, upp = FEASIBLE_RR_PARAMETERS[key]
             # Do not check if a value is inside the feasible domain outside of active cells
             mask = model.mesh.active_cell == 1
+        if key in model.hy1d_parameters.keys:
+            arr = model.get_hy1d_parameters(key)
+            low, upp = FEASIBLE_HY1D_PARAMETERS[key]
         elif key in model.rr_initial_states.keys:
             arr = model.get_rr_initial_states(key)
             low, upp = FEASIBLE_RR_INITIAL_STATES[key]
@@ -1091,6 +1109,19 @@ def _standardize_simulation_parameters_feasibility(model: Model):
                 f"is not included in the feasible domain ]{low}, {upp}["
             )
 
+    for key in model.hy1d_parameters.keys:
+        arr = model.get_hy1d_parameters(key)
+        low, upp = FEASIBLE_HY1D_PARAMETERS[key]
+        # Do not check if a value is inside the feasible domain outside of active cells
+        low_arr = np.min(arr, initial=np.inf)
+        upp_arr = np.max(arr, initial=-np.inf)
+
+        if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
+            raise ValueError(
+                f"Invalid value for model hy1d_parameter '{key}'. hy1d_parameter domain [{low_arr}, {upp_arr}] "
+                f"is not included in the feasible domain ]{low}, {upp}["
+            )
+
     for key in model.rr_initial_states.keys:
         arr = model.get_rr_initial_states(key)
         low, upp = FEASIBLE_RR_INITIAL_STATES[key]
@@ -1188,6 +1219,11 @@ def _standardize_simulation_optimize_options_finalize(
                 for j, desc in enumerate(model.setup.descriptor_name):
                     if desc in optimize_options["descriptor"][key]:
                         optimize_options["rr_initial_states_descriptor"][j, i] = 1
+
+    # % hy1d parameters
+    optimize_options["hy1d_parameters"] = np.zeros(shape=model.setup.nhy1dp, dtype=np.int32)
+    optimize_options["l_hy1d_parameters"] = np.zeros(shape=model.setup.nhy1dp, dtype=np.float32)
+    optimize_options["u_hy1d_parameters"] = np.zeros(shape=model.setup.nhy1dp, dtype=np.float32)
 
     # % nn parameters
     optimize_options["nn_parameters"] = np.zeros(shape=len(NN_PARAMETERS_KEYS), dtype=np.int32)

@@ -13,6 +13,7 @@
 !%          ``yres``                 Y cell size derived from flwdir                               [m / degree]
 !%          ``xmin``                 X mininimum value derived from flwdir                         [m / degree]
 !%          ``ymax``                 Y maximum value derived from flwdir                           [m / degree]
+!%          ``epsg``                 Coordinates reference system in EPSG code
 !%          ``nrow``                 Number of rows
 !%          ``ncol``                 Number of columns
 !%          ``dx``                   X cells size (meter approximation)                            [m]
@@ -34,6 +35,10 @@
 !%          ``area_dln``             Drained area at gauge position delineated                     [m2]
 !%          ``rowcol_to_ind_ac``     Matrix linking (row, col) couple to active cell indice (k)
 !%          ``local_active_cell``    Mask of local active cells
+!%          ``ncs``                  Number of cross-sections
+!%          ``cs``                   Cross-sections
+!%          ``nseg``                 Number of segments
+!%          ``seg``                  Segments
 !%
 !%      Subroutine
 !%      ----------
@@ -45,6 +50,8 @@ module mwd_mesh
 
     use md_constant !%only: sp
     use mwd_setup !% only: SetupDT
+    use mwd_cross_section !% only: Cross_SectionDT
+    use mwd_segment !% only: SegmentDT
 
     implicit none
 
@@ -55,6 +62,8 @@ module mwd_mesh
 
         real(sp) :: xmin
         real(sp) :: ymax
+
+        integer :: epsg
 
         integer :: nrow
         integer :: ncol
@@ -84,28 +93,43 @@ module mwd_mesh
         integer, dimension(:, :), allocatable :: rowcol_to_ind_ac !$F90W index-array
         integer, dimension(:, :), allocatable :: local_active_cell
 
+        integer :: ncs
+        type(Cross_SectionDT), dimension(:), allocatable :: cross_sections
+
+        integer :: nseg
+        type(SegmentDT), dimension(:), allocatable :: segments
+
     end type MeshDT
 
 contains
 
-    subroutine MeshDT_initialise(this, setup, nrow, ncol, npar, ng)
+    subroutine MeshDT_initialise(this, setup, nrow, ncol, npar, ng, &
+                                 ncs, nlevels, nlat, nup, nseg, nds_seg, nus_seg)
 
         implicit none
 
         type(MeshDT), intent(inout) :: this
         type(SetupDT), intent(inout) :: setup
-        integer, intent(in) :: nrow, ncol, npar, ng
+        integer, intent(in) :: nrow, ncol, npar, ng, ncs, nseg
+        integer, dimension(ncs), intent(in) :: nlevels, nlat, nup
+        integer, dimension(nseg), intent(in) :: nds_seg, nus_seg
+
+        integer :: i
 
         this%nrow = nrow
         this%ncol = ncol
         this%npar = npar
         this%ng = ng
+        this%ncs = ncs
+        this%nseg = nseg
 
         this%xres = -99._sp
         this%yres = -99._sp
 
         this%xmin = -99._sp
         this%ymax = -99._sp
+
+        this%epsg = -99
 
         allocate (this%dx(this%nrow, this%ncol))
         this%dx = -99._sp
@@ -154,6 +178,16 @@ contains
 
         allocate (this%local_active_cell(this%nrow, this%ncol))
         this%local_active_cell = -99
+
+        allocate (this%cross_sections(this%ncs))
+        do i = 1, this%ncs
+            call Cross_SectionDT_initialise(this%cross_sections(i), nlevels(i), nlat(i), nup(i))
+        end do
+
+        allocate (this%segments(this%nseg))
+        do i = 1, this%nseg
+            call SegmentDT_initialise(this%segments(i), nds_seg(i), nus_seg(i))
+        end do
 
     end subroutine MeshDT_initialise
 

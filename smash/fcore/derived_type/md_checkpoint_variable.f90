@@ -15,6 +15,8 @@
 !%          ``ac_mlt``               Active cell melt flux (snow module output)
 !%          ``ac_qtz``               Active cell elemental discharge with time buffer (hydrological module output)
 !%          ``ac_qz``                Active cell surface discharge with time buffer (routing module output)
+!%          ``hy1d_h``               Hydraulic 1D water depth
+!%          ``hy1d_q``               Hydraulic 1D streamflow
 !%          ======================== =======================================
 
 module md_checkpoint_variable
@@ -29,6 +31,8 @@ module md_checkpoint_variable
         real(sp), dimension(:, :), allocatable :: ac_rr_states
         real(sp), dimension(:), allocatable :: ac_mlt
         real(sp), dimension(:, :), allocatable :: ac_qtz, ac_qz
+
+        real(sp), dimension(:), allocatable :: hy1d_h, hy1d_q
 
     end type Checkpoint_VariableDT
 

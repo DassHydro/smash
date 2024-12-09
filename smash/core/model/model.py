@@ -8,6 +8,7 @@ import numpy as np
 from smash._constant import (
     DEFAULT_BOUNDS_RR_INITIAL_STATES,
     DEFAULT_BOUNDS_RR_PARAMETERS,
+    DEFAULT_BOUNDS_HY1D_PARAMETERS,
     DEFAULT_BOUNDS_SERR_MU_PARAMETERS,
     DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS,
     SERR_MU_MAPPING_PARAMETERS,
@@ -432,7 +433,20 @@ class Model:
 
             _map_dict_to_fortran_derived_type(setup, self.setup)
 
-            self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["npar"], mesh["ng"])
+            self.mesh = MeshDT(
+                self.setup,
+                mesh["nrow"],
+                mesh["ncol"],
+                mesh["npar"],
+                mesh["ng"],
+                mesh["ncs"],
+                [mesh["cross_sections"][i]["nlevels"] for i in range(mesh["ncs"])],
+                [mesh["cross_sections"][i]["nlat"] for i in range(mesh["ncs"])],
+                [mesh["cross_sections"][i]["nup"] for i in range(mesh["ncs"])],
+                mesh["nseg"],
+                [mesh["segments"][i]["nds_seg"] for i in range(mesh["nseg"])],
+                [mesh["segments"][i]["nus_seg"] for i in range(mesh["nseg"])],
+            )
 
             _map_dict_to_fortran_derived_type(mesh, self.mesh)
 
@@ -445,6 +459,8 @@ class Model:
             self._parameters = ParametersDT(self.setup, self.mesh)
 
             _build_parameters(self.setup, self.mesh, self._input_data, self._parameters)
+
+            # self._hy1d_parameters = HY1D_ParametersDT(self.setup, self.mesh) #pag
 
             self._output = OutputDT(self.setup, self.mesh)
 
@@ -2189,6 +2205,26 @@ class Model:
             key: value
             for key, value in DEFAULT_BOUNDS_RR_PARAMETERS.items()
             if key in STRUCTURE_RR_PARAMETERS[self.setup.structure]
+        }
+
+    def get_hy1d_parameters_bounds(self) -> dict[str, tuple[float, float]]:
+        """
+        Get the boundary condition for the Model 1d hydraulics parameters.
+
+        Returns
+        -------
+        bounds : `dict[str, tuple[float, float]]`
+            A dictionary representing the boundary condition for each rainfall-runoff parameter.
+
+        Examples
+        --------
+        TODO cance_1dvect
+        """
+
+        return {
+            key: value
+            for key, value in DEFAULT_BOUNDS_HY1D_PARAMETERS.items()
+            if key in STRUCTURE_HY1D_PARAMETERS[self.setup.structure]
         }
 
     def get_rr_initial_states_bounds(self) -> dict[str, tuple[float, float]]:

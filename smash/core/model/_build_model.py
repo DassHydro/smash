@@ -72,6 +72,18 @@ def _map_dict_to_fortran_derived_type(dct: dict, fdt: FortranDerivedType, skip: 
             else:
                 _map_dict_to_fortran_derived_type(value, fdt)
 
+        # Assume list is used to store FortranDerivedTypeArray. We check that this is a list of
+        # dictionary to be sure that we are dealing with a FortranDerivedTypeArray
+        elif isinstance(value, list):
+            for i, sub_value in enumerate(value):
+                if isinstance(sub_value, dict):
+                    sub_fdt = getattr(fdt, key)[i]
+                    _map_dict_to_fortran_derived_type(sub_value, sub_fdt)
+
+                # % Should be unreachable
+                else:
+                    pass
+
         else:
             if hasattr(fdt, key):
                 setattr(fdt, key, value)
@@ -183,6 +195,13 @@ def _build_parameters(
     for key in OPTIMIZABLE_NN_PARAMETERS[max(0, setup.n_layers - 1)]:
         # zero init
         setattr(parameters.nn_parameters, key, 0)
+
+    # % Build 1d hydraulic parameters
+    parameters.hy1d_parameters.keys = STRUCTURE_HY1D_PARAMETERS[setup.structure]
+
+    # % Builds 1d hydraulic parameters if module used       #pag check
+    for key in enumerate(parameters.hy1d_parameters.keys):
+        value = DEFAULT_HY1D_PARAMETERS[key]
 
 
 def _build_output(

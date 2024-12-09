@@ -22,6 +22,13 @@ def get_rr_parameters_from_structure(structure: str) -> list[str]:
     return rr_parameters
 
 
+# def get_hy1d_parameters_from_hy1d_module(structure: str) -> list[str]:
+# hy1d_parameters = []
+# [hy1d_parameters.extend(HY1D_MODULE[module]) for module in structure.split("-")]
+
+# return hy1d_parameters
+
+
 def get_rr_states_from_structure(structure: str) -> list[str]:
     rr_states = []
     [rr_states.extend(MODULE_RR_STATES[module]) for module in structure.split("-")]
@@ -200,10 +207,27 @@ MODULE_RR_INTERNAL_FLUXES = dict(
     **ROUTING_MODULE_RR_INTERNAL_FLUXES,
 )
 
+### HYDRAULIC MODULE ###
+########################
+
+HY1D_MODULE = ["zero", "kw", "non_inertial"]
+
+# % Following SNOW_MODULE order
+HY1D_MODULE_PARAMETERS = dict(
+    zip(
+        HY1D_MODULE,
+        [
+            [],  # % zero
+            ["a", "b", "bathy", "manning"],  # % kw
+            ["a", "b", "bathy", "manning"],  # % non_inertial
+        ],
+    )
+)
+
 ### STRUCTURE ###
 #################
 
-# % Product of all modules (snow, hydrological, routing)
+# % Product of all modules (snow, hydrological, routing, 1d hydraulics)
 STRUCTURE = get_structure()
 
 # % Following STRUCTURE order
@@ -237,6 +261,15 @@ STRUCTURE_RR_INTERNAL_FLUXES = dict(
         [get_rr_internal_fluxes_from_structure(s) for s in STRUCTURE],
     )
 )
+
+# % Following STRUCTURE order
+STRUCTURE_HY1D_PARAMETERS = dict(
+    zip(
+        STRUCTURE,
+        [get_hy1d_parameters_from_structure(s) for s in STRUCTURE],
+    )
+)
+
 
 ## PARAMETERIZATION NN STRUCTURE ##
 ###################################
@@ -379,6 +412,20 @@ FEASIBLE_RR_INITIAL_STATES = dict(
     )
 )
 
+
+# % Following HY1D_PARAMETERS order
+FEASIBLE_HY1D_PARAMETERS = dict(
+    zip(
+        HY1D_MODULE_PARAMETERS,
+        [
+            (0, np.inf),  # % a
+            (0, np.inf),  # % b
+            (0, np.inf),  # % bathy
+            (1e-2, np.inf),  # % manning
+        ],
+    )
+)
+
 ### DEFAULT PARAMETERS ###
 ##########################
 
@@ -440,6 +487,20 @@ DEFAULT_RR_INITIAL_STATES = dict(
     )
 )
 
+# % Following HY1D_PARAMETERS order
+DEFAULT_HY1D_PARAMETERS = dict(
+    zip(
+        HY1D_MODULE_PARAMETERS,
+        [
+            0,  # % a
+            0,  # % b
+            0,  # % bathy
+            1e-2,  # % manning
+        ],
+    )
+)
+
+
 ### DEFAULT BOUNDS PARAMETERS ###
 #################################
 
@@ -499,6 +560,19 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
     )
 )
 
+# % Following HY1D_PARAMETERS order
+DEFAULT_BOUNDS_HY1D_PARAMETERS = dict(
+    zip(
+        HY1D_MODULE_PARAMETERS,
+        [
+            (1e-6, 1e3),  # % a
+            (1, 100),  # % b
+            (1e-6, 0.999999),  # % bathy
+            (1e-3, 0.5),  # % manning
+        ],
+    )
+)
+
 ### OPTIMIZABLE PARAMETERS ###
 ##############################
 
@@ -517,6 +591,9 @@ OPTIMIZABLE_RR_INITIAL_STATES = dict(
         [True] * len(RR_STATES),
     )
 )
+
+# % Following HY_PARAMETERS order
+OPTIMIZABLE_HY1D_PARAMETERS = dict(zip(HY1D_MODULE_PARAMETERS, ["manning", "manning"]))
 
 ### STRUCTURAL ERROR (SERR) MODEL ###
 #####################################
@@ -671,6 +748,7 @@ DEFAULT_MODEL_SETUP = {
     "snow_module": "zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
+    "hy1d_module": "zero",
     "hidden_neuron": 16,
     "serr_mu_mapping": "Zero",
     "serr_sigma_mapping": "Linear",
@@ -1099,6 +1177,7 @@ MODEL_DDT_IO_ATTR_KEYS = {
     "atmos_data": ["mean_prcp", "mean_pet", "mean_snow", "mean_temp"],
     "rr_parameters": ["keys", "values"],
     "rr_initial_states": ["keys", "values"],
+    "hy1d_parameters": ["keys", "values"],
     "nn_parameters": NN_PARAMETERS_KEYS,
     "serr_mu_parameters": ["keys", "values"],
     "serr_sigma_parameters": ["keys", "values"],

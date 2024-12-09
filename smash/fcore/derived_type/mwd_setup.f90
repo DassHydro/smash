@@ -12,6 +12,7 @@
 !%          ``snow_module``            Snow module
 !%          ``hydrological_module``    Hydrological module
 !%          ``routing_module``         Routing module
+!%          ``hy1d_module``            Hydraulic 1D module
 !%          ``neurons``                Number of neurons in trainable layers
 !%          ``serr_mu_mapping``        Mapping for structural error model
 !%          ``serr_sigma_mapping``     Mapping for structural error model
@@ -63,6 +64,7 @@
 !%          ``n_snow_fluxes``          Number of internal fluxes of snow module
 !%          ``n_hydro_fluxes``         Number of internal fluxes of hydrological module
 !%          ``n_routing_fluxes``       Number of internal fluxes of routing module
+!%          ``nhy1dp``                 Number of 1D vectorial hydraulic model parameters
 !%
 !%      Subroutine
 !%      ----------
@@ -86,6 +88,7 @@ module mwd_setup
         character(lchar) :: snow_module = "..." !$F90W char
         character(lchar) :: hydrological_module = "..." !$F90W char
         character(lchar) :: routing_module = "..."!$F90W char
+        character(lchar) :: hy1d_module = "..."!$F90W char
 
         character(lchar) :: serr_mu_mapping = "..." !$F90W char
         character(lchar) :: serr_sigma_mapping = "..." !$F90W char
@@ -149,6 +152,7 @@ module mwd_setup
         integer :: n_snow_fluxes = -99
         integer :: n_hydro_fluxes = -99
         integer :: n_routing_fluxes = -99
+        integer :: nhy1dp = -99
 
         integer :: n_layers = -99
         integer, dimension(2) :: hidden_neuron = -99

@@ -72,6 +72,10 @@ module mwd_optimize_options
         real(sp), dimension(:), allocatable :: l_serr_sigma_parameters
         real(sp), dimension(:), allocatable :: u_serr_sigma_parameters
 
+        integer, dimension(:), allocatable :: hy1d_parameters
+        real(sp), dimension(:), allocatable :: l_hy1d_parameters
+        real(sp), dimension(:), allocatable :: u_hy1d_parameters
+
         integer :: maxiter = -99
         real(sp) :: factr = -99._sp
         real(sp) :: pgtol = -99._sp
@@ -95,6 +99,15 @@ contains
 
         allocate (this%u_rr_parameters(setup%nrrp))
         this%u_rr_parameters = -99._sp
+
+        allocate (this%hy1d_parameters(setup%nhy1dp))
+        this%hy1d_parameters = -99
+
+        allocate (this%l_hy1d_parameters(setup%nhy1dp))
+        this%l_hy1d_parameters = -99._sp
+
+        allocate (this%u_hy1d_parameters(setup%nhy1dp))
+        this%u_hy1d_parameters = -99._sp
 
         allocate (this%rr_parameters_descriptor(setup%nd, setup%nrrp))
         this%rr_parameters_descriptor = -99

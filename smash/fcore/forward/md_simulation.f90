@@ -27,6 +27,7 @@ module md_simulation
     !% & loieau_time_step, loieau_mlp_time_step
     use md_vic3l_operator !% only: vic3l_time_step
     use md_routing_operator !% only: lag0_time_step, lr_time_step, kw_time_step
+    use md_hy1d_operator !% only: hy1d_non_inertial_time_step
     use mwd_sparse_matrix_manipulation !% only: matrix_to_ac_vector, &
     !& ac_vector_to_matrix
 
@@ -68,10 +69,12 @@ contains
 
         integer :: i, k, time_step_returns
 
+        output%response%hy1d_h(:, time_step) = checkpoint_variable%hy1d_h
+        output%response%hy1d_q(:, time_step) = checkpoint_variable%hy1d_q
+
         do i = 1, mesh%ng
             k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2))
             output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, setup%nqz)
-
         end do
 
         !$AD start-exclude
@@ -827,6 +830,33 @@ contains
 
             end select
 
+            ! Hydraulic 1D module
+            select case (setup%hy1d_module)
+
+                ! 'zero' module
+            case ("zero")
+
+                ! Nothing to do
+
+                ! 'kw' module
+            case ("kw")
+
+                ! 'non_inertial' module
+            case ("non_inertial")
+
+                call hy1d_non_inertial_time_step( &
+                    setup, &
+                    mesh, &
+                    t, &
+                    checkpoint_variable%ac_qtz, &
+                    checkpoint_variable%ac_qz, &
+                    checkpoint_variable%hy1d_h, &
+                    checkpoint_variable%hy1d_q)
+
+            end select
+
+            !pag : add mass conservation test at each hydrological time step, and global over whole Omega*T
+
             call store_time_step(setup, mesh, output, returns, checkpoint_variable, t)
 
         end do
@@ -867,10 +897,15 @@ contains
         allocate (checkpoint_variable%ac_qtz(mesh%nac, setup%nqz))
         allocate (checkpoint_variable%ac_qz(mesh%nac, setup%nqz))
 
+        allocate (checkpoint_variable%hy1d_h(mesh%ncs))
+        allocate (checkpoint_variable%hy1d_q(mesh%ncs))
+
         ! % Initialize checkpoint fluxes
         checkpoint_variable%ac_mlt = 0._sp
         checkpoint_variable%ac_qtz = 0._sp
         checkpoint_variable%ac_qz = 0._sp
+        checkpoint_variable%hy1d_h = 0._sp
+        checkpoint_variable%hy1d_q = 0._sp
 
         ! % Initialize checkpoint rainfall-runoff parameters
         do i = 1, setup%nrrp

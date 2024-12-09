@@ -15,6 +15,8 @@
 !%          ``rr_initial_states``      RR_StatesDT
 !%          ``serr_mu_parameters``     SErr_Mu_ParametersDT
 !%          ``serr_sigma_parameters``  SErr_Sigma_ParametersDT
+!%          ``nn_parameters``          NN_ParametersDT
+!%          ``hy_parameters``          HY_ParametersDT
 !%
 !§      Subroutine
 !%      ----------
@@ -33,6 +35,7 @@ module mwd_parameters
     use mwd_serr_mu_parameters !% only: SErr_Mu_ParametersDT, SErr_Mu_ParametersDT_initialise
     use mwd_serr_sigma_parameters !% only: SErr_Sigma_ParametersDT, SErr_Sigma_ParametersDT_initialise
     use mwd_nn_parameters !% only: NN_ParametersDT, NN_ParametersDT_initialise
+    use mwd_hy1d_parameters !% only: HY_ParametersDT, HY_ParametersDT_initialise
 
     implicit none
 
@@ -44,6 +47,7 @@ module mwd_parameters
         type(SErr_Mu_ParametersDT) :: serr_mu_parameters
         type(SErr_Sigma_ParametersDT) :: serr_sigma_parameters
         type(NN_ParametersDT) :: nn_parameters
+        type(HY1D_ParametersDT) :: hy1d_parameters
 
     end type ParametersDT
 
@@ -62,6 +66,7 @@ contains
         call SErr_Mu_ParametersDT_initialise(this%serr_mu_parameters, setup, mesh)
         call SErr_Sigma_ParametersDT_initialise(this%serr_sigma_parameters, setup, mesh)
         call NN_ParametersDT_initialise(this%nn_parameters, setup)
+        call HY1D_ParametersDT_initialise(this%hy1d_parameters, setup, mesh)
 
     end subroutine ParametersDT_initialise
 

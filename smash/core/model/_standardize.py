@@ -15,6 +15,7 @@ from smash._constant import (
     FEASIBLE_RR_PARAMETERS,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
+    HY1D_MODULE,
     HYDROLOGICAL_MODULE,
     HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
@@ -153,6 +154,21 @@ def _standardize_model_setup_routing_module(routing_module: str, **kwargs) -> st
         raise TypeError("routing_module model setup must be a str")
 
     return routing_module
+
+
+def _standardize_model_setup_hy1d_module(hy1d_module: str, **kwargs) -> str:
+    if isinstance(hy1d_module, str):
+        if hy1d_module.lower() in HY1D_MODULE:
+            hy1d_module = hy1d_module.lower()
+        else:
+            raise ValueError(
+                f"Unknown hydraulic 1D module '{hy1d_module}' for hy1d_module in model setup. "
+                f"Choices: {HY1D_MODULE}"
+            )
+    else:
+        raise TypeError("hy1d_module model setup must be a str")
+
+    return hy1d_module
 
 
 def _standardize_model_setup_serr_mu_mapping(serr_mu_mapping: str, **kwargs) -> str:
@@ -531,6 +547,18 @@ def _standardize_rr_parameters_key(model: Model, key: str) -> str:
     return key.lower()
 
 
+def _standardize_hy1d_parameters_key(model: Model, key: str) -> str:
+    if not isinstance(key, str):
+        raise TypeError("key argument must be a str")
+
+    if key.lower() not in STRUCTURE_HY1D_PARAMETERS[model.setup.structure]:
+        raise ValueError(
+            f"Unknown model hy1d_parameter '{key}'. Choices: {STRUCTURE_HY1D_PARAMETERS[model.setup.structure]}"
+        )
+
+    return key.lower()
+
+
 def _standardize_rr_states_key(model: Model, state_kind: str, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError("key argument must be a str")
@@ -689,6 +717,12 @@ def _standardize_serr_sigma_parameters_value(
 
 def _standardize_get_rr_parameters_args(model: Model, key: str) -> str:
     key = _standardize_rr_parameters_key(model, key)
+
+    return key
+
+
+def _standardize_get_hy1d_parameters_args(model: Model, key: str) -> str:
+    key = _standardize_hy1d_parameters_key(model, key)
 
     return key
 

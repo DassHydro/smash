@@ -2077,6 +2077,62 @@ END MODULE MWD_OPTIONS_DIFF
 !%      Type
 !%      ----
 !%
+!%      - ResponseDT
+!%          Response simulated by the hydrological model.
+!%
+!%          ======================== =======================================
+!%          `Variables`              Description
+!%          ======================== =======================================
+!%          ``q``                    Simulated discharge at gauges              [m3/s]
+!%          ======================== =======================================
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - ResponseDT_initialise
+!%      - ResponseDT_copy
+MODULE MWD_RESPONSE_DIFF
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+  IMPLICIT NONE
+  TYPE RESPONSEDT
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hy1d_h
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hy1d_q
+  END TYPE RESPONSEDT
+
+CONTAINS
+  SUBROUTINE RESPONSEDT_INITIALISE(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(RESPONSEDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    ALLOCATE(this%q(mesh%ng, setup%ntime_step))
+    this%q = -99._sp
+    ALLOCATE(this%hy1d_h(mesh%ncs, setup%ntime_step))
+    this%hy1d_h = -99._sp
+    ALLOCATE(this%hy1d_q(mesh%ncs, setup%ntime_step))
+    this%hy1d_q = -99._sp
+  END SUBROUTINE RESPONSEDT_INITIALISE
+
+  SUBROUTINE RESPONSEDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(RESPONSEDT), INTENT(IN) :: this
+    TYPE(RESPONSEDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE RESPONSEDT_COPY
+
+END MODULE MWD_RESPONSE_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
 !%      - RR_StatesDT
 !%        Matrices containting spatialized states of hydrological operators.
 !%        (reservoir level ...) The matrices are updated at each time step.
@@ -2158,7 +2214,7 @@ MODULE MWD_OUTPUT_DIFF
 !% only: MeshDT
   USE MWD_MESH
 !% only: ResponseDT, ResponseDT_initialise
-  USE MWD_RESPONSE
+  USE MWD_RESPONSE_DIFF
 !% only: Rr_StatesDT, Rr_StatesDT_initialise
   USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
@@ -2219,11 +2275,11 @@ MODULE MWD_CONTROL_DIFF
 !% only: sp
   USE MD_CONSTANT
   IMPLICIT NONE
-! Kinds: rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters, nn_parameters
+! Kinds: rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters, nn_parameters, hy_parameters
 !$F90W char-array
   TYPE CONTROLDT
       INTEGER :: n
-      INTEGER, DIMENSION(5) :: nbk
+      INTEGER, DIMENSION(6) :: nbk
       REAL(sp), DIMENSION(:), ALLOCATABLE :: x
       REAL(sp), DIMENSION(:), ALLOCATABLE :: l
       REAL(sp), DIMENSION(:), ALLOCATABLE :: u
@@ -2302,6 +2358,66 @@ CONTAINS
   END SUBROUTINE CONTROLDT_DEALLOC
 
 END MODULE MWD_CONTROL_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%
+!%      - HY_ParametersDT
+!%          Matrices containting spatialized parameters of vectorial 1D network hydraulic model.
+!%          (friction, bathymetry, hydraulic geoemtry)
+!%
+!%          ========================== =====================================
+!%          `Variables`                Description
+!%          ========================== =====================================
+!%          ``keys``                   Hydraulic model parameters keys
+!%          ``values``                 Hydraulic model parameters values
+!%
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - HY_ParametersDT_initialise
+!%      - HY_ParametersDT_copy
+MODULE MWD_HY1D_PARAMETERS_DIFF
+!% only: sp, lchar
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+  IMPLICIT NONE
+!$F90W char-array
+  TYPE HY1D_PARAMETERSDT
+      CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: keys
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: values
+  END TYPE HY1D_PARAMETERSDT
+  TYPE HY1D_PARAMETERSDT_DIFF
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: values
+  END TYPE HY1D_PARAMETERSDT_DIFF
+
+CONTAINS
+  SUBROUTINE HY1D_PARAMETERSDT_INITIALISE(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(HY1D_PARAMETERSDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    ALLOCATE(this%keys(setup%nhy1dp))
+    this%keys = '...'
+    ALLOCATE(this%values(mesh%ncs, setup%nhy1dp))
+    this%values = -99._sp
+  END SUBROUTINE HY1D_PARAMETERSDT_INITIALISE
+
+  SUBROUTINE HY1D_PARAMETERSDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(HY1D_PARAMETERSDT), INTENT(IN) :: this
+    TYPE(HY1D_PARAMETERSDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE HY1D_PARAMETERSDT_COPY
+
+END MODULE MWD_HY1D_PARAMETERS_DIFF
 
 !%      (MWD) Module Wrapped and Differentiated.
 !%
@@ -2569,6 +2685,8 @@ END MODULE MWD_SERR_SIGMA_PARAMETERS_DIFF
 !%          ``rr_initial_states``      RR_StatesDT
 !%          ``serr_mu_parameters``     SErr_Mu_ParametersDT
 !%          ``serr_sigma_parameters``  SErr_Sigma_ParametersDT
+!%          ``nn_parameters``          NN_ParametersDT
+!%          ``hy_parameters``          HY_ParametersDT
 !%
 !§      Subroutine
 !%      ----------
@@ -2594,6 +2712,8 @@ MODULE MWD_PARAMETERS_DIFF
   USE MWD_SERR_SIGMA_PARAMETERS_DIFF
 !% only: NN_ParametersDT, NN_ParametersDT_initialise
   USE MWD_NN_PARAMETERS_DIFF
+!% only: HY_ParametersDT, HY_ParametersDT_initialise
+  USE MWD_HY1D_PARAMETERS_DIFF
   IMPLICIT NONE
   TYPE PARAMETERSDT
       TYPE(CONTROLDT) :: control
@@ -2602,6 +2722,7 @@ MODULE MWD_PARAMETERS_DIFF
       TYPE(SERR_MU_PARAMETERSDT) :: serr_mu_parameters
       TYPE(SERR_SIGMA_PARAMETERSDT) :: serr_sigma_parameters
       TYPE(NN_PARAMETERSDT) :: nn_parameters
+      TYPE(HY1D_PARAMETERSDT) :: hy1d_parameters
   END TYPE PARAMETERSDT
   TYPE PARAMETERSDT_DIFF
       TYPE(CONTROLDT_DIFF) :: control
@@ -2610,6 +2731,7 @@ MODULE MWD_PARAMETERS_DIFF
       TYPE(SERR_MU_PARAMETERSDT_DIFF) :: serr_mu_parameters
       TYPE(SERR_SIGMA_PARAMETERSDT_DIFF) :: serr_sigma_parameters
       TYPE(NN_PARAMETERSDT) :: nn_parameters
+      TYPE(HY1D_PARAMETERSDT_DIFF) :: hy1d_parameters
   END TYPE PARAMETERSDT_DIFF
 
 CONTAINS
@@ -2625,6 +2747,7 @@ CONTAINS
     CALL SERR_SIGMA_PARAMETERSDT_INITIALISE(this%serr_sigma_parameters, &
 &                                     setup, mesh)
     CALL NN_PARAMETERSDT_INITIALISE(this%nn_parameters, setup)
+    CALL HY1D_PARAMETERSDT_INITIALISE(this%hy1d_parameters, setup, mesh)
   END SUBROUTINE PARAMETERSDT_INITIALISE
 
   SUBROUTINE PARAMETERSDT_COPY(this, this_copy)
@@ -5418,10 +5541,12 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - get_serr_mu
 !%      - get_serr_sigma
 !%      - get_rr_parameters
+!%      - get_hy1d_parameters
 !%      - get_rr_states
 !%      - get_serr_mu_parameters
 !%      - get_serr_sigma_parameters
 !%      - set_rr_parameters
+!%      - set_hy1d_parameters
 !%      - set_rr_states
 !%      - set_serr_mu_parameters
 !%      - set_serr_sigma_parameters
@@ -5438,6 +5563,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - control_tfm
 !%      - inv_control_tfm
 !%      - uniform_rr_parameters_get_control_size
+!%      - uniform_hy1d_parameters_get_control_size  !pag
 !%      - uniform_rr_initial_states_get_control_size
 !%      - distributed_rr_parameters_get_control_size
 !%      - distributed_rr_initial_states_get_control_size
@@ -5449,6 +5575,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - nn_parameters_get_control_size
 !%      - get_control_sizes
 !%      - uniform_rr_parameters_fill_control
+!%      - uniform_hy1d_parameters_fill_control       !pag
 !%      - uniform_rr_initial_states_fill_control
 !%      - distributed_rr_parameters_fill_control
 !%      - distributed_rr_initial_states_fill_control
@@ -5462,6 +5589,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - fill_control
 !%      - uniform_rr_parameters_fill_parameters
 !%      - uniform_rr_initial_states_fill_parameters
+!%      - uniform_hy1d_parameters_fill_parameters
 !%      - distributed_rr_parameters_fill_parameters
 !%      - distributed_rr_initial_states_fill_parameters
 !%      - multi_linear_rr_parameters_fill_parameters
@@ -5489,6 +5617,8 @@ MODULE MWD_PARAMETERS_MANIPULATION_DIFF
   USE MWD_RR_PARAMETERS_DIFF
 !% only: RR_StatesDT
   USE MWD_RR_STATES_DIFF
+!% only: HY1D_ParametersDT
+  USE MWD_HY1D_PARAMETERS_DIFF
 !% only: SErr_Mu_ParametersDT
   USE MWD_SERR_MU_PARAMETERS_DIFF
 !% only: SErr_Sigma_ParametersDT
@@ -5521,6 +5651,24 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE GET_RR_PARAMETERS
+
+  SUBROUTINE GET_HY1D_PARAMETERS(hy1d_parameters, key, vle)
+    IMPLICIT NONE
+! Should be unreachable
+    TYPE(HY1D_PARAMETERSDT), INTENT(IN) :: hy1d_parameters
+    CHARACTER(len=*), INTENT(IN) :: key
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: vle
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC TRIM
+! Linear search on keys
+    DO i=1,SIZE(hy1d_parameters%keys)
+      IF (TRIM(hy1d_parameters%keys(i)) .EQ. key) THEN
+        vle = hy1d_parameters%values(:, i)
+        RETURN
+      END IF
+    END DO
+  END SUBROUTINE GET_HY1D_PARAMETERS
 
   SUBROUTINE GET_RR_STATES(rr_states, key, vle)
     IMPLICIT NONE
@@ -5593,6 +5741,24 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE SET_RR_PARAMETERS
+
+  SUBROUTINE SET_HY1D_PARAMETERS(hy1d_parameters, key, vle)
+    IMPLICIT NONE
+! Should be unreachable
+    TYPE(HY1D_PARAMETERSDT), INTENT(INOUT) :: hy1d_parameters
+    CHARACTER(len=*), INTENT(IN) :: key
+    REAL(sp), DIMENSION(:), INTENT(IN) :: vle
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC TRIM
+! Linear search on keys
+    DO i=1,SIZE(hy1d_parameters%keys)
+      IF (TRIM(hy1d_parameters%keys(i)) .EQ. key) THEN
+        hy1d_parameters%values(:, i) = vle
+        RETURN
+      END IF
+    END DO
+  END SUBROUTINE SET_HY1D_PARAMETERS
 
   SUBROUTINE SET_RR_STATES(rr_states, key, vle)
     IMPLICIT NONE
@@ -6268,6 +6434,14 @@ CONTAINS
     n = SUM(options%optimize%rr_parameters)
   END SUBROUTINE UNIFORM_RR_PARAMETERS_GET_CONTROL_SIZE
 
+  SUBROUTINE UNIFORM_HY1D_PARAMETERS_GET_CONTROL_SIZE(options, n)
+    IMPLICIT NONE
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTRINSIC SUM
+    n = SUM(options%optimize%hy1d_parameters)
+  END SUBROUTINE UNIFORM_HY1D_PARAMETERS_GET_CONTROL_SIZE
+
   SUBROUTINE UNIFORM_RR_INITIAL_STATES_GET_CONTROL_SIZE(options, n)
     IMPLICIT NONE
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -6398,6 +6572,7 @@ CONTAINS
     CASE ('uniform') 
       CALL UNIFORM_RR_PARAMETERS_GET_CONTROL_SIZE(options, nbk(1))
       CALL UNIFORM_RR_INITIAL_STATES_GET_CONTROL_SIZE(options, nbk(2))
+      CALL UNIFORM_HY1D_PARAMETERS_GET_CONTROL_SIZE(options, nbk(6))
     CASE ('distributed') 
       CALL DISTRIBUTED_RR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, nbk&
 &                                               (1))
@@ -6451,6 +6626,32 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_CONTROL
+
+  SUBROUTINE UNIFORM_HY1D_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    INTRINSIC SUM
+    INTRINSIC TRIM
+! HY1D parameters is the sixth control kind
+    j = SUM(parameters%control%nbk(1:5))
+    DO i=1,setup%nhy1dp
+      IF (options%optimize%hy1d_parameters(i) .NE. 0) THEN
+        j = j + 1
+        parameters%control%x(j) = SUM(parameters%hy1d_parameters%values(&
+&         :, i))
+        parameters%control%l(j) = options%optimize%l_hy1d_parameters(i)
+        parameters%control%u(j) = options%optimize%u_hy1d_parameters(i)
+        parameters%control%nbd(j) = 2
+        parameters%control%name(j) = TRIM(parameters%hy1d_parameters%&
+&         keys(i))//'-0'
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_HY1D_PARAMETERS_FILL_CONTROL
 
   SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
@@ -6879,6 +7080,8 @@ CONTAINS
 &                                       options)
       CALL UNIFORM_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
 &                                           parameters, options)
+      CALL UNIFORM_HY1D_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
+&                                         , options)
     CASE ('distributed') 
       CALL DISTRIBUTED_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
 &                                           parameters, options)
@@ -6999,6 +7202,26 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS
+
+  SUBROUTINE UNIFORM_HY1D_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    INTRINSIC SUM
+! HY1D parameters is the sixth control kind
+    j = SUM(parameters%control%nbk(1:5))
+    DO i=1,setup%nhy1dp
+      IF (options%optimize%hy1d_parameters(i) .NE. 0) THEN
+        j = j + 1
+        parameters%hy1d_parameters%values(:, i) = parameters%control%x(j&
+&         )
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_HY1D_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of uniform_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE cont
 !ext OpenMP):
@@ -8541,7 +8764,7 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
   SUBROUTINE FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
 &   parameters_d, options)
     IMPLICIT NONE
@@ -8559,6 +8782,8 @@ CONTAINS
       CALL UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
 &                                                parameters, &
 &                                                parameters_d, options)
+      CALL UNIFORM_HY1D_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                            parameters, options)
     CASE ('distributed') 
       CALL DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
 &                                                parameters, &
@@ -8613,7 +8838,7 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
   SUBROUTINE FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
 &   parameters_b, options)
     IMPLICIT NONE
@@ -8821,6 +9046,8 @@ CONTAINS
 &                                          , options)
       CALL UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
 &                                              parameters, options)
+      CALL UNIFORM_HY1D_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                            parameters, options)
     CASE ('distributed') 
       CALL DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
 &                                              parameters, options)
@@ -8882,7 +9109,7 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
   SUBROUTINE CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters&
 &   , parameters_d, options)
     IMPLICIT NONE
@@ -8925,7 +9152,7 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
   SUBROUTINE CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters&
 &   , parameters_b, options)
     IMPLICIT NONE
@@ -9318,7 +9545,7 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
   FUNCTION SMOOTHING_REGULARIZATION_D(setup, mesh, input_data, &
 &   parameters, parameters_d, options, hard, res) RESULT (RES_D)
     IMPLICIT NONE
@@ -9398,7 +9625,7 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
   SUBROUTINE SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
 &   parameters, parameters_b, options, hard, res_b1)
     IMPLICIT NONE
@@ -11577,7 +11804,8 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, &
 &   parameters, parameters_d, options, options_d, jreg, jreg_d)
     IMPLICIT NONE
@@ -11635,7 +11863,8 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, &
 &   parameters, parameters_b, options, options_b, jreg, jreg_b)
     IMPLICIT NONE
@@ -11857,8 +12086,8 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                output.response.q:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_D(setup, mesh, input_data, &
 &   parameters, parameters_d, output, output_d, options, options_d, &
 &   returns)
@@ -11894,8 +12123,8 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                output.response.q:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_B(setup, mesh, input_data, &
 &   parameters, parameters_b, output, output_b, options, options_b, &
 &   returns)
@@ -12006,8 +12235,8 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                output.response.q:in options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, options_d, returns)
     IMPLICIT NONE
@@ -12044,8 +12273,8 @@ CONTAINS
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                output.response.q:in options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, options_b, returns)
     IMPLICIT NONE
@@ -12500,6 +12729,8 @@ END MODULE MWD_SPARSE_MATRIX_MANIPULATION_DIFF
 !%          ``ac_mlt``               Active cell melt flux (snow module output)
 !%          ``ac_qtz``               Active cell elemental discharge with time buffer (hydrological module output)
 !%          ``ac_qz``                Active cell surface discharge with time buffer (routing module output)
+!%          ``hy1d_h``               Hydraulic 1D water depth
+!%          ``hy1d_q``               Hydraulic 1D streamflow
 !%          ======================== =======================================
 MODULE MD_CHECKPOINT_VARIABLE_DIFF
 !% only: sp
@@ -12510,7 +12741,15 @@ MODULE MD_CHECKPOINT_VARIABLE_DIFF
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_rr_states
       REAL(sp), DIMENSION(:), ALLOCATABLE :: ac_mlt
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_qtz, ac_qz
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: hy1d_h, hy1d_q
   END TYPE CHECKPOINT_VARIABLEDT
+  TYPE CHECKPOINT_VARIABLEDT_DIFF
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_rr_parameters
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_rr_states
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: ac_mlt
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_qtz
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_qz
+  END TYPE CHECKPOINT_VARIABLEDT_DIFF
 END MODULE MD_CHECKPOINT_VARIABLE_DIFF
 
 !%      (MW) Module Wrapped and Differentiated.
@@ -25273,6 +25512,8 @@ MODULE MD_SIMULATION_DIFF
   USE MD_VIC3L_OPERATOR_DIFF
 !% only: lag0_time_step, lr_time_step, kw_time_step
   USE MD_ROUTING_OPERATOR_DIFF
+!% only: hy1d_non_inertial_time_step
+  USE MD_HY1D_OPERATOR
 !% only: matrix_to_ac_vector, &
   USE MWD_SPARSE_MATRIX_MANIPULATION_DIFF
   IMPLICIT NONE
@@ -25353,7 +25594,8 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
-    TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable_d
+    TYPE(CHECKPOINT_VARIABLEDT_DIFF), INTENT(IN) :: &
+&   checkpoint_variable_d
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
     DO i=1,mesh%ng
@@ -25381,7 +25623,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
-    TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_b
+    TYPE(CHECKPOINT_VARIABLEDT_DIFF) :: checkpoint_variable_b
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
     DO i=1,mesh%ng
@@ -25407,6 +25649,8 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
+    output%response%hy1d_h(:, time_step) = checkpoint_variable%hy1d_h
+    output%response%hy1d_q(:, time_step) = checkpoint_variable%hy1d_q
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
@@ -25432,7 +25676,8 @@ CONTAINS
 !                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.response.hy1d_h:in
+!                output.response.hy1d_q:in
   SUBROUTINE SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters&
 &   , parameters_d, output, output_d, options, returns, &
 &   checkpoint_variable, checkpoint_variable_d, start_time_step, &
@@ -25448,7 +25693,8 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable
-    TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable_d
+    TYPE(CHECKPOINT_VARIABLEDT_DIFF), INTENT(INOUT) :: &
+&   checkpoint_variable_d
     INTEGER, INTENT(IN) :: start_time_step, end_time_step
     INTEGER :: t, rr_parameters_inc, rr_states_inc
 ! % Might add any number if needed
@@ -26435,6 +26681,22 @@ CONTAINS
 &                     checkpoint_variable%ac_qz, checkpoint_variable_d%&
 &                     ac_qz)
       END SELECT
+! Hydraulic 1D module
+      SELECT CASE  (setup%hy1d_module) 
+      CASE ('kw', 'zero') 
+
+      CASE ('non_inertial') 
+! 'zero' module
+! Nothing to do
+! 'kw' module
+! 'non_inertial' module
+        CALL HY1D_NON_INERTIAL_TIME_STEP(setup, mesh, t, &
+&                                  checkpoint_variable%ac_qtz, &
+&                                  checkpoint_variable%ac_qz, &
+&                                  checkpoint_variable%hy1d_h, &
+&                                  checkpoint_variable%hy1d_q)
+      END SELECT
+!pag : add mass conservation test at each hydrological time step, and global over whole Omega*T
       CALL STORE_TIME_STEP_D(setup, mesh, output, output_d, returns, &
 &                      checkpoint_variable, checkpoint_variable_d, t)
     END DO
@@ -26461,7 +26723,8 @@ CONTAINS
 !                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.response.hy1d_h:in
+!                output.response.hy1d_q:in
   SUBROUTINE SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters&
 &   , parameters_b, output, output_b, options, returns, &
 &   checkpoint_variable, checkpoint_variable_b, start_time_step, &
@@ -26477,7 +26740,8 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable
-    TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable_b
+    TYPE(CHECKPOINT_VARIABLEDT_DIFF), INTENT(INOUT) :: &
+&   checkpoint_variable_b
     INTEGER, INTENT(IN) :: start_time_step, end_time_step
     INTEGER :: t, rr_parameters_inc, rr_states_inc
 ! % Might add any number if needed
@@ -27297,6 +27561,22 @@ CONTAINS
       CASE DEFAULT
         CALL PUSHCONTROL2B(0)
       END SELECT
+! Hydraulic 1D module
+      SELECT CASE  (setup%hy1d_module) 
+      CASE ('kw', 'zero') 
+
+      CASE ('non_inertial') 
+! 'zero' module
+! Nothing to do
+! 'kw' module
+! 'non_inertial' module
+        CALL HY1D_NON_INERTIAL_TIME_STEP(setup, mesh, t, &
+&                                  checkpoint_variable%ac_qtz, &
+&                                  checkpoint_variable%ac_qz, &
+&                                  checkpoint_variable%hy1d_h, &
+&                                  checkpoint_variable%hy1d_q)
+      END SELECT
+!pag : add mass conservation test at each hydrological time step, and global over whole Omega*T
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
 &                    checkpoint_variable, t)
     END DO
@@ -28993,6 +29273,22 @@ CONTAINS
 &                   rr_parameters_inc+2), checkpoint_variable%ac_qz)
         rr_parameters_inc = rr_parameters_inc + 1
       END SELECT
+! Hydraulic 1D module
+      SELECT CASE  (setup%hy1d_module) 
+      CASE ('kw', 'zero') 
+
+      CASE ('non_inertial') 
+! 'zero' module
+! Nothing to do
+! 'kw' module
+! 'non_inertial' module
+        CALL HY1D_NON_INERTIAL_TIME_STEP(setup, mesh, t, &
+&                                  checkpoint_variable%ac_qtz, &
+&                                  checkpoint_variable%ac_qz, &
+&                                  checkpoint_variable%hy1d_h, &
+&                                  checkpoint_variable%hy1d_q)
+      END SELECT
+!pag : add mass conservation test at each hydrological time step, and global over whole Omega*T
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
 &                    checkpoint_variable, t)
     END DO
@@ -29010,6 +29306,7 @@ CONTAINS
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.response.hy1d_h:in output.response.hy1d_q:in
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -29025,7 +29322,7 @@ CONTAINS
     INTEGER :: ncheckpoint, checkpoint_size, i, start_time_step, &
 &   end_time_step
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable
-    TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_d
+    TYPE(CHECKPOINT_VARIABLEDT_DIFF) :: checkpoint_variable_d
     INTRINSIC REAL
     INTRINSIC SQRT
     INTRINSIC INT
@@ -29056,6 +29353,8 @@ CONTAINS
     ALLOCATE(checkpoint_variable%ac_qtz(mesh%nac, setup%nqz))
     ALLOCATE(checkpoint_variable_d%ac_qz(mesh%nac, setup%nqz))
     ALLOCATE(checkpoint_variable%ac_qz(mesh%nac, setup%nqz))
+    ALLOCATE(checkpoint_variable%hy1d_h(mesh%ncs))
+    ALLOCATE(checkpoint_variable%hy1d_q(mesh%ncs))
 ! % Initialize checkpoint fluxes
     checkpoint_variable_d%ac_mlt = 0.0_4
     checkpoint_variable%ac_mlt = 0._sp
@@ -29106,6 +29405,7 @@ CONTAINS
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.response.hy1d_h:in output.response.hy1d_q:in
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -29121,12 +29421,13 @@ CONTAINS
     INTEGER :: ncheckpoint, checkpoint_size, i, start_time_step, &
 &   end_time_step
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable
-    TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_b
+    TYPE(CHECKPOINT_VARIABLEDT_DIFF) :: checkpoint_variable_b
     INTRINSIC REAL
     INTRINSIC SQRT
     INTRINSIC INT
     REAL(sp) :: arg1
     REAL(sp) :: result1
+    INTEGER :: ii1
 ! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
 ! % memory used at each time step and T in [1, +inf] the total number of time steps.
@@ -29157,6 +29458,8 @@ CONTAINS
     ALLOCATE(checkpoint_variable_b%ac_qz(mesh%nac, setup%nqz))
     checkpoint_variable_b%ac_qz = 0.0_4
     ALLOCATE(checkpoint_variable%ac_qz(mesh%nac, setup%nqz))
+    ALLOCATE(checkpoint_variable%hy1d_h(mesh%ncs))
+    ALLOCATE(checkpoint_variable%hy1d_q(mesh%ncs))
 ! % Initialize checkpoint fluxes
     checkpoint_variable%ac_mlt = 0._sp
     checkpoint_variable%ac_qtz = 0._sp
@@ -29191,6 +29494,36 @@ CONTAINS
       CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                   checkpoint_variable%ac_qz, 1)*SIZE(&
 &                   checkpoint_variable%ac_qz, 2))
+      DO ii1=1,SIZE(mesh%cross_sections, 1)
+        CALL PUSHREAL4ARRAY(mesh%cross_sections(ii1)%manning, SIZE(mesh%&
+&                     cross_sections(ii1)%manning, 1))
+      END DO
+      DO ii1=1,SIZE(mesh%cross_sections, 1)
+        CALL PUSHREAL4ARRAY(mesh%cross_sections(ii1)%level_heights, SIZE&
+&                     (mesh%cross_sections(ii1)%level_heights, 1))
+      END DO
+      DO ii1=1,SIZE(mesh%cross_sections, 1)
+        CALL PUSHREAL4ARRAY(mesh%cross_sections(ii1)%level_widths, SIZE(&
+&                     mesh%cross_sections(ii1)%level_widths, 1))
+      END DO
+      DO ii1=1,SIZE(mesh%cross_sections, 1)
+        CALL PUSHINTEGER4ARRAY(mesh%cross_sections(ii1)%lat_rowcols, &
+&                        SIZE(mesh%cross_sections(ii1)%lat_rowcols, 1)*&
+&                        SIZE(mesh%cross_sections(ii1)%lat_rowcols, 2))
+      END DO
+      DO ii1=1,SIZE(mesh%cross_sections, 1)
+        CALL PUSHINTEGER4ARRAY(mesh%cross_sections(ii1)%up_rowcols, SIZE&
+&                        (mesh%cross_sections(ii1)%up_rowcols, 1)*SIZE(&
+&                        mesh%cross_sections(ii1)%up_rowcols, 2))
+      END DO
+      DO ii1=1,SIZE(mesh%segments, 1)
+        CALL PUSHINTEGER4ARRAY(mesh%segments(ii1)%ds_segment, SIZE(mesh%&
+&                        segments(ii1)%ds_segment, 1))
+      END DO
+      DO ii1=1,SIZE(mesh%segments, 1)
+        CALL PUSHINTEGER4ARRAY(mesh%segments(ii1)%us_segment, SIZE(mesh%&
+&                        segments(ii1)%us_segment, 1))
+      END DO
       CALL SIMULATION_CHECKPOINT(setup, mesh, input_data, parameters, &
 &                          output, options, returns, checkpoint_variable&
 &                          , start_time_step, end_time_step)
@@ -29202,6 +29535,36 @@ CONTAINS
     parameters_b%nn_parameters%weight_3 = 0.0_4
     parameters_b%nn_parameters%bias_3 = 0.0_4
     DO i=ncheckpoint,1,-1
+      DO ii1=SIZE(mesh%segments, 1),1,-1
+        CALL POPINTEGER4ARRAY(mesh%segments(ii1)%us_segment, SIZE(mesh%&
+&                       segments(ii1)%us_segment, 1))
+      END DO
+      DO ii1=SIZE(mesh%segments, 1),1,-1
+        CALL POPINTEGER4ARRAY(mesh%segments(ii1)%ds_segment, SIZE(mesh%&
+&                       segments(ii1)%ds_segment, 1))
+      END DO
+      DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+        CALL POPINTEGER4ARRAY(mesh%cross_sections(ii1)%up_rowcols, SIZE(&
+&                       mesh%cross_sections(ii1)%up_rowcols, 1)*SIZE(&
+&                       mesh%cross_sections(ii1)%up_rowcols, 2))
+      END DO
+      DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+        CALL POPINTEGER4ARRAY(mesh%cross_sections(ii1)%lat_rowcols, SIZE&
+&                       (mesh%cross_sections(ii1)%lat_rowcols, 1)*SIZE(&
+&                       mesh%cross_sections(ii1)%lat_rowcols, 2))
+      END DO
+      DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+        CALL POPREAL4ARRAY(mesh%cross_sections(ii1)%level_widths, SIZE(&
+&                    mesh%cross_sections(ii1)%level_widths, 1))
+      END DO
+      DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+        CALL POPREAL4ARRAY(mesh%cross_sections(ii1)%level_heights, SIZE(&
+&                    mesh%cross_sections(ii1)%level_heights, 1))
+      END DO
+      DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+        CALL POPREAL4ARRAY(mesh%cross_sections(ii1)%manning, SIZE(mesh%&
+&                    cross_sections(ii1)%manning, 1))
+      END DO
       CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                  checkpoint_variable%ac_qz, 1)*SIZE(&
 &                  checkpoint_variable%ac_qz, 2))
@@ -29235,6 +29598,8 @@ CONTAINS
 &                          (:, i), checkpoint_variable_b%&
 &                          ac_rr_parameters(:, i))
     END DO
+    DEALLOCATE(checkpoint_variable%hy1d_q)
+    DEALLOCATE(checkpoint_variable%hy1d_h)
     DEALLOCATE(checkpoint_variable%ac_qz)
     DEALLOCATE(checkpoint_variable_b%ac_qz)
     DEALLOCATE(checkpoint_variable%ac_qtz)
@@ -29284,10 +29649,14 @@ CONTAINS
     ALLOCATE(checkpoint_variable%ac_mlt(mesh%nac))
     ALLOCATE(checkpoint_variable%ac_qtz(mesh%nac, setup%nqz))
     ALLOCATE(checkpoint_variable%ac_qz(mesh%nac, setup%nqz))
+    ALLOCATE(checkpoint_variable%hy1d_h(mesh%ncs))
+    ALLOCATE(checkpoint_variable%hy1d_q(mesh%ncs))
 ! % Initialize checkpoint fluxes
     checkpoint_variable%ac_mlt = 0._sp
     checkpoint_variable%ac_qtz = 0._sp
     checkpoint_variable%ac_qz = 0._sp
+    checkpoint_variable%hy1d_h = 0._sp
+    checkpoint_variable%hy1d_q = 0._sp
 ! % Initialize checkpoint rainfall-runoff parameters
     DO i=1,setup%nrrp
       CALL MATRIX_TO_AC_VECTOR(mesh, parameters%rr_parameters%values(:, &
@@ -29331,8 +29700,9 @@ END MODULE MD_SIMULATION_DIFF
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                output.response.q:in output.response.hy1d_h:in
+!                output.response.hy1d_q:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, options_d, returns)
 !% only: sp
@@ -29399,8 +29769,9 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
-!                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                parameters.nn_parameters.bias_3:in parameters.hy1d_parameters.values:in
+!                output.response.q:in output.response.hy1d_h:in
+!                output.response.hy1d_q:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, options_b, returns)
 !% only: sp
@@ -29436,12 +29807,43 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   TYPE(OPTIONSDT), INTENT(IN) :: options
   TYPE(OPTIONSDT_DIFF) :: options_b
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
+  INTEGER :: ii1
 !% Map control to parameters
   CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
 &               ))
   CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
 &                      options)
 !% Simulation
+  DO ii1=1,SIZE(mesh%cross_sections, 1)
+    CALL PUSHREAL4ARRAY(mesh%cross_sections(ii1)%manning, SIZE(mesh%&
+&                 cross_sections(ii1)%manning, 1))
+  END DO
+  DO ii1=1,SIZE(mesh%cross_sections, 1)
+    CALL PUSHREAL4ARRAY(mesh%cross_sections(ii1)%level_heights, SIZE(&
+&                 mesh%cross_sections(ii1)%level_heights, 1))
+  END DO
+  DO ii1=1,SIZE(mesh%cross_sections, 1)
+    CALL PUSHREAL4ARRAY(mesh%cross_sections(ii1)%level_widths, SIZE(mesh&
+&                 %cross_sections(ii1)%level_widths, 1))
+  END DO
+  DO ii1=1,SIZE(mesh%cross_sections, 1)
+    CALL PUSHINTEGER4ARRAY(mesh%cross_sections(ii1)%lat_rowcols, SIZE(&
+&                    mesh%cross_sections(ii1)%lat_rowcols, 1)*SIZE(mesh%&
+&                    cross_sections(ii1)%lat_rowcols, 2))
+  END DO
+  DO ii1=1,SIZE(mesh%cross_sections, 1)
+    CALL PUSHINTEGER4ARRAY(mesh%cross_sections(ii1)%up_rowcols, SIZE(&
+&                    mesh%cross_sections(ii1)%up_rowcols, 1)*SIZE(mesh%&
+&                    cross_sections(ii1)%up_rowcols, 2))
+  END DO
+  DO ii1=1,SIZE(mesh%segments, 1)
+    CALL PUSHINTEGER4ARRAY(mesh%segments(ii1)%ds_segment, SIZE(mesh%&
+&                    segments(ii1)%ds_segment, 1))
+  END DO
+  DO ii1=1,SIZE(mesh%segments, 1)
+    CALL PUSHINTEGER4ARRAY(mesh%segments(ii1)%us_segment, SIZE(mesh%&
+&                    segments(ii1)%us_segment, 1))
+  END DO
   CALL SIMULATION(setup, mesh, input_data, parameters, output, options, &
 &           returns)
 !% Compute cost
@@ -29509,6 +29911,36 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 &             )
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
 &               , output, output_b, options, options_b, returns)
+  DO ii1=SIZE(mesh%segments, 1),1,-1
+    CALL POPINTEGER4ARRAY(mesh%segments(ii1)%us_segment, SIZE(mesh%&
+&                   segments(ii1)%us_segment, 1))
+  END DO
+  DO ii1=SIZE(mesh%segments, 1),1,-1
+    CALL POPINTEGER4ARRAY(mesh%segments(ii1)%ds_segment, SIZE(mesh%&
+&                   segments(ii1)%ds_segment, 1))
+  END DO
+  DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+    CALL POPINTEGER4ARRAY(mesh%cross_sections(ii1)%up_rowcols, SIZE(mesh&
+&                   %cross_sections(ii1)%up_rowcols, 1)*SIZE(mesh%&
+&                   cross_sections(ii1)%up_rowcols, 2))
+  END DO
+  DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+    CALL POPINTEGER4ARRAY(mesh%cross_sections(ii1)%lat_rowcols, SIZE(&
+&                   mesh%cross_sections(ii1)%lat_rowcols, 1)*SIZE(mesh%&
+&                   cross_sections(ii1)%lat_rowcols, 2))
+  END DO
+  DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+    CALL POPREAL4ARRAY(mesh%cross_sections(ii1)%level_widths, SIZE(mesh%&
+&                cross_sections(ii1)%level_widths, 1))
+  END DO
+  DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+    CALL POPREAL4ARRAY(mesh%cross_sections(ii1)%level_heights, SIZE(mesh&
+&                %cross_sections(ii1)%level_heights, 1))
+  END DO
+  DO ii1=SIZE(mesh%cross_sections, 1),1,-1
+    CALL POPREAL4ARRAY(mesh%cross_sections(ii1)%manning, SIZE(mesh%&
+&                cross_sections(ii1)%manning, 1))
+  END DO
   CALL SIMULATION_B(setup, mesh, input_data, parameters, parameters_b, &
 &             output, output_b, options, returns)
   CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
