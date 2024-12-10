@@ -13522,17 +13522,18 @@ CONTAINS
 !   variations   of useful results: hp perc pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_D(fq_ps, fq_ps_d, fq_es, fq_es_d, pn, pn_d, &
-&   en, en_d, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, perc_d)
+&   en, en_d, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, perc_d, ps, es)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp), INTENT(IN) :: fq_ps_d, fq_es_d, pn_d, en_d, cp_d
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
-    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_d, hp_imd_d
     INTRINSIC TANH
+    INTRINSIC MIN
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_d
     REAL(sp) :: pwr1
@@ -13541,6 +13542,8 @@ CONTAINS
     REAL(sp) :: temp0
     REAL(sp) :: temp1
     REAL(sp) :: temp2
+    REAL(sp) :: ps_d
+    REAL(sp) :: es_d
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
@@ -13552,9 +13555,13 @@ CONTAINS
 &     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
 &     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
     ps = temp2
-! Range of correction coef: (0, 2)
-    ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
-    ps = (1._sp+fq_ps)*ps
+    IF (pn .GT. (1._sp+fq_ps)*ps) THEN
+      ps_d = ps*fq_ps_d + (fq_ps+1._sp)*ps_d
+      ps = (1._sp+fq_ps)*ps
+    ELSE
+      ps_d = pn_d
+      ps = pn
+    END IF
     temp2 = TANH(en*inv_cp)
     temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
@@ -13564,14 +13571,18 @@ CONTAINS
 &     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
 &     1._sp-hp)*temp2+1._sp)
     es = temp
-! Range of correction coef: (0, 2)
-    es_d = es*fq_es_d + (fq_es+1._sp)*es_d
-    es = (1._sp+fq_es)*es
+    IF (en .GT. (1._sp+fq_es)*es) THEN
+      es_d = es*fq_es_d + (fq_es+1._sp)*es_d
+      es = (1._sp+fq_es)*es
+    ELSE
+      es_d = en_d
+      es = en
+    END IF
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
-      pr_d = pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d
-      pr = pn - (hp_imd-hp)*cp
+      pr_d = pn_d - ps_d
+      pr = pn - ps
     ELSE
       pr_d = 0.0_4
     END IF
@@ -13590,17 +13601,18 @@ CONTAINS
 !                pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_B(fq_ps, fq_ps_b, fq_es, fq_es_b, pn, pn_b, &
-&   en, en_b, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, perc_b)
+&   en, en_b, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, perc_b, ps, es)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp) :: fq_ps_b, fq_es_b, pn_b, en_b, cp_b
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
-    REAL(sp) :: pr, perc
+    REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_b, hp_imd_b
     INTRINSIC TANH
+    INTRINSIC MIN
     REAL(sp) :: pwx1
     REAL(sp) :: pwx1_b
     REAL(sp) :: pwr1
@@ -13619,16 +13631,28 @@ CONTAINS
     REAL(sp) :: temp_b4
     REAL(sp) :: temp_b5
     INTEGER :: branch
+    REAL(sp) :: ps_b
+    REAL(sp) :: es_b
     inv_cp = 1._sp/cp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-! Range of correction coef: (0, 2)
-    CALL PUSHREAL4(ps)
-    ps = (1._sp+fq_ps)*ps
+    IF (pn .GT. (1._sp+fq_ps)*ps) THEN
+      CALL PUSHREAL4(ps)
+      ps = (1._sp+fq_ps)*ps
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      ps = pn
+      CALL PUSHCONTROL1B(1)
+    END IF
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
-! Range of correction coef: (0, 2)
-    CALL PUSHREAL4(es)
-    es = (1._sp+fq_es)*es
+    IF (en .GT. (1._sp+fq_es)*es) THEN
+      CALL PUSHREAL4(es)
+      es = (1._sp+fq_es)*es
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      es = en
+      CALL PUSHCONTROL1B(1)
+    END IF
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13653,34 +13677,45 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       pn_b = pn_b + pr_b
-      hp_imd_b = hp_imd_b - cp*pr_b
-      hp_b = cp*pr_b
-      cp_b = cp_b - (hp_imd-hp)*pr_b
+      ps_b = -pr_b
     ELSE
-      hp_b = 0.0_4
+      ps_b = 0.0_4
     END IF
+    hp_b = hp_imd_b
+    ps_b = ps_b + inv_cp*hp_imd_b
     es_b = -(inv_cp*hp_imd_b)
     inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
-    CALL POPREAL4(es)
-    fq_es_b = fq_es_b + es*es_b
-    es_b = (fq_es+1._sp)*es_b
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL4(es)
+      fq_es_b = fq_es_b + es*es_b
+      es_b = (fq_es+1._sp)*es_b
+    ELSE
+      en_b = en_b + es_b
+      es_b = 0.0_4
+    END IF
     temp4 = TANH(en*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
     temp1 = TANH(en*inv_cp)
     temp0 = hp*cp*(-hp+2._sp)
     temp_b3 = es_b/temp3
     temp_b = (2._sp-hp)*temp1*temp_b3
-    temp_b0 = -(temp0*temp1*temp_b3/temp3)
-    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
-&     temp_b0
-    ps_b = inv_cp*hp_imd_b
     temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
+    temp_b0 = -(temp0*temp1*temp_b3/temp3)
+    hp_b = hp_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*temp_b0
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
     en_b = en_b + inv_cp*temp_b5 + inv_cp*temp_b4
+    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4
     cp_b = cp_b + hp*temp_b
-    CALL POPREAL4(ps)
-    fq_ps_b = fq_ps_b + ps*ps_b
-    ps_b = (fq_ps+1._sp)*ps_b
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL4(ps)
+      fq_ps_b = fq_ps_b + ps*ps_b
+      ps_b = (fq_ps+1._sp)*ps_b
+    ELSE
+      pn_b = pn_b + ps_b
+      ps_b = 0.0_4
+    END IF
     temp = TANH(pn*inv_cp)
     temp0 = hp*temp + 1._sp
     temp1 = TANH(pn*inv_cp)
@@ -13690,32 +13725,39 @@ CONTAINS
     temp_b1 = -(temp2*temp1*temp_b/temp0)
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + en*temp_b5 + en*temp_b4 + pn*temp_b2 + pn*&
-&     temp_b0
-    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
+    inv_cp_b = inv_cp_b + pn*temp_b2 + pn*temp_b0
+    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
   END SUBROUTINE GR_PRODUCTION_B
 
-  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc)
+  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc&
+&   , ps, es)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
     REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
+    REAL(sp) :: inv_cp, hp_imd
     INTRINSIC TANH
+    INTRINSIC MIN
     REAL(sp) :: pwx1
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-! Range of correction coef: (0, 2)
-    ps = (1._sp+fq_ps)*ps
+    IF (pn .GT. (1._sp+fq_ps)*ps) THEN
+      ps = (1._sp+fq_ps)*ps
+    ELSE
+      ps = pn
+    END IF
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
-! Range of correction coef: (0, 2)
-    es = (1._sp+fq_es)*es
+    IF (en .GT. (1._sp+fq_es)*es) THEN
+      es = (1._sp+fq_es)*es
+    ELSE
+      es = en
+    END IF
     hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
+    IF (pn .GT. 0) pr = pn - ps
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
     perc = hp_imd*cp*(1._sp-pwr1)
@@ -13726,17 +13768,17 @@ CONTAINS
 !   variations   of useful results: hp perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
   SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, &
-&   alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, dt)
+&   alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, ps, es, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, alpha1_d
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
-    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_d, hp_imd_d
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_d, gam_d, inv_lambda_d
     INTRINSIC EXP
@@ -13756,6 +13798,8 @@ CONTAINS
     REAL(sp) :: temp2
     REAL(sp) :: temp3
     REAL(sp) :: temp4
+    REAL(sp) :: ps_d
+    REAL(sp) :: es_d
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
@@ -13816,17 +13860,17 @@ CONTAINS
 !   gradient     of useful results: alpha1 hp cp pn perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
   SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, &
-&   alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, dt)
+&   alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, ps, es, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
     REAL(sp) :: pn_b, en_b, cp_b, alpha1_b
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
-    REAL(sp) :: pr, perc
+    REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
+    REAL(sp) :: inv_cp, hp_imd
+    REAL(sp) :: inv_cp_b, hp_imd_b
     REAL(sp) :: lambda, gam, inv_lambda
     REAL(sp) :: lambda_b, gam_b, inv_lambda_b
     INTRINSIC EXP
@@ -13854,6 +13898,8 @@ CONTAINS
     REAL(sp) :: temp_b4
     REAL(sp) :: temp_b5
     INTEGER :: branch
+    REAL(sp) :: ps_b
+    REAL(sp) :: es_b
     inv_cp = 1._sp/cp
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
@@ -13941,14 +13987,14 @@ CONTAINS
     alpha1_b = alpha1_b - pn*temp_b
   END SUBROUTINE GR_RI_PRODUCTION_B
 
-  SUBROUTINE GR_RI_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc, dt&
-& )
+  SUBROUTINE GR_RI_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc, ps&
+&   , es, dt)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp), INTENT(OUT) :: pr, perc, ps, es
+    REAL(sp) :: inv_cp, hp_imd
     REAL(sp) :: lambda, gam, inv_lambda
     INTRINSIC EXP
     INTRINSIC SQRT
@@ -15082,7 +15128,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -15105,7 +15151,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -15170,7 +15217,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -15199,7 +15246,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -15259,7 +15306,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -15290,7 +15337,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15308,7 +15355,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -15389,7 +15436,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -15456,7 +15503,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
             CALL GR_EXCHANGE_D(output_layer(4, k), output_layer_d(4, k)&
 &                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
 &                        ), l, l_d)
@@ -15556,7 +15603,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -15626,7 +15673,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
 &                     )
             CALL PUSHCONTROL1B(1)
@@ -15704,7 +15751,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -15787,7 +15834,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15838,7 +15885,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
 &                     )
           ELSE
@@ -15899,7 +15946,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -15926,7 +15974,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
 &                             ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
-&                             pr_d, perc, perc_d, setup%dt)
+&                             pr_d, perc, perc_d, ps, es, setup%dt)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -15997,7 +16045,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -16029,7 +16078,7 @@ CONTAINS
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -16103,7 +16152,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
 &                             ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
-&                             pr_b, perc, perc_b, setup%dt)
+&                             pr_b, perc, perc_b, ps, es, setup%dt)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -16136,7 +16185,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16155,7 +16205,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -16887,7 +16937,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -16910,7 +16960,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -16976,7 +17027,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -17005,7 +17056,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -17067,7 +17118,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -17098,7 +17149,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17116,7 +17167,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -17198,7 +17249,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -17265,7 +17316,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(output_layer(4, k), &
 &                                  output_layer_d(4, k), ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
@@ -17366,7 +17417,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -17436,7 +17487,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -17515,7 +17566,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -17599,7 +17650,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17650,7 +17701,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
@@ -17711,7 +17762,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -17738,7 +17790,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
 &                             ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
-&                             pr_d, perc, perc_d, setup%dt)
+&                             pr_d, perc, perc_d, ps, es, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -17810,7 +17862,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -17842,7 +17895,7 @@ CONTAINS
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -17918,7 +17971,7 @@ CONTAINS
             CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
 &                             ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
-&                             pr_b, perc, perc_b, setup%dt)
+&                             pr_b, perc, perc_b, ps, es, setup%dt)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -17951,7 +18004,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd, split
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
+&   split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -17970,7 +18024,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, setup%dt)
+&                           ac_hp(k), pr, perc, ps, es, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -18028,7 +18082,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
+&   , qe
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d&
 &   , qd_d, qe_d
     INTRINSIC MAX
@@ -18052,7 +18107,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -18124,7 +18180,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
+&   , qe
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
 &   , qd_b, qe_b
     INTRINSIC MAX
@@ -18155,7 +18212,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -18230,7 +18287,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -18262,7 +18319,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
+&   , qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18280,7 +18338,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc)
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -18366,7 +18424,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qe_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -18435,7 +18493,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(output_layer(5, k), &
 &                                  output_layer_d(5, k), ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
@@ -18552,7 +18610,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qe_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -18626,7 +18684,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -18727,7 +18785,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -18813,7 +18871,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18865,7 +18923,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
@@ -18930,7 +18988,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d&
 &   , ql_d, qd_d
     INTRINSIC MAX
@@ -18952,7 +19010,8 @@ CONTAINS
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -18965,8 +19024,8 @@ CONTAINS
           END IF
           prr_d = 0.9_sp*0.6_sp*(pr_d+perc_d) + l_d
           prr = 0.6_sp*0.9_sp*(pr+perc) + l
-          prl_d = 0.9_sp*0.4_sp*(pr_d+perc_d) + l_d
-          prl = 0.4_sp*0.9_sp*(pr+perc) + l
+          prl_d = 0.9_sp*0.4_sp*(pr_d+perc_d)
+          prl = 0.4_sp*0.9_sp*(pr+perc)
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
@@ -19022,7 +19081,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b&
 &   , ql_b, qd_b
     INTRINSIC MAX
@@ -19051,7 +19110,7 @@ CONTAINS
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -19063,7 +19122,7 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = 0.6_sp*0.9_sp*(pr+perc) + l
           CALL PUSHREAL4(prl)
-          prl = 0.4_sp*0.9_sp*(pr+perc) + l
+          prl = 0.4_sp*0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
@@ -19110,9 +19169,9 @@ CONTAINS
           temp_b = 0.9_sp*0.4_sp*prl_b
           pr_b = 0.1_sp*prd_b + temp_b
           perc_b = 0.1_sp*prd_b + temp_b
-          l_b = l_b + prl_b + prr_b
           CALL POPREAL4(prr)
           temp_b = 0.9_sp*0.6_sp*prr_b
+          l_b = l_b + prr_b
           pr_b = pr_b + temp_b
           perc_b = perc_b + temp_b
           CALL POPCONTROL1B(branch)
@@ -19125,7 +19184,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b)
+&                          perc, perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -19157,7 +19216,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19173,7 +19232,7 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -19181,7 +19240,7 @@ CONTAINS
             l = 0._sp
           END IF
           prr = 0.6_sp*0.9_sp*(pr+perc) + l
-          prl = 0.4_sp*0.9_sp*(pr+perc) + l
+          prl = 0.4_sp*0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -19258,7 +19317,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -19325,7 +19384,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), 1000._sp, ac_hp(k), ac_hp_d(k), &
-&                          pr, pr_d, perc, perc_d)
+&                          pr, pr_d, perc, perc_d, ps, es)
             CALL GR_EXCHANGE_D(output_layer(5, k), output_layer_d(5, k)&
 &                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
 &                        ), l, l_d)
@@ -19351,8 +19410,8 @@ CONTAINS
           temp = (output_layer(4, k)+1._sp)*(pr+perc)
           prl_d = 0.9_sp*0.4_sp*(temp0*((pr+perc)*output_layer_d(4, k)+(&
 &           output_layer(4, k)+1._sp)*(pr_d+perc_d))-temp*2*output_layer&
-&           (3, k)*output_layer_d(3, k)) + l_d
-          prl = 0.9_sp*0.4_sp*(temp*temp0) + l
+&           (3, k)*output_layer_d(3, k))
+          prl = 0.9_sp*0.4_sp*(temp*temp0)
 ! Range of correction c0.1: (0, 10)
           temp0 = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + &
 &           0.1_sp
@@ -19440,7 +19499,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -19512,7 +19571,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
             CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
 &                     )
             CALL PUSHCONTROL1B(1)
@@ -19531,9 +19590,8 @@ CONTAINS
 &           output_layer(3, k)**2))*(pr+perc) + l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
-          CALL PUSHREAL4(prl)
           prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+&           output_layer(3, k)**2))*(pr+perc)
 ! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
@@ -19573,6 +19631,8 @@ CONTAINS
             prd_b = 0.0_4
           END IF
           temp = -(0.4_sp*output_layer(4, k)) + 0.6_sp
+          prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
+&           output_layer(3, k)**2))*(pr+perc)
           CALL POPREAL4(ac_hl(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prl, prl_b, ac_cl(k), &
 &                      ac_cl_b(k), ac_hl(k), ac_hl_b(k), ql, ql_b)
@@ -19582,13 +19642,11 @@ CONTAINS
           temp_b1 = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
           pr_b = temp_b1
           perc_b = temp_b1
-          CALL POPREAL4(prl)
           temp_b0 = 0.9_sp*0.4_sp*prl_b
           output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
 &           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(&
 &           output_layer(4, k)+1._sp)*(pr+perc)*temp_b0 - 2*output_layer&
 &           (3, k)*temp*(pr+perc)*0.9_sp*prr_b
-          l_b = l_b + prl_b + prr_b
           temp_b = (1._sp-output_layer(3, k)**2)*temp_b0
           output_layer_b(4, k) = output_layer_b(4, k) + (pr+perc)*temp_b
           temp_b1 = (output_layer(4, k)+1._sp)*temp_b
@@ -19596,6 +19654,7 @@ CONTAINS
           temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
           pr_b = pr_b + temp_b1 + temp*temp_b
           perc_b = perc_b + temp_b1 + temp*temp_b
+          l_b = l_b + prr_b
           output_layer_b(4, k) = output_layer_b(4, k) - 0.4_sp*(pr+perc)&
 &           *temp_b
           CALL POPCONTROL1B(branch)
@@ -19613,7 +19672,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k), &
-&                          pr, pr_b, perc, perc_b)
+&                          pr, pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -19699,7 +19758,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19749,7 +19808,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
             CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
 &                     )
           ELSE
@@ -19764,7 +19823,7 @@ CONTAINS
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
           prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+&           output_layer(3, k)**2))*(pr+perc)
 ! Range of correction c0.1: (0, 10)
           prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
@@ -19810,7 +19869,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -19845,7 +19904,8 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d)
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -19893,7 +19953,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -19933,7 +19993,7 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -19974,7 +20034,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
 &                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b)
+&                          perc, perc_b, ps, es)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -20009,7 +20069,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -20035,7 +20095,7 @@ CONTAINS
             END IF
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc)
+&                        , ac_hp(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20103,7 +20163,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, prr, qr
+    REAL(sp) :: pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20185,7 +20245,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
 &                          ac_cp_d(k), 1000._sp, ac_hp(k), ac_hp_d(k), &
-&                          pr, pr_d, perc, perc_d)
+&                          pr, pr_d, perc, perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20259,7 +20319,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, prr, qr
+    REAL(sp) :: pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20337,7 +20397,7 @@ CONTAINS
             CALL PUSHREAL4(ac_hp(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -20379,7 +20439,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
 &                          ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k), &
-&                          pr, pr_b, perc, perc_b)
+&                          pr, pr_b, perc, perc_b, ps, es)
           END IF
         END IF
       END DO
@@ -20473,7 +20533,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, prr, qr
+    REAL(sp) :: pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -20533,7 +20593,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc)
+&                        , perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20576,7 +20636,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20613,7 +20673,8 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
 &                          en, en_d, ac_ca(k), ac_ca_d(k), beta, ac_ha(k&
-&                          ), ac_ha_d(k), pr, pr_d, perc, perc_d)
+&                          ), ac_ha_d(k), pr, pr_d, perc, perc_d, ps, es&
+&                         )
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20670,7 +20731,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20712,7 +20773,7 @@ CONTAINS
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_ha(k))
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc)
+&                        ac_ha(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -20774,7 +20835,7 @@ CONTAINS
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k), &
 &                          beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc, &
-&                          perc_b)
+&                          perc_b, ps, es)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -20809,7 +20870,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -20837,7 +20898,7 @@ CONTAINS
             END IF
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc)
+&                        ac_ha(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20913,7 +20974,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20997,7 +21058,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_d(2, k), &
 &                          pn(k), pn_d(k), en(k), en_d(k), ac_ca(k), &
 &                          ac_ca_d(k), beta, ac_ha(k), ac_ha_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          pr_d, perc, perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -21088,7 +21149,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -21172,7 +21233,7 @@ CONTAINS
             CALL PUSHREAL4(ac_ha(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+&                        perc, ps, es)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHREAL4(pr)
@@ -21249,7 +21310,7 @@ CONTAINS
 &                          ), output_layer(2, k), output_layer_b(2, k), &
 &                          pn(k), pn_b(k), en(k), en_b(k), ac_ca(k), &
 &                          ac_ca_b(k), beta, ac_ha(k), ac_ha_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          pr_b, perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -21344,7 +21405,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -21406,7 +21467,7 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
 &                        pn(k), en(k), ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc)
+&                        perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp

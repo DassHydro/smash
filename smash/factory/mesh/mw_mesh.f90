@@ -73,7 +73,7 @@ contains
 
     end subroutine mask_upstream_cells
 
-    subroutine catchment_dln(nrow, ncol, flwdir, dx, dy, row, col, area, &
+    subroutine catchment_dln_area_based(nrow, ncol, flwdir, dx, dy, row, col, area, &
     & max_depth, mask_dln, row_dln, col_dln, sink_dln)
 
         implicit none
@@ -118,6 +118,7 @@ contains
                     cycle
                 end if
 
+                !% Compare "observed" area (area) with the "computed" area (sum(mask_dln_imd*dx*dy))
                 tol = abs(area - sum(mask_dln_imd*dx*dy))/area
 
                 if (tol .ge. min_tol) cycle
@@ -138,7 +139,73 @@ contains
         row = row - 1
         col = col - 1
 
-    end subroutine catchment_dln
+    end subroutine catchment_dln_area_based
+
+    subroutine catchment_dln_contour_based(nrow, ncol, flwdir, mask, row, col, &
+    & max_depth, mask_dln, row_dln, col_dln, sink_dln)
+
+        implicit none
+
+        integer, intent(in) :: nrow, ncol
+        integer, dimension(nrow, ncol), intent(in) :: flwdir, mask
+        integer, intent(inout) :: row, col
+        integer, intent(in) :: max_depth
+        integer, dimension(nrow, ncol), intent(out) :: mask_dln
+        integer, intent(out) :: col_dln, row_dln
+        logical, intent(out) :: sink_dln
+
+        integer, dimension(nrow, ncol) :: mask_dln_imd
+        integer :: i, j, row_imd, col_imd
+        real(4) :: min_tol, tol
+        logical :: sink_dln_imd
+
+        !% Transform from Python to FORTRAN index
+        row = row + 1
+        col = col + 1
+
+        min_tol = huge(0._4)
+
+        do i = -max_depth, max_depth
+
+            do j = -max_depth, max_depth
+
+                row_imd = row + j
+                col_imd = col + i
+                mask_dln_imd = 0
+                sink_dln_imd = .false.
+
+                if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
+
+                call mask_upstream_cells(nrow, ncol, flwdir, row_imd, &
+                & col_imd, mask_dln_imd, sink_dln_imd)
+
+                if (sink_dln_imd) then
+                    sink_dln = .true.
+                    cycle
+                end if
+
+                !% Compare "observed" contour (mask) with the "computed" contour (mask_dln_imd)
+                tol = sum(abs(mask - mask_dln_imd))
+
+                if (tol .ge. min_tol) cycle
+
+                min_tol = tol
+
+                !% Transform from FORTRAN to Python index
+                row_dln = row_imd - 1
+                col_dln = col_imd - 1
+
+                mask_dln = mask_dln_imd
+
+            end do
+
+        end do
+
+        !% Transform from FORTRAN to Python index
+        row = row - 1
+        col = col - 1
+
+    end subroutine catchment_dln_contour_based
 
     subroutine fill_nidp(nrow, ncol, flwdir, nidp)
 

@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import rasterio
 
+import rasterio.features
+
 from smash.factory.mesh._libmesh import mw_mesh
 from smash.factory.mesh._standardize import (
     _standardize_detect_sink_args,
@@ -26,6 +28,8 @@ from smash.factory.mesh._tools import (
 
 if TYPE_CHECKING:
     from typing import Any
+
+    import geopandas as gpd
 
     from smash.util._typing import AlphaNumeric, FilePath, ListLike, Numeric
 
@@ -151,6 +155,7 @@ def _generate_rr_mesh_from_xy(
     y: np.ndarray,
     area: np.ndarray,
     code: np.ndarray,
+    shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int,
 ) -> dict:
@@ -192,6 +197,22 @@ def _generate_rr_mesh_from_xy(
         dx_win = dx[slice_win]
         dy_win = dy[slice_win]
         flwdir_win = flwdir[slice_win]
+
+        if shp_dataset is not None and code[ind] in shp_dataset["code"].values:
+            transform = rasterio.transform.Affine(
+                xres, 0, xmin + slice_win[1].start * xres, 0, -yres, ymax - slice_win[0].start * yres
+            )
+            geometry = shp_dataset.loc[shp_dataset["code"] == code[ind], "geometry"]
+            mask = rasterio.features.rasterize(
+                [(geom, 1) for geom in geometry], out_shape=flwdir_win.shape, transform=transform, fill=0
+            )
+            mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln_contour_based(
+                flwdir_win, mask, row_win, col_win, max_depth
+            )
+        else:
+            mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln_area_based(
+                flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
+            )
 
         mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln(
             flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
@@ -346,6 +367,7 @@ def _generate_rr_mesh(
     y: Numeric | ListLike[float] | None = None,
     area: Numeric | ListLike[float] | None = None,
     code: str | ListLike[str] | None = None,
+    shp_dataset: gpd.GeoDataFrame | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
 ) -> dict[str, Any]:
@@ -356,7 +378,7 @@ def _generate_rr_mesh(
     if bbox is not None:
         return _generate_rr_mesh_from_bbox(flwdir_path, bbox, epsg)
     else:
-        return _generate_rr_mesh_from_xy(flwdir_path, x, y, area, code, max_depth, epsg)
+        return _generate_rr_mesh_from_xy(flwdir_path, x, y, area, code, shp_dataset, max_depth, epsg)
 
 
 def _generate_hy1d_mesh(rr_mesh: dict[str, Any], river_line_path: FilePath) -> dict[str, Any]:
@@ -391,6 +413,7 @@ def generate_mesh(
     rr_options: dict[str, Any],
     hy1d_options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    # % TODO: Add documentation here
     args = _standardize_generate_mesh_args(rr_options, hy1d_options)
 
     return _generate_mesh(*args)

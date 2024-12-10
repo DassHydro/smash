@@ -4,9 +4,9 @@ from smash.factory.net.net import Net
 from smash.factory.samples.samples import generate_samples
 
 __all__ = [
+    "Net",
     "detect_sink",
     "generate_mesh",
-    "load_dataset",
     "generate_samples",
-    "Net",
+    "load_dataset",
 ]

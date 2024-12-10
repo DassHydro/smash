@@ -47,10 +47,10 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Optimize",
     "BayesianOptimize",
-    "optimize",
+    "Optimize",
     "bayesian_optimize",
+    "optimize",
 ]
 
 
@@ -101,6 +101,9 @@ class Optimize:
 
         wjreg_opt : `float`
             The optimal wjreg value.
+
+        wjreg_approx: `float`
+            The approximative wjreg value evaluated with one optimization cycle only.
 
         distance : `numpy.ndarray`
             An array of shape *(6,)* representing the L-Curve distance for each optimization cycle
@@ -336,7 +339,6 @@ def _optimize_lcurve_wjreg(
         returns,
     )
     jobs_max = returns.jobs
-
     # % Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
     _apply_optimizer(model, wparameters, options, returns, optimize_options, return_options, callback=None)
@@ -345,6 +347,7 @@ def _optimize_lcurve_wjreg(
     jobs_min = returns.jobs
     jreg_min = 0.0
     jreg_max = returns.jreg
+    wjreg_fast = 0.0
 
     if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.0:
         wjreg_fast = (jobs_max - jobs_min) / jreg_max
@@ -381,6 +384,7 @@ def _optimize_lcurve_wjreg(
 
     lcurve = {
         "wjreg_opt": wjreg,
+        "wjreg_approx": wjreg_fast,
         "distance": distance,
         "cost": cost_arr,
         "jobs": jobs_arr,

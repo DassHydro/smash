@@ -108,14 +108,14 @@ def _forward_run_with_estimated_parameters(
 ) -> tuple[ForwardRun | None, dict]:
     mahal_distance = 0
 
-    for p in prior_data:
-        param_p, distance_p = _estimate_parameter(prior_data[p], cost, density[p], alpha)
+    for param_name, data in prior_data.items():
+        param_p, distance_p = _estimate_parameter(data, cost, density[param_name], alpha)
 
-        if p in model.rr_parameters.keys:
-            model.set_rr_parameters(p, param_p)
+        if param_name in model.rr_parameters.keys:
+            model.set_rr_parameters(param_name, param_p)
 
-        elif p in model.rr_initial_states.keys:
-            model.set_rr_initial_states(p, param_p)
+        elif param_name in model.rr_initial_states.keys:
+            model.set_rr_initial_states(param_name, param_p)
 
         # % In case we have other kind of parameters. Should be unreachable.
         else:

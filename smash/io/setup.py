@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     from smash.util._typing import FilePath
 
-__all__ = ["save_setup", "read_setup"]
+__all__ = ["read_setup", "save_setup"]
 
 
 def save_setup(setup: dict[str, Any], path: FilePath):

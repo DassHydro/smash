@@ -181,16 +181,18 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
         HYDROLOGICAL_MODULE,
         (
-            [["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"]] * 3  # % gr4, gr4_mlp, gr4_ri
+            [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            * 3  # % gr4, gr4_mlp, gr4_ri
             + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ode_mlp
-            + [["pn", "en", "pr", "perc", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
             * 3  # % gr5, gr5_mlp, gr5_ri
-            + [["pn", "en", "pr", "perc", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
+            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
             * 2  # % gr6, gr6_mlp
-            + [["pn", "en", "pr", "perc", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
+            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
             * 2  # % grc, grc_mlp
-            + [["ei", "pn", "en", "pr", "perc", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
-            + [["ei", "pn", "en", "pr", "perc", "prr", "prd", "qr", "qd", "qt"]] * 2  # % loieau, loieau_mlp
+            + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
+            + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
+            * 2  # % loieau, loieau_mlp
             + [["pn", "en", "qr", "qb", "qt"]]  # % vic3l
         ),
     )
