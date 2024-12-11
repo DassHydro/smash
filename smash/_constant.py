@@ -707,12 +707,12 @@ DEFAULT_MODEL_SETUP = {
     "prcp_partitioning": False,
     "sparse_storage": False,
     "read_descriptor": False,
-    "read_imperviousness": False,
-    "imperviousness_format": "tif",
-    "imperviousness_file": None,
     "descriptor_format": "tif",
     "descriptor_directory": None,
     "descriptor_name": None,
+    "read_imperviousness": False,
+    "imperviousness_format": "tif",
+    "imperviousness_file": None,
 }
 
 
