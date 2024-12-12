@@ -626,3 +626,6 @@ def _read_imperviousness(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT)
 
     if msg:
         warnings.warn(f"Warning(s) linked to imperviousness reading.\n{msg}", stacklevel=2)
+
+    if np.ma.is_masked(imperviousness):
+        warnings.warn(f"{msg} \n Masked values are not applied", stacklevel=2)
