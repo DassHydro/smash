@@ -68,8 +68,7 @@ contains
         implicit none
 
         real(sp), intent(in) :: fq_ps, fq_es, en, imperviousness, cp, beta
-        real(sp), intent(inout) :: pn
-        real(sp), intent(inout) :: hp
+        real(sp), intent(inout) :: pn, hp
         real(sp), intent(out) :: pr, perc, ps, es
 
         real(sp) :: inv_cp, hp_imd
@@ -108,10 +107,9 @@ contains
 
         implicit none
 
-        real(sp), intent(inout) :: pn
-        real(sp), intent(in) :: en, cp, imperviousness, beta, alpha1
+        real(sp), intent(in) :: en, imperviousness, cp, beta, alpha1
         real(sp), intent(in) :: dt
-        real(sp), intent(inout) :: hp
+        real(sp), intent(inout) :: pn, hp
         real(sp), intent(out) :: pr, perc, ps, es
 
         real(sp) :: inv_cp, hp_imd
@@ -231,9 +229,8 @@ contains
 
         implicit none
         
+        real(sp), intent(in) :: en, imperviousness, cp, ct, kexc
         real(sp), intent(inout) :: pn
-        real(sp), intent(in) :: en, cp, ct, kexc
-        real(sp), intent(in) :: imperviousness
         real(sp), intent(inout) :: hp, ht, q
         real(sp), intent(out) :: l
 
@@ -306,10 +303,8 @@ contains
         implicit none
 
         real(sp), dimension(5), intent(in) :: fq  ! fixed NN output size
-        real(sp), intent(inout) :: pn
-        real(sp), intent(in) :: en, cp, ct, kexc
-        real(sp), intent(in) :: imperviousness
-        real(sp), intent(inout) :: hp, ht, q
+        real(sp), intent(in) :: en, imperviousness, cp, ct, kexc
+        real(sp), intent(inout) :: pn, hp, ht, q
         real(sp), intent(out) :: l
 
         real(sp) :: inv_cp, dt, fhp, fht
@@ -370,8 +365,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
-        real(sp) :: imperviousness
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -476,8 +470,7 @@ contains
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
-        real(sp) :: imperviousness
+        real(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -543,8 +536,8 @@ contains
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_hp, ac_ht, ac_qt, pn, en, imperviousness) &
-        !$OMP& private(row, col, k, time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd)
+        !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_hp, ac_ht, ac_qt, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -628,8 +621,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split
-        real(sp) :: imperviousness
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd, split
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -729,8 +721,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
-        real(sp) :: l
-        real(sp) :: imperviousness
+        real(sp) :: imperviousness, l
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -834,8 +825,7 @@ contains
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
-        real(sp) :: l
-        real(sp) :: imperviousness
+        real(sp) :: imperviousness, l
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -898,8 +888,8 @@ contains
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, output_layer, ac_cp, ac_ct, ac_kexc, &
-        !$OMP& ac_hp, ac_ht, ac_qt, pn, en, imperviousness) &
-        !$OMP& private(row, col, k, time_step_returns, l)
+        !$OMP& ac_hp, ac_ht, ac_qt, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, l)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -961,8 +951,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
-        real(sp) :: imperviousness
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1068,8 +1057,7 @@ contains
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
-        real(sp) :: imperviousness
+        real(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1135,8 +1123,8 @@ contains
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en, imperviousness) &
-        !$OMP& private(row, col, k, time_step_returns, pr, perc, ps, es, l, prr, prd, qr, qd)
+        !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1220,7 +1208,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, split
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd, split
         real(sp) :: imperviousness
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
@@ -1322,8 +1310,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
-        real(sp) :: imperviousness
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1432,8 +1419,7 @@ contains
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
-        real(sp) :: imperviousness
+        real(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1592,8 +1578,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
-        real(sp) :: imperviousness
+        real(sp) :: pn, en, imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1699,8 +1684,7 @@ contains
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
-        real(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
-        real(sp) :: imperviousness
+        real(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1763,8 +1747,8 @@ contains
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, ac_ct, ac_cl, ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt, pn, en, imperviousness) &
-        !$OMP& private(row, col, k, time_step_returns, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd)
+        !$OMP& ac_cp, ac_ct, ac_cl, ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1855,8 +1839,7 @@ contains
 
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
-        real(sp) :: imperviousness
+        real(sp) :: ei, pn, en, imperviousness, pr, perc, ps, es, prr, qr
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1954,8 +1937,7 @@ contains
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
         integer :: row, col, k, time_step_returns
-        real(sp) :: pr, perc, ps, es, prr, qr
-        real(sp) :: imperviousness
+        real(sp) :: imperviousness, pr, perc, ps, es, prr, qr
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -2021,8 +2003,8 @@ contains
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, ac_ct, ac_hp, ac_ht, ac_qt, ei, pn, en, imperviousness) &
-        !$OMP& private(row, col, k, time_step_returns, pr, perc, ps, es, prr, qr)
+        !$OMP& ac_cp, ac_ct, ac_hp, ac_ht, ac_qt, ei, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, prr, qr)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -2272,8 +2254,8 @@ contains
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt, ei, pn, en, imperviousness) &
-        !$OMP& private(row, col, k, time_step_returns, pr, perc, ps, es, prr, prd, qr, qd)
+        !$OMP& ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt, ei, pn, en) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, prr, prd, qr, qd)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
