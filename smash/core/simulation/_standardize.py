@@ -815,7 +815,7 @@ def _standardize_simulation_cost_options_gauge(
         st = pd.Timestamp(model.setup.start_time)
         et = pd.Timestamp(model.setup.end_time)
         start_slice = int((end_warmup - st).total_seconds() / model.setup.dt)
-        end_slice = model.setup.ntime_step - 1
+        end_slice = model.setup.ntime_step
         time_slice = slice(start_slice, end_slice)
         for i, ggc in enumerate(model.mesh.code):
             if ggc in gauge:
