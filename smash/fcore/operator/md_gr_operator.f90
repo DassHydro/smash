@@ -1209,7 +1209,6 @@ contains
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
         real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd, split
-        real(sp) :: imperviousness
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)

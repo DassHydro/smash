@@ -13288,10 +13288,8 @@ CONTAINS
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, en, imperviousness, cp, beta
     REAL(sp), INTENT(IN) :: fq_ps_d, fq_es_d, en_d, cp_d
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(INOUT) :: pn_d
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_d
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_d, hp_d
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
     REAL(sp) :: inv_cp, hp_imd
@@ -13376,10 +13374,8 @@ CONTAINS
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, en, imperviousness, cp, beta
     REAL(sp) :: fq_ps_b, fq_es_b, en_b, cp_b
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(INOUT) :: pn_b
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_b
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_b, hp_b
     REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
     REAL(sp) :: inv_cp, hp_imd
@@ -13513,8 +13509,7 @@ CONTAINS
 &   beta, hp, pr, perc, ps, es)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: fq_ps, fq_es, en, imperviousness, cp, beta
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(INOUT) :: pn, hp
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp) :: inv_cp, hp_imd
     INTRINSIC TANH
@@ -13555,13 +13550,11 @@ CONTAINS
 &   cp_d, beta, alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, ps, &
 &   es, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(INOUT) :: pn_d
-    REAL(sp), INTENT(IN) :: en, cp, imperviousness, beta, alpha1
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: en_d, cp_d, alpha1_d
     REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_d
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_d, hp_d
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
     REAL(sp) :: inv_cp, hp_imd
@@ -13656,13 +13649,11 @@ CONTAINS
 &   cp_b, beta, alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, ps, &
 &   es, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(INOUT) :: pn_b
-    REAL(sp), INTENT(IN) :: en, cp, imperviousness, beta, alpha1
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, beta, alpha1
     REAL(sp) :: en_b, cp_b, alpha1_b
     REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_b
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_b, hp_b
     REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
     REAL(sp) :: inv_cp, hp_imd
@@ -13793,10 +13784,9 @@ CONTAINS
   SUBROUTINE GR_RI_PRODUCTION(pn, en, imperviousness, cp, beta, alpha1, &
 &   hp, pr, perc, ps, es, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(IN) :: en, cp, imperviousness, beta, alpha1
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(INOUT) :: pn, hp
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp) :: inv_cp, hp_imd
     REAL(sp) :: lambda, gam, inv_lambda
@@ -14345,11 +14335,10 @@ CONTAINS
 &   imperviousness, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d&
 &   , q, q_d, l)
     IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: en_d, cp_d, ct_d, kexc_d
     REAL(sp), INTENT(INOUT) :: pn
     REAL(sp), INTENT(INOUT) :: pn_d
-    REAL(sp), INTENT(IN) :: en, cp, ct, kexc
-    REAL(sp), INTENT(IN) :: en_d, cp_d, ct_d, kexc_d
-    REAL(sp), INTENT(IN) :: imperviousness
     REAL(sp), INTENT(INOUT) :: hp, ht, q
     REAL(sp), INTENT(INOUT) :: hp_d, ht_d, q_d
     REAL(sp), INTENT(OUT) :: l
@@ -14460,11 +14449,10 @@ CONTAINS
 &   imperviousness, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b&
 &   , q, q_b, l)
     IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp) :: en_b, cp_b, ct_b, kexc_b
     REAL(sp), INTENT(INOUT) :: pn
     REAL(sp), INTENT(INOUT) :: pn_b
-    REAL(sp), INTENT(IN) :: en, cp, ct, kexc
-    REAL(sp) :: en_b, cp_b, ct_b, kexc_b
-    REAL(sp), INTENT(IN) :: imperviousness
     REAL(sp), INTENT(INOUT) :: hp, ht, q
     REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
     REAL(sp) :: l
@@ -14631,9 +14619,8 @@ CONTAINS
   SUBROUTINE GR_PRODUCTION_TRANSFER_ODE(pn, en, imperviousness, cp, ct, &
 &   kexc, hp, ht, q, l)
     IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
     REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(IN) :: en, cp, ct, kexc
-    REAL(sp), INTENT(IN) :: imperviousness
     REAL(sp), INTENT(INOUT) :: hp, ht, q
     REAL(sp), INTENT(OUT) :: l
     REAL(sp), DIMENSION(2, 2) :: jacob
@@ -14694,13 +14681,10 @@ CONTAINS
 ! fixed NN output size
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq_d
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(INOUT) :: pn_d
-    REAL(sp), INTENT(IN) :: en, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
     REAL(sp), INTENT(IN) :: en_d, cp_d, ct_d, kexc_d
-    REAL(sp), INTENT(IN) :: imperviousness
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
-    REAL(sp), INTENT(INOUT) :: hp_d, ht_d, q_d
+    REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
+    REAL(sp), INTENT(INOUT) :: pn_d, hp_d, ht_d, q_d
     REAL(sp), INTENT(OUT) :: l
     REAL(sp) :: l_d
     REAL(sp) :: inv_cp, dt, fhp, fht
@@ -14783,13 +14767,10 @@ CONTAINS
 ! fixed NN output size
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq
     REAL(sp), DIMENSION(5) :: fq_b
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(INOUT) :: pn_b
-    REAL(sp), INTENT(IN) :: en, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
     REAL(sp) :: en_b, cp_b, ct_b, kexc_b
-    REAL(sp), INTENT(IN) :: imperviousness
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
-    REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
+    REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
+    REAL(sp), INTENT(INOUT) :: pn_b, hp_b, ht_b, q_b
     REAL(sp) :: l
     REAL(sp) :: inv_cp, dt, fhp, fht
     REAL(sp) :: inv_cp_b, fhp_b, fht_b
@@ -14905,10 +14886,8 @@ CONTAINS
     IMPLICIT NONE
 ! fixed NN output size
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq
-    REAL(sp), INTENT(INOUT) :: pn
-    REAL(sp), INTENT(IN) :: en, cp, ct, kexc
-    REAL(sp), INTENT(IN) :: imperviousness
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
     REAL(sp), INTENT(OUT) :: l
     REAL(sp) :: inv_cp, dt, fhp, fht
 ! integer :: i
@@ -14970,9 +14949,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15062,9 +15041,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
     REAL(sp) :: dummydiff_b0
@@ -15187,8 +15166,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15289,9 +15268,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15460,9 +15439,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp_b
     INTEGER :: branch
@@ -15699,8 +15678,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15814,11 +15793,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
-    REAL(sp) :: imperviousness
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -15916,11 +15894,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
-    REAL(sp) :: imperviousness
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -16064,9 +16041,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16143,8 +16119,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, l
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16226,8 +16201,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, l
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16343,8 +16317,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, l
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16441,8 +16414,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, l
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16578,8 +16550,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, l
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16759,8 +16730,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, l
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16848,9 +16818,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16941,9 +16911,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
     REAL(sp) :: dummydiff_b0
@@ -17068,8 +17038,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17171,9 +17141,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -17343,9 +17313,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp_b
     INTEGER :: branch
@@ -17584,8 +17554,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17699,11 +17669,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
-    REAL(sp) :: imperviousness
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -17802,11 +17771,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
-    REAL(sp) :: imperviousness
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -17952,9 +17920,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -18034,11 +18001,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
-&   , qe
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d&
 &   , qd_d, qe_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -18135,11 +18101,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
-&   , qe
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
 &   , qd_b, qe_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
     REAL(sp) :: dummydiff_b0
@@ -18279,9 +18244,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
-&   , qe
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18387,9 +18351,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
+&   , qr, qd, qe
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qe_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     REAL(sp) :: temp0
@@ -18577,9 +18541,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
+&   , qr, qd, qe
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qe_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp_b
     REAL(sp) :: temp
@@ -18846,8 +18810,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
-    REAL(sp) :: imperviousness
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
+&   , qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18966,10 +18930,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, imperviousness, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d&
 &   , ql_d, qd_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -19062,10 +19026,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, imperviousness, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b&
 &   , ql_b, qd_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
     REAL(sp) :: dummydiff_b0
@@ -19202,8 +19166,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
-    REAL(sp) :: imperviousness
+    REAL(sp) :: pn, en, imperviousness, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19306,9 +19270,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
+&   ql, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp
     REAL(sp) :: temp0
@@ -19492,9 +19456,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
+&   ql, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b
-    REAL(sp) :: imperviousness
     INTRINSIC MAX
     REAL(sp) :: temp_b
     REAL(sp) :: temp
@@ -19759,8 +19723,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
+&   ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19873,9 +19837,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
+    REAL(sp) :: ei, pn, en, imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d
-    REAL(sp) :: imperviousness
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -19960,9 +19923,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
+    REAL(sp) :: ei, pn, en, imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
-    REAL(sp) :: imperviousness
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -20078,8 +20040,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
-    REAL(sp) :: imperviousness
+    REAL(sp) :: ei, pn, en, imperviousness, pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -20175,9 +20136,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, prr, qr
+    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_d, perc_d, prr_d, qr_d
-    REAL(sp) :: imperviousness
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -20335,9 +20295,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, prr, qr
+    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_b, perc_b, prr_b, qr_b
-    REAL(sp) :: imperviousness
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
@@ -20557,8 +20516,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, prr, qr
-    REAL(sp) :: imperviousness
+    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
