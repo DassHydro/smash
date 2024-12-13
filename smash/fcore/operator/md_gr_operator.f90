@@ -674,8 +674,8 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, imperviousness, ac_cp(k), &
-                                          beta, ac_alpha1(k), ac_hp(k), pr, perc, ps, es, setup%dt)
+                    call gr_ri_production(pn, en, imperviousness, ac_cp(k), beta, ac_alpha1(k), ac_hp(k), &
+                    & pr, perc, ps, es, setup%dt)
 
                     call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
 
@@ -1254,8 +1254,8 @@ contains
                     call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
                     & ac_hi(k), pn, en)
 
-                    call gr_ri_production(pn, en, imperviousness, ac_cp(k), &
-                                          beta, ac_alpha1(k), ac_hp(k), pr, perc, ps, es, setup%dt)
+                    call gr_ri_production(pn, en, imperviousness, ac_cp(k), beta, ac_alpha1(k), &
+                    & ac_hp(k), pr, perc, ps, es, setup%dt)
 
                     call gr_threshold_exchange(0._sp, ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
