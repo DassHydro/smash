@@ -375,8 +375,7 @@ contains
 
                 rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 3
-            
-            
+
                 ! 'gr5_mlp' module
             case ("gr5_mlp")
 
@@ -416,7 +415,6 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 5
                 rr_states_inc = rr_states_inc + 3
 
-
                 ! 'gr5_ri' module
             case ("gr5_ri")
 
@@ -452,7 +450,6 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 7
                 rr_states_inc = rr_states_inc + 3
 
-                
                 ! 'gr6' module
             case ("gr6")
 
