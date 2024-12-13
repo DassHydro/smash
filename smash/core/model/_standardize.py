@@ -65,8 +65,25 @@ def _standardize_model_setup_directory(read: bool, key: str, value: str | None) 
         if value is None:
             raise ValueError(f"{key} model setup must be defined if read_{directory_kind} is set to True")
         elif isinstance(value, str):
-            if not os.path.exists(value):
-                raise FileNotFoundError(f"No such file or directory '{value}' for {key} model setup")
+            if not os.path.isdir(value):
+                raise FileNotFoundError(f"No such directory '{value}' for {key} model setup")
+        else:
+            raise TypeError(f"{key} model setup must be a str")
+    else:
+        value = "..."
+
+    return value
+
+
+def _standardize_model_setup_file(read: bool, key: str, value: str | None) -> str:
+    file_kind = key.split("_")[0]
+
+    if read:
+        if value is None:
+            raise ValueError(f"{key} model setup must be defined if read_{file_kind} is set to True")
+        elif isinstance(value, str):
+            if not os.path.isfile(value):
+                raise FileNotFoundError(f"No such file '{value}' for {key} model setup")
         else:
             raise TypeError(f"{key} model setup must be a str")
     else:
@@ -415,6 +432,20 @@ def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, *
         raise TypeError("descriptor_name model setup must be of ListLike type (List, Tuple, np.ndarray)")
 
     return descriptor_name
+
+
+def _standardize_model_setup_read_imperviousness(read_imperviousness: bool, **kwargs) -> bool:
+    return _standardize_model_setup_bool("read_imperviousness", read_imperviousness)
+
+
+def _standardize_model_setup_imperviousness_format(imperviousness_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("imperviousness_format", imperviousness_format)
+
+
+def _standardize_model_setup_imperviousness_file(
+    read_imperviousness: bool, imperviousness_file: str, **kwargs
+) -> str:
+    return _standardize_model_setup_file(read_imperviousness, "imperviousness_file", imperviousness_file)
 
 
 def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **kwargs) -> np.ndarray:

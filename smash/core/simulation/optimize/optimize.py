@@ -47,10 +47,10 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Optimize",
     "BayesianOptimize",
-    "optimize",
+    "Optimize",
     "bayesian_optimize",
+    "optimize",
 ]
 
 

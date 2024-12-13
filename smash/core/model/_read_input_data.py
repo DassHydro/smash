@@ -184,24 +184,24 @@ def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> tuple[np.ndarray, dic
 def _get_reading_warning_message(reading_warning: dict[str, int | list[str]]) -> str:
     msg = []
 
-    if reading_warning["miss"]:
+    if reading_warning.get("miss"):
         msg.append(
             f"Missing warning: missing {len(reading_warning['miss'])} file(s): " f"{reading_warning['miss']}"
         )
 
-    if reading_warning["res"]:
+    if reading_warning.get("res"):
         msg.append(
             "Resolution warning: resolution missmatch between mesh and at least one raster file. Nearest "
             "neighbour resampling algorithm has been used to match mesh resolution"
         )
 
-    if reading_warning["overlap"]:
+    if reading_warning.get("overlap"):
         msg.append(
             "Overlap warning: overlap missmatch between mesh and at least one raster file. Cropping domain "
             "has been updated to the nearest overlapping cell"
         )
 
-    if reading_warning["outofbound"]:
+    if reading_warning.get("outofbound"):
         kind = "partially" if reading_warning["outofbound"] == 1 else "totally"
         msg.append(
             f"Out of bound warning: mesh is {kind} out of bound for at least one raster file. Out of bound "
@@ -603,3 +603,29 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if msg:
         warnings.warn(f"Warning(s) linked to physiographic descriptor reading.\n{msg}", stacklevel=2)
+
+
+def _read_imperviousness(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+    # reading data
+    imperviousness, warning = _read_windowed_raster(setup.imperviousness_file, mesh)
+
+    # check values expected between 0 and 1 here
+    mask = imperviousness != -99.0
+
+    low = np.min(imperviousness, where=mask, initial=np.inf)
+    upp = np.max(imperviousness, where=mask, initial=-np.inf)
+
+    if low < 0 or upp > 1:
+        raise ValueError(
+            f"Invalid imperviousness. Values must be between 0 and 1 not between {low} and {upp}"
+        )
+    # write imperviousness rate into fortran variable
+    input_data.physio_data.imperviousness = imperviousness
+
+    msg = _get_reading_warning_message(warning)
+
+    if msg:
+        warnings.warn(f"Warning(s) linked to imperviousness reading.\n{msg}", stacklevel=2)
+
+    if np.ma.is_masked(imperviousness):
+        warnings.warn(f"{msg} \n Masked values are not applied", stacklevel=2)

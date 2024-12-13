@@ -1,8 +1,8 @@
-commit 7e9c6bead7c659bd64ad8041785e1e276c3f2f03
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Thu Nov 21 13:27:50 2024 +0100
+commit fb0190f293ce348efdce6e3d4e66e5e6b58eb2cb
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Fri Dec 6 13:04:30 2024 +0100
 
-    ENH: add test to check the forward pass of default hybrid structures (#352)
+    ENH: add implcit neural ode solver for gr4 model
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED

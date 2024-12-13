@@ -43,38 +43,46 @@ to ensure you have the latest package versions and to prevent any conflicts:
     (smash-dev) python3 -m pip install --upgrade pip
     (smash-dev) conda update --all
 
-Linux
-'''''
 
-If you want to use the system Python and pip, you will need:
+.. tab-set::
 
-- C and Fortran compilers (typically ``gcc`` and ``gfortran``).
+    .. tab-item:: Linux
 
-- Python header files (typically a package named ``python3-dev`` or ``python3-devel``)
+        If you want to use the system Python and pip, you will need:
 
-- Java Runtime Environment (typically ``openjdk-17-jdk``)
+        - C and Fortran compilers (typically ``gcc`` and ``gfortran``).
 
-This can be installed on **Ubuntu/Debian Linux**:
+        - Python header files (typically a package named ``python3-dev`` or ``python3-devel``)
 
-.. code-block:: none
+        - Java Runtime Environment (typically ``openjdk-17-jdk``)
 
-    sudo apt-get install -y build-essential gfortran python3-pip python3-dev openjdk-17-jdk
+        This can be installed on **Ubuntu/Debian Linux**:
 
-.. note::
+        .. code-block:: none
 
-    - ``build-essential`` is used to install ``gcc`` and ``make``. ``make`` is optionnal but a ``Makefile`` is
-      available to build `smash`, generate the documentation, generate the adjoint code, run the tests and
-      format the source code.
+            sudo apt-get install -y build-essential gfortran python3-pip python3-dev openjdk-17-jdk
 
-    - ``openjdk-17-jdk`` is used to generate the adjoint with `Tapenade <https://team.inria.fr/ecuador/en/tapenade/>`__
+        .. note::
 
-Windows
-'''''''
+            - ``build-essential`` is used to install ``gcc`` and ``make``. ``make`` is optionnal but a ``Makefile`` is
+              available to build `smash`, generate the documentation, generate the adjoint code, run the tests and
+              format the source code.
 
-.. warning::
-    
-    Section in development. Information on compiling `smash` under **Windows** can be found in the
-    ``pyproject.toml``, ``meson.build`` and ``wheel.yml`` workflow.
+            - ``openjdk-17-jdk`` is used to generate the adjoint with `Tapenade <https://team.inria.fr/ecuador/en/tapenade/>`__
+
+    .. tab-item:: macOS
+
+        .. warning::
+
+            Section in development. Information on compiling `smash` under **macOS** can be found in the
+            ``pyproject.toml``, ``meson.build`` and ``wheel.yml`` workflow.
+
+    .. tab-item:: Windows
+
+        .. warning::
+
+            Section in development. Information on compiling `smash` under **Windows** can be found in the
+            ``pyproject.toml``, ``meson.build`` and ``wheel.yml`` workflow.
 
 Build
 *****
@@ -111,7 +119,7 @@ Once the system-level dependencies installed and the git cloned, `smash` can be 
     that needs to be differentiated, you will still need to regenerate the adjoint code. See the section
     :ref:`contributor_guide.development_process_details.build_from_source.automatic_differentiation`
 
-On **Linux**, `smash` can be built with or without dependency on `OpenMP <https://www.openmp.org/>`__.
+On **Linux** and **macOS**, `smash` can be built with or without dependency on `OpenMP <https://www.openmp.org/>`__.
 By default, the dependency is activated. To build without it, simply add the following option to the build command:
 
 .. code-block:: none
@@ -1748,3 +1756,33 @@ API reference
 
 Only the architecture of this section is defined in the ``rst`` files. The content is automatically generated from the docstrings of each
 `smash` function. The style guide used for the docstrings is that of  `numpydoc <https://numpydoc.readthedocs.io/en/latest/format.html>`__.
+
+Backporting
+-----------
+
+This section is similar to the `Backporting <https://numpy.org/doc/stable/dev/development_workflow.html#backporting>`__
+section of `NumPy <https://numpy.org/doc/stable/index.html>`__. Below is a summary of the main commands to run:
+
+- First, you need to make the branch you will work on. This needs to be based on the older version of smash (not main):
+
+.. code-block:: shell
+
+    # Make a new branch based on smash/maintenance/1.0.x,
+    # backport-420 is our new name for the branch.
+    git checkout -b backport-420 maintenance/1.0.x
+
+- Now you need to apply the changes from main to this branch using ``git cherry-pick``:
+
+.. code-block:: shell
+
+    # This pull request included the commit aa7a047
+    git cherry-pick aa7a047
+    ...
+    # Fix any conflicts, then if needed:
+    git cherry-pick --continue
+
+- Push the new branch to your Github repository:
+
+.. code-block:: shell
+
+    git push -u origin backport-420

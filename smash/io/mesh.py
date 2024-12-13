@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from smash.util._typing import FilePath
 
 
-__all__ = ["save_mesh", "read_mesh"]
+__all__ = ["read_mesh", "save_mesh"]
 
 
 def save_mesh(mesh: dict[str, Any], path: FilePath):
