@@ -13280,15 +13280,16 @@ CONTAINS
   END SUBROUTINE GR_INTERCEPTION
 
 !  Differentiation of gr_production in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: hp perc pr
+!   variations   of useful results: hp pn perc pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_D(fq_ps, fq_ps_d, fq_es, fq_es_d, pn, pn_d, &
-&   en, en_d, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, perc_d, ps, es)
+&   en, en_d, imperviousness, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, &
+&   perc_d, ps, es)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
-    REAL(sp), INTENT(IN) :: fq_ps_d, fq_es_d, pn_d, en_d, cp_d
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_d
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, en, imperviousness, cp, beta
+    REAL(sp), INTENT(IN) :: fq_ps_d, fq_es_d, en_d, cp_d
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_d, hp_d
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
     REAL(sp) :: inv_cp, hp_imd
@@ -13308,6 +13309,9 @@ CONTAINS
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     pr = 0._sp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn_d = (1._sp-imperviousness)*pn_d
+    pn = (1._sp-imperviousness)*pn
     temp = TANH(pn*inv_cp)
     temp0 = TANH(pn*inv_cp)
     temp1 = cp*(-(hp*hp)+1._sp)
@@ -13339,6 +13343,9 @@ CONTAINS
       es_d = en_d
       es = en
     END IF
+! no evaporation over impervious part of a cell 
+    es_d = (1._sp-imperviousness)*es_d
+    es = (1._sp-imperviousness)*es
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
@@ -13362,12 +13369,13 @@ CONTAINS
 !                pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_B(fq_ps, fq_ps_b, fq_es, fq_es_b, pn, pn_b, &
-&   en, en_b, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, perc_b, ps, es)
+&   en, en_b, imperviousness, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, &
+&   perc_b, ps, es)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
-    REAL(sp) :: fq_ps_b, fq_es_b, pn_b, en_b, cp_b
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_b
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, en, imperviousness, cp, beta
+    REAL(sp) :: fq_ps_b, fq_es_b, en_b, cp_b
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_b, hp_b
     REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
     REAL(sp) :: inv_cp, hp_imd
@@ -13395,6 +13403,8 @@ CONTAINS
     REAL(sp) :: ps_b
     REAL(sp) :: es_b
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn = (1._sp-imperviousness)*pn
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
     IF (pn .GT. (1._sp+fq_ps)*ps) THEN
       CALL PUSHREAL4(ps)
@@ -13414,6 +13424,8 @@ CONTAINS
       es = en
       CALL PUSHCONTROL1B(1)
     END IF
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13446,6 +13458,7 @@ CONTAINS
     ps_b = ps_b + inv_cp*hp_imd_b
     es_b = -(inv_cp*hp_imd_b)
     inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b
+    es_b = (1._sp-imperviousness)*es_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL POPREAL4(es)
@@ -13489,13 +13502,14 @@ CONTAINS
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
     inv_cp_b = inv_cp_b + pn*temp_b2 + pn*temp_b0
     cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
+    pn_b = (1._sp-imperviousness)*pn_b
   END SUBROUTINE GR_PRODUCTION_B
 
-  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, cp, beta, hp, pr, perc&
-&   , ps, es)
+  SUBROUTINE GR_PRODUCTION(fq_ps, fq_es, pn, en, imperviousness, cp, &
+&   beta, hp, pr, perc, ps, es)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: fq_ps, fq_es, pn, en, cp, beta
-    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(IN) :: fq_ps, fq_es, en, imperviousness, cp, beta
+    REAL(sp), INTENT(INOUT) :: pn, hp
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp) :: inv_cp, hp_imd
     INTRINSIC TANH
@@ -13504,6 +13518,8 @@ CONTAINS
     REAL(sp) :: pwr1
     inv_cp = 1._sp/cp
     pr = 0._sp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn = (1._sp-imperviousness)*pn
     ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
     IF (pn .GT. (1._sp+fq_ps)*ps) THEN
       ps = (1._sp+fq_ps)*ps
@@ -13517,6 +13533,8 @@ CONTAINS
     ELSE
       es = en
     END IF
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) pr = pn - ps
     pwx1 = 1._sp + (hp_imd/beta)**4
@@ -13526,16 +13544,17 @@ CONTAINS
   END SUBROUTINE GR_PRODUCTION
 
 !  Differentiation of gr_ri_production in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: hp perc pr
+!   variations   of useful results: hp pn perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
-  SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, &
-&   alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, ps, es, dt)
+  SUBROUTINE GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, cp, &
+&   cp_d, beta, alpha1, alpha1_d, hp, hp_d, pr, pr_d, perc, perc_d, ps, &
+&   es, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, alpha1_d
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, beta, alpha1
+    REAL(sp), INTENT(IN) :: en_d, cp_d, alpha1_d
     REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_d
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_d, hp_d
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp), INTENT(OUT) :: pr_d, perc_d
     REAL(sp) :: inv_cp, hp_imd
@@ -13575,6 +13594,9 @@ CONTAINS
     lambda = temp
     inv_lambda_d = -(lambda_d/lambda**2)
     inv_lambda = 1._sp/lambda
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn_d = (1._sp-imperviousness)*pn_d
+    pn = (1._sp-imperviousness)*pn
     arg1_d = inv_cp*(pn*lambda_d+lambda*pn_d) + lambda*pn*inv_cp_d
     arg1 = lambda*pn*inv_cp
     arg2_d = inv_cp*(pn*lambda_d+lambda*pn_d) + lambda*pn*inv_cp_d
@@ -13599,6 +13621,9 @@ CONTAINS
 &     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp4*hp_d))/((&
 &     1._sp-hp)*temp4+1._sp)
     es = temp1
+! no evaporation over impervious part of a cell 
+    es_d = (1._sp-imperviousness)*es_d
+    es = (1._sp-imperviousness)*es
     hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
@@ -13620,14 +13645,15 @@ CONTAINS
 !  Differentiation of gr_ri_production in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: alpha1 hp cp pn perc pr
 !   with respect to varying inputs: alpha1 hp en cp pn
-  SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, &
-&   alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, ps, es, dt)
+  SUBROUTINE GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, cp, &
+&   cp_b, beta, alpha1, alpha1_b, hp, hp_b, pr, pr_b, perc, perc_b, ps, &
+&   es, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
-    REAL(sp) :: pn_b, en_b, cp_b, alpha1_b
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, beta, alpha1
+    REAL(sp) :: en_b, cp_b, alpha1_b
     REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_b
+    REAL(sp), INTENT(INOUT) :: pn, hp
+    REAL(sp), INTENT(INOUT) :: pn_b, hp_b
     REAL(sp) :: pr, perc, ps, es
     REAL(sp) :: pr_b, perc_b
     REAL(sp) :: inv_cp, hp_imd
@@ -13665,12 +13691,17 @@ CONTAINS
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    CALL PUSHREAL4(pn)
+    pn = (1._sp-imperviousness)*pn
     arg1 = lambda*pn*inv_cp
     arg2 = lambda*pn*inv_cp
     ps = cp*inv_lambda*TANH(arg1)*(1._sp-(lambda*hp)**2)/(1._sp+lambda*&
 &     hp*TANH(arg2)) - gam*dt
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) THEN
       CALL PUSHCONTROL1B(0)
@@ -13702,6 +13733,7 @@ CONTAINS
       hp_b = 0.0_4
     END IF
     es_b = -(inv_cp*hp_imd_b)
+    es_b = (1._sp-imperviousness)*es_b
     temp4 = TANH(en*inv_cp)
     temp3 = (-hp+1._sp)*temp4 + 1._sp
     temp1 = TANH(en*inv_cp)
@@ -13742,18 +13774,19 @@ CONTAINS
       gam_b = -(dt*ps_b) - lambda_b/(2.0*SQRT(1._sp-gam))
     END IF
     hp_b = hp_b + lambda*temp*temp_b3 + lambda*temp_b2
+    pn_b = pn_b + lambda*inv_cp*arg2_b + lambda*inv_cp*arg1_b
+    CALL POPREAL4(pn)
     temp_b = -(EXP(-(pn*alpha1))*gam_b)
-    pn_b = pn_b + lambda*inv_cp*arg2_b + lambda*inv_cp*arg1_b - alpha1*&
-&     temp_b
+    pn_b = (1._sp-imperviousness)*pn_b - alpha1*temp_b
     alpha1_b = alpha1_b - pn*temp_b
   END SUBROUTINE GR_RI_PRODUCTION_B
 
-  SUBROUTINE GR_RI_PRODUCTION(pn, en, cp, beta, alpha1, hp, pr, perc, ps&
-&   , es, dt)
+  SUBROUTINE GR_RI_PRODUCTION(pn, en, imperviousness, cp, beta, alpha1, &
+&   hp, pr, perc, ps, es, dt)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta, alpha1
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, beta, alpha1
     REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(INOUT) :: pn, hp
     REAL(sp), INTENT(OUT) :: pr, perc, ps, es
     REAL(sp) :: inv_cp, hp_imd
     REAL(sp) :: lambda, gam, inv_lambda
@@ -13769,12 +13802,16 @@ CONTAINS
     gam = 1._sp - EXP(-(pn*alpha1))
     lambda = SQRT(1._sp - gam)
     inv_lambda = 1._sp/lambda
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn = (1._sp-imperviousness)*pn
     arg1 = lambda*pn*inv_cp
     arg2 = lambda*pn*inv_cp
     ps = cp*inv_lambda*TANH(arg1)*(1._sp-(lambda*hp)**2)/(1._sp+lambda*&
 &     hp*TANH(arg2)) - gam*dt
     es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
 &     inv_cp))
+! no evaporation over impervious part of a cell 
+    es = (1._sp-imperviousness)*es
     hp_imd = hp + (ps-es)*inv_cp
     IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
     pwx1 = 1._sp + (hp_imd/beta)**4
@@ -14292,13 +14329,16 @@ CONTAINS
   END SUBROUTINE GR_EXPONENTIAL_TRANSFER
 
 !  Differentiation of gr_production_transfer_ode in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: q hp ht
+!   variations   of useful results: q hp ht pn
 !   with respect to varying inputs: kexc hp ht en cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_D(pn, pn_d, en, en_d, cp, cp_d, &
-&   ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, l)
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_D(pn, pn_d, en, en_d, &
+&   imperviousness, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d&
+&   , q, q_d, l)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, ct_d, kexc_d
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: en_d, cp_d, ct_d, kexc_d
+    REAL(sp), INTENT(INOUT) :: pn
+    REAL(sp), INTENT(INOUT) :: pn_d
     REAL(sp), INTENT(INOUT) :: hp, ht, q
     REAL(sp), INTENT(INOUT) :: hp_d, ht_d, q_d
     REAL(sp), INTENT(OUT) :: l
@@ -14320,6 +14360,9 @@ CONTAINS
 ! integer :: n_subtimesteps = 2
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn_d = (1._sp-imperviousness)*pn_d
+    pn = (1._sp-imperviousness)*pn
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 ! do i = 1, n_subtimesteps
@@ -14402,11 +14445,14 @@ CONTAINS
 !  Differentiation of gr_production_transfer_ode in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: q kexc hp ht en cp pn ct
 !   with respect to varying inputs: kexc hp ht en cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B(pn, pn_b, en, en_b, cp, cp_b, &
-&   ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, l)
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B(pn, pn_b, en, en_b, &
+&   imperviousness, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b&
+&   , q, q_b, l)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
-    REAL(sp) :: pn_b, en_b, cp_b, ct_b, kexc_b
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp) :: en_b, cp_b, ct_b, kexc_b
+    REAL(sp), INTENT(INOUT) :: pn
+    REAL(sp), INTENT(INOUT) :: pn_b
     REAL(sp), INTENT(INOUT) :: hp, ht, q
     REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
     REAL(sp) :: l
@@ -14430,6 +14476,8 @@ CONTAINS
     REAL(sp) :: l_b
 ! integer :: n_subtimesteps = 2
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn = (1._sp-imperviousness)*pn
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 ! do i = 1, n_subtimesteps
@@ -14564,13 +14612,15 @@ CONTAINS
     END DO
     ht_b = ht_b + ht0_b
     hp_b = hp_b + hp0_b
+    pn_b = (1._sp-imperviousness)*pn_b
     cp_b = cp_b - inv_cp_b/cp**2
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B
 
-  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE(pn, en, cp, ct, kexc, hp, ht, q&
-&   , l)
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE(pn, en, imperviousness, cp, ct, &
+&   kexc, hp, ht, q, l)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp), INTENT(INOUT) :: pn
     REAL(sp), INTENT(INOUT) :: hp, ht, q
     REAL(sp), INTENT(OUT) :: l
     REAL(sp), DIMENSION(2, 2) :: jacob
@@ -14584,6 +14634,8 @@ CONTAINS
     REAL(sp) :: result1
 ! integer :: n_subtimesteps = 2
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn = (1._sp-imperviousness)*pn
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 ! do i = 1, n_subtimesteps
@@ -14620,19 +14672,19 @@ CONTAINS
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE
 
 !  Differentiation of gr_production_transfer_ode_mlp in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: q hp ht
+!   variations   of useful results: q hp ht pn
 !   with respect to varying inputs: kexc hp ht en fq cp pn ct
   SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D(fq, fq_d, pn, pn_d, en, &
-&   en_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, &
-&   l)
+&   en_d, imperviousness, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht&
+&   , ht_d, q, q_d, l)
     IMPLICIT NONE
 ! fixed NN output size
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq_d
-    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, ct_d, kexc_d
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
-    REAL(sp), INTENT(INOUT) :: hp_d, ht_d, q_d
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp), INTENT(IN) :: en_d, cp_d, ct_d, kexc_d
+    REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
+    REAL(sp), INTENT(INOUT) :: pn_d, hp_d, ht_d, q_d
     REAL(sp), INTENT(OUT) :: l
     REAL(sp) :: l_d
     REAL(sp) :: inv_cp, dt, fhp, fht
@@ -14644,6 +14696,9 @@ CONTAINS
 ! integer :: n_subtimesteps = 4
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn_d = (1._sp-imperviousness)*pn_d
+    pn = (1._sp-imperviousness)*pn
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
@@ -14706,16 +14761,16 @@ CONTAINS
 !   gradient     of useful results: q kexc hp ht en fq cp pn ct
 !   with respect to varying inputs: kexc hp ht en fq cp pn ct
   SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B(fq, fq_b, pn, pn_b, en, &
-&   en_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, &
-&   l)
+&   en_b, imperviousness, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht&
+&   , ht_b, q, q_b, l)
     IMPLICIT NONE
 ! fixed NN output size
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq
     REAL(sp), DIMENSION(5) :: fq_b
-    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
-    REAL(sp) :: pn_b, en_b, cp_b, ct_b, kexc_b
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
-    REAL(sp), INTENT(INOUT) :: hp_b, ht_b, q_b
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp) :: en_b, cp_b, ct_b, kexc_b
+    REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
+    REAL(sp), INTENT(INOUT) :: pn_b, hp_b, ht_b, q_b
     REAL(sp) :: l
     REAL(sp) :: inv_cp, dt, fhp, fht
     REAL(sp) :: inv_cp_b, fhp_b, fht_b
@@ -14728,6 +14783,8 @@ CONTAINS
 ! integer :: i
 ! integer :: n_subtimesteps = 4
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn = (1._sp-imperviousness)*pn
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
@@ -14820,21 +14877,24 @@ CONTAINS
     fq_b(2) = fq_b(2) + (2._sp-hp)*temp_b0
     fq_b(1) = fq_b(1) + pn*temp_b
     pn_b = pn_b + (fq(1)+1._sp)*temp_b
+    pn_b = (1._sp-imperviousness)*pn_b
     cp_b = cp_b - inv_cp_b/cp**2
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B
 
-  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP(fq, pn, en, cp, ct, kexc, hp&
-&   , ht, q, l)
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP(fq, pn, en, imperviousness, &
+&   cp, ct, kexc, hp, ht, q, l)
     IMPLICIT NONE
 ! fixed NN output size
     REAL(sp), DIMENSION(5), INTENT(IN) :: fq
-    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
-    REAL(sp), INTENT(INOUT) :: hp, ht, q
+    REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
+    REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
     REAL(sp), INTENT(OUT) :: l
     REAL(sp) :: inv_cp, dt, fhp, fht
 ! integer :: i
 ! integer :: n_subtimesteps = 4
     inv_cp = 1._sp/cp
+! impervious area percentage at cell scale applied to neutralized rainfall - no infiltration for imperviousness*pn 
+    pn = (1._sp-imperviousness)*pn
 ! dt = 1._sp/real(n_subtimesteps, sp)
     dt = 1._sp
 !do i = 1, n_subtimesteps
@@ -14889,7 +14949,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -14906,14 +14967,16 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
-&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
-&                         )
+&                          en, en_d, imperviousness, ac_cp(k), ac_cp_d(k&
+&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
+&                          , perc_d, ps, es)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -14978,7 +15041,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -14999,15 +15063,17 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
-            CALL PUSHREAL4(pn)
             CALL PUSHREAL4(ac_hi(k))
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), beta, ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -15061,15 +15127,17 @@ CONTAINS
           IF (branch .NE. 0) THEN
             CALL GR_EXCHANGE_B(0._sp, dummydiff_b1, ac_kexc(k), &
 &                        ac_kexc_b(k), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             pn_b = 0.0_4
             en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
-&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
-&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b, ps, es)
+&                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
+&                          ), ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr&
+&                          , pr_b, perc, perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
-            CALL POPREAL4(pn)
             CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
@@ -15098,7 +15166,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15112,11 +15181,13 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), beta, ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -15197,7 +15268,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -15259,12 +15331,15 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
 &                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
-&                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d, ps, es)
+&                          pn(k), pn_d(k), en(k), en_d(k), &
+&                          imperviousness, ac_cp(k), ac_cp_d(k), beta, &
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
             CALL GR_EXCHANGE_D(output_layer(4, k), output_layer_d(4, k)&
 &                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
 &                        ), l, l_d)
@@ -15364,7 +15439,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -15428,13 +15504,16 @@ CONTAINS
         ELSE
           CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
+            CALL PUSHREAL4(pn(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
 &                     )
             CALL PUSHCONTROL1B(1)
@@ -15505,14 +15584,18 @@ CONTAINS
             CALL GR_EXCHANGE_B(output_layer(4, k), output_layer_b(4, k)&
 &                        , ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k&
 &                        ), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
             CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
 &                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
-&                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b, ps, es)
+&                          pn(k), pn_b(k), en(k), en_b(k), &
+&                          imperviousness, ac_cp(k), ac_cp_b(k), beta, &
+&                          ac_hp(k), ac_hp_b(k), pr, pr_b, perc, perc_b&
+&                          , ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -15595,7 +15678,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -15643,10 +15727,12 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
 &                     )
           ELSE
@@ -15707,8 +15793,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -15728,12 +15814,14 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
-&                             ac_cp_d(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, &
+&                             ac_cp(k), ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
 &                             pr_d, perc, perc_d, ps, es, setup%dt)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
@@ -15806,8 +15894,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -15829,6 +15917,8 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
             CALL PUSHREAL4(pn)
@@ -15838,8 +15928,10 @@ CONTAINS
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, ps, es, setup%dt)
+            CALL PUSHREAL4(pn)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, ps, es, &
+&                           setup%dt)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -15907,11 +15999,14 @@ CONTAINS
           ELSE
             CALL GR_EXCHANGE_B(0._sp, dummydiff_b, ac_kexc(k), ac_kexc_b&
 &                        (k), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
-&                             ac_cp_b(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, &
+&                             ac_cp(k), ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
 &                             pr_b, perc, perc_b, ps, es, setup%dt)
             CALL POPREAL4(ac_hi(k))
@@ -15946,8 +16041,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15962,11 +16057,14 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, ps, es, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, ps, es, &
+&                           setup%dt)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -16021,7 +16119,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
+    REAL(sp) :: imperviousness, l
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16056,12 +16154,14 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           CALL GR_PRODUCTION_TRANSFER_ODE_D(pn(k), pn_d(k), en(k), en_d(&
-&                                     k), ac_cp(k), ac_cp_d(k), ac_ct(k)&
-&                                     , ac_ct_d(k), ac_kexc(k), &
-&                                     ac_kexc_d(k), ac_hp(k), ac_hp_d(k)&
-&                                     , ac_ht(k), ac_ht_d(k), ac_qt(k), &
-&                                     ac_qt_d(k), l)
+&                                     k), imperviousness, ac_cp(k), &
+&                                     ac_cp_d(k), ac_ct(k), ac_ct_d(k), &
+&                                     ac_kexc(k), ac_kexc_d(k), ac_hp(k)&
+&                                     , ac_hp_d(k), ac_ht(k), ac_ht_d(k)&
+&                                     , ac_qt(k), ac_qt_d(k), l)
 ! Transform from mm/dt to m3/s
           temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
           ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
@@ -16101,7 +16201,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
+    REAL(sp) :: imperviousness, l
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16137,12 +16237,15 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           CALL PUSHREAL4(ac_qt(k))
           CALL PUSHREAL4(ac_ht(k))
           CALL PUSHREAL4(ac_hp(k))
-          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), ac_cp(k), ac_ct(&
-&                                   k), ac_kexc(k), ac_hp(k), ac_ht(k), &
-&                                   ac_qt(k), l)
+          CALL PUSHREAL4(pn(k))
+          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), imperviousness, &
+&                                   ac_cp(k), ac_ct(k), ac_kexc(k), &
+&                                   ac_hp(k), ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           CALL PUSHCONTROL1B(1)
         END IF
@@ -16157,15 +16260,18 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
+          CALL POPREAL4(pn(k))
           CALL POPREAL4(ac_hp(k))
           CALL POPREAL4(ac_ht(k))
           CALL POPREAL4(ac_qt(k))
           CALL GR_PRODUCTION_TRANSFER_ODE_B(pn(k), pn_b(k), en(k), en_b(&
-&                                     k), ac_cp(k), ac_cp_b(k), ac_ct(k)&
-&                                     , ac_ct_b(k), ac_kexc(k), &
-&                                     ac_kexc_b(k), ac_hp(k), ac_hp_b(k)&
-&                                     , ac_ht(k), ac_ht_b(k), ac_qt(k), &
-&                                     ac_qt_b(k), l)
+&                                     k), imperviousness, ac_cp(k), &
+&                                     ac_cp_b(k), ac_ct(k), ac_ct_b(k), &
+&                                     ac_kexc(k), ac_kexc_b(k), ac_hp(k)&
+&                                     , ac_hp_b(k), ac_ht(k), ac_ht_b(k)&
+&                                     , ac_qt(k), ac_qt_b(k), l)
           ac_qt_b(k) = 0.0_4
         END IF
       END DO
@@ -16211,7 +16317,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
+    REAL(sp) :: imperviousness, l
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16239,9 +16345,11 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
-          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), ac_cp(k), ac_ct(&
-&                                   k), ac_kexc(k), ac_hp(k), ac_ht(k), &
-&                                   ac_qt(k), l)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
+          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), imperviousness, &
+&                                   ac_cp(k), ac_ct(k), ac_kexc(k), &
+&                                   ac_hp(k), ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt
@@ -16306,7 +16414,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
+    REAL(sp) :: imperviousness, l
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16364,14 +16472,17 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP_D(output_layer(:, k), &
 &                                         output_layer_d(:, k), pn(k), &
-&                                         pn_d(k), en(k), en_d(k), ac_cp&
-&                                         (k), ac_cp_d(k), ac_ct(k), &
-&                                         ac_ct_d(k), ac_kexc(k), &
-&                                         ac_kexc_d(k), ac_hp(k), &
-&                                         ac_hp_d(k), ac_ht(k), ac_ht_d(&
-&                                         k), ac_qt(k), ac_qt_d(k), l)
+&                                         pn_d(k), en(k), en_d(k), &
+&                                         imperviousness, ac_cp(k), &
+&                                         ac_cp_d(k), ac_ct(k), ac_ct_d(&
+&                                         k), ac_kexc(k), ac_kexc_d(k), &
+&                                         ac_hp(k), ac_hp_d(k), ac_ht(k)&
+&                                         , ac_ht_d(k), ac_qt(k), &
+&                                         ac_qt_d(k), l)
 ! Transform from mm/dt to m3/s
           temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
           ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
@@ -16439,7 +16550,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
+    REAL(sp) :: imperviousness, l
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16497,13 +16608,16 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           CALL PUSHREAL4(ac_qt(k))
           CALL PUSHREAL4(ac_ht(k))
           CALL PUSHREAL4(ac_hp(k))
+          CALL PUSHREAL4(pn(k))
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), pn(k)&
-&                                       , en(k), ac_cp(k), ac_ct(k), &
-&                                       ac_kexc(k), ac_hp(k), ac_ht(k), &
-&                                       ac_qt(k), l)
+&                                       , en(k), imperviousness, ac_cp(k&
+&                                       ), ac_ct(k), ac_kexc(k), ac_hp(k&
+&                                       ), ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           CALL PUSHCONTROL1B(1)
         END IF
@@ -16519,17 +16633,21 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
+          CALL POPREAL4(pn(k))
           CALL POPREAL4(ac_hp(k))
           CALL POPREAL4(ac_ht(k))
           CALL POPREAL4(ac_qt(k))
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP_B(output_layer(:, k), &
 &                                         output_layer_b(:, k), pn(k), &
-&                                         pn_b(k), en(k), en_b(k), ac_cp&
-&                                         (k), ac_cp_b(k), ac_ct(k), &
-&                                         ac_ct_b(k), ac_kexc(k), &
-&                                         ac_kexc_b(k), ac_hp(k), &
-&                                         ac_hp_b(k), ac_ht(k), ac_ht_b(&
-&                                         k), ac_qt(k), ac_qt_b(k), l)
+&                                         pn_b(k), en(k), en_b(k), &
+&                                         imperviousness, ac_cp(k), &
+&                                         ac_cp_b(k), ac_ct(k), ac_ct_b(&
+&                                         k), ac_kexc(k), ac_kexc_b(k), &
+&                                         ac_hp(k), ac_hp_b(k), ac_ht(k)&
+&                                         , ac_ht_b(k), ac_qt(k), &
+&                                         ac_qt_b(k), l)
           ac_qt_b(k) = 0.0_4
         END IF
       END DO
@@ -16612,7 +16730,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: l
+    REAL(sp) :: imperviousness, l
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16657,10 +16775,12 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), pn(k)&
-&                                       , en(k), ac_cp(k), ac_ct(k), &
-&                                       ac_kexc(k), ac_hp(k), ac_ht(k), &
-&                                       ac_qt(k), l)
+&                                       , en(k), imperviousness, ac_cp(k&
+&                                       ), ac_ct(k), ac_kexc(k), ac_hp(k&
+&                                       ), ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt
@@ -16698,7 +16818,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -16715,14 +16836,16 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
-&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
-&                         )
+&                          en, en_d, imperviousness, ac_cp(k), ac_cp_d(k&
+&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
+&                          , perc_d, ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -16788,7 +16911,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
@@ -16809,15 +16933,17 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
-            CALL PUSHREAL4(pn)
             CALL PUSHREAL4(ac_hi(k))
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), beta, ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -16873,15 +16999,17 @@ CONTAINS
             CALL GR_THRESHOLD_EXCHANGE_B(0._sp, dummydiff_b1, ac_kexc(k)&
 &                                  , ac_kexc_b(k), ac_aexc(k), ac_aexc_b&
 &                                  (k), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             pn_b = 0.0_4
             en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
-&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
-&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b, ps, es)
+&                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
+&                          ), ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr&
+&                          , pr_b, perc, perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
-            CALL POPREAL4(pn)
             CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
@@ -16910,7 +17038,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16924,11 +17053,13 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), beta, ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -17010,7 +17141,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -17072,12 +17204,15 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
 &                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
-&                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d, ps, es)
+&                          pn(k), pn_d(k), en(k), en_d(k), &
+&                          imperviousness, ac_cp(k), ac_cp_d(k), beta, &
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(output_layer(4, k), &
 &                                  output_layer_d(4, k), ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
@@ -17178,7 +17313,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -17242,13 +17378,16 @@ CONTAINS
         ELSE
           CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
+            CALL PUSHREAL4(pn(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -17320,14 +17459,18 @@ CONTAINS
 &                                  output_layer_b(4, k), ac_kexc(k), &
 &                                  ac_kexc_b(k), ac_aexc(k), ac_aexc_b(k&
 &                                  ), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
             CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
 &                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
-&                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b, ps, es)
+&                          pn(k), pn_b(k), en(k), en_b(k), &
+&                          imperviousness, ac_cp(k), ac_cp_b(k), beta, &
+&                          ac_hp(k), ac_hp_b(k), pr, pr_b, perc, perc_b&
+&                          , ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -17411,7 +17554,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
+&   , qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -17459,10 +17603,12 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
@@ -17523,8 +17669,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , split_d
     INTRINSIC TANH
@@ -17544,12 +17690,14 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
-            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), &
-&                             ac_cp_d(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_D(pn, pn_d, en, en_d, imperviousness, &
+&                             ac_cp(k), ac_cp_d(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_d(k), ac_hp(k), ac_hp_d(k), pr, &
 &                             pr_d, perc, perc_d, ps, es, setup%dt)
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
@@ -17623,8 +17771,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , split_b
     INTRINSIC TANH
@@ -17646,6 +17794,8 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
             CALL PUSHREAL4(pn)
@@ -17655,8 +17805,10 @@ CONTAINS
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, ps, es, setup%dt)
+            CALL PUSHREAL4(pn)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, ps, es, &
+&                           setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -17726,11 +17878,14 @@ CONTAINS
             CALL GR_THRESHOLD_EXCHANGE_B(0._sp, dummydiff_b, ac_kexc(k)&
 &                                  , ac_kexc_b(k), ac_aexc(k), ac_aexc_b&
 &                                  (k), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), &
-&                             ac_cp_b(k), beta, ac_alpha1(k), &
+            CALL GR_RI_PRODUCTION_B(pn, pn_b, en, en_b, imperviousness, &
+&                             ac_cp(k), ac_cp_b(k), beta, ac_alpha1(k), &
 &                             ac_alpha1_b(k), ac_hp(k), ac_hp_b(k), pr, &
 &                             pr_b, perc, perc_b, ps, es, setup%dt)
             CALL POPREAL4(ac_hi(k))
@@ -17765,8 +17920,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, &
-&   split
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd, split
     INTRINSIC TANH
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -17781,11 +17936,14 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_RI_PRODUCTION(pn, en, ac_cp(k), beta, ac_alpha1(k), &
-&                           ac_hp(k), pr, perc, ps, es, setup%dt)
+            CALL GR_RI_PRODUCTION(pn, en, imperviousness, ac_cp(k), beta&
+&                           , ac_alpha1(k), ac_hp(k), pr, perc, ps, es, &
+&                           setup%dt)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -17843,8 +18001,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
-&   , qe
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d&
 &   , qd_d, qe_d
     INTRINSIC MAX
@@ -17862,14 +18020,16 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
-&                          en, en_d, ac_cp(k), ac_cp_d(k), beta, ac_hp(k&
-&                          ), ac_hp_d(k), pr, pr_d, perc, perc_d, ps, es&
-&                         )
+&                          en, en_d, imperviousness, ac_cp(k), ac_cp_d(k&
+&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
+&                          , perc_d, ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
 &                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
@@ -17941,8 +18101,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
-&   , qe
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
 &   , qd_b, qe_b
     INTRINSIC MAX
@@ -17965,15 +18125,17 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
-            CALL PUSHREAL4(pn)
             CALL PUSHREAL4(ac_hi(k))
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), beta, ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -18042,15 +18204,17 @@ CONTAINS
             CALL GR_THRESHOLD_EXCHANGE_B(0._sp, dummydiff_b1, ac_kexc(k)&
 &                                  , ac_kexc_b(k), ac_aexc(k), ac_aexc_b&
 &                                  (k), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             pn_b = 0.0_4
             en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
-&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
-&                          beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc, &
-&                          perc_b, ps, es)
+&                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
+&                          ), ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr&
+&                          , pr_b, perc, perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
-            CALL POPREAL4(pn)
             CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
@@ -18080,8 +18244,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd&
-&   , qe
+    REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18095,11 +18259,13 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), beta, ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(0._sp, ac_kexc(k), ac_aexc(k), &
 &                                ac_ht(k), l)
           ELSE
@@ -18185,7 +18351,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
+&   , qr, qd, qe
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qe_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -18249,12 +18416,15 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
 &                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
-&                          ac_cp_d(k), beta, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d, ps, es)
+&                          pn(k), pn_d(k), en(k), en_d(k), &
+&                          imperviousness, ac_cp(k), ac_cp_d(k), beta, &
+&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
             CALL GR_THRESHOLD_EXCHANGE_D(output_layer(5, k), &
 &                                  output_layer_d(5, k), ac_kexc(k), &
 &                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
@@ -18371,7 +18541,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
+&   , qr, qd, qe
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qe_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -18439,13 +18610,16 @@ CONTAINS
         ELSE
           CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
+            CALL PUSHREAL4(pn(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
@@ -18539,14 +18713,18 @@ CONTAINS
 &                                  output_layer_b(5, k), ac_kexc(k), &
 &                                  ac_kexc_b(k), ac_aexc(k), ac_aexc_b(k&
 &                                  ), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
             CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
 &                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
-&                          ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b, ps, es)
+&                          pn(k), pn_b(k), en(k), en_b(k), &
+&                          imperviousness, ac_cp(k), ac_cp_b(k), beta, &
+&                          ac_hp(k), ac_hp_b(k), pr, pr_b, perc, perc_b&
+&                          , ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -18632,7 +18810,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
+&   , qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18681,10 +18860,12 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), beta, ac_hp(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
+&                        ac_hp(k), pr, perc, ps, es)
             CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
@@ -18749,7 +18930,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, imperviousness, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d&
 &   , ql_d, qd_d
     INTRINSIC MAX
@@ -18765,14 +18947,16 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
-&                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
-&                          , ps, es)
+&                          en, en_d, imperviousness, ac_cp(k), ac_cp_d(k&
+&                          ), 1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
             CALL GR_EXCHANGE_D(0._sp, 0.0_4, ac_kexc(k), ac_kexc_d(k), &
 &                        ac_ht(k), ac_ht_d(k), l, l_d)
           ELSE
@@ -18842,7 +19026,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, imperviousness, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b&
 &   , ql_b, qd_b
     INTRINSIC MAX
@@ -18863,15 +19048,17 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(en)
-            CALL PUSHREAL4(pn)
             CALL PUSHREAL4(ac_hi(k))
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), 1000._sp, ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -18939,15 +19126,17 @@ CONTAINS
           IF (branch .NE. 0) THEN
             CALL GR_EXCHANGE_B(0._sp, dummydiff_b1, ac_kexc(k), &
 &                        ac_kexc_b(k), ac_ht(k), ac_ht_b(k), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             pn_b = 0.0_4
             en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
-&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
-&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b, ps, es)
+&                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
+&                          ), ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k)&
+&                          , pr, pr_b, perc, perc_b, ps, es)
             CALL POPREAL4(ac_hi(k))
-            CALL POPREAL4(pn)
             CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
@@ -18977,7 +19166,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: pn, en, imperviousness, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18989,11 +19179,13 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc, ps, es)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), 1000._sp, ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(0._sp, ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -19078,7 +19270,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
+&   ql, qd
     REAL(sp) :: pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -19140,12 +19333,15 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
 &                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
-&                          ac_cp_d(k), 1000._sp, ac_hp(k), ac_hp_d(k), &
-&                          pr, pr_d, perc, perc_d, ps, es)
+&                          pn(k), pn_d(k), en(k), en_d(k), &
+&                          imperviousness, ac_cp(k), ac_cp_d(k), &
+&                          1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
             CALL GR_EXCHANGE_D(output_layer(5, k), output_layer_d(5, k)&
 &                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
 &                        ), l, l_d)
@@ -19260,7 +19456,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
+&   ql, qd
     REAL(sp) :: pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -19326,13 +19523,16 @@ CONTAINS
         ELSE
           CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
+            CALL PUSHREAL4(pn(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), &
+&                        1000._sp, ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
 &                     )
             CALL PUSHCONTROL1B(1)
@@ -19426,14 +19626,18 @@ CONTAINS
             CALL GR_EXCHANGE_B(output_layer(5, k), output_layer_b(5, k)&
 &                        , ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k&
 &                        ), l, l_b)
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
             CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
 &                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
-&                          ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k), &
-&                          pr, pr_b, perc, perc_b, ps, es)
+&                          pn(k), pn_b(k), en(k), en_b(k), &
+&                          imperviousness, ac_cp(k), ac_cp_b(k), &
+&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+&                          perc, perc_b, ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -19519,7 +19723,8 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
+&   ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19566,10 +19771,12 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), &
+&                        1000._sp, ac_hp(k), pr, perc, ps, es)
             CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
 &                     )
           ELSE
@@ -19630,7 +19837,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
+    REAL(sp) :: ei, pn, en, imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -19646,6 +19853,8 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
               ei_d = ac_prcp_d(k)
@@ -19664,9 +19873,9 @@ CONTAINS
             en_d = -ei_d
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
-&                          en, en_d, ac_cp(k), ac_cp_d(k), 1000._sp, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
-&                          , ps, es)
+&                          en, en_d, imperviousness, ac_cp(k), ac_cp_d(k&
+&                          ), 1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -19714,7 +19923,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
+    REAL(sp) :: ei, pn, en, imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -19733,6 +19942,8 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
               ei = ac_prcp(k)
@@ -19742,19 +19953,18 @@ CONTAINS
               ei = ac_pet(k)
             END IF
             IF (0._sp .LT. ac_prcp(k) - ei) THEN
-              CALL PUSHREAL4(pn)
               pn = ac_prcp(k) - ei
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL4(pn)
-              pn = 0._sp
               CALL PUSHCONTROL1B(1)
+              pn = 0._sp
             END IF
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), 1000._sp, ac_hp(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -19789,22 +19999,22 @@ CONTAINS
           perc_b = prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             pn_b = 0.0_4
             en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
-&                          , pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k), &
-&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b, ps, es)
+&                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
+&                          ), ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k)&
+&                          , pr, pr_b, perc, perc_b, ps, es)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL4(pn)
               ac_prcp_b(k) = ac_prcp_b(k) + pn_b
               ei_b = ei_b - pn_b
-            ELSE
-              CALL POPREAL4(pn)
             END IF
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) ac_prcp_b(k) = ac_prcp_b(k) + ei_b
@@ -19830,7 +20040,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: ei, pn, en, pr, perc, ps, es, prr, qr
+    REAL(sp) :: ei, pn, en, imperviousness, pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -19843,6 +20053,8 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
               ei = ac_prcp(k)
@@ -19855,8 +20067,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_cp(k), 1000._sp&
-&                        , ac_hp(k), pr, perc, ps, es)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_cp(k), 1000._sp, ac_hp(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -19924,7 +20136,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, prr, qr
+    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20001,12 +20213,15 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
 &                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), ac_cp(k), &
-&                          ac_cp_d(k), 1000._sp, ac_hp(k), ac_hp_d(k), &
-&                          pr, pr_d, perc, perc_d, ps, es)
+&                          pn(k), pn_d(k), en(k), en_d(k), &
+&                          imperviousness, ac_cp(k), ac_cp_d(k), &
+&                          1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20080,7 +20295,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, prr, qr
+    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
     REAL(sp) :: pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20154,11 +20369,14 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(ac_hp(k))
+            CALL PUSHREAL4(pn(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), &
+&                        1000._sp, ac_hp(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -20195,12 +20413,16 @@ CONTAINS
           perc_b = prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
             CALL POPREAL4(ac_hp(k))
             CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
 &                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), ac_cp(k), &
-&                          ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k), &
-&                          pr, pr_b, perc, perc_b, ps, es)
+&                          pn(k), pn_b(k), en(k), en_b(k), &
+&                          imperviousness, ac_cp(k), ac_cp_b(k), &
+&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+&                          perc, perc_b, ps, es)
           END IF
         END IF
       END DO
@@ -20294,7 +20516,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: pr, perc, ps, es, prr, qr
+    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -20351,10 +20573,12 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_cp(k), 1000._sp, ac_hp(k), pr&
-&                        , perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_cp(k), &
+&                        1000._sp, ac_hp(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20397,7 +20621,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, imperviousness, pr, perc, ps, es, prr&
+&   , prd, qr, qd
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20415,6 +20640,8 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
               ei_d = ac_prcp_d(k)
@@ -20433,9 +20660,9 @@ CONTAINS
             en_d = -ei_d
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(0._sp, 0.0_4, 0._sp, 0.0_4, pn, pn_d, &
-&                          en, en_d, ac_ca(k), ac_ca_d(k), beta, ac_ha(k&
-&                          ), ac_ha_d(k), pr, pr_d, perc, perc_d, ps, es&
-&                         )
+&                          en, en_d, imperviousness, ac_ca(k), ac_ca_d(k&
+&                          ), beta, ac_ha(k), ac_ha_d(k), pr, pr_d, perc&
+&                          , perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20492,7 +20719,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, imperviousness, pr, perc, ps, es, prr&
+&   , prd, qr, qd
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20513,6 +20741,8 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
               ei = ac_prcp(k)
@@ -20522,19 +20752,18 @@ CONTAINS
               ei = ac_pet(k)
             END IF
             IF (0._sp .LT. ac_prcp(k) - ei) THEN
-              CALL PUSHREAL4(pn)
               pn = ac_prcp(k) - ei
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL4(pn)
-              pn = 0._sp
               CALL PUSHCONTROL1B(1)
+              pn = 0._sp
             END IF
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_ha(k))
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_ca(k), beta, ac_ha(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -20590,22 +20819,22 @@ CONTAINS
           CALL POPREAL4(prr)
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_ha(k))
             pn_b = 0.0_4
             en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
-&                          , pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k), &
-&                          beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc, &
-&                          perc_b, ps, es)
+&                          , pn, pn_b, en, en_b, imperviousness, ac_ca(k&
+&                          ), ac_ca_b(k), beta, ac_ha(k), ac_ha_b(k), pr&
+&                          , pr_b, perc, perc_b, ps, es)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL4(pn)
               ac_prcp_b(k) = ac_prcp_b(k) + pn_b
               ei_b = ei_b - pn_b
-            ELSE
-              CALL POPREAL4(pn)
             END IF
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) ac_prcp_b(k) = ac_prcp_b(k) + ei_b
@@ -20631,7 +20860,8 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, imperviousness, pr, perc, ps, es, prr&
+&   , prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -20646,6 +20876,8 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
               ei = ac_prcp(k)
@@ -20658,8 +20890,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc, ps, es)
+            CALL GR_PRODUCTION(0._sp, 0._sp, pn, en, imperviousness, &
+&                        ac_ca(k), beta, ac_ha(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20735,7 +20967,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20814,12 +21046,15 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
 &                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), ac_ca(k), &
-&                          ac_ca_d(k), beta, ac_ha(k), ac_ha_d(k), pr, &
-&                          pr_d, perc, perc_d, ps, es)
+&                          pn(k), pn_d(k), en(k), en_d(k), &
+&                          imperviousness, ac_ca(k), ac_ca_d(k), beta, &
+&                          ac_ha(k), ac_ha_d(k), pr, pr_d, perc, perc_d&
+&                          , ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -20910,7 +21145,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, prr, prd, qr, qd
     REAL(sp) :: pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -20988,13 +21223,16 @@ CONTAINS
         ELSE
           CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_ha(k))
+            CALL PUSHREAL4(pn(k))
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_ca(k), beta, &
+&                        ac_ha(k), pr, perc, ps, es)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHREAL4(pr)
@@ -21064,14 +21302,18 @@ CONTAINS
             CALL POPREAL4(perc)
             CALL POPREAL4(pr)
           ELSE
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
             CALL POPREAL4(ac_ha(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
             CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
 &                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), ac_ca(k), &
-&                          ac_ca_b(k), beta, ac_ha(k), ac_ha_b(k), pr, &
-&                          pr_b, perc, perc_b, ps, es)
+&                          pn(k), pn_b(k), en(k), en_b(k), &
+&                          imperviousness, ac_ca(k), ac_ca_b(k), beta, &
+&                          ac_ha(k), ac_ha_b(k), pr, pr_b, perc, perc_b&
+&                          , ps, es)
           END IF
           CALL POPINTEGER4(k)
         END IF
@@ -21166,7 +21408,7 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, pr, perc, ps, es, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, prr, prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -21225,10 +21467,12 @@ CONTAINS
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
+          imperviousness = input_data%physio_data%imperviousness(row, &
+&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), ac_ca(k), beta, ac_ha(k), pr, &
-&                        perc, ps, es)
+&                        pn(k), en(k), imperviousness, ac_ca(k), beta, &
+&                        ac_ha(k), pr, perc, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
