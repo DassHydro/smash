@@ -446,7 +446,6 @@ DEFAULT_RR_INITIAL_STATES = dict(
 #################################
 
 # % Following RR_PARAMETERS order
-
 DEFAULT_BOUNDS_RR_PARAMETERS = dict(
     zip(
         RR_PARAMETERS,

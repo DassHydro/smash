@@ -447,6 +447,7 @@ def _standardize_model_setup_imperviousness_file(
 ) -> str:
     return _standardize_model_setup_file(read_imperviousness, "imperviousness_file", imperviousness_file)
 
+
 def _standardize_model_setup_hidden_neuron(hidden_neuron: Numeric | ListLike, **kwargs) -> np.ndarray:
     standardized_hidden_neuron = np.zeros(int(len(NN_PARAMETERS_KEYS) / 2) - 1, dtype=np.int32)
 
