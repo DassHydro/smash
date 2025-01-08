@@ -350,231 +350,6 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
 
-
-.. _math_num_documentation.forward_structure.hydrological_module.gr4_ri:
-
-.. dropdown:: gr4_ri (Génie Rural 4 with rainfall intensity terms)
-    :animate: fade-in-slide-down
-
-    This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
-
-    .. figure:: ../_static/gr4-ri_structure.svg
-        :align: center
-        :width: 400
-        
-        Diagram of the ``gr4_ri`` like hydrological operator
-
-    It can be expressed as follows:
-
-    .. math::
-
-        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
-
-    with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-    :math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
-    :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
-    :math:`k_{exc}` the exchange coefficient, :math:`h_i` the state of the interception reservoir, 
-    :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
-    :math:`\alpha_1` and :math:`\alpha_2` parameters controling the rainfall intensity rate respectively in time unit per :math:`mm` and in :math:`mm` per time unit.
-
-    .. note::
-
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
-        
-        - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
-        - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
-        - Parameters, :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}\}\in\boldsymbol{\theta}`
-        - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
-    
-    The function :math:`f` is resolved numerically as follows:
-
-    **Interception**
-
-    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
-
-    **Production** 
-
-    In the classical gr production reservoir formulation, the instantaneous production rate is the ratio between the state and the capacity of the reservoir,
-    :math:`\eta = \left( \frac{h_p}{c_p} \right)^2`. 
-    The infiltration flux :math:`p_s` is obtained by temporal integration as follows:
-
-    .. math::
-        :nowrap:
-
-        \begin{eqnarray}
-
-            &p_s = \int_{t-\Delta t}^{t} (1 - \eta) dt \\
-        
-        \end{eqnarray}
-        
-    Assuming the neutralized rainfall :math:`p_n` constant over the current time step and thanks to analytically integrable function, the infiltration flux into the production reservoir is obtained:
-
-    .. math::
-        :nowrap:
-        
-        \begin{eqnarray}
-
-            &p_s = & c_p \tanh\left(\frac{p_n}{c_p}\right) \frac{1 - \left( \frac{h_p}{c_p} \right)^2}{1 + \frac{h_p}{c_p} \tanh\left( \frac{p_n}{c_p} \right)} \\
-            
-        \end{eqnarray}
-
-    To improve runoff production by a gr reservoir, 
-    even with low production level in dry condition, 
-    in the case of high rainfall intensity, in :cite:p:`Astagneau_2022` they suggest a modification 
-    of the infiltration rate :math:`p_s` depending on rainfall intensity :math:`p_n`. 
-    Indeed, let's consider the rainfall intensity coefficient :math:`\gamma`,
-    function of weighted rainfall intensity.
-
-    .. math::
-        :nowrap:
-
-        \begin{eqnarray}
-
-            & \gamma = & 1 - \exp(-p_n \times \alpha_1) \\
-        
-        \end{eqnarray}
-    
-    with :math:`\alpha_1` in time unit per :math:`mm`.
-
-    The expression of the instantaneous production rate changes as follows
-
-    .. math::
-        :nowrap:
-
-        \begin{eqnarray}
-
-            & \eta = & \left( 1 - \gamma \right) \left( \frac{h_p}{c_p} \right)^2 + \gamma \\
-        
-        \end{eqnarray}
-
-    Thus the infiltration rate becomes
-
-    .. math::
-        :nowrap:
-
-        \begin{eqnarray}
-
-        &p_s& &=& &\int_{t-\Delta t}^{t} (1 - \eta) dt\\
-
-        && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \left(\frac{h_p}{c_p} \right)^2 \right) dt - \int_{t-\Delta t}^{t} \gamma dt\\
-        
-        && &=& &\left[ \frac{ c_p }{ \sqrt{1-\gamma} } \tanh \left( \frac{\sqrt{1-\gamma} \  h_p}{c_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
-        
-        \end{eqnarray}
-
-
-    We denote :math:`\lambda := \sqrt{1 - \gamma}`, then
-
-    .. math::
-        :nowrap:
-        
-        \begin{eqnarray}
-
-        \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) - \tanh\left( \lambda \frac{h_p}{c_p} \right) &=& 
-        \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
-        &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \lambda \frac{h_p}{c_p} \right) + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \lambda \frac{h_p}{c_p} \right) \tanh \left( \lambda \frac{p_n}{c_p} \right) } \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
-        &\sim& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \lambda \frac{h_p}{c_p} + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right) }  \lambda \frac{h_p}{c_p} \right) \\
-        &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)}
-        \end{eqnarray}
-        
-    Thus
-
-    .. math::
-        :nowrap:
-        
-        \begin{eqnarray}
-
-        p_s &=& \frac{c_p}{\lambda} \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)} - \gamma \Delta t
-        \end{eqnarray}
-
-
-    .. note::
-
-        Note that if :math:`\alpha_1 = 0`, we return to the general writting of the instantaneous production rate.
-
-    **Exchange**
-
-    Same as ``gr4`` exchange, see :ref:`GR4 Exchange <math_num_documentation.forward_structure.hydrological_module.gr4>`    
-        
-    **Transfer**
-    
-    In context of high rainfall intensities triggering flash flood responses, it is crucial to account for fast dynamics related to surface/hypodermic runoff 
-    and slower responses due to delayed/deeper flows (e.g. :cite:p:`hess-22-5317-2018`). 
-    Following :cite:p:`Astagneau_2022` for a lumped GR model, we introduce at pixel scale in `smash` a function to modify the partitioning between fast 
-    and slower transfert branches depending on rainfall intensity of the current time step only (small pixel size):
-    
-    .. math::
-        :nowrap:
-
-        \begin{eqnarray}
-
-            &p_{rr}& =& (1 - spl)(p_r + p_{erc}) + l_{exc}\\
-            &p_{rd}& =& spl(p_r + p_{erc}) \\
-            &spl& =& 0.9 \tanh(\alpha_2 p_n)^2 + 0.1
-            
-        \end{eqnarray}
-
-    with :math:`\alpha_2` in :math:`mm` per time unit.
-
-    .. note::
-
-        If :math:`\alpha_2 = 0`, we return to the ``gr-4`` writting of the transfer.
-        If :math:`\alpha_2 = \alpha_1 = 0`, it is equivalent to ``gr-4`` structure.
-
-
-.. _math_num_documentation.forward_structure.hydrological_module.gr5_ri:
-
-.. dropdown:: gr5_ri (Génie Rural 5 with rainfall intensity terms)
-    :animate: fade-in-slide-down
-
-    This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
-
-    .. figure:: ../_static/gr5-ri_structure.svg
-        :align: center
-        :width: 400
-        
-        Diagram of the ``gr5_ri`` like hydrological operator
-
-    It can be expressed as follows:
-
-    .. math::
-
-        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
-
-    with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
-    :math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
-    :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
-    :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
-    :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
-    :math:`\alpha_1` and :math:`\alpha_2` parameters controling the rainfall intensity rate respectively in time unit per :math:`mm` and in :math:`mm` per time unit.
-
-    .. note::
-
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
-        
-        - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
-        - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
-        - Parameters, :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
-        - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
-    
-    The function :math:`f` is resolved numerically as follows:
-
-    **Interception**
-
-    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
-
-    **Production** 
-
-    Same as ``gr4_ri`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
-
-    **Exchange**
-
-    Same as ``gr5`` exchange, see :ref:`GR5 Exchange <math_num_documentation.forward_structure.hydrological_module.gr5>`    
-        
-    **Transfer**
-    
-    Same as ``gr4_ri`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
-
 .. _math_num_documentation.forward_structure.hydrological_module.gr6:
 
 .. dropdown:: gr6 (Génie Rural 6)
@@ -916,7 +691,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.loieau:
 
-.. dropdown:: loieau (LoiEau)
+.. dropdown:: loieau (Génie Rural LoiEau)
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the GR model :cite:p:`Folton_2020`.
@@ -1015,6 +790,238 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     .. math::
 
         q_t(x, t) = k_b(x)\left(q_r(x, t) + q_d(x, t)\right)
+
+
+.. _math_num_documentation.forward_structure.hydrological_module.gr_rainfall_intensity:
+
+.. dropdown:: gr_ri (Génie Rural with rainfall intensity terms)
+
+    .. _math_num_documentation.forward_structure.hydrological_module.gr4_ri:
+
+    .. dropdown:: gr4_ri
+        :animate: fade-in-slide-down
+
+        This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
+
+        .. figure:: ../_static/gr4-ri_structure.svg
+            :align: center
+            :width: 400
+            
+            Diagram of the ``gr4_ri`` like hydrological operator
+
+        It can be expressed as follows:
+
+        .. math::
+
+            q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
+
+        with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
+        :math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
+        :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
+        :math:`k_{exc}` the exchange coefficient, :math:`h_i` the state of the interception reservoir, 
+        :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
+        :math:`\alpha_1` and :math:`\alpha_2` parameters controling the rainfall intensity rate respectively in time unit per :math:`mm` and in :math:`mm` per time unit.
+
+        .. note::
+
+            Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+            
+            - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+            - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+            - Parameters, :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}\}\in\boldsymbol{\theta}`
+            - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
+        
+        The function :math:`f` is resolved numerically as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+        **Production** 
+
+        In the classical gr production reservoir formulation, the instantaneous production rate is the ratio between the state and the capacity of the reservoir,
+        :math:`\eta = \left( \frac{h_p}{c_p} \right)^2`. 
+        The infiltration flux :math:`p_s` is obtained by temporal integration as follows:
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+                &p_s = \int_{t-\Delta t}^{t} (1 - \eta) dt \\
+            
+            \end{eqnarray}
+            
+        Assuming the neutralized rainfall :math:`p_n` constant over the current time step and thanks to analytically integrable function, the infiltration flux into the production reservoir is obtained:
+
+        .. math::
+            :nowrap:
+            
+            \begin{eqnarray}
+
+                &p_s = & c_p \tanh\left(\frac{p_n}{c_p}\right) \frac{1 - \left( \frac{h_p}{c_p} \right)^2}{1 + \frac{h_p}{c_p} \tanh\left( \frac{p_n}{c_p} \right)} \\
+                
+            \end{eqnarray}
+
+        To improve runoff production by a gr reservoir, 
+        even with low production level in dry condition, 
+        in the case of high rainfall intensity, in :cite:p:`Astagneau_2022` they suggest a modification 
+        of the infiltration rate :math:`p_s` depending on rainfall intensity :math:`p_n`. 
+        Indeed, let's consider the rainfall intensity coefficient :math:`\gamma`,
+        function of weighted rainfall intensity.
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+                & \gamma = & 1 - \exp(-p_n \times \alpha_1) \\
+            
+            \end{eqnarray}
+        
+        with :math:`\alpha_1` in time unit per :math:`mm`.
+
+        The expression of the instantaneous production rate changes as follows
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+                & \eta = & \left( 1 - \gamma \right) \left( \frac{h_p}{c_p} \right)^2 + \gamma \\
+            
+            \end{eqnarray}
+
+        Thus the infiltration rate becomes
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+            &p_s& &=& &\int_{t-\Delta t}^{t} (1 - \eta) dt\\
+
+            && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \left(\frac{h_p}{c_p} \right)^2 \right) dt - \int_{t-\Delta t}^{t} \gamma dt\\
+            
+            && &=& &\left[ \frac{ c_p }{ \sqrt{1-\gamma} } \tanh \left( \frac{\sqrt{1-\gamma} \  h_p}{c_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
+            
+            \end{eqnarray}
+
+
+        We denote :math:`\lambda := \sqrt{1 - \gamma}`, then
+
+        .. math::
+            :nowrap:
+            
+            \begin{eqnarray}
+
+            \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) - \tanh\left( \lambda \frac{h_p}{c_p} \right) &=& 
+            \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+            &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \lambda \frac{h_p}{c_p} \right) + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \lambda \frac{h_p}{c_p} \right) \tanh \left( \lambda \frac{p_n}{c_p} \right) } \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+            &\sim& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \lambda \frac{h_p}{c_p} + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right) }  \lambda \frac{h_p}{c_p} \right) \\
+            &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)}
+            \end{eqnarray}
+            
+        Thus
+
+        .. math::
+            :nowrap:
+            
+            \begin{eqnarray}
+
+            p_s &=& \frac{c_p}{\lambda} \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)} - \gamma \Delta t
+            \end{eqnarray}
+
+
+        .. note::
+
+            Note that if :math:`\alpha_1 = 0`, we return to the general writting of the instantaneous production rate.
+
+        **Exchange**
+
+        Same as ``gr4`` exchange, see :ref:`GR4 Exchange <math_num_documentation.forward_structure.hydrological_module.gr4>`    
+            
+        **Transfer**
+        
+        In context of high rainfall intensities triggering flash flood responses, it is crucial to account for fast dynamics related to surface/hypodermic runoff 
+        and slower responses due to delayed/deeper flows (e.g. :cite:p:`hess-22-5317-2018`). 
+        Following :cite:p:`Astagneau_2022` for a lumped GR model, we introduce at pixel scale in `smash` a function to modify the partitioning between fast 
+        and slower transfert branches depending on rainfall intensity of the current time step only (small pixel size):
+        
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+                &p_{rr}& =& (1 - spl)(p_r + p_{erc}) + l_{exc}\\
+                &p_{rd}& =& spl(p_r + p_{erc}) \\
+                &spl& =& 0.9 \tanh(\alpha_2 p_n)^2 + 0.1
+                
+            \end{eqnarray}
+
+        with :math:`\alpha_2` in :math:`mm` per time unit.
+
+        .. note::
+
+            If :math:`\alpha_2 = 0`, we return to the ``gr-4`` writting of the transfer.
+            If :math:`\alpha_2 = \alpha_1 = 0`, it is equivalent to ``gr-4`` structure.
+
+
+    .. _math_num_documentation.forward_structure.hydrological_module.gr5_ri:
+
+    .. dropdown:: gr5_ri
+        :animate: fade-in-slide-down
+
+        This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
+
+        .. figure:: ../_static/gr5-ri_structure.svg
+            :align: center
+            :width: 400
+            
+            Diagram of the ``gr5_ri`` like hydrological operator
+
+        It can be expressed as follows:
+
+        .. math::
+
+            q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
+
+        with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
+        :math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
+        :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
+        :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
+        :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
+        :math:`\alpha_1` and :math:`\alpha_2` parameters controling the rainfall intensity rate respectively in time unit per :math:`mm` and in :math:`mm` per time unit.
+
+        .. note::
+
+            Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+            
+            - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+            - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+            - Parameters, :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+            - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
+        
+        The function :math:`f` is resolved numerically as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+        **Production** 
+
+        Same as ``gr4_ri`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+        **Exchange**
+
+        Same as ``gr5`` exchange, see :ref:`GR5 Exchange <math_num_documentation.forward_structure.hydrological_module.gr5>`    
+            
+        **Transfer**
+        
+        Same as ``gr4_ri`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+
+
 
 .. _math_num_documentation.forward_structure.hydrological_module.vic3l:
 
