@@ -521,6 +521,60 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         If :math:`\alpha_2 = 0`, we return to the ``gr-4`` writting of the transfer.
         If :math:`\alpha_2 = \alpha_1 = 0`, it is equivalent to ``gr-4`` structure.
 
+
+.. _math_num_documentation.forward_structure.hydrological_module.gr5_ri:
+
+.. dropdown:: gr5_ri (Génie Rural 5 with rainfall intensity terms)
+    :animate: fade-in-slide-down
+
+    This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
+
+    .. figure:: ../_static/gr5-ri_structure.svg
+        :align: center
+        :width: 400
+        
+        Diagram of the ``gr5_ri`` like hydrological operator
+
+    It can be expressed as follows:
+
+    .. math::
+
+        q_{t}(x, t) = f\left(\left[P, E\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
+
+    with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`E` the potential evapotranspiration,
+    :math:`m_{lt}` the melt flux from the snow operator, :math:`c_i` the maximum capacity of the interception reservoir,
+    :math:`c_p` the maximum capacity of the production reservoir, :math:`c_t` the maximum capacity of the transfer reservoir,
+    :math:`k_{exc}` the exchange coefficient, :math:`a_{exc}` the exchange threshold, :math:`h_i` the state of the interception reservoir, 
+    :math:`h_p` the state of the production reservoir and :math:`h_t` the state of the transfer reservoir,
+    :math:`\alpha_1` and :math:`\alpha_2` parameters controling the rainfall intensity rate respectively in time unit per :math:`mm` and in :math:`mm` per time unit.
+
+    .. note::
+
+        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        
+        - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+        - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+        - Parameters, :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+        - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
+    
+    The function :math:`f` is resolved numerically as follows:
+
+    **Interception**
+
+    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+    **Production** 
+
+    Same as ``gr4_ri`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+    **Exchange**
+
+    Same as ``gr5`` exchange, see :ref:`GR5 Exchange <math_num_documentation.forward_structure.hydrological_module.gr5>`    
+        
+    **Transfer**
+    
+    Same as ``gr4_ri`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
 .. _math_num_documentation.forward_structure.hydrological_module.gr6:
 
 .. dropdown:: gr6 (Génie Rural 6)
