@@ -57,12 +57,13 @@ class Signatures:
     ----------
     cont : `pandas.DataFrame`
         A dataframe representing observed or simulated continuous signatures.
-        The column names consist of the catchment code and studied signature names.
+        The column names include the catchment code and the names of the studied signatures.
 
     event : `pandas.DataFrame`
         A dataframe representing observed or simulated flood event signatures.
-        The column names consist of the catchment code, the season that event occurrs,
-        the beginning/end of each event and studied signature names.
+        The column names include the catchment code, the season in which the event occurs,
+        the start and end of each event, whether double events with multiple peaks are detected,
+        and the names of the studied signatures.
 
     See Also
     --------
@@ -158,7 +159,7 @@ def signatures(
     0  V3524010  autumn 2014-11-03 03:00:00  ...  0.324836  3.0  100.448631
     1  V3515010  autumn 2014-11-03 10:00:00  ...  0.339471  0.0   20.168104
     2  V3517010  autumn 2014-11-03 08:00:00  ...  0.319605  1.0    5.356519
-    [3 rows x 12 columns]
+    [3 rows x 13 columns]
 
     Access simulated continuous signatures as a `pandas.DataFrame`
 
@@ -167,7 +168,7 @@ def signatures(
     0  V3524010  0.208410  0.064490  ...  6.270661e-04  1.767450  27.806826
     1  V3515010  0.139829  0.049087  ...  4.919724e-05  0.150414   5.161743
     2  V3517010  0.139431  0.047900  ...  6.545733e-07  0.031947   1.355473
-    [3 rows x 9 columns]
+    [3 rows x 10 columns]
 
     Access specific simulated continuous signature for each gauge
 
@@ -182,7 +183,7 @@ def signatures(
     >>> sign.cont[sign.cont["code"] == "V3524010"]
            code      Crc    Crchf  ...     Cfp10    Cfp50      Cfp90
     0  V3524010  0.20841  0.06449  ...  0.000627  1.76745  27.806826
-    [1 rows x 9 columns]
+    [1 rows x 10 columns]
 
     Access specific simulated continuous signatures for a single gauge
 
@@ -225,7 +226,7 @@ def _signatures(
     )
 
     col_cs = ["code"] + cs
-    col_es = ["code", "season", "start", "end"] + es
+    col_es = ["code", "season", "start", "end", "multipeak"] + es
 
     df_cs = pd.DataFrame(columns=col_cs)
     df_es = pd.DataFrame(columns=col_es)
@@ -294,6 +295,7 @@ def _signatures(
                                         season,
                                         date_range[ts],
                                         date_range[te],
+                                        t["multipeak"],
                                     ]
                                     + esignatures
                                 ],
