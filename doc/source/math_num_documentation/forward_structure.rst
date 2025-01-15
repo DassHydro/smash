@@ -111,7 +111,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.gr4:
 
-.. dropdown:: gr4 (Génie Rural 4)
+.. dropdown:: Génie Rural with 4 parameters (gr4)
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the GR4 model :cite:p:`perrin2003improvement`.
@@ -288,7 +288,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.gr5:
 
-.. dropdown:: gr5 (Génie Rural 5)
+.. dropdown:: Génie Rural with 5 parameters (gr5)
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the GR5 model :cite:p:`LeMoine_2008`. It consists in a gr4 like model stucture (see diagram above)  with a modified exchange flux with two parameters to account for seasonal variaitons.
@@ -352,7 +352,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.gr6:
 
-.. dropdown:: gr6 (Génie Rural 6)
+.. dropdown:: Génie Rural with 6 parameters (gr6)
     :animate: fade-in-slide-down
 
     This hydrological module is derived from the GR6 model :cite:p:`michel2003` and :cite:p:`pushpalatha`.
@@ -495,7 +495,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.grc:
 
-.. dropdown:: grc (Génie Rural C)
+.. dropdown:: Génie Rural C (grc)
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the GR models. It consists in a ``gr4`` like model stucture
@@ -600,7 +600,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.grd:
 
-.. dropdown:: grd (Génie Rural Distribué)
+.. dropdown:: Génie Rural Distribué (grd)
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the GR models and is a simplified strucutre used in :cite:p:`jay2019potential`.
@@ -691,7 +691,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.loieau:
 
-.. dropdown:: loieau (Génie Rural LoiEau)
+.. dropdown:: Génie Rural LoiEau (loieau)
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the GR model :cite:p:`Folton_2020`.
@@ -794,7 +794,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.gr_rainfall_intensity:
 
-.. dropdown:: gr_ri (Génie Rural with rainfall intensity terms)
+.. dropdown:: Génie Rural with rainfall intensity terms (gr4_ri, gr5_ri)
 
     .. _math_num_documentation.forward_structure.hydrological_module.gr4_ri:
 
@@ -1021,11 +1021,9 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         Same as ``gr4_ri`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
 
 
-
-
 .. _math_num_documentation.forward_structure.hydrological_module.vic3l:
 
-.. dropdown:: vic3l (Variable Infiltration Curve 3 Layers)
+.. dropdown:: Variable Infiltration Curve 3 Layers (vic3l)
     :animate: fade-in-slide-down
 
     This hydrological operator is derived from the VIC model :cite:p:`liang1994simple`.
@@ -1309,7 +1307,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
 .. _math_num_documentation.forward_structure.routing_module.lag0:
 
-.. dropdown:: lag0 (Instantaneous Routing)
+.. dropdown:: Instantaneous Routing (lag0)
     :animate: fade-in-slide-down
 
     This routing operator is a simple aggregation of upstream discharge to downstream following the drainage plan. It can be expressed as follows:
@@ -1362,7 +1360,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
 .. _math_num_documentation.forward_structure.routing_module.lr:
 
-.. dropdown:: lr (Linear Reservoir)
+.. dropdown:: Linear Reservoir (lr)
     :animate: fade-in-slide-down
 
     This routing operator is using a linear reservoir to rout upstream discharge to downstream following the drainage plan. It can be expressed as follows:
@@ -1423,7 +1421,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
 .. _math_num_documentation.forward_structure.routing_module.kw:
 
-.. dropdown:: kw (Kinematic Wave) 
+.. dropdown:: Kinematic Wave (kw)
     :animate: fade-in-slide-down
 
     This routing operator is based on a conceptual 1D kinematic wave model that is numerically solved with a linearized implicit numerical scheme :cite:p:`ChowAppliedhydrology`. This is applicable given the drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` that enables reducing the routing problem to 1D. 
