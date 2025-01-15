@@ -803,6 +803,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         q_t(x, t) = q_r(x, t)
 
+
+
 .. _math_num_documentation.forward_structure.hydrological_module.loieau:
 
 .. dropdown:: loieau (LoiEau)
@@ -905,6 +907,48 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         q_t(x, t) = k_b(x)\left(q_r(x, t) + q_d(x, t)\right)
 
+.. _math_num_documentation.forward_structure.hydrological_module.imperviousness:
+
+.. dropdown:: gr with imperviousness
+    :animate: fade-in-slide-down
+
+    The user can read imperviousness pixel maps to potentially approach the soil 's comportement and improve the GR models response.
+    The coefficients of imperviousness :math:`imperv(x)` are applied on the neutralized rainfall :math:`p_n` and once it has passed through by the production part, on the evaporation :math:`e_s`.
+    The coefficients live between 0 and 1, for instance if the imperviousness is closed to 1, the production part receives less neutralized rainfall :math:`p_n`, also less evaporation :math:`e_s` from impermeable soil.
+    The process of GR production change for all GR models. To illustrate it we show the modified diagram of gr4 with imperviousness. 
+
+    .. figure:: ../_static/gr4_structure_imperviousness.svg
+        :align: center
+        :width: 300
+        
+        Diagram of the ``gr4`` hydrological operator with imperviousness, a simplified ``GR`` like
+
+
+    **Production**
+
+    - Compute the neutralized precipitation :math:`p_n` on impermeable soil
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &p_n(x, t)& &=& & \left(1 - imperv(x)\right)\ p_n(x, t)
+
+        \end{eqnarray}
+    
+    - Compute the production infiltrating precipitation :math:`p_s` and evaporation :math:`e_s`
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+        &p_s(x, t)& &=& &c_p(x) (1 - h_p(x, t - 1)^2) \frac{\tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}{1 + h_p(x, t - 1) \tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}\\
+
+        &e_s(x, t)& &=& &(1 - imperv(x)) \left(h_p(x, t - 1) c_p(x) (2 - h_p(x, t - 1)) \frac{\tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)}{1 + (1 - h_p(x, t - 1)) \tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)} \right)
+        \end{eqnarray}
+    
 .. _math_num_documentation.forward_structure.hydrological_module.vic3l:
 
 .. dropdown:: vic3l (Variable Infiltration Curve 3 Layers)
