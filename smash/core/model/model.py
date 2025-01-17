@@ -205,7 +205,7 @@ class Model:
             Whether or not to read observed discharge file(s).
 
             .. hint::
-                See the :ref:`user_guide.others.input_data_convention` section
+                See the :ref:`user_guide.in_depth.input_data_convention` section
 
         qobs_directory : `str`
             Path to the root directory of the observed discharge file(s).
@@ -215,7 +215,7 @@ class Model:
             Whether or not to read precipitation file(s).
 
             .. hint::
-                See the :ref:`user_guide.others.input_data_convention` section
+                See the :ref:`user_guide.in_depth.input_data_convention` section
 
         prcp_format : `str`, default 'tif'
             Precipitation file format. This option is only applicable if **read_prcp** is set to True.
@@ -243,7 +243,7 @@ class Model:
             Whether or not to read potential evapotranspiration file(s).
 
             .. hint::
-                See the :ref:`user_guide.others.input_data_convention` section
+                See the :ref:`user_guide.in_depth.input_data_convention` section
 
         pet_format : `str`, default 'tif'
             Potential evapotranspiration file format. This option is only applicable if **read_pet** is set
@@ -278,7 +278,7 @@ class Model:
             This option is only applicable if **snow_module** is set to ``ssn``.
 
             .. hint::
-                See the :ref:`user_guide.others.input_data_convention` section
+                See the :ref:`user_guide.in_depth.input_data_convention` section
 
         snow_format : `str`, default 'tif'
             Snow file format. This option is only applicable if **read_snow** is set to True and if
@@ -310,7 +310,7 @@ class Model:
             Whether or not to read temperature file(s).
 
             .. hint::
-                See the :ref:`user_guide.others.input_data_convention` section
+                See the :ref:`user_guide.in_depth.input_data_convention` section
 
         temp_format : `str`, default 'tif'
             Temperature file format. This option is only applicable if **read_temp** is set to True and if

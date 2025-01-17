@@ -1,51 +1,12 @@
-.. _user_guide.quickstart.france_large_domain_simulation:
+.. _user_guide.quickstart.large_domain_simulation:
 
-================================
-France - Large Domain Simulation
-================================
+=======================
+Large Domain Simulation
+=======================
 
-This second tutorial on `smash` aims to perform a simulation over the whole of metropolitan France with a simple model structure. The objective, compared to the first tutorial, is to create a mesh over a large spatial domain, to perform a forward run and to visualize the simulated discharge over the entire domain.
-
-.. image:: ../../_static/france.png
-    :width: 350
-    :align: center
-
-Required data
--------------
-
-You need first to download all the required data.
-
-.. button-link:: https://smash.recover.inrae.fr/dataset/France-dataset.tar
-    :color: primary
-    :shadow:
-    :align: center
-
-    **Download**
-
-If the download was successful, a file named ``France-dataset.tar`` should be available. We can switch to the directory where this file has been 
-downloaded and extract it using the following command:
-
-.. code-block:: shell
-
-    tar xf France-dataset.tar
-
-Now a folder called ``France-dataset`` should be accessible and contain the following files and folders:
-
-- ``France_flwdir.tif``
-    A GeoTiff file containing the flow direction data,
-- ``prcp``
-    A directory containing precipitation data in GeoTiff format with the following directory structure: ``%Y/%m/%d`` 
-    (``2012/01/01``),
-- ``pet``
-    A directory containing daily interannual potential evapotranspiration data in GeoTiff format,
-
-In this dataset, there are no gauge attributes or observed discharge, we are only interested in performing a forward run on a domain without 
-optimization beforehand.
-
-We can open a Python interface. The current working directory will be assumed to be the directory where
-the ``France-dataset`` is located.
-
-Open a Python interface:
+This tutorial aims to perform a simulation over the whole of metropolitan France with a simple model structure using the :ref:`France dataset <user_guide.demo_data.france>`.
+The objective is to create a mesh over a large spatial domain, to perform a forward run and to visualize the simulated discharge over the entire domain.
+We begin by opening a Python interface:
 
 .. code-block:: shell
 
@@ -75,8 +36,8 @@ Model creation
 Model setup creation
 ********************
 
-The ``setup`` dictionary is pretty similar to the one used for the **Cance** tutorial except that we do not read observed discharge and the 
-simulation period is different.
+The ``setup`` dictionary is pretty similar to the one used for the :ref:`Cance <user_guide.demo_data.cance>` tutorial
+except that we do not read observed discharge and the simulation period is different.
 
 .. ipython:: python
 
@@ -125,14 +86,14 @@ We can visualize the shape of the ``mesh``, the flow direction and the flow accu
 
     plt.imshow(mesh["flwdir"]);
     plt.colorbar(label="Flow direction (D8)");
-    @savefig user_guide.quickstart.france_large_domain_simulation.flwdir.png
+    @savefig user_guide.quickstart.large_domain_simulation.flwdir.png
     plt.title("France - Flow direction");
 
 .. ipython:: python
 
     plt.imshow(mesh["flwacc"], norm=LogNorm());
     plt.colorbar(label="Flow accumulation (m²)");
-    @savefig user_guide.quickstart.france_large_domain_simulation.flwacc.png
+    @savefig user_guide.quickstart.large_domain_simulation.flwacc.png
     plt.title("France - Flow accumulation");
 
 Then, we can initialize the `smash.Model` object
@@ -181,7 +142,7 @@ We can view the simulated discharge for one time step, for example the last one.
     q = np.where(model.mesh.active_cell == 0, np.nan, q) # Remove the non-active cells from the plot
     plt.imshow(q, norm=SymLogNorm(1e-4));
     plt.colorbar(label="Discharge $(m^3/s)$");
-    @savefig user_guide.quickstart.france_large_domain_simulation.forward_run_q.png
+    @savefig user_guide.quickstart.large_domain_simulation.forward_run_q.png
     plt.title("France - Discharge");
 
 .. note::
@@ -222,10 +183,8 @@ specifying them in the ``return_options`` argument, for example only the two las
     q = np.where(model.mesh.active_cell == 0, np.nan, q) # Remove the non-active cells from the plot
     plt.imshow(q, norm=SymLogNorm(1e-4));
     plt.colorbar(label="Discharge $(m^3/s)$");
-    @savefig user_guide.quickstart.france_large_domain_simulation.forward_run_q2.png
+    @savefig user_guide.quickstart.large_domain_simulation.forward_run_q2.png
     plt.title("France - Discharge");
-
-This concludes this second tutorial on `smash`.
 
 .. ipython:: python
     :suppress:

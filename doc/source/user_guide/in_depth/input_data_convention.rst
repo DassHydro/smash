@@ -1,11 +1,11 @@
-.. _user_guide.others.input_data_convention:
+.. _user_guide.in_depth.input_data_convention:
 
 =====================
 Input Data Convention
 =====================
 
 The aim of this section is to describe the conventions that apply to all input data used in `smash`
-(i.e. observed discharge, precipitation, descriptor, etc)
+(i.e., observed discharge, precipitation, descriptor, etc.).
 
 Observed discharge
 ------------------
