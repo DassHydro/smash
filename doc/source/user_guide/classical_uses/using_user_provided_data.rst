@@ -1,11 +1,10 @@
-.. _user_guide.in_depth.input_data_convention:
+.. _user_guide.classical_uses.using_user_provided_data:
 
-=====================
-Input Data Convention
-=====================
+========================
+Using User-Provided Data
+========================
 
-The aim of this section is to describe the conventions that apply to all input data used in `smash`
-(i.e., observed discharge, precipitation, descriptor, etc.).
+To work with user-provided data `smash` (i.e., observed discharge, precipitation, descriptor, etc.), the data must adhere to specific format conventions, as described in this section.
 
 Observed discharge
 ------------------
@@ -92,17 +91,17 @@ An example of file name in tif format for the slope descriptor: ``slope.tif``.
     ``descriptor_name`` is a unique key, the ``descriptor_directory`` (and all subdirectories) can not contains files with similar decriptor name.
 
 .. warning::
-    There are 4 possible warnings when reading geo-referenced data (i.e. precipitation, descriptor, etc):
+    There are 4 possible warnings when reading geo-referenced data (i.e., precipitation, descriptor, etc):
 
     - ``Missing Warning``
         A file (or more) is missing. It will be interpreted as no data.
 
     - ``Resolution Warning``
-        A file (or more) has a spatial resolution different from the mesh resolution (i.e. the flow direction resolution).
+        A file (or more) has a spatial resolution different from the mesh resolution (i.e., the flow direction resolution).
         It will be resampled using a Nearest Neighbour algorithm.
 
     - ``Overlap Warning``
-        A file (or more) has an origin that does not overlap with the mesh origin (i.e. the flow direction origin).
+        A file (or more) has an origin that does not overlap with the mesh origin (i.e., the flow direction origin).
         The reading window is shifted towards the nearest overlapping cell.
 
     - ``Out Of Bound Warning``
@@ -172,7 +171,7 @@ This results in the following ``setup``:
         "descriptor_name": ["slope", "dd"],
     }
 
-This structure will be effective if few files are available for atmospheric data (i.e. precipitation, potential 
+This structure will be effective if few files are available for atmospheric data (i.e., precipitation, potential 
 evapotranspiration, etc). However, if these directories contain a large number of files, a recursive search from the 
 root folder can become very time-consuming. For this reason, it is necessary to adapt the directory structure to simplify and 
 speed up file searches.

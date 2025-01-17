@@ -51,7 +51,7 @@ the ``setup`` and the ``mesh``.
 Model setup creation
 ********************
 
-The ``setup`` is a Python dictionary (i.e. pairs of keys and values) which contains all information relating to the simulation period, 
+The ``setup`` is a Python dictionary (i.e., pairs of keys and values) which contains all information relating to the simulation period, 
 the structure of the hydrological model and the reading of input data. For this first simulation let us create the following setup:
 
 .. ipython:: python
@@ -85,7 +85,7 @@ To get into more details, this ``setup`` is composed of:
 
 .. note::
     The convention of `smash` is that ``start_time`` is the date used to initialize the model's states. All 
-    the modeled state-flux variables (i.e. discharge, states, internal fluxes) will be computed over the
+    the modeled state-flux variables (i.e., discharge, states, internal fluxes) will be computed over the
     period ``start_time + 1dt`` and ``end_time``
 
 - ``hydrological_module``
@@ -425,7 +425,7 @@ Rainfall-runoff parameters
 
 `Model.rr_parameters <smash.Model.rr_parameters>` contains all the rainfall-runoff parameters. The rainfall-runoff parameters available 
 depend on the chosen model structure and of the different modules that compose it. Here, we have selected the hydrological module ``gr4`` 
-and the routing module ``lr``. This attribute consists of one variable storing the ``keys`` i.e. the names of the rainfall-runoff parameters 
+and the routing module ``lr``. This attribute consists of one variable storing the ``keys`` i.e., the names of the rainfall-runoff parameters 
 and another storing their ``values``, a `numpy.ndarray` of shape *(nrow, ncol, nrrp)*, where ``nrrp`` is the number of rainfall-runoff 
 parameters available.
 
@@ -471,7 +471,7 @@ Methods similar to those used for rainfall-runoff parameters are available for s
 Rainfall-runoff final states
 ****************************
 
-`Model.rr_final_states <smash.Model.rr_final_states>` contains all the rainfall-runoff final states, i.e. at the end of the simulation time window defined in ``setup``. This attribute is identical to the rainfall-runoff initial states but for final ones. The final states are updated once a simulation is performed.
+`Model.rr_final_states <smash.Model.rr_final_states>` contains all the rainfall-runoff final states, i.e., at the end of the simulation time window defined in ``setup``. This attribute is identical to the rainfall-runoff initial states but for final ones. The final states are updated once a simulation is performed.
 
 .. ipython:: python
 
@@ -591,7 +591,7 @@ So, to summarize, the optimization algorithm has converged after 8 iterations by
 
 Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is one minus the Nash-Sutcliffe efficiency ``nse`` (:math:`1 - \text{NSE}`)
 and the optimized parameters are the set of rainfall-runoff parameters (``cp``, ``ct``, ``kexc`` and ``llr``). In the current configuration spatially
-uniform parameters were optimized, i.e. a spatially uniform map for each parameter. We can visualize the optimized rainfall-runoff parameters.
+uniform parameters were optimized, i.e., a spatially uniform map for each parameter. We can visualize the optimized rainfall-runoff parameters.
 
 .. ipython:: python
 

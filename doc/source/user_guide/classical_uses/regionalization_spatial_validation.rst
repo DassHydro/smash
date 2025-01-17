@@ -137,7 +137,7 @@ by stopping the optimizer after ``50`` iterations.
     )
 
 We have therefore optimized the set of rainfall-runoff parameters using a multiple polynomial regression constrained by
-physiographic descriptors. Here, most of the options used are the default ones, i.e. a minimization of one minus the Nash-Sutcliffe
+physiographic descriptors. Here, most of the options used are the default ones, i.e., a minimization of one minus the Nash-Sutcliffe
 efficiency on the most downstream gauge of the domain. The resulting rainfall-runoff parameter maps can be viewed.
 
 .. ipython:: python

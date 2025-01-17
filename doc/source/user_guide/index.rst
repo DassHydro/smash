@@ -6,7 +6,7 @@ User Guide
 
 Demo Data
 ---------
-First, you need to download the demo data provided in this section before proceeding with the following tutorials.
+First, the demo data are provided in this section and can be downloaded as needed before proceeding with the following tutorials.
 
 .. toctree::
     :maxdepth: 1
@@ -42,6 +42,7 @@ It covers standard workflows, including calibration, validation techniques, and 
     classical_uses/hydrograph_segmentation
     classical_uses/hydrological_signatures
     classical_uses/rainfall_indices
+    classical_uses/using_user_provided_data
 
 In-depth
 --------
@@ -51,7 +52,6 @@ providing detailed guidance for experienced users looking to maximize the softwa
 .. toctree::
     :maxdepth: 1
 
-    in_depth/input_data_convention
     in_depth/advanced_learnable_regionalization
     in_depth/control_parameters_manipulation
     in_depth/multicriteria_calibration

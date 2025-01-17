@@ -190,13 +190,13 @@ class Model:
 
         .. note::
             The convention of `smash` is that **start_time** is the date used to initialize the model's
-            states. All the modeled state-flux variables :math:`\\boldsymbol{U}(x,t)` (i.e. discharge, states,
+            states. All the modeled state-flux variables :math:`\\boldsymbol{U}(x,t)` (i.e., discharge, states,
             internal fluxes) will be computed over the period **start_time + 1dt** and **end_time**
 
         adjust_interception : `bool`, default True
             Whether or not to adjust the maximum capacity of the interception reservoir.
             This option is available for any **hydrological_module** having the :math:`c_i` parameter
-            (i.e. ``'gr4'``, ``'gr5'``, ``'gr6'``, etc.) and for a sub-daily simulation time step **dt**.
+            (i.e., ``'gr4'``, ``'gr5'``, ``'gr6'``, etc.) and for a sub-daily simulation time step **dt**.
 
         compute_mean_atmos : `bool`, default True
             Whether or not to compute mean atmospheric data for each gauge.
@@ -205,7 +205,7 @@ class Model:
             Whether or not to read observed discharge file(s).
 
             .. hint::
-                See the :ref:`user_guide.in_depth.input_data_convention` section
+                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
 
         qobs_directory : `str`
             Path to the root directory of the observed discharge file(s).
@@ -215,7 +215,7 @@ class Model:
             Whether or not to read precipitation file(s).
 
             .. hint::
-                See the :ref:`user_guide.in_depth.input_data_convention` section
+                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
 
         prcp_format : `str`, default 'tif'
             Precipitation file format. This option is only applicable if **read_prcp** is set to True.
@@ -243,7 +243,7 @@ class Model:
             Whether or not to read potential evapotranspiration file(s).
 
             .. hint::
-                See the :ref:`user_guide.in_depth.input_data_convention` section
+                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
 
         pet_format : `str`, default 'tif'
             Potential evapotranspiration file format. This option is only applicable if **read_pet** is set
@@ -278,7 +278,7 @@ class Model:
             This option is only applicable if **snow_module** is set to ``ssn``.
 
             .. hint::
-                See the :ref:`user_guide.in_depth.input_data_convention` section
+                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
 
         snow_format : `str`, default 'tif'
             Snow file format. This option is only applicable if **read_snow** is set to True and if
@@ -310,7 +310,7 @@ class Model:
             Whether or not to read temperature file(s).
 
             .. hint::
-                See the :ref:`user_guide.in_depth.input_data_convention` section
+                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
 
         temp_format : `str`, default 'tif'
             Temperature file format. This option is only applicable if **read_temp** is set to True and if
@@ -342,7 +342,7 @@ class Model:
                 See the :ref:`math_num_documentation.precipitation_partitioning` section
 
         sparse_storage : `bool`, default False
-            Whether or not to store atmospheric data (i.e. precipitation, potential evapotranspiration, snow
+            Whether or not to store atmospheric data (i.e., precipitation, potential evapotranspiration, snow
             and temperature) sparsely.
             This option reduces the amount of memory taken up by atmospheric data. It is particularly useful
             when working large dataset.
@@ -1317,7 +1317,7 @@ class Model:
 
         .. note::
             Unlike rainfall-runoff initial states, there is no setter for rainfall-runoff final states.
-            They are generated after any kind of simulation (i.e. forward_run, optimize, ...)
+            They are generated after any kind of simulation (i.e., forward_run, optimize, ...)
 
         If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
@@ -2319,7 +2319,7 @@ class Model:
         - :math:`\\mu_0` and :math:`\\mu_1`, the structural error mu parameters with respect to
           ``'Linear'`` mapping,
 
-        - :math:`q`, the model response (i.e. the discharge),
+        - :math:`q`, the model response (i.e., the discharge),
 
         - :math:`g` and :math:`t`, the index refering to the gauge and time step respectively
 
@@ -2389,7 +2389,7 @@ class Model:
         - :math:`\\sigma_0` and :math:`\\sigma_1`, the structural error sigma parameters with respect to
           ``'Linear'`` mapping,
 
-        - :math:`q`, the model response (i.e. the discharge),
+        - :math:`q`, the model response (i.e., the discharge),
 
         - :math:`g` and :math:`t`, the index refering to the gauge and time step respectively
 

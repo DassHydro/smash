@@ -45,14 +45,15 @@ To access `smash` and its functions import it in your Python code like this:
 
     import smash
 
-Because of a name conflict on `PyPI <https://pypi.org/>`__, the distribution name (i.e. the name used in pip
-install, ``hydro-smash``) is not the same as the package name (i.e. the name used to import, ``smash``).
+Because of a name conflict on `PyPI <https://pypi.org/>`__, the distribution name (i.e., the name used in pip
+install, ``hydro-smash``) is not the same as the package name (i.e., the name used to import, ``smash``).
 
 ---------
 Tutorials
 ---------
 
-For a brief user guide to get started with `smash`, you can refer to the ``Quickstart`` section in the :ref:`User Guide <user_guide>`. Other in-depth functionalities and advanced optimization techniques are also included in this :ref:`User Guide <user_guide>`.
+For a brief user guide to get started with `smash`, you can refer to the ``Quickstart`` section in the :ref:`User Guide <user_guide>`.
+Other classical uses, in-depth functionalities and advanced optimization techniques are also included in this :ref:`User Guide <user_guide>`.
 
 For detailed descriptions of the `smash` API, you can visit the :ref:`API Reference <api_reference>` section.
 
