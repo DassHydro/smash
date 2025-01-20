@@ -1,53 +1,11 @@
-.. _user_guide.quickstart.lez_split_sample_test:
+.. _user_guide.classical_uses.split_sample_temporal_validation:
 
-=======================
-Lez - Split Sample Test
-=======================
+====================================
+Split Sample and Temporal Validation
+====================================
 
-This third and last quickstart tutorial on `smash` will be carried out on another French catchment, **the Lez at Lattes**. The objective is to 
+This tutorial on `smash` will be carried out on another French catchment, **the Lez at Lattes**. The objective is to 
 set up an optimization with split sample test :cite:p:`klemevs1986operational`, i.e. cross-calibration and temporal validation over two distinct periods ``p1`` and ``p2``.
-
-.. image:: ../../_static/lez.png
-    :width: 400
-    :align: center
-
-Required data
--------------
-
-You need first to download all the required data.
-
-.. button-link:: https://smash.recover.inrae.fr/dataset/Lez-dataset.tar
-    :color: primary
-    :shadow:
-    :align: center
-
-    **Download**
-
-If the download was successful, a file named ``Lez-dataset.tar`` should be available. We can switch to the directory where this file has been 
-downloaded and extract it using the following command:
-
-.. code-block:: shell
-
-    tar xf Lez-dataset.tar
-
-Now a folder called ``Lez-dataset`` should be accessible and contain the following files and folders:
-
-- ``France_flwdir.tif``
-    A GeoTiff file containing the flow direction data,
-- ``gauge_attributes.csv``
-    A csv file containing the gauge attributes (gauge coordinates, drained area and code),
-- ``prcp``
-    A directory containing precipitation data in GeoTiff format with the following directory structure: ``%Y/%m`` 
-    (``2012/08``),
-- ``pet``
-    A directory containing daily interannual potential evapotranspiration data in GeoTiff format,
-- ``qobs``
-    A directory containing the observed discharge data in csv format,
-- ``descriptor``
-    A directory containing physiographic descriptors in GeoTiff format.
-
-We can open a Python interface. The current working directory will be assumed to be the directory where
-the ``Lez-dataset`` is located.
 
 Open a Python interface:
 
@@ -137,14 +95,14 @@ And quickly verify that the generated ``mesh`` is correct
 
     plt.imshow(mesh["flwdst"]);
     plt.colorbar(label="Flow distance (m)");
-    @savefig user_guide.quickstart.lez_split_sample_test.flwdst.png
+    @savefig user_guide.classical_uses.split_sample_temporal_validation.flwdst.png
     plt.title("Lez - Flow distance");
 
 .. ipython:: python
 
     plt.imshow(mesh["flwacc"]);
     plt.colorbar(label="Flow accumulation (m²)");
-    @savefig user_guide.quickstart.lez_split_sample_test.flwacc.png
+    @savefig user_guide.classical_uses.split_sample_temporal_validation.flwacc.png
     plt.title("Lez - Flow accumulation");
 
 .. ipython:: python
@@ -154,7 +112,7 @@ And quickly verify that the generated ``mesh`` is correct
     for pos in mesh["gauge_pos"]:
         base[pos[0], pos[1]] = 1
     plt.imshow(base, cmap="Set1_r");
-    @savefig user_guide.quickstart.lez_split_sample_test.gauge_position.png
+    @savefig user_guide.classical_uses.split_sample_temporal_validation.gauge_position.png
     plt.title("Lez - Gauge position");
 
 Then, we can initialize the two `smash.Model` objects
@@ -221,7 +179,7 @@ We can take a look at the hydrographs and optimized rainfall-runoff parameters.
     ax2.set_xlabel("Time step");
     ax2.legend();
 
-    @savefig user_guide.quickstart.lez_split_sample_test.optimize_q.png
+    @savefig user_guide.classical_uses.split_sample_temporal_validation.optimize_q.png
     f.suptitle(
         f"Observed and simulated discharge at gauge {code}"
         " for period p1 (left) and p2 (right)\nCalibration"
@@ -316,7 +274,7 @@ and visualize hydrographs
     ax2.set_xlabel("Time step");
     ax2.legend();
 
-    @savefig user_guide.quickstart.lez_split_sample_test.forward_run_q.png
+    @savefig user_guide.classical_uses.split_sample_temporal_validation.forward_run_q.png
     f.suptitle(
         f"Observed and simulated discharge at gauge {code}"
         " for period p1 (left) and p2 (right)\nValidation"
@@ -325,7 +283,7 @@ and visualize hydrographs
 Model performances
 ------------------
 
-Finally, we can look at calibration and validation performances using certain metrics. Using the function `smash.evaluation`,
+We evaluate calibration and validation performances using certain metrics. Using the function `smash.evaluation`,
 you can compute one metric of your choice (among those available) for all the gauges that make up the ``mesh``. Here, we are interested 
 in the ``nse`` (the calibration metric) and the ``kge`` for the downstream gauge only. We will create two `pandas.DataFrame`, one for the 
 calibration performances and the other for the validation performances.
