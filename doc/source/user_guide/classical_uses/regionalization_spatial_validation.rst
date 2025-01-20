@@ -1,11 +1,10 @@
-.. _user_guide.classical_uses.lez_regionalization:
+.. _user_guide.classical_uses.regionalization_spatial_validation:
 
-=====================
-Lez - Regionalization
-=====================
+======================================
+Regionalization and Spatial Validation
+======================================
 
-This guide on `smash` will be carried out on the French catchment, **the Lez at Lattes** and aims to perform an optimization of the
-hydrological model considering regional mapping of physical descriptors onto model conceptual parameters.
+This tutorial uses the :ref:`Lez dataset <user_guide.demo_data.lez>` to perform regionalization and spatial validation.
 The parameters :math:`\boldsymbol{\theta}` can be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}`
 (slope, drainage density, soil water storage, etc) and :math:`\boldsymbol{\rho}` a control vector:
 :math:`\boldsymbol{\theta}(x)=\phi\left(\boldsymbol{\mathcal{D}}(x),\boldsymbol{\rho}\right)`.
@@ -14,49 +13,6 @@ See the :ref:`math_num_documentation.mapping` section for more details.
 First, a shape is assumed for the mapping (here **multi-polynomial** or **neural network**).
 Then the control vector of the mapping needs to be optimized: :math:`\boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}\;J`,
 with :math:`J` the cost function.
-
-.. image:: ../../_static/lez.png
-    :width: 400
-    :align: center
-
-Required data
--------------
-
-.. hint::
-
-    It is the same dataset as the :ref:`user_guide.quickstart.lez_split_sample_test` study, so possibly no need to re-download it.
-
-You need first to download all the required data.
-
-.. button-link:: https://smash.recover.inrae.fr/dataset/Lez-dataset.tar
-    :color: primary
-    :shadow:
-    :align: center
-
-    **Download**
-
-If the download was successful, a file named ``Lez-dataset.tar`` should be available. We can switch to the directory where this file has been 
-downloaded and extract it using the following command:
-
-.. code-block:: shell
-
-    tar xf Lez-dataset.tar
-
-Now a folder called ``Lez-dataset`` should be accessible and contain the following files and folders:
-
-- ``France_flwdir.tif``
-    A GeoTiff file containing the flow direction data,
-- ``gauge_attributes.csv``
-    A csv file containing the gauge attributes (gauge coordinates, drained area and code),
-- ``prcp``
-    A directory containing precipitation data in GeoTiff format with the following directory structure: ``%Y/%m`` 
-    (``2012/08``),
-- ``pet``
-    A directory containing daily interannual potential evapotranspiration data in GeoTiff format,
-- ``qobs``
-    A directory containing the observed discharge data in csv format,
-- ``descriptor``
-    A directory containing physiographic descriptors in GeoTiff format.
 
 Six physical descriptors are considered in this example, which are:
 
@@ -181,7 +137,7 @@ by stopping the optimizer after ``50`` iterations.
     )
 
 We have therefore optimized the set of rainfall-runoff parameters using a multiple polynomial regression constrained by
-physiographic descriptors. Here, most of the options used are the default ones, i.e. a minimization of one minus the Nash-Sutcliffe
+physiographic descriptors. Here, most of the options used are the default ones, i.e., a minimization of one minus the Nash-Sutcliffe
 efficiency on the most downstream gauge of the domain. The resulting rainfall-runoff parameter maps can be viewed.
 
 .. ipython:: python
@@ -195,7 +151,7 @@ efficiency on the most downstream gauge of the domain. The resulting rainfall-ru
     map_kexc = ax[1,0].imshow(model_mp.get_rr_parameters("kexc"));
     f.colorbar(map_kexc, ax=ax[1,0], label="kexc (mm/d)");
     map_llr = ax[1,1].imshow(model_mp.get_rr_parameters("llr"));
-    @savefig user_guide.classical_uses.lez_regionalization.mp_theta.png
+    @savefig user_guide.classical_uses.regionalization_spatial_validation.mp_theta.png
     f.colorbar(map_llr, ax=ax[1,1], label="llr (min)");
 
 As well as performances at upstream gauges
@@ -263,6 +219,10 @@ We also pass other options specific to the use of a NN:
     As we used the `smash.optimize` method (here an :ref:`ADAM algorithm <math_num_documentation.optimization_algorithm>` by default when choosing a NN based mapping) and asked for optional return values, this function will return two values, the optimized model
     ``model_ann`` and the optional returns ``opt_ann``.
 
+.. hint::
+    For advanced techniques, such as using customized ANNs, transfer learning, and more,
+    refer to the in-depth tutorial on :ref:`Learnable Regionalization Mapping <user_guide.in_depth.advanced_learnable_regionalization>`.
+
 Since we have returned the optimized neural network, we can visualize what it contains
 
 .. ipython:: python
@@ -279,7 +239,7 @@ Other information is available in the `smash.factory.Net` object, including the 
     plt.xlabel("Iteration");
     plt.ylabel("$1-NSE$");
     plt.grid(alpha=.7, ls="--");
-    @savefig user_guide.classical_uses.lez_regionalization.ann_J.png
+    @savefig user_guide.classical_uses.regionalization_spatial_validation.ann_J.png
     plt.title("Cost function descent");
 
 Finally, we can visualize parameters and performances
@@ -295,7 +255,7 @@ Finally, we can visualize parameters and performances
     map_kexc = ax[1,0].imshow(model_ann.get_rr_parameters("kexc"));
     f.colorbar(map_kexc, ax=ax[1,0], label="kexc (mm/d)");
     map_llr = ax[1,1].imshow(model_ann.get_rr_parameters("llr"));
-    @savefig user_guide.classical_uses.lez_regionalization.ann_theta.png
+    @savefig user_guide.classical_uses.regionalization_spatial_validation.ann_theta.png
     f.colorbar(map_llr, ax=ax[1,1], label="llr (min)");
 
 .. ipython:: python
