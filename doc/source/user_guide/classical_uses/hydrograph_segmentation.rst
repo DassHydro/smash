@@ -13,7 +13,6 @@ First, open a Python interface:
 
     python3
 
--------
 Imports
 -------
 
@@ -23,7 +22,6 @@ Imports
     import matplotlib.pyplot as plt
     import pandas as pd
 
----------------------
 Model object creation
 ---------------------
 
@@ -38,7 +36,6 @@ Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_datas
     
     model = smash.Model(setup, mesh)
 
------------------------------------------
 Flood event information and visualization
 -----------------------------------------
 
@@ -102,6 +99,9 @@ We suggest to adjust ``peak_quant`` of the segmentation algorithm to detect the 
 Indeed by default ``peak_quant`` fixed to 0.995, that means that only the discharges which exceed the 0.99 quantile are selected by the algorithm.
 For example, we chose a smaller value.
 
+Quantile option
+---------------
+
 .. ipython:: python
 
     event_seg_2 = smash.hydrograph_segmentation(model, peak_quant=0.99);
@@ -149,6 +149,9 @@ We can once again visualize, the segmented events of catchment ``V3524010`` on t
 If we are intested in specific time duration of the invent, we can control it with the ``max_duration`` option.
 By default ``max_duration`` is fixed to 240 hours.
 
+Duration option
+---------------
+
 .. ipython:: python
 
         event_seg_3 = smash.hydrograph_segmentation(model, peak_quant=0.99, max_duration=20);
@@ -185,6 +188,9 @@ We catch the events of 20 hours.
         fig.suptitle("V3524010");
 
 In the same way, after a run, we can study the simulated rainfall with turning ``by`` option to ``sim`` instead of the default value ``obs``.
+
+Provinded data option
+---------------------
 
 .. ipython:: python
 
