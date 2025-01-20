@@ -192,6 +192,7 @@ def _events_grad(
             if prev_end >= start:
                 list_events[-1]["end"] = max(end, prev_end)
                 list_events[-1]["start"] = min(start, prev_start)
+                list_events[-1]["multipeak"] = True
 
                 if q[i_peak] > q[prev_peakq]:
                     list_events[-1]["peakQ"] = i_peak
@@ -201,7 +202,7 @@ def _events_grad(
 
                 continue
 
-        list_events.append({"start": start, "end": end, "peakP": peakp, "peakQ": i_peak})
+        list_events.append({"start": start, "end": end, "multipeak": False, "peakP": peakp, "peakQ": i_peak})
 
     return list_events
 

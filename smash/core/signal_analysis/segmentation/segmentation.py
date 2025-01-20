@@ -51,11 +51,12 @@ def hydrograph_segmentation(
     -------
     segmentation : `pandas.DataFrame`
         Flood events information obtained from segmentation algorithm.
-        The dataframe has 6 columns which are
+        The dataframe has 7 columns which are
 
         - ``'code'`` : the catchment code.
         - ``'start'`` : the beginning of event.
         - ``'end'`` : the end of event.
+        - ``'multipeak'`` : whether the event has multiple peaks.
         - ``'maxrainfall'`` : the moment that the maximum precipation is observed.
         - ``'flood'`` : the moment that the maximum discharge is observed.
         - ``'season'`` : the season that event occurrs.
@@ -74,14 +75,14 @@ def hydrograph_segmentation(
     0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
     1  V3515010 2014-11-03 10:00:00 ... 2014-11-04 20:00:00  autumn
     2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn
-    [3 rows x 6 columns]
+    [3 rows x 7 columns]
 
     Access all flood events information for a single gauge
 
     >>> hydro_seg[hydro_seg["code"] == "V3524010"]
            code               start  ...               flood  season
     0  V3524010 2014-11-03 03:00:00  ... 2014-11-04 19:00:00  autumn
-    [1 rows x 6 columns]
+    [1 rows x 7 columns]
 
     Lower the **peak_quant** to potentially retrieve more than one event
 
@@ -94,7 +95,7 @@ def hydrograph_segmentation(
     3  V3515010 2014-11-03 10:00:00  ... 2014-11-04 20:00:00  autumn
     4  V3517010 2014-10-09 15:00:00  ... 2014-10-10 23:00:00  autumn
     5  V3517010 2014-11-03 08:00:00  ... 2014-11-04 16:00:00  autumn
-    [6 rows x 6 columns]
+    [6 rows x 7 columns]
 
     Once again, access all flood events information for a single gauge
 
@@ -102,7 +103,7 @@ def hydrograph_segmentation(
            code               start  ...               flood  season
     0  V3524010 2014-10-10 04:00:00  ... 2014-10-13 02:00:00  autumn
     1  V3524010 2014-11-03 03:00:00  ... 2014-11-04 19:00:00  autumn
-    [2 rows x 6 columns]
+    [2 rows x 7 columns]
     """
 
     peak_quant, max_duration, by = _standardize_hydrograph_segmentation_args(peak_quant, max_duration, by)
@@ -117,7 +118,7 @@ def _hydrograph_segmentation(instance: Model, peak_quant: float, max_duration: N
         freq=f"{int(instance.setup.dt)}s",
     )
 
-    col_name = ["code", "start", "end", "maxrainfall", "flood", "season"]
+    col_name = ["code", "start", "end", "multipeak", "maxrainfall", "flood", "season"]
 
     df = pd.DataFrame(columns=col_name)
 
@@ -146,7 +147,9 @@ def _hydrograph_segmentation(instance: Model, peak_quant: float, max_duration: N
                 peakp = date_range[t["peakP"]]
                 season = _get_season(ts)
 
-                pdrow = pd.DataFrame([[catchment, ts, te, peakp, peakq, season]], columns=col_name)
+                pdrow = pd.DataFrame(
+                    [[catchment, ts, te, t["multipeak"], peakp, peakq, season]], columns=col_name
+                )
                 df = pdrow.copy() if df.empty else pd.concat([df, pdrow], ignore_index=True)
 
     return df
