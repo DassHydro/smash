@@ -14,7 +14,7 @@ First, open a Python interface:
     python3
 
 Imports
--------
+*******
 
 .. ipython:: python
     
@@ -23,7 +23,7 @@ Imports
     import pandas as pd
 
 Model object creation
----------------------
+*********************
 
 To obtain flood events segmentation, you need to create a :class:`smash.Model` object. 
 For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.demo_data.cance`.
@@ -37,7 +37,7 @@ Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_datas
     model = smash.Model(setup, mesh)
 
 Flood event information and visualization
------------------------------------------
+*****************************************
 
 Once the :class:`smash.Model` object is created, the flood events information are available using the `smash.hydrograph_segmentation` function.
 
@@ -100,7 +100,7 @@ Indeed by default ``peak_quant`` fixed to 0.995, that means that only the discha
 For example, we chose a smaller value.
 
 Quantile option
----------------
+***************
 
 .. ipython:: python
 
@@ -150,7 +150,7 @@ If we are intested in specific time duration of the invent, we can control it wi
 By default ``max_duration`` is fixed to 240 hours.
 
 Duration option
----------------
+***************
 
 .. ipython:: python
 
@@ -190,7 +190,7 @@ We catch the events of 20 hours.
 In the same way, after a run, we can study the simulated rainfall with turning ``by`` option to ``sim`` instead of the default value ``obs``.
 
 Provinded data option
----------------------
+*********************
 
 .. ipython:: python
 
