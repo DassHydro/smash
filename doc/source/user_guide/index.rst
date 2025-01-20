@@ -19,6 +19,7 @@ Classical Uses
     :maxdepth: 1
 
     classical_uses/lez_regionalization
+    classical_uses/event_segmentation
 
 Others
 ------
