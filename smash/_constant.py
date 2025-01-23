@@ -526,7 +526,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
             (1e-6, 5e-4),  # % alpha1
-            (1e-5, 1.0),  # % alpha2
+            (1e-5, 1e-3),  # % alpha2
             (1e-6, 1e3),  # % cl
             (1e-3, 20),  # % be
             (-50, 50),  # % kexc
@@ -802,6 +802,9 @@ DEFAULT_MODEL_SETUP = {
     "descriptor_format": "tif",
     "descriptor_directory": None,
     "descriptor_name": None,
+    "read_imperviousness": False,
+    "imperviousness_format": "tif",
+    "imperviousness_file": None,
 }
 
 

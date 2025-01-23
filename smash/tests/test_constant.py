@@ -404,7 +404,7 @@ def test_default_bounds_parameters():
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
         (1e-6, 5e-4),  # % alpha1
-        (1e-5, 1.0),  # % alpha2
+        (1e-5, 1e-3),  # % alpha2
         (1e-6, 1e3),  # % cl
         (1e-3, 20),  # % be
         (-50, 50),  # % kexc

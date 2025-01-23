@@ -137,6 +137,10 @@ module mwd_setup
         character(2*lchar) :: descriptor_directory = "..." !$F90W char
         character(lchar), allocatable, dimension(:) :: descriptor_name !$F90W char-array
 
+        logical :: read_imperviousness = .false.
+        character(lchar) :: imperviousness_format = "..." !$F90W char
+        character(2*lchar) :: imperviousness_file = "..." !$F90W char
+
         ! Post processed variables
         character(lchar) :: structure = "..." !$F90W char
         logical :: snow_module_present = .false.

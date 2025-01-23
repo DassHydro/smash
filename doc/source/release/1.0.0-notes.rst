@@ -673,9 +673,6 @@ New options have been added to the setup:
     This options (one per atmospheric data type) can be used to specify how are stored the atmospheric
     data files (i.e., the directories architecture).
 
-    .. hint::
-        See the :ref:`user_guide.others.input_data_convention` convention.
-
     It can be specified as follows:
 
     .. code-block:: yaml

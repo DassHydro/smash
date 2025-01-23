@@ -1,5 +1,5 @@
 # Derived from Pandas
-FROM python:3.11
+FROM python:3.12
 WORKDIR /home/smash
 
 RUN apt-get update && apt-get -y upgrade
