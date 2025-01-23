@@ -18,8 +18,8 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - HY_ParametersDT_initialise
-!%      - HY_ParametersDT_copy
+!%      - HY1D_ParametersDT_initialise
+!%      - HY1D_ParametersDT_copy
 
 module mwd_hy1d_parameters
 

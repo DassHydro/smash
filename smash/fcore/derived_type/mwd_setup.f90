@@ -57,6 +57,7 @@
 !%          ``n_layers``               Number of trainable layers
 !%          ``nrrp``                   Number of rainfall-runoff parameters
 !%          ``nrrs``                   Number of rainfall-runoff states
+!%          ``nhy1dp``                 Number of 1D vectorial hydraulic model parameters
 !%          ``nsep_mu``                Number of structural error parameters for mu
 !%          ``nsep_sigma``             Number of structural error parameters for sigma
 !%          ``nqz``                    Size of the temporal buffer for discharge grids
@@ -64,7 +65,6 @@
 !%          ``n_snow_fluxes``          Number of internal fluxes of snow module
 !%          ``n_hydro_fluxes``         Number of internal fluxes of hydrological module
 !%          ``n_routing_fluxes``       Number of internal fluxes of routing module
-!%          ``nhy1dp``                 Number of 1D vectorial hydraulic model parameters
 !%
 !%      Subroutine
 !%      ----------
@@ -145,6 +145,7 @@ module mwd_setup
         integer :: nd = -99
         integer :: nrrp = -99
         integer :: nrrs = -99
+        integer :: nhy1dp = -99
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
         integer :: nqz = -99
@@ -152,7 +153,6 @@ module mwd_setup
         integer :: n_snow_fluxes = -99
         integer :: n_hydro_fluxes = -99
         integer :: n_routing_fluxes = -99
-        integer :: nhy1dp = -99
 
         integer :: n_layers = -99
         integer, dimension(2) :: hidden_neuron = -99

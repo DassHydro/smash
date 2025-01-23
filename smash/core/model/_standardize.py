@@ -32,6 +32,7 @@ from smash._constant import (
     STRUCTURE_RR_INTERNAL_FLUXES,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    STRUCTURE_HY1D_PARAMETERS,
     get_neurons_from_hydrological_module,
 )
 
@@ -492,6 +493,7 @@ def _standardize_model_setup_finalize(setup: dict):
             setup["snow_module"],
             setup["hydrological_module"],
             setup["routing_module"],
+            setup["hy1d_module"],
         ]
     )
 
@@ -506,6 +508,7 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["nd"] = setup["descriptor_name"].size
     setup["nrrp"] = len(STRUCTURE_RR_PARAMETERS[setup["structure"]])
     setup["nrrs"] = len(STRUCTURE_RR_STATES[setup["structure"]])
+    setup["nhy1dp"] = len(STRUCTURE_HY1D_PARAMETERS[setup["structure"]])
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
     setup["nqz"] = ROUTING_MODULE_NQZ[setup["routing_module"]]
@@ -552,9 +555,14 @@ def _standardize_hy1d_parameters_key(model: Model, key: str) -> str:
         raise TypeError("key argument must be a str")
 
     if key.lower() not in STRUCTURE_HY1D_PARAMETERS[model.setup.structure]:
-        raise ValueError(
-            f"Unknown model hy1d_parameter '{key}'. Choices: {STRUCTURE_HY1D_PARAMETERS[model.setup.structure]}"
-        )
+        if STRUCTURE_HY1D_PARAMETERS[model.setup.structure]:
+            raise ValueError(
+                f"Unknown model hy1d_parameter '{key}'. Choices: {STRUCTURE_HY1D_PARAMETERS[model.setup.structure]}"
+            )
+        else:
+            raise ValueError(
+                f"Unknown model hy1d_parameter '{key}'. There is no hydraulic module in model structure '{model.setup.structure}'"
+            )
 
     return key.lower()
 
@@ -661,6 +669,19 @@ def _standardize_rr_states_value(
     return value
 
 
+def _standardize_hy1d_parameters_value(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> Numeric | np.ndarray:
+    if not isinstance(value, (int, float, np.ndarray)):
+        raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
+
+    arr = np.array(value, ndmin=1, dtype=np.float32)
+
+    # TODO: complete check hy1d parameter value here
+
+    return value
+
+
 def _standardize_serr_mu_parameters_value(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
@@ -721,14 +742,14 @@ def _standardize_get_rr_parameters_args(model: Model, key: str) -> str:
     return key
 
 
-def _standardize_get_hy1d_parameters_args(model: Model, key: str) -> str:
-    key = _standardize_hy1d_parameters_key(model, key)
+def _standardize_get_rr_initial_states_args(model: Model, key: str) -> str:
+    key = _standardize_rr_states_key(model, "rr_initial_state", key)
 
     return key
 
 
-def _standardize_get_rr_initial_states_args(model: Model, key: str) -> str:
-    key = _standardize_rr_states_key(model, "rr_initial_state", key)
+def _standardize_get_hy1d_parameters_args(model: Model, key: str) -> str:
+    key = _standardize_hy1d_parameters_key(model, key)
 
     return key
 
@@ -764,6 +785,14 @@ def _standardize_set_rr_initial_states_args(model: Model, key: str, value: Numer
     key = _standardize_rr_states_key(model, state_kind, key)
 
     value = _standardize_rr_states_value(model, state_kind, key, value)
+
+    return (key, value)
+
+
+def _standardize_set_hy1d_parameters_args(model: Model, key: str, value: Numeric | np.ndarray) -> AnyTuple:
+    key = _standardize_hy1d_parameters_key(model, key)
+
+    value = _standardize_hy1d_parameters_value(model, key, value)
 
     return (key, value)
 

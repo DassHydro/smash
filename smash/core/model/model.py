@@ -15,6 +15,7 @@ from smash._constant import (
     SERR_SIGMA_MAPPING_PARAMETERS,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    STRUCTURE_HY1D_PARAMETERS,
 )
 from smash.core.model._build_model import (
     _build_input_data,
@@ -27,6 +28,7 @@ from smash.core.model._standardize import (
     _standardize_get_rr_final_states_args,
     _standardize_get_rr_initial_states_args,
     _standardize_get_rr_parameters_args,
+    _standardize_get_hy1d_parameters_args,
     _standardize_get_serr_mu_parameters_args,
     _standardize_get_serr_sigma_parameters_args,
     _standardize_model_args,
@@ -34,6 +36,7 @@ from smash.core.model._standardize import (
     _standardize_set_nn_parameters_weight_args,
     _standardize_set_rr_initial_states_args,
     _standardize_set_rr_parameters_args,
+    _standardize_set_hy1d_parameters_args,
     _standardize_set_serr_mu_parameters_args,
     _standardize_set_serr_sigma_parameters_args,
 )
@@ -97,6 +100,7 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_response_data import Response_DataDT
     from smash.fcore._mwd_rr_parameters import RR_ParametersDT
     from smash.fcore._mwd_rr_states import RR_StatesDT
+    from smash.fcore._mwd_hy1d_parameters import HY1D_ParametersDT
     from smash.fcore._mwd_serr_mu_parameters import SErr_Mu_ParametersDT
     from smash.fcore._mwd_serr_sigma_parameters import SErr_Sigma_ParametersDT
     from smash.fcore._mwd_u_response_data import U_Response_DataDT
@@ -418,6 +422,7 @@ class Model:
         rr_final_states: ['keys', 'values']
         rr_initial_states: ['keys', 'values']
         rr_parameters: ['keys', 'values']
+        hy1d_parameters: ['keys', 'values']
         serr_mu_parameters: ['keys', 'values']
         serr_sigma_parameters: ['keys', 'values']
         setup: ['adjust_interception', 'compute_mean_atmos', '...', 'temp_access', 'temp_directory']
@@ -459,8 +464,6 @@ class Model:
             self._parameters = ParametersDT(self.setup, self.mesh)
 
             _build_parameters(self.setup, self.mesh, self._input_data, self._parameters)
-
-            # self._hy1d_parameters = HY1D_ParametersDT(self.setup, self.mesh) #pag
 
             self._output = OutputDT(self.setup, self.mesh)
 
@@ -945,6 +948,39 @@ class Model:
     @rr_parameters.setter
     def rr_parameters(self, value: RR_ParametersDT):
         self._parameters.rr_parameters = value
+
+    @property
+    def hy1d_parameters(self) -> HY1D_ParametersDT:
+        """
+        Model 1D hydraulic parameters.
+
+        Returns
+        -------
+        hy1d_parameters : `HY1D_ParametersDT <fcore._mwd_hy1d_parameters.HY1D_ParametersDT>`
+            It returns a Fortran derived type containing the variables relating to the 1D hydraulic
+            parameters.
+
+        See Also
+        --------
+        Model.get_hy1d_parameters : Get the values of a Model 1D hydraulic parameter.
+        Model.set_hy1d_parameters : Set the values of a Model 1D hydraulic parameter.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        Access to Model 1D hydraulic parameters
+
+        TODO: complete here.
+        """
+
+        return self._parameters.hy1d_parameters
+
+    @hy1d_parameters.setter
+    def hy1d_parameters(self, value: HY1D_ParametersDT):
+        self._parameters.hy1d_parameters = value
 
     @property
     def rr_initial_states(self) -> RR_StatesDT:
@@ -1788,6 +1824,73 @@ class Model:
 
         self._parameters.rr_initial_states.values[..., ind] = value
 
+    def get_hy1d_parameters(self, key: str) -> NDArray[np.float32]:
+        """
+        Get the values of a Model 1D hydraulic parameter.
+
+        Parameters
+        ----------
+        key : `str`
+            The name of the 1D hydraulic parameter.
+
+        Returns
+        -------
+        value : `numpy.ndarray`
+            An array of the same shape as the 1D hydraulic mesh representing the 1D hydraulic parameter.
+
+        See Also
+        --------
+        Model.hy1d_parameters : Model 1D hydraulic parameters.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        TODO: complete here
+        """
+
+        key = _standardize_get_hy1d_parameters_args(self, key)
+        ind = np.argwhere(self._parameters.hy1d_parameters.keys == key).item()
+
+        return self._parameters.hy1d_parameters.values[..., ind]
+
+    def set_hy1d_parameters(self, key: str, value: Numeric | NDArray[Any]):
+        """
+        Set the values of a Model 1D hydraulic parameter.
+
+        This method performs an in-place operation on the Model object.
+
+        Parameters
+        ----------
+        key : str
+            The name of the 1D hydraulic parameter.
+
+        value : `float` or `numpy.ndarray`
+            The value(s) to set to the 1D hydraulic parameter.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the 1D hydraulic
+            parameter shape.
+
+        See Also
+        --------
+        Model.get_hy1d_parameters : Get the values of a Model 1D hydraulic parameter.
+        Model.hy1d_parameters : Model 1D hydraulic parameters.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        TODO: complete here
+        """
+
+        key, value = _standardize_set_hy1d_parameters_args(self, key, value)
+        ind = np.argwhere(self._parameters.hy1d_parameters.keys == key).item()
+
+        self._parameters.hy1d_parameters.values[..., ind] = value
+
     def get_serr_mu_parameters(self, key: str) -> NDArray[np.float32]:
         """
         Get the values of a Model structural error mu parameter.
@@ -2209,16 +2312,16 @@ class Model:
 
     def get_hy1d_parameters_bounds(self) -> dict[str, tuple[float, float]]:
         """
-        Get the boundary condition for the Model 1d hydraulics parameters.
+        Get the boundary condition for the Model 1D hydraulic parameters.
 
         Returns
         -------
         bounds : `dict[str, tuple[float, float]]`
-            A dictionary representing the boundary condition for each rainfall-runoff parameter.
+            A dictionary representing the boundary condition for each 1D hydraulic parameter.
 
         Examples
         --------
-        TODO cance_1dvect
+        TODO: complete here
         """
 
         return {

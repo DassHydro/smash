@@ -9,7 +9,7 @@ import numpy as np
 
 
 def get_structure() -> list[str]:
-    product = itertools.product(SNOW_MODULE, HYDROLOGICAL_MODULE, ROUTING_MODULE)
+    product = itertools.product(*MODULE)
     product = ["-".join(module) for module in product]
 
     return product
@@ -17,28 +17,34 @@ def get_structure() -> list[str]:
 
 def get_rr_parameters_from_structure(structure: str) -> list[str]:
     rr_parameters = []
-    [rr_parameters.extend(MODULE_RR_PARAMETERS[module]) for module in structure.split("-")]
+    [
+        rr_parameters.extend(MODULE_RR_PARAMETERS[module]) for module in structure.split("-")[:-1]
+    ]  # No rr_parameters in hy1d module
 
     return rr_parameters
 
 
-# def get_hy1d_parameters_from_hy1d_module(structure: str) -> list[str]:
-# hy1d_parameters = []
-# [hy1d_parameters.extend(HY1D_MODULE[module]) for module in structure.split("-")]
-
-# return hy1d_parameters
+def get_hy1d_parameters_from_structure(structure: str) -> list[str]:
+    return MODULE_HY1D_PARAMETERS[
+        structure.split("-")[-1]
+    ]  # Only hy1d module (last index) has hy1d parameters
 
 
 def get_rr_states_from_structure(structure: str) -> list[str]:
     rr_states = []
-    [rr_states.extend(MODULE_RR_STATES[module]) for module in structure.split("-")]
+    [
+        rr_states.extend(MODULE_RR_STATES[module]) for module in structure.split("-")[:-1]
+    ]  # No rr_states in hy1d module
 
     return rr_states
 
 
 def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     rr_internal_fluxes = []
-    [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
+    [
+        rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")[:-1]
+    ]  # No rr_internal_fluxes in hy1d module
+
     return rr_internal_fluxes
 
 
@@ -81,7 +87,9 @@ HYDROLOGICAL_MODULE = [
 
 ROUTING_MODULE = ["lag0", "lr", "kw"]
 
-MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
+HY1D_MODULE = ["zero", "kw", "non_inertial"]
+
+MODULE = (SNOW_MODULE, HYDROLOGICAL_MODULE, ROUTING_MODULE, HY1D_MODULE)
 
 
 # % Following SNOW_MODULE order
@@ -209,13 +217,8 @@ MODULE_RR_INTERNAL_FLUXES = dict(
     **ROUTING_MODULE_RR_INTERNAL_FLUXES,
 )
 
-### HYDRAULIC MODULE ###
-########################
-
-HY1D_MODULE = ["zero", "kw", "non_inertial"]
-
-# % Following SNOW_MODULE order
-HY1D_MODULE_PARAMETERS = dict(
+# % Following HY1D_MODULE order. Only in hy1d module
+MODULE_HY1D_PARAMETERS = dict(
     zip(
         HY1D_MODULE,
         [
@@ -229,7 +232,7 @@ HY1D_MODULE_PARAMETERS = dict(
 ### STRUCTURE ###
 #################
 
-# % Product of all modules (snow, hydrological, routing, 1d hydraulics)
+# % Product of all modules (snow, hydrological, routing, hy1d)
 STRUCTURE = get_structure()
 
 # % Following STRUCTURE order
@@ -355,6 +358,13 @@ RR_STATES = [
     "hlr",  # % lr
 ]
 
+HY1D_PARAMETERS = [
+    "a",  # % kw, non_inertial
+    "b",  # % kw, non_inertial
+    "bathy",  # % kw, non_inertial
+    "manning",  # % kw, non_inertial
+]
+
 ### FEASIBLE PARAMETERS ###
 ###########################
 
@@ -418,12 +428,12 @@ FEASIBLE_RR_INITIAL_STATES = dict(
 # % Following HY1D_PARAMETERS order
 FEASIBLE_HY1D_PARAMETERS = dict(
     zip(
-        HY1D_MODULE_PARAMETERS,
+        HY1D_PARAMETERS,
         [
             (0, np.inf),  # % a
             (0, np.inf),  # % b
             (0, np.inf),  # % bathy
-            (1e-2, np.inf),  # % manning
+            (0, np.inf),  # % manning
         ],
     )
 )
@@ -492,7 +502,7 @@ DEFAULT_RR_INITIAL_STATES = dict(
 # % Following HY1D_PARAMETERS order
 DEFAULT_HY1D_PARAMETERS = dict(
     zip(
-        HY1D_MODULE_PARAMETERS,
+        HY1D_PARAMETERS,
         [
             0,  # % a
             0,  # % b
@@ -565,7 +575,7 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
 # % Following HY1D_PARAMETERS order
 DEFAULT_BOUNDS_HY1D_PARAMETERS = dict(
     zip(
-        HY1D_MODULE_PARAMETERS,
+        HY1D_PARAMETERS,
         [
             (1e-6, 1e3),  # % a
             (1, 100),  # % b
@@ -595,7 +605,12 @@ OPTIMIZABLE_RR_INITIAL_STATES = dict(
 )
 
 # % Following HY_PARAMETERS order
-OPTIMIZABLE_HY1D_PARAMETERS = dict(zip(HY1D_MODULE_PARAMETERS, ["manning", "manning"]))
+OPTIMIZABLE_HY1D_PARAMETERS = dict(
+    zip(
+        HY1D_PARAMETERS,
+        [False, False, False, True],  # % Only manning parameter is optimizable for the moment
+    )
+)
 
 ### STRUCTURAL ERROR (SERR) MODEL ###
 #####################################

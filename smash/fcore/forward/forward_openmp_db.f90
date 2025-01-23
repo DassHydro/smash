@@ -2379,8 +2379,8 @@ END MODULE MWD_CONTROL_DIFF
 !%      Subroutine
 !%      ----------
 !%
-!%      - HY_ParametersDT_initialise
-!%      - HY_ParametersDT_copy
+!%      - HY1D_ParametersDT_initialise
+!%      - HY1D_ParametersDT_copy
 MODULE MWD_HY1D_PARAMETERS_DIFF
 !% only: sp, lchar
   USE MD_CONSTANT

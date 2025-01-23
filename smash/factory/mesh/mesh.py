@@ -214,10 +214,6 @@ def _generate_rr_mesh_from_xy(
                 flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
             )
 
-        mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln(
-            flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
-        )
-
         row_dln[ind] = row_dln_win + slice_win[0].start  # % srow
         col_dln[ind] = col_dln_win + slice_win[1].start  # % scol
 
@@ -367,12 +363,12 @@ def _generate_rr_mesh(
     y: Numeric | ListLike[float] | None = None,
     area: Numeric | ListLike[float] | None = None,
     code: str | ListLike[str] | None = None,
-    shp_dataset: gpd.GeoDataFrame | None = None,
+    shp_path: FilePath | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
 ) -> dict[str, Any]:
-    flwdir_path, bbox, x, y, area, code, max_depth, epsg = _standardize_generate_rr_mesh_args(
-        flwdir_path, bbox, x, y, area, code, max_depth, epsg
+    flwdir_path, bbox, x, y, area, code, shp_dataset, max_depth, epsg = _standardize_generate_rr_mesh_args(
+        flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg
     )
 
     if bbox is not None:

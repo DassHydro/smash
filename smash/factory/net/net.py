@@ -544,6 +544,7 @@ class Net(object):
         # calculate the gradient of J wrt rr_parameters and rr_initial_states
         # that are the output of the descriptors-to-parameters (d2p) NN
         # and get the gradient of the pmtz NN (pmtz) if used
+        # TODO: get the gradient hydraulic parameters if used
         grad_d2p_init, grad_pmtz = _get_gradient_value(
             self, x_train, calibrated_parameters, instance, parameters, wrap_options, wrap_returns
         )
@@ -567,6 +568,8 @@ class Net(object):
         ind = ADAPTIVE_OPTIMIZER.index(optimizer)
         func = eval(OPTIMIZER_CLASS[ind])
 
+        # % TODO: Init opt for hydraulic parameters if used
+
         opt_nn_parameters = [func(learning_rate=learning_rate) for _ in range(2 * instance.setup.n_layers)]
 
         # % Train model
@@ -579,6 +582,8 @@ class Net(object):
                         key,
                         opt_nn_parameters[i].update(getattr(parameters.nn_parameters, key), grad_pmtz[i]),
                     )
+
+                # % TODO: update trainable hydraulic parameters if used
 
             self._backward_pass(grad_d2p_init, inplace=True)  # update weights of the d2p NN
 

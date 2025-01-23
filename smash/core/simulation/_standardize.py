@@ -18,10 +18,10 @@ from smash._constant import (
     F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
+    FEASIBLE_HY1D_PARAMETERS,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     GAUGE_ALIAS,
-    HY1D_MODULE_PARAMETERS,
     JOBS_CMPT,
     JOBS_CMPT_TFM,
     JREG_CMPT,
@@ -32,6 +32,7 @@ from smash._constant import (
     OPTIMIZABLE_NN_PARAMETERS,
     OPTIMIZABLE_RR_INITIAL_STATES,
     OPTIMIZABLE_RR_PARAMETERS,
+    OPTIMIZABLE_HY1D_PARAMETERS,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
     OPTIMIZER_CLASS,
@@ -46,6 +47,7 @@ from smash._constant import (
     SIMULATION_OPTIMIZE_OPTIONS_KEYS,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    STRUCTURE_HY1D_PARAMETERS,
     WEIGHT_ALIAS,
     WJREG_ALIAS,
 )
@@ -102,8 +104,14 @@ def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
                 low, upp = FEASIBLE_RR_PARAMETERS[key]
             elif key in model.rr_initial_states.keys:
                 low, upp = FEASIBLE_RR_INITIAL_STATES[key]
+            elif key in model.hy1d_parameters.keys:
+                low, upp = FEASIBLE_HY1D_PARAMETERS[key]
             else:
-                available_parameters = list(model.rr_parameters.keys) + list(model.rr_initial_states.keys)
+                available_parameters = (
+                    list(model.rr_parameters.keys)
+                    + list(model.rr_initial_states.keys)
+                    + list(model.hy1d_parameters.keys)
+                )
                 raise ValueError(
                     f"Unknown parameter '{key}' in samples attributes. Choices: {available_parameters}"
                 )
@@ -127,13 +135,15 @@ def _standardize_simulation_optimize_options_parameters(
     model: Model, func_name: str, parameters: str | ListLike | None, **kwargs
 ) -> np.ndarray:
     is_bayesian = "bayesian" in func_name
-    is_hy1d = "non_inertial" in model.setup.hy1d_module or "kw" in model.setup.hy1d_module
 
     available_rr_parameters = [
         key for key in STRUCTURE_RR_PARAMETERS[model.setup.structure] if OPTIMIZABLE_RR_PARAMETERS[key]
     ]
     available_rr_initial_states = [
         key for key in STRUCTURE_RR_STATES[model.setup.structure] if OPTIMIZABLE_RR_INITIAL_STATES[key]
+    ]
+    available_hy1d_parameters = [
+        key for key in STRUCTURE_HY1D_PARAMETERS[model.setup.structure] if OPTIMIZABLE_HY1D_PARAMETERS[key]
     ]
     available_serr_mu_parameters = [
         key
@@ -147,27 +157,21 @@ def _standardize_simulation_optimize_options_parameters(
     ]
     available_nn_parameters = OPTIMIZABLE_NN_PARAMETERS[max(0, model.setup.n_layers - 1)]
 
-    available_parameters = available_rr_parameters + available_rr_initial_states + available_nn_parameters
-
-    if is_hy1d:
-        available_hy1d_parameters = [
-            key
-            for key in HY1D_MODULE_PARAMETERS[model.setup.hy1d_module]
-            if OPTIMIZABLE_HY_PARAMETERS[key]  # pag
-        ]
-        available_parameters.extend(available_hy1d_parameters)
+    available_parameters = (
+        available_rr_parameters
+        + available_rr_initial_states
+        + available_hy1d_parameters
+        + available_nn_parameters
+    )
 
     if is_bayesian:
         available_parameters.extend(available_serr_mu_parameters + available_serr_sigma_parameters)
 
     if parameters is None:
-        default_parameters = available_rr_parameters + available_nn_parameters
+        default_parameters = available_rr_parameters + available_hy1d_parameters + available_nn_parameters
 
         if is_bayesian:
             default_parameters += available_serr_mu_parameters + available_serr_sigma_parameters
-
-        if is_hy1d:
-            default_parameters += available_hy1d_parameters
 
         parameters = np.array(default_parameters, ndmin=1)
 
@@ -230,8 +234,8 @@ def _standardize_simulation_optimize_options_bounds(
 
     parameters_bounds = dict(
         **model.get_rr_parameters_bounds(),
-        **model.get_hy1d_parameters_bounds(),
         **model.get_rr_initial_states_bounds(),
+        **model.get_hy1d_parameters_bounds(),
         **model.get_serr_mu_parameters_bounds(),
         **model.get_serr_sigma_parameters_bounds(),
     )
@@ -247,14 +251,16 @@ def _standardize_simulation_optimize_options_bounds(
             low, upp = FEASIBLE_RR_PARAMETERS[key]
             # Do not check if a value is inside the feasible domain outside of active cells
             mask = model.mesh.active_cell == 1
-        if key in model.hy1d_parameters.keys:
-            arr = model.get_hy1d_parameters(key)
-            low, upp = FEASIBLE_HY1D_PARAMETERS[key]
         elif key in model.rr_initial_states.keys:
             arr = model.get_rr_initial_states(key)
             low, upp = FEASIBLE_RR_INITIAL_STATES[key]
             # Do not check if a value is inside the feasible domain outside of active cells
             mask = model.mesh.active_cell == 1
+        elif key in model.hy1d_parameters.keys:
+            arr = model.get_hy1d_parameters(key)
+            low, upp = FEASIBLE_HY1D_PARAMETERS[key]
+            # Check all values
+            mask = np.ones(arr.shape, dtype=bool)
         elif key in model.serr_sigma_parameters.keys:
             arr = model.get_serr_sigma_parameters(key)
             low, upp = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
@@ -1109,19 +1115,6 @@ def _standardize_simulation_parameters_feasibility(model: Model):
                 f"is not included in the feasible domain ]{low}, {upp}["
             )
 
-    for key in model.hy1d_parameters.keys:
-        arr = model.get_hy1d_parameters(key)
-        low, upp = FEASIBLE_HY1D_PARAMETERS[key]
-        # Do not check if a value is inside the feasible domain outside of active cells
-        low_arr = np.min(arr, initial=np.inf)
-        upp_arr = np.max(arr, initial=-np.inf)
-
-        if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
-            raise ValueError(
-                f"Invalid value for model hy1d_parameter '{key}'. hy1d_parameter domain [{low_arr}, {upp_arr}] "
-                f"is not included in the feasible domain ]{low}, {upp}["
-            )
-
     for key in model.rr_initial_states.keys:
         arr = model.get_rr_initial_states(key)
         low, upp = FEASIBLE_RR_INITIAL_STATES[key]
@@ -1133,6 +1126,21 @@ def _standardize_simulation_parameters_feasibility(model: Model):
             raise ValueError(
                 f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain "
                 f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
+            )
+
+    for key in model.hy1d_parameters.keys:
+        arr = model.get_hy1d_parameters(key)
+        # % Skip if size == 0, i.e. no 1d hydraulic module
+        if arr.size == 0:
+            continue
+        low, upp = FEASIBLE_HY1D_PARAMETERS[key]
+        low_arr = np.min(arr)
+        upp_arr = np.max(arr)
+
+        if (low_arr + F_PRECISION) <= low or (upp_arr - F_PRECISION) >= upp:
+            raise ValueError(
+                f"Invalid value for model hy1d_parameter '{key}'. hy1d_parameter domain [{low_arr}, {upp_arr}] "
+                f"is not included in the feasible domain ]{low}, {upp}["
             )
 
     for key in model.serr_mu_parameters.keys:
@@ -1204,6 +1212,7 @@ def _standardize_simulation_optimize_options_finalize(
     optimize_options["rr_initial_states"] = np.zeros(shape=model.setup.nrrs, dtype=np.int32)
     optimize_options["l_rr_initial_states"] = np.zeros(shape=model.setup.nrrs, dtype=np.float32)
     optimize_options["u_rr_initial_states"] = np.zeros(shape=model.setup.nrrs, dtype=np.float32)
+
     if descriptor_present:
         optimize_options["rr_initial_states_descriptor"] = np.zeros(
             shape=(model.setup.nd, model.setup.nrrs), dtype=np.int32
@@ -1224,6 +1233,12 @@ def _standardize_simulation_optimize_options_finalize(
     optimize_options["hy1d_parameters"] = np.zeros(shape=model.setup.nhy1dp, dtype=np.int32)
     optimize_options["l_hy1d_parameters"] = np.zeros(shape=model.setup.nhy1dp, dtype=np.float32)
     optimize_options["u_hy1d_parameters"] = np.zeros(shape=model.setup.nhy1dp, dtype=np.float32)
+
+    for i, key in enumerate(model.hy1d_parameters.keys):
+        if key in optimize_options["parameters"]:
+            optimize_options["hy1d_parameters"][i] = 1
+            optimize_options["l_hy1d_parameters"][i] = optimize_options["bounds"][key][0]
+            optimize_options["u_hy1d_parameters"][i] = optimize_options["bounds"][key][1]
 
     # % nn parameters
     optimize_options["nn_parameters"] = np.zeros(shape=len(NN_PARAMETERS_KEYS), dtype=np.int32)
