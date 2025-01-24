@@ -689,6 +689,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         q_t(x, t) = q_r(x, t)
 
+
+
 .. _math_num_documentation.forward_structure.hydrological_module.loieau:
 
 .. dropdown:: Génie Rural LoiEau (loieau)
@@ -790,7 +792,6 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     .. math::
 
         q_t(x, t) = k_b(x)\left(q_r(x, t) + q_d(x, t)\right)
-
 
 .. _math_num_documentation.forward_structure.hydrological_module.gr_rainfall_intensity:
 
@@ -1019,6 +1020,50 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         **Transfer**
         
         Same as ``gr4_ri`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
+
+.. _math_num_documentation.forward_structure.hydrological_module.imperviousness:
+
+.. dropdown:: Génie Rural with imperviousness 
+    :animate: fade-in-slide-down
+
+    This imperviousness feature allows for the calculation of the impervious proportion of a pixel's surface and takes this into account when computing infiltration and evaporation fluxes applied to the GR type production reservoir.
+    The imperviousness coefficients  :math:`imperv(x)` influence the fluxes of the production reservoir of each cell by being applied to the neutralized rainfall :math:`p_n(x,t)` and the evaporation :math:`e_s(x,t)`.
+    The imperviousness coefficients must range between 0 and 1 and be specified through an input map that is consistent with the model grid. This map can be obtained, for example, from soil occupation processing.
+    For instance, if the imperviousness coefficient is close to 1, the production part receives less neutralized rainfall :math:`p_n` and there is less evaporation :math:`e_s` from the impermeable soil.
+    This imperviousness accounting for the GR reservoir is applicable to GR model structures in SMASH. This is illustrated here on the GR4 structure.
+
+    .. figure:: ../_static/gr4_structure_imperviousness.svg
+        :align: center
+        :width: 300
+        
+        Diagram of the ``gr4`` hydrological operator with imperviousness, a simplified ``GR`` like model for spatialized modeling.
+
+
+    **Production**
+
+    - Compute the neutralized precipitation :math:`p_n` on impermeable soil
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &p_n(x, t)& &=& & \left(1 - imperv(x)\right)\ p_n(x, t)
+
+        \end{eqnarray}
+    
+    - Compute the production infiltrating precipitation :math:`p_s` and evaporation :math:`e_s`
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+        &p_s(x, t)& &=& &c_p(x) (1 - h_p(x, t - 1)^2) \frac{\tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}{1 + h_p(x, t - 1) \tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}\\
+
+        &e_s(x, t)& &=& &(1 - imperv(x)) \left(h_p(x, t - 1) c_p(x) (2 - h_p(x, t - 1)) \frac{\tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)}{1 + (1 - h_p(x, t - 1)) \tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)} \right)
+        \end{eqnarray}
+    
 
 
 .. _math_num_documentation.forward_structure.hydrological_module.vic3l:
