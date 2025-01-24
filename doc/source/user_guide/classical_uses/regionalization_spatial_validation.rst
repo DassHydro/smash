@@ -4,7 +4,7 @@
 Regionalization and Spatial Validation
 ======================================
 
-This tutorial uses the :ref:`Lez dataset <user_guide.demo_data.lez>` to perform regionalization and spatial validation.
+This tutorial explains how to perform regionalization and spatial validation methods with `smash` using physical descriptors.
 The parameters :math:`\boldsymbol{\theta}` can be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}`
 (slope, drainage density, soil water storage, etc) and :math:`\boldsymbol{\rho}` a control vector:
 :math:`\boldsymbol{\theta}(x)=\phi\left(\boldsymbol{\mathcal{D}}(x),\boldsymbol{\rho}\right)`.
@@ -14,17 +14,7 @@ First, a shape is assumed for the mapping (here **multi-polynomial** or **neural
 Then the control vector of the mapping needs to be optimized: :math:`\boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}\;J`,
 with :math:`J` the cost function.
 
-Six physical descriptors are considered in this example, which are:
-
-.. image:: ../../_static/physio_descriptors.png
-    :align: center
-
-.. TODO: Add descriptor explanation
-
-We can open a Python interface. The current working directory will be assumed to be the directory where
-the ``Lez-dataset`` is located.
-
-Open a Python interface:
+We begin by opening a Python interface:
 
 .. code-block:: shell
 
@@ -48,58 +38,31 @@ We will first import everything we need in this tutorial.
     import pandas as pd
     import matplotlib.pyplot as plt
 
-Model creation
---------------
+Model Creation and Descriptors Visualization
+--------------------------------------------
 
-Model setup creation
-********************
+Now, we need to create a :class:`smash.Model` object.
+For this case, we will use the :ref:`user_guide.demo_data.lez` dataset as an example.
 
-.. ipython:: python
-
-    setup = {
-        "start_time": "2012-08-01",
-        "end_time": "2013-07-31",
-        "dt": 86_400, # daily time step
-        "hydrological_module": "gr4", 
-        "routing_module": "lr",
-        "read_prcp": True, 
-        "prcp_directory": "./Lez-dataset/prcp", 
-        "read_pet": True,  
-        "pet_directory": "./Lez-dataset/pet",
-        "read_qobs": True,
-        "qobs_directory": "./Lez-dataset/qobs",
-        "read_descriptor": True,
-        "descriptor_directory": "./Lez-dataset/descriptor",
-        "descriptor_name": [
-            "slope",
-            "drainage_density",
-            "karst",
-            "woodland",
-            "urban",
-            "soil_water_storage"
-        ]
-    }
-
-Model mesh creation
-*******************
+Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_dataset` function and create the :class:`smash.Model` object.
 
 .. ipython:: python
 
-    gauge_attributes = pd.read_csv("./Lez-dataset/gauge_attributes.csv")
-
-    mesh = smash.factory.generate_mesh(
-        flwdir_path="./Lez-dataset/France_flwdir.tif",
-        x=list(gauge_attributes["x"]),
-        y=list(gauge_attributes["y"]),
-        area=list(gauge_attributes["area"] * 1e6), # Convert km² to m²
-        code=list(gauge_attributes["code"]),
-    )
-
-Then, we can initialize the `smash.Model` object
-
-.. ipython:: python
-
+    setup, mesh = smash.factory.load_dataset("Lez")
     model = smash.Model(setup, mesh)
+
+Six physical descriptors are considered in this example, which are:
+
+.. image:: ../../_static/physio_descriptors.png
+    :align: center
+
+.. TODO: Add descriptor explanation
+
+The values of these descriptors can be obtained in the ``physio_data`` derived type of the :class:`smash.Model` object.
+
+.. ipython:: python
+
+    model.physio_data.descriptor.shape  # (x, y, n_descriptors)
 
 Model simulation
 ----------------

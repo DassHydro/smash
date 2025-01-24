@@ -76,6 +76,3 @@ Potential evapotranspiration data are mandatory. The way in which potential evap
 precipitation. One difference to note is that instead of working with one potential evapotranspiration file per time step, it is possible to
 work with daily interannual data, which therefore requires a file per day whose name contains a date in the following format ``%m%d``. 
 Here, we provided daily interannual potential evapotranspiration data.
-
-Now that we've briefly covered the necessary data, we can open a Python interface and proceed with the next tutorials using this dataset.
-The current working directory will be assumed to be the directory where the ``France-dataset`` is located.

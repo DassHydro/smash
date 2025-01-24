@@ -6,7 +6,7 @@ User Guide
 
 Demo Data
 ---------
-First, the demo data are provided in this section and can be downloaded as needed before proceeding with the following tutorials.
+First, this section provides descriptions of the demo data that can be downloaded and will be used for the following tutorials.
 
 .. toctree::
     :maxdepth: 1

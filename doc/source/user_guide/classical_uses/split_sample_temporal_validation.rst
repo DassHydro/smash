@@ -4,8 +4,8 @@
 Split Sample and Temporal Validation
 ====================================
 
-This tutorial on `smash` will be carried out on another French catchment, **the Lez at Lattes**. The objective is to 
-set up an optimization with split sample test :cite:p:`klemevs1986operational`, i.e. cross-calibration and temporal validation over two distinct periods ``p1`` and ``p2``.
+The objective of this tutorial is to learn how to set up an optimization with a split sample test :cite:p:`klemevs1986operational` in `smash`,
+i.e., cross-calibration and temporal validation over two distinct periods ``p1`` and ``p2``.
 
 Open a Python interface:
 
@@ -34,10 +34,12 @@ We will first import everything we need in this tutorial.
 Model creation
 --------------
 
+In this tutorial, we will use the :ref:`user_guide.demo_data.lez` dataset as an example.
+
 Model setup creation
 ********************
 
-Since we are going to work on two different periods, each of 6 months, we need to create two ``setups`` dictionaries where the only difference 
+Since we are going to work on two different periods, each of 6 months, we need to create two ``setup`` dictionaries where the only difference 
 will be in the simulation period arguments ``start_time`` and ``end_time``. The first period ``p1`` will run from ``2012-08-01`` to
 ``2013-01-31`` and the second, from ``2013-02-01`` to ``2013-07-31``.
 
@@ -74,7 +76,7 @@ will be in the simulation period arguments ``start_time`` and ``end_time``. The 
 Model mesh creation
 *******************
 
-For the ``mesh``, there is no need to generate two different ``meshes`` dictionaries, the same one can be used for both time periods. Similar to the 
+For the ``mesh``, there is no need to generate two different ``mesh`` dictionaries, the same one can be used for both time periods. Similar to the 
 **Cance** tutorial, we are going to create a ``mesh`` from the attributes of the catchment gauges.
 
 .. ipython:: python
@@ -115,7 +117,7 @@ And quickly verify that the generated ``mesh`` is correct
     @savefig user_guide.classical_uses.split_sample_temporal_validation.gauge_position.png
     plt.title("Lez - Gauge position");
 
-Then, we can initialize the two `smash.Model` objects
+Then, we can initialize the two `smash.Model` objects:
 
 .. ipython:: python
 

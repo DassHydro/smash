@@ -107,6 +107,3 @@ the data are observed discharges in **cubic meter per second** and any negative 
 
     It is not necessary to restrict the observed discharge series to the simulation period. It is possible to provide a time series covering a larger time window over which `smash`
     will only read the lines corresponding to dates after the starting date provided in the header.
-
-Now that we've briefly covered the necessary data, we can open a Python interface and proceed with the next tutorials using this dataset.
-The current working directory will be assumed to be the directory where the ``Cance-dataset`` is located.
