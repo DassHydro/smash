@@ -1026,16 +1026,17 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural with imperviousness 
     :animate: fade-in-slide-down
 
-    The user can read imperviousness pixel maps to potentially approach the soil 's comportement and improve the GR models response.
-    The coefficients of imperviousness :math:`imperv(x)` are applied on the neutralized rainfall :math:`p_n` and once it has passed through by the production part, on the evaporation :math:`e_s`.
-    The coefficients live between 0 and 1, for instance if the imperviousness is closed to 1, the production part receives less neutralized rainfall :math:`p_n`, also less evaporation :math:`e_s` from impermeable soil.
-    The process of GR production change for all GR models. To illustrate it we show the modified diagram of gr4 with imperviousness. 
+    This imperviousness feature allows for the calculation of the impervious proportion of a pixel's surface and takes this into account when computing infiltration and evaporation fluxes applied to the GR type production reservoir.
+    The imperviousness coefficients  :math:`imperv(x)` influence the fluxes of the production reservoir of each cell by being applied to the neutralized rainfall :math:`p_n(x,t)` and the evaporation :math:`e_s(x,t)`.
+    The imperviousness coefficients must range between 0 and 1 and be specified through an input map that is consistent with the model grid. This map can be obtained, for example, from soil occupation processing.
+    For instance, if the imperviousness coefficient is close to 1, the production part receives less neutralized rainfall :math:`p_n` and there is less evaporation :math:`e_s` from the impermeable soil.
+    This imperviousness accounting for the GR reservoir is applicable to GR model structures in SMASH. This is illustrated here on the GR4 structure.
 
     .. figure:: ../_static/gr4_structure_imperviousness.svg
         :align: center
         :width: 300
         
-        Diagram of the ``gr4`` hydrological operator with imperviousness, a simplified ``GR`` like
+        Diagram of the ``gr4`` hydrological operator with imperviousness, a simplified ``GR`` like model for spatialized modeling.
 
 
     **Production**
