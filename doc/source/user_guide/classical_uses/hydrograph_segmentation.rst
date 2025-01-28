@@ -4,8 +4,8 @@
 Hydrograph Segmentation
 =======================
 
-This section aims to go into detail on how to use and visualize the hydrograph segmentation from 
-a proposed algorithm as depicted in section :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>`.
+This section provides a detailed guide on using and visualizing hydrograph segmentation
+based on the algorithm depicted in section :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>`.
 
 First, open a Python interface:
 
