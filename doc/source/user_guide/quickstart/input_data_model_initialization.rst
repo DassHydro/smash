@@ -48,7 +48,7 @@ To get into more details, this ``setup`` is composed of:
     period ``start_time + 1dt`` and ``end_time``
 
 - ``hydrological_module``
-    The hydrological module, to be chosen from [``gr4``, ``gr5``, ``grd``, ``loieau``, ``vic3l``],
+    The hydrological module could be for instance ``gr4``, ``gr5``, ``grd``, ``loieau`` or ``vic3l``. 
 
     .. hint::
 
@@ -354,15 +354,26 @@ The spatial average of precipitation (``mean_prcp``) and potential evapotranspir
 and stored in `Model.atmos_data <smash.Model.atmos_data>`. They are `numpy.ndarray` of shape *(ng, ntime_step)*, one temporal series by gauge.
 
 .. ipython:: python
+    
+    dti = pd.date_range(start=model.setup.start_time, end=model.setup.end_time, freq="h")[1:]
+    mean_pet = model.atmos_data.mean_pet[0, :]
+    mean_prcp = model.atmos_data.mean_prcp[0, :]
 
     code = model.mesh.code[0]
-    plt.plot(model.atmos_data.mean_prcp[0, :], label="Mean precipitation");
-    plt.plot(model.atmos_data.mean_pet[0, :], label="Mean potential evapotranspiration");
-    plt.grid(ls="--", alpha=.7);
-    plt.legend();
-    plt.xlabel("Time step");
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+    fig.subplots_adjust(hspace=0)
+    ax1.bar(dti, mean_prcp, color="lightslategrey", label="Rainfall");
+    ax1.grid(alpha=.7, ls="--")
+    ax1.get_xaxis().set_visible(False)
+    ax1.set_ylabel("$mm$");
+    ax1.invert_yaxis()
+    ax2.plot(dti, mean_pet, label="Evapotranspiration");
+    ax2.grid(alpha=.7, ls="--")
+    ax2.tick_params(axis="x", labelrotation=20)
+    ax2.set_ylabel("$mm$");
+    ax2.set_xlim(ax1.get_xlim());
     @savefig user_guide.in_depth.classical_calibration_io.mean_prcp_pet.png
-    plt.title(
+    fig.suptitle(
         f"Mean precipitation and potential evapotranspiration at gauge {code}"
     );
 
