@@ -15,6 +15,8 @@ First, open a Python interface:
 Imports
 -------
 
+We will first import everything we need in this tutorial.
+
 .. ipython:: python
     
     import smash
