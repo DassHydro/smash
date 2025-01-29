@@ -8,6 +8,8 @@ import rasterio
 
 import rasterio.features
 
+import geopandas as gpd
+
 from smash.factory.mesh._libmesh import mw_mesh
 from smash.factory.mesh._standardize import (
     _standardize_detect_sink_args,
@@ -28,8 +30,6 @@ from smash.factory.mesh._tools import (
 
 if TYPE_CHECKING:
     from typing import Any
-
-    import geopandas as gpd
 
     from smash.util._typing import AlphaNumeric, FilePath, ListLike, Numeric
 
@@ -376,11 +376,15 @@ def _generate_rr_mesh(
     else:
         return _generate_rr_mesh_from_xy(flwdir_path, x, y, area, code, shp_dataset, max_depth, epsg)
 
-
-def _generate_hy1d_mesh(rr_mesh: dict[str, Any], river_line_path: FilePath) -> dict[str, Any]:
+def _generate_hy1d_mesh(rr_mesh: dict[str, Any], river_line_path: FilePath, bbox: ListLike[float] | None = None) -> dict[str, Any]:
     (river_line_path,) = _standardize_generate_hy1d_mesh_args(river_line_path)
 
-    river_line = _get_river_line(river_line_path, rr_mesh)
+    if bbox is not None:
+        print("debug: reading river line without preprocessing.")
+        river_line = gpd.read_file(river_line_path)
+    else:
+        print("debug: using _get_river_line for river line preprocessing.")
+        river_line = _get_river_line(river_line_path, rr_mesh)
 
     cross_sections, segments = _get_cross_sections_and_segments(river_line, rr_mesh)
 

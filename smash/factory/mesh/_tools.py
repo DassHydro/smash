@@ -10,6 +10,7 @@ import pyflwdir
 import rasterio
 import rasterio.features
 from shapely.geometry import Point, Polygon
+from pyflwdir.gis_utils import degree_metres_x, degree_metres_y
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -170,11 +171,10 @@ def _switch_flwdir_convention(flwdir: np.ndarray, convention: str) -> np.ndarray
             (flwdir == 6),
             (flwdir == 7),
             (flwdir == 8),
+            (flwdir == 0),  # SMASH nodata
         ]
-
-        values = [64, 128, 1, 2, 4, 8, 16, 32]
-
-        flwdir_converted = np.select(conditions, values, 0).astype(np.uint8)
+        values = [64, 128, 1, 2, 4, 8, 16, 32, 247]  # 0 -> 247 for D8 nodata
+        flwdir_converted = np.select(conditions, values, 247).astype(np.uint8)
 
     elif convention == "d8-smash":
         conditions = [
@@ -186,10 +186,9 @@ def _switch_flwdir_convention(flwdir: np.ndarray, convention: str) -> np.ndarray
             (flwdir == 8),
             (flwdir == 16),
             (flwdir == 32),
+            (flwdir == 247),  # D8 nodata
         ]
-
-        values = [1, 2, 3, 4, 5, 6, 7, 8]
-
+        values = [1, 2, 3, 4, 5, 6, 7, 8, 0]  # 247 -> 0 for SMASH nodata
         flwdir_converted = np.select(conditions, values, 0).astype(np.int32)
 
     return flwdir_converted
@@ -315,11 +314,6 @@ def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict
         # Store the selected path of the best start cell index
         selected_path[best_cell_idx] = flwpaths[np.where(source_cells == best_cell_idx)[0][0]]
 
-    # Identify upstream cells from the selected paths, excluding invalid cells and outlet
-    flow_path_upstream_cells = [
-        cell for cell in list(selected_path.keys()) if cell in flwdir.idxs_seq and cell != flwdir.idxs_pit[0]
-    ]
-
     # Compute the flow path
     flwpath = np.unique(np.concatenate(list(selected_path.values())))
     flwpath = flwpath[np.isin(flwpath, flwdir.idxs_seq)]
@@ -330,25 +324,31 @@ def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict
     # Extract inflow cell indices from the final flow path mask
     inflows_idxs = flwdir.inflow_idxs(flwpath_mask)
 
+    # Generate stream segments (defined by flow path between two confluences)
+    streams = flwdir.streams(mask=flwpath_mask)
+
+    # Get upstream cell for each stream segment excluding cells in flow path
+    downstream_indices = {stream['properties']['idx_ds'] for stream in streams}
+    stream_upstream_cells = [
+        stream['properties']['idx'] for stream in streams
+        if stream['properties']['idx'] not in downstream_indices]
+
     # Separate inflows into upstream and lateral inflows based on whether their downstream cell is in the
     # flow path upstream cells
     lat_inflows_idxs = [
         inflow_point
         for inflow_point in inflows_idxs
-        if flwdir.idxs_ds[inflow_point] not in flow_path_upstream_cells
+        if flwdir.idxs_ds[inflow_point] not in stream_upstream_cells
     ]
     # lateral_inflows_rowcol = np.unravel_index(lateral_inflows, flwdir.shape)
     up_inflows_idxs = [
         inflow_point
         for inflow_point in inflows_idxs
-        if flwdir.idxs_ds[inflow_point] in flow_path_upstream_cells
+        if flwdir.idxs_ds[inflow_point] in stream_upstream_cells
     ]
 
     # Get flow distance
     flwdst = flwdir.distnc.ravel()
-
-    # Get stream segments
-    streams = flwdir.streams(mask=flwpath_mask)
 
     for stream in streams:
         coords = np.array(stream["geometry"]["coordinates"])
@@ -368,9 +368,18 @@ def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict
     cross_sections = []
     for stream in streams:
         for i in range(stream["properties"]["nmidpoints"]):
-            x = flwdst[stream["properties"]["midpoint_idxs"][i]] - np.hypot(
-                *(stream["geometry"]["coordinates"][i] - stream["properties"]["midpoint_coordinates"][i])
-            )
+            if latlon: # calculate curvilinear abscissa based on latlon condition
+                centroid_coords = np.array(stream["geometry"]["coordinates"][i])
+                midpoint_coords = np.array(stream["properties"]["midpoint_coordinates"][i])
+                lat_avg = (centroid_coords[1] + midpoint_coords[1]) / 2.0 # average latitude
+                dx = degree_metres_x(lat_avg) * (centroid_coords[0] - midpoint_coords[0]) # horizontal length of a degree in metres at a given latitude
+                dy = degree_metres_y(lat_avg) * (centroid_coords[1] - midpoint_coords[1]) # verical length of a degree in metres at a given latitude
+                x = flwdst[stream["properties"]["midpoint_idxs"][i]] - np.hypot(dx, dy)
+            else:
+                x = flwdst[stream["properties"]["midpoint_idxs"][i]] - np.hypot(
+                    *(stream["geometry"]["coordinates"][i] - stream["properties"]["midpoint_coordinates"][i])
+                )
+            
             # Hardcoded bathymetry value with 0.001 m/m slope
             bathy = x * 1e-3
 
