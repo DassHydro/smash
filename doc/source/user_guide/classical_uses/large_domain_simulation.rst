@@ -4,7 +4,7 @@
 Large Domain Simulation
 =======================
 
-This tutorial aims to perform a simulation over the whole of metropolitan France with a simple model structure using the :ref:`France dataset <user_guide.demo_data.france>`.
+This tutorial aims to perform a simulation over the whole of metropolitan France with a simple model structure.
 The objective is to create a mesh over a large spatial domain, to perform a forward run and to visualize the simulated discharge over the entire domain.
 We begin by opening a Python interface:
 
@@ -33,73 +33,14 @@ We will first import everything we need in this tutorial. Both ``LogNorm`` and `
 Model creation
 --------------
 
-Model setup creation
-********************
+Now, we need to create a :class:`smash.Model` object.
+For this case, we will use the :ref:`user_guide.demo_data.france` dataset as an example.
 
-The ``setup`` dictionary is pretty similar to the one used for the :ref:`Cance <user_guide.demo_data.cance>` tutorial
-except that we do not read observed discharge and the simulation period is different.
-
-.. ipython:: python
-
-    setup = {
-        "start_time": "2012-01-01 00:00", 
-        "end_time": "2012-01-02 08:00",
-        "dt": 3_600,
-        "hydrological_module": "gr4", 
-        "routing_module": "lr",
-        "read_prcp": True, 
-        "prcp_conversion_factor": 0.1, 
-        "prcp_directory": "./France-dataset/prcp", 
-        "read_pet": True, 
-        "daily_interannual_pet": True, 
-        "pet_directory": "./France-dataset/pet", 
-    }
-
-Model mesh creation
-*******************
-
-For the ``mesh``, we only need the flow direction file and the mainland France bounding box ``bbox`` to pass to the `smash.factory.generate_mesh`
-function. A bouding box in `smash` is a list of 4 values (``xmin``, ``xmax``, ``ymin``, ``ymax``), each of which corresponds respectively to 
-the x minimum value, the x maximum value, the y mimimum value and the y maximum value. The values must be in the same unit and projection as the 
-flow direction.
+Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_dataset` function and create the :class:`smash.Model` object.
 
 .. ipython:: python
 
-    bbox = [100_000, 1_250_000, 6_050_000, 7_125_000] # Mainland Fance bbox in Lambert-93
-    mesh = smash.factory.generate_mesh(
-        flwdir_path="./France-dataset/France_flwdir.tif",
-        bbox=bbox,
-    )
-
-.. note::
-
-    Compare to a ``mesh`` generated with gauge attributes, the following variables are missing: ``flwdst``, ``gauge_pos``, ``code``, ``area``
-    and ``area_dln``.
-
-We can visualize the shape of the ``mesh``, the flow direction and the flow accumulation
-
-.. ipython:: python
-
-    mesh["nrow"], mesh["ncol"]
-
-.. ipython:: python
-
-    plt.imshow(mesh["flwdir"]);
-    plt.colorbar(label="Flow direction (D8)");
-    @savefig user_guide.quickstart.large_domain_simulation.flwdir.png
-    plt.title("France - Flow direction");
-
-.. ipython:: python
-
-    plt.imshow(mesh["flwacc"], norm=LogNorm());
-    plt.colorbar(label="Flow accumulation (m²)");
-    @savefig user_guide.quickstart.large_domain_simulation.flwacc.png
-    plt.title("France - Flow accumulation");
-
-Then, we can initialize the `smash.Model` object
-
-.. ipython:: python
-
+    setup, mesh = smash.factory.load_dataset("France")
     model = smash.Model(setup, mesh)
 
 Model simulation

@@ -114,7 +114,3 @@ Physical descriptors
 
 Physical descriptors are mandatory for performing regionalization methods.
 These descriptors serve as inputs for the descriptors-to-parameters mapping, which allows for constraining the model parameters based on physical characteristics.
-
-Now that we've briefly covered the necessary data, we can open a Python interface and proceed with the next tutorials using this dataset.
-The current working directory will be assumed to be the directory where the ``Lez-dataset`` is located.
-
