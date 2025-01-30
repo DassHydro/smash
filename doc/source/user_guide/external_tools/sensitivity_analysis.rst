@@ -1,5 +1,7 @@
 .. _user_guide.external_tools.sensitivity_analysis:
 
+.. _For documentation in external tools, it should be made with pre-existing output, and will not be reruned during compilation.
+
 ====================
 Sensitivity Analysis
 ====================
