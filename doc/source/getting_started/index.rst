@@ -9,7 +9,7 @@ Installation
 ------------
 
 `smash` can be installed with pip on **Linux**, **macOS**, **Windows** or from source and supports Python
-versions **3.9** to **3.12**.
+versions **3.9** to **3.13**.
 
 .. note::
 
