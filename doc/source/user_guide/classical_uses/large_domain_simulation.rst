@@ -8,7 +8,7 @@ This tutorial aims to perform a simulation over the whole of metropolitan France
 The objective is to create a mesh over a large spatial domain, to perform a forward run and to visualize the simulated discharge over the entire domain.
 We begin by opening a Python interface:
 
-.. code-block:: shell
+.. code-block:: none
 
     python3
 
@@ -16,12 +16,11 @@ We begin by opening a Python interface:
     :suppress:
 
     import os
-    os.system("python3 generate_dataset.py -d France")
 
 Imports
 -------
 
-We will first import everything we need in this tutorial. Both ``LogNorm`` and ``SymLogNorm`` will be used for plotting
+We will first import everything we need in this tutorial. Both ``LogNorm`` and ``SymLogNorm`` will be used for plotting.
 
 .. ipython:: python
 

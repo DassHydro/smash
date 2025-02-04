@@ -9,7 +9,7 @@ i.e., cross-calibration and temporal validation over two distinct periods ``p1``
 
 Open a Python interface:
 
-.. code-block:: shell
+.. code-block:: none
 
     python3
 
@@ -17,7 +17,6 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 generate_dataset.py -d Lez")
 
 Imports
 -------
