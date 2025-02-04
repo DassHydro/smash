@@ -293,7 +293,7 @@ contains
 
         implicit none
 
-        real(sp), dimension(5), intent(in) :: fq  ! fixed NN output size
+        real(sp), dimension(4), intent(in) :: fq  ! fixed NN output size
         real(sp), dimension(size(fq), 4), intent(in) :: jacobian_nn  ! fixed NN input size
         real(sp), intent(in) :: en, imperviousness, cp, ct, kexc
         real(sp), intent(inout) :: pn, hp, ht, q
@@ -326,9 +326,9 @@ contains
             fhp = ((1._sp - hp**2)*pn*(1._sp + fq(1)) - hp*(2._sp - hp)*en*(1._sp + fq(2)))*inv_cp
             dh(1) = hp - hp0 - dt*fhp
 
-            ! Range of correction c0.9: (1, 0), for the remaining terms: (0, 2)
-            fht = (0.9_sp*(1._sp - fq(3)**2)*pn*hp**2 - (1._sp + fq(5))*ct*ht**5 &
-            & + (kexc*ht**3.5_sp)*(1._sp + fq(4)))*inv_ct
+            ! Range of correction for the three terms: (0, 2)
+            fht = (0.9_sp*(1._sp + fq(1))*pn*hp**2 - (1._sp + fq(4))*ct*ht**5 &
+            & + (kexc*ht**3.5_sp)*(1._sp + fq(3)))*inv_ct
             dh(2) = ht - ht0 - dt*fht
 
             ! 1 - dt*nabla_hp(fhp)
@@ -340,13 +340,13 @@ contains
             & - en*jacobian_nn(2, 2)*hp*(2._sp - hp))*inv_cp
 
             ! -dt*nabla_hp(fht)
-            jacob(2, 1) = -dt*(1.8_sp*pn*(hp*(1._sp - fq(3)**2) - jacobian_nn(3, 1)*fq(3)*hp**2) &
-            & - jacobian_nn(5, 1)*ct*ht**5 + jacobian_nn(4, 1)*kexc*ht**3.5_sp)*inv_ct
+            jacob(2, 1) = -dt*(0.9_sp*pn*hp*(2._sp*(1._sp + fq(1)) + jacobian_nn(1, 1)*hp) &
+            & - jacobian_nn(4, 1)*ct*ht**5 + jacobian_nn(3, 1)*kexc*ht**3.5_sp)*inv_ct
 
             ! 1 - dt*nabla_ht(fht)
-            jacob(2, 2) = 1._sp - dt*(3.5_sp*(1._sp + fq(4))*kexc*ht**2.5 + jacobian_nn(4, 2)*ht**3.5 &
-            & - 1.8_sp*fq(3)*jacobian_nn(3, 2)*pn*hp**2 &
-            & - 5._sp*(1._sp + fq(5))*ct*ht**4 - jacobian_nn(5, 2)*ht**5)*inv_ct
+            jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp + fq(3)) + jacobian_nn(3, 2)*ht)*kexc*ht**2.5 &
+            & + 0.9_sp*jacobian_nn(1, 2)*pn*hp**2 &
+            & - (5._sp*(1._sp + fq(4)) + jacobian_nn(4, 2)*ht)*ct*ht**4)*inv_ct
 
             call solve_linear_system_2vars(jacob, delta_h, dh)
 
@@ -363,11 +363,10 @@ contains
 
         end do
 
-        l = (1._sp + fq(4))*kexc*ht**3.5_sp  ! Range of correction kexc: (0, 2)
+        l = (1._sp + fq(3))*kexc*ht**3.5_sp  ! Range of correction kexc: (0, 2)
 
-        q = (1._sp + fq(5))*ct*ht**5 &  ! Range of correction ct: (0, 2)
-        & + (0.1_sp + 0.9_sp*fq(3)**2) &  ! Range of correction c0.1: (1, 10)
-        & *(1._sp + fq(1))*pn*hp**2 + l  ! Range of correction pn: (0, 2)
+        q = (1._sp + fq(4))*ct*ht**5 &  ! Range of correction ct: (0, 2)
+        & + 0.1_sp*(1._sp + fq(1))*pn*hp**2 + l  ! Range of correction pn: (0, 2)
 
     end subroutine gr_production_transfer_ode_mlp
 

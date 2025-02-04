@@ -15154,8 +15154,8 @@ CONTAINS
 &   ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, l)
     IMPLICIT NONE
 ! fixed NN output size
-    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
-    REAL(sp), DIMENSION(5), INTENT(IN) :: fq_d
+    REAL(sp), DIMENSION(4), INTENT(IN) :: fq
+    REAL(sp), DIMENSION(4), INTENT(IN) :: fq_d
     INTRINSIC SIZE
 ! fixed NN input size
     REAL(sp), DIMENSION(SIZE(fq), 4), INTENT(IN) :: jacobian_nn
@@ -15182,10 +15182,8 @@ CONTAINS
     REAL(sp) :: temp0
     REAL(sp) :: temp1
     REAL(sp) :: temp2
-    REAL(sp) :: temp3
+    REAL*4 :: temp3
     REAL*4 :: temp4
-    REAL*4 :: temp5
-    REAL*4 :: temp6
     inv_cp_d = -(cp_d/cp**2)
     inv_cp = 1._sp/cp
     inv_ct_d = -(ct_d/ct**2)
@@ -15213,70 +15211,64 @@ CONTAINS
       fhp = temp0*inv_cp
       dh_d(1) = hp_d - hp0_d - dt*fhp_d
       dh(1) = hp - hp0 - dt*fhp
-! Range of correction c0.9: (1, 0), for the remaining terms: (0, 2)
-      temp0 = pn*(hp*hp)
-      temp = ht**5
-      temp1 = ht**3.5_sp
-      temp2 = 0.9_sp*(-(fq(3)*fq(3))+1._sp)*temp0 - (fq(5)+1._sp)*ct*&
-&       temp + temp1*kexc*(fq(4)+1._sp)
-      fht_d = inv_ct*(0.9_sp*((1._sp-fq(3)**2)*(hp**2*pn_d+pn*2*hp*hp_d)&
-&       -temp0*2*fq(3)*fq_d(3))-temp*(ct*fq_d(5)+(fq(5)+1._sp)*ct_d)-((&
-&       fq(5)+1._sp)*ct*5*ht**4-kexc*(fq(4)+1._sp)*3.5_sp*ht**2.5)*ht_d+&
-&       temp1*((fq(4)+1._sp)*kexc_d+kexc*fq_d(4))) + temp2*inv_ct_d
-      fht = temp2*inv_ct
+! Range of correction for the three terms: (0, 2)
+      temp0 = ht**5
+      temp = ht**3.5_sp
+      temp1 = 0.9_sp*(fq(1)+1._sp)*pn*(hp*hp) - (fq(4)+1._sp)*ct*temp0 +&
+&       temp*kexc*(fq(3)+1._sp)
+      fht_d = inv_ct*(0.9_sp*(hp**2*(pn*fq_d(1)+(fq(1)+1._sp)*pn_d)+(fq(&
+&       1)+1._sp)*pn*2*hp*hp_d)-temp0*(ct*fq_d(4)+(fq(4)+1._sp)*ct_d)-((&
+&       fq(4)+1._sp)*ct*5*ht**4-kexc*(fq(3)+1._sp)*3.5_sp*ht**2.5)*ht_d+&
+&       temp*((fq(3)+1._sp)*kexc_d+kexc*fq_d(3))) + temp1*inv_ct_d
+      fht = temp1*inv_ct
       dh_d(2) = ht_d - ht0_d - dt*fht_d
       dh(2) = ht - ht0 - dt*fht
 ! 1 - dt*nabla_hp(fhp)
-      temp2 = jacobian_nn(1, 1)*(-(hp*hp)+1) - 2._sp*hp*(fq(1)+1._sp)
-      temp1 = jacobian_nn(2, 1)*hp*(-hp+2._sp) + 2._sp*(-hp+1._sp)*(fq(2&
+      temp1 = jacobian_nn(1, 1)*(-(hp*hp)+1) - 2._sp*hp*(fq(1)+1._sp)
+      temp0 = jacobian_nn(2, 1)*hp*(-hp+2._sp) + 2._sp*(-hp+1._sp)*(fq(2&
 &       )+1._sp)
-      temp0 = pn*temp2 - en*temp1
-      jacob_d(1, 1) = -(dt*(inv_cp*(temp2*pn_d+pn*((1-hp**2)*&
+      temp = pn*temp1 - en*temp0
+      jacob_d(1, 1) = -(dt*(inv_cp*(temp1*pn_d+pn*((1-hp**2)*&
 &       jacobian_nn_d(1, 1)-jacobian_nn(1, 1)*2*hp*hp_d-2._sp*((fq(1)+&
-&       1._sp)*hp_d+hp*fq_d(1)))-temp1*en_d-en*(hp*(2._sp-hp)*&
+&       1._sp)*hp_d+hp*fq_d(1)))-temp0*en_d-en*(hp*(2._sp-hp)*&
 &       jacobian_nn_d(2, 1)+jacobian_nn(2, 1)*(2._sp-2*hp)*hp_d+2._sp*((&
-&       1._sp-hp)*fq_d(2)-(fq(2)+1._sp)*hp_d)))+temp0*inv_cp_d))
-      jacob(1, 1) = 1._sp - dt*(temp0*inv_cp)
+&       1._sp-hp)*fq_d(2)-(fq(2)+1._sp)*hp_d)))+temp*inv_cp_d))
+      jacob(1, 1) = 1._sp - dt*(temp*inv_cp)
 ! -dt*nabla_ht(fhp)
-      temp2 = jacobian_nn(2, 2)*(-hp+2._sp)
-      temp1 = pn*jacobian_nn(1, 2)*(-(hp*hp)+1) - temp2*en*hp
+      temp1 = jacobian_nn(2, 2)*(-hp+2._sp)
+      temp0 = pn*jacobian_nn(1, 2)*(-(hp*hp)+1) - temp1*en*hp
       jacob_d(1, 2) = -(dt*(inv_cp*((1-hp**2)*(jacobian_nn(1, 2)*pn_d+pn&
 &       *jacobian_nn_d(1, 2))-pn*jacobian_nn(1, 2)*2*hp*hp_d-en*hp*((&
-&       2._sp-hp)*jacobian_nn_d(2, 2)-jacobian_nn(2, 2)*hp_d)-temp2*(hp*&
-&       en_d+en*hp_d))+temp1*inv_cp_d))
-      jacob(1, 2) = -(dt*(temp1*inv_cp))
+&       2._sp-hp)*jacobian_nn_d(2, 2)-jacobian_nn(2, 2)*hp_d)-temp1*(hp*&
+&       en_d+en*hp_d))+temp0*inv_cp_d))
+      jacob(1, 2) = -(dt*(temp0*inv_cp))
 ! -dt*nabla_hp(fht)
-      temp2 = jacobian_nn(3, 1)*fq(3)
-      temp1 = hp*(-(fq(3)*fq(3))+1._sp) - temp2*(hp*hp)
+      temp1 = 2._sp*(fq(1)+1._sp) + jacobian_nn(1, 1)*hp
       temp0 = ht**5
       temp = ht**3.5_sp
-      temp3 = 1.8_sp*pn*temp1 - jacobian_nn(5, 1)*ct*temp0 + jacobian_nn&
-&       (4, 1)*kexc*temp
-      jacob_d(2, 1) = -(dt*(inv_ct*(1.8_sp*(temp1*pn_d+pn*((1._sp-temp2*&
-&       2*hp-fq(3)**2)*hp_d-hp*2*fq(3)*fq_d(3)-hp**2*(fq(3)*&
-&       jacobian_nn_d(3, 1)+jacobian_nn(3, 1)*fq_d(3))))-temp0*(ct*&
-&       jacobian_nn_d(5, 1)+jacobian_nn(5, 1)*ct_d)-(jacobian_nn(5, 1)*&
-&       ct*5*ht**4-jacobian_nn(4, 1)*kexc*3.5_sp*ht**2.5)*ht_d+temp*(&
-&       kexc*jacobian_nn_d(4, 1)+jacobian_nn(4, 1)*kexc_d))+temp3*&
-&       inv_ct_d))
-      jacob(2, 1) = -(dt*(temp3*inv_ct))
+      temp2 = 0.9_sp*pn*hp*temp1 - jacobian_nn(4, 1)*ct*temp0 + &
+&       jacobian_nn(3, 1)*kexc*temp
+      jacob_d(2, 1) = -(dt*(inv_ct*(0.9_sp*(temp1*(hp*pn_d+pn*hp_d)+pn*&
+&       hp*(2._sp*fq_d(1)+hp*jacobian_nn_d(1, 1)+jacobian_nn(1, 1)*hp_d)&
+&       )-temp0*(ct*jacobian_nn_d(4, 1)+jacobian_nn(4, 1)*ct_d)-(&
+&       jacobian_nn(4, 1)*ct*5*ht**4-jacobian_nn(3, 1)*kexc*3.5_sp*ht**&
+&       2.5)*ht_d+temp*(kexc*jacobian_nn_d(3, 1)+jacobian_nn(3, 1)*&
+&       kexc_d))+temp2*inv_ct_d))
+      jacob(2, 1) = -(dt*(temp2*inv_ct))
 ! 1 - dt*nabla_ht(fht)
-      temp4 = ht**2.5
-      temp5 = ht**3.5
-      temp3 = jacobian_nn(3, 2)*(hp*hp)
-      temp2 = ht**4
-      temp1 = ht**5
-      temp6 = 3.5_sp*(fq(4)+1._sp)*kexc*temp4 + jacobian_nn(4, 2)*temp5 &
-&       - 1.8_sp*fq(3)*pn*temp3 - 5._sp*(fq(5)+1._sp)*ct*temp2 - &
-&       jacobian_nn(5, 2)*temp1
-      jacob_d(2, 2) = -(dt*(inv_ct*(3.5_sp*(temp4*(kexc*fq_d(4)+(fq(4)+&
-&       1._sp)*kexc_d)+(fq(4)+1._sp)*kexc*2.5*ht**1.5*ht_d)+temp5*&
-&       jacobian_nn_d(4, 2)+(jacobian_nn(4, 2)*3.5*ht**2.5-jacobian_nn(5&
-&       , 2)*5*ht**4)*ht_d-1.8_sp*(temp3*(pn*fq_d(3)+fq(3)*pn_d)+fq(3)*&
-&       pn*(hp**2*jacobian_nn_d(3, 2)+jacobian_nn(3, 2)*2*hp*hp_d))-&
-&       5._sp*(temp2*(ct*fq_d(5)+(fq(5)+1._sp)*ct_d)+(fq(5)+1._sp)*ct*4*&
-&       ht**3*ht_d)-temp1*jacobian_nn_d(5, 2))+temp6*inv_ct_d))
-      jacob(2, 2) = 1._sp - dt*(temp6*inv_ct)
+      temp3 = ht**2.5
+      temp2 = 3.5_sp*(fq(3)+1._sp) + jacobian_nn(3, 2)*ht
+      temp1 = ht**4
+      temp0 = 5._sp*(fq(4)+1._sp) + jacobian_nn(4, 2)*ht
+      temp4 = temp2*kexc*temp3 + 0.9_sp*jacobian_nn(1, 2)*pn*(hp*hp) - &
+&       temp0*ct*temp1
+      jacob_d(2, 2) = -(dt*(inv_ct*(temp3*(kexc*(3.5_sp*fq_d(3)+ht*&
+&       jacobian_nn_d(3, 2)+jacobian_nn(3, 2)*ht_d)+temp2*kexc_d)+temp2*&
+&       kexc*2.5*ht**1.5*ht_d+0.9_sp*(hp**2*(pn*jacobian_nn_d(1, 2)+&
+&       jacobian_nn(1, 2)*pn_d)+jacobian_nn(1, 2)*pn*2*hp*hp_d)-ct*temp1&
+&       *(5._sp*fq_d(4)+ht*jacobian_nn_d(4, 2)+jacobian_nn(4, 2)*ht_d)-&
+&       temp0*(temp1*ct_d+ct*4*ht**3*ht_d))+temp4*inv_ct_d))
+      jacob(2, 2) = 1._sp - dt*(temp4*inv_ct)
       CALL SOLVE_LINEAR_SYSTEM_2VARS_D(jacob, jacob_d, delta_h, &
 &                                delta_h_d, dh, dh_d)
       hp_d = hp_d + delta_h_d(1)
@@ -15305,20 +15297,17 @@ CONTAINS
       j = j + 1
     END DO
 ! Range of correction kexc: (0, 2)
-    temp3 = ht**3.5_sp
-    l_d = temp3*(kexc*fq_d(4)+(fq(4)+1._sp)*kexc_d) + (fq(4)+1._sp)*kexc&
+    temp2 = ht**3.5_sp
+    l_d = temp2*(kexc*fq_d(3)+(fq(3)+1._sp)*kexc_d) + (fq(3)+1._sp)*kexc&
 &     *3.5_sp*ht**2.5*ht_d
-    l = (fq(4)+1._sp)*kexc*temp3
+    l = (fq(3)+1._sp)*kexc*temp2
 ! Range of correction ct: (0, 2)
-! Range of correction c0.1: (1, 10)
 ! Range of correction pn: (0, 2)
-    temp3 = ht**5
-    temp2 = (fq(1)+1._sp)*pn*(hp*hp)
-    temp1 = 0.9_sp*(fq(3)*fq(3)) + 0.1_sp
-    q_d = temp3*(ct*fq_d(5)+(fq(5)+1._sp)*ct_d) + (fq(5)+1._sp)*ct*5*ht&
-&     **4*ht_d + temp2*0.9_sp*2*fq(3)*fq_d(3) + temp1*(hp**2*(pn*fq_d(1)&
-&     +(fq(1)+1._sp)*pn_d)+(fq(1)+1._sp)*pn*2*hp*hp_d) + l_d
-    q = (fq(5)+1._sp)*ct*temp3 + temp1*temp2 + l
+    temp2 = ht**5
+    q_d = temp2*(ct*fq_d(4)+(fq(4)+1._sp)*ct_d) + (fq(4)+1._sp)*ct*5*ht&
+&     **4*ht_d + 0.1_sp*(hp**2*(pn*fq_d(1)+(fq(1)+1._sp)*pn_d)+(fq(1)+&
+&     1._sp)*pn*2*hp*hp_d) + l_d
+    q = (fq(4)+1._sp)*ct*temp2 + 0.1_sp*((fq(1)+1._sp)*pn*(hp*hp)) + l
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D
 
 !  Differentiation of gr_production_transfer_ode_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context):
@@ -15331,8 +15320,8 @@ CONTAINS
 &   ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, l)
     IMPLICIT NONE
 ! fixed NN output size
-    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
-    REAL(sp), DIMENSION(5) :: fq_b
+    REAL(sp), DIMENSION(4), INTENT(IN) :: fq
+    REAL(sp), DIMENSION(4) :: fq_b
     INTRINSIC SIZE
 ! fixed NN input size
     REAL(sp), DIMENSION(SIZE(fq), 4), INTENT(IN) :: jacobian_nn
@@ -15366,9 +15355,6 @@ CONTAINS
     REAL*4 :: temp_b3
     REAL*4 :: temp4
     REAL(sp) :: temp_b4
-    REAL*4 :: temp5
-    REAL(sp) :: temp6
-    REAL(sp) :: temp_b5
     INTEGER :: branch
     INTEGER :: ad_count
     INTEGER :: i
@@ -15389,9 +15375,9 @@ CONTAINS
 &       )))*inv_cp
       CALL PUSHREAL4(dh(1))
       dh(1) = hp - hp0 - dt*fhp
-! Range of correction c0.9: (1, 0), for the remaining terms: (0, 2)
-      fht = (0.9_sp*(1._sp-fq(3)**2)*pn*hp**2-(1._sp+fq(5))*ct*ht**5+&
-&       kexc*ht**3.5_sp*(1._sp+fq(4)))*inv_ct
+! Range of correction for the three terms: (0, 2)
+      fht = (0.9_sp*(1._sp+fq(1))*pn*hp**2-(1._sp+fq(4))*ct*ht**5+kexc*&
+&       ht**3.5_sp*(1._sp+fq(3)))*inv_ct
       CALL PUSHREAL4(dh(2))
       dh(2) = ht - ht0 - dt*fht
 ! 1 - dt*nabla_hp(fhp)
@@ -15405,14 +15391,14 @@ CONTAINS
 &       2, 2)*hp*(2._sp-hp))*inv_cp)
 ! -dt*nabla_hp(fht)
       CALL PUSHREAL4(jacob(2, 1))
-      jacob(2, 1) = -(dt*(1.8_sp*pn*(hp*(1._sp-fq(3)**2)-jacobian_nn(3, &
-&       1)*fq(3)*hp**2)-jacobian_nn(5, 1)*ct*ht**5+jacobian_nn(4, 1)*&
-&       kexc*ht**3.5_sp)*inv_ct)
+      jacob(2, 1) = -(dt*(0.9_sp*pn*hp*(2._sp*(1._sp+fq(1))+jacobian_nn(&
+&       1, 1)*hp)-jacobian_nn(4, 1)*ct*ht**5+jacobian_nn(3, 1)*kexc*ht**&
+&       3.5_sp)*inv_ct)
 ! 1 - dt*nabla_ht(fht)
       CALL PUSHREAL4(jacob(2, 2))
-      jacob(2, 2) = 1._sp - dt*(3.5_sp*(1._sp+fq(4))*kexc*ht**2.5+&
-&       jacobian_nn(4, 2)*ht**3.5-1.8_sp*fq(3)*jacobian_nn(3, 2)*pn*hp**&
-&       2-5._sp*(1._sp+fq(5))*ct*ht**4-jacobian_nn(5, 2)*ht**5)*inv_ct
+      jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp+fq(3))+jacobian_nn(3, 2)*&
+&       ht)*kexc*ht**2.5+0.9_sp*jacobian_nn(1, 2)*pn*hp**2-(5._sp*(1._sp&
+&       +fq(4))+jacobian_nn(4, 2)*ht)*ct*ht**4)*inv_ct
       CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
       CALL PUSHREAL4(hp)
       hp = hp + delta_h(1)
@@ -15450,20 +15436,18 @@ CONTAINS
     END DO
     CALL PUSHINTEGER4(ad_count)
     l_b = q_b
-    temp_b5 = ht**5*q_b
-    ht_b = ht_b + 5*ht**4*(fq(5)+1._sp)*ct*q_b + 3.5_sp*ht**2.5*(fq(4)+&
+    temp_b4 = ht**5*q_b
+    ht_b = ht_b + 5*ht**4*(fq(4)+1._sp)*ct*q_b + 3.5_sp*ht**2.5*(fq(3)+&
 &     1._sp)*kexc*l_b
-    fq_b(3) = fq_b(3) + 2*fq(3)*0.9_sp*(fq(1)+1._sp)*pn*hp**2*q_b
-    temp_b4 = (0.9_sp*fq(3)**2+0.1_sp)*q_b
-    temp_b2 = hp**2*temp_b4
-    hp_b = hp_b + 2*hp*(fq(1)+1._sp)*pn*temp_b4
+    temp_b2 = hp**2*0.1_sp*q_b
+    hp_b = hp_b + 2*hp*(fq(1)+1._sp)*pn*0.1_sp*q_b
     fq_b(1) = fq_b(1) + pn*temp_b2
     pn_b = pn_b + (fq(1)+1._sp)*temp_b2
-    fq_b(5) = fq_b(5) + ct*temp_b5
-    ct_b = ct_b + (fq(5)+1._sp)*temp_b5
-    temp_b5 = ht**3.5_sp*l_b
-    fq_b(4) = fq_b(4) + kexc*temp_b5
-    kexc_b = kexc_b + (fq(4)+1._sp)*temp_b5
+    fq_b(4) = fq_b(4) + ct*temp_b4
+    ct_b = ct_b + (fq(4)+1._sp)*temp_b4
+    temp_b4 = ht**3.5_sp*l_b
+    fq_b(3) = fq_b(3) + kexc*temp_b4
+    kexc_b = kexc_b + (fq(3)+1._sp)*temp_b4
     dt = 1._sp
     inv_cp = 1._sp/cp
     inv_ct = 1._sp/ct
@@ -15492,59 +15476,55 @@ CONTAINS
 &                                delta_h_b, dh, dh_b)
       CALL POPREAL4(jacob(2, 2))
       temp4 = ht**2.5
-      temp5 = ht**3.5
-      temp2 = jacobian_nn(3, 2)*(hp*hp)
-      temp0 = ht**4
-      temp6 = ht**5
+      temp3 = 3.5_sp*(fq(3)+1._sp) + jacobian_nn(3, 2)*ht
+      temp1 = ht**4
+      temp0 = ct*temp1
+      temp = 5._sp*(fq(4)+1._sp) + jacobian_nn(4, 2)*ht
       temp_b3 = -(inv_ct*dt*jacob_b(2, 2))
-      inv_ct_b = inv_ct_b - (3.5_sp*((fq(4)+1._sp)*kexc*temp4)+&
-&       jacobian_nn(4, 2)*temp5-1.8_sp*(fq(3)*pn*temp2)-5._sp*((fq(5)+&
-&       1._sp)*ct*temp0)-jacobian_nn(5, 2)*temp6)*dt*jacob_b(2, 2)
+      inv_ct_b = inv_ct_b - (temp3*kexc*temp4+0.9_sp*(jacobian_nn(1, 2)*&
+&       pn*hp**2)-temp*temp0)*dt*jacob_b(2, 2)
       jacob_b(2, 2) = 0.0_4
-      temp_b4 = temp4*3.5_sp*temp_b3
-      jacobian_nn_b(4, 2) = jacobian_nn_b(4, 2) + temp5*temp_b3
-      temp_b1 = -(temp2*1.8_sp*temp_b3)
-      temp_b2 = -(fq(3)*pn*1.8_sp*temp_b3)
-      temp_b = -(temp0*5._sp*temp_b3)
-      jacobian_nn_b(5, 2) = jacobian_nn_b(5, 2) - temp6*temp_b3
-      jacobian_nn_b(3, 2) = jacobian_nn_b(3, 2) + hp**2*temp_b2
-      hp_b = hp_b + 2*hp*jacobian_nn(3, 2)*temp_b2
-      fq_b(3) = fq_b(3) + pn*temp_b1
+      temp_b4 = kexc*temp4*temp_b3
+      kexc_b = kexc_b + temp3*temp4*temp_b3
+      temp_b2 = hp**2*0.9_sp*temp_b3
+      temp_b = -(temp0*temp_b3)
+      ct_b = ct_b - temp1*temp*temp_b3
+      jacobian_nn_b(4, 2) = jacobian_nn_b(4, 2) + ht*temp_b
+      jacobian_nn_b(1, 2) = jacobian_nn_b(1, 2) + pn*temp_b2
+      pn_b = pn_b + jacobian_nn(1, 2)*temp_b2
+      jacobian_nn_b(3, 2) = jacobian_nn_b(3, 2) + ht*temp_b4
       CALL POPREAL4(jacob(2, 1))
-      temp1 = jacobian_nn(3, 1)*fq(3)
-      temp0 = hp*(-(fq(3)*fq(3))+1._sp) - temp1*(hp*hp)
+      temp1 = 2._sp*(fq(1)+1._sp) + jacobian_nn(1, 1)*hp
+      temp_b2 = -(inv_ct*dt*jacob_b(2, 1))
+      ht_b = ht_b + (2.5*ht**1.5*temp3*kexc-4*ht**3*ct*temp)*temp_b3 + &
+&       jacobian_nn(4, 2)*temp_b + jacobian_nn(3, 2)*temp_b4 + (3.5_sp*&
+&       ht**2.5*jacobian_nn(3, 1)*kexc-5*ht**4*jacobian_nn(4, 1)*ct)*&
+&       temp_b2
       temp = ht**5
       temp3 = ht**3.5_sp
-      temp_b2 = -(inv_ct*dt*jacob_b(2, 1))
-      ht_b = ht_b + (2.5*ht**1.5*(fq(4)+1._sp)*kexc*3.5_sp+3.5*ht**2.5*&
-&       jacobian_nn(4, 2)-4*ht**3*(fq(5)+1._sp)*ct*5._sp-5*ht**4*&
-&       jacobian_nn(5, 2))*temp_b3 + (3.5_sp*ht**2.5*jacobian_nn(4, 1)*&
-&       kexc-5*ht**4*jacobian_nn(5, 1)*ct)*temp_b2
-      ct_b = ct_b + (fq(5)+1._sp)*temp_b - jacobian_nn(5, 1)*temp*&
-&       temp_b2
-      pn_b = pn_b + fq(3)*temp_b1 + temp0*1.8_sp*temp_b2
-      kexc_b = kexc_b + (fq(4)+1._sp)*temp_b4 + jacobian_nn(4, 1)*temp3*&
-&       temp_b2
-      inv_ct_b = inv_ct_b - (1.8_sp*(pn*temp0)-jacobian_nn(5, 1)*ct*temp&
-&       +jacobian_nn(4, 1)*kexc*temp3)*dt*jacob_b(2, 1)
+      inv_ct_b = inv_ct_b - (0.9_sp*(pn*hp*temp1)-jacobian_nn(4, 1)*ct*&
+&       temp+jacobian_nn(3, 1)*kexc*temp3)*dt*jacob_b(2, 1)
       jacob_b(2, 1) = 0.0_4
-      temp_b0 = pn*1.8_sp*temp_b2
-      jacobian_nn_b(5, 1) = jacobian_nn_b(5, 1) - ct*temp*temp_b2
-      jacobian_nn_b(4, 1) = jacobian_nn_b(4, 1) + kexc*temp3*temp_b2
-      temp_b1 = -(hp**2*temp_b0)
-      fq_b(3) = fq_b(3) + jacobian_nn(3, 1)*temp_b1 - 2*fq(3)*hp*temp_b0
-      jacobian_nn_b(3, 1) = jacobian_nn_b(3, 1) + fq(3)*temp_b1
+      temp_b0 = temp1*0.9_sp*temp_b2
+      temp_b1 = pn*hp*0.9_sp*temp_b2
+      jacobian_nn_b(4, 1) = jacobian_nn_b(4, 1) - ct*temp*temp_b2
+      ct_b = ct_b - jacobian_nn(4, 1)*temp*temp_b2
+      jacobian_nn_b(3, 1) = jacobian_nn_b(3, 1) + kexc*temp3*temp_b2
+      kexc_b = kexc_b + jacobian_nn(3, 1)*temp3*temp_b2
+      fq_b(1) = fq_b(1) + 2._sp*temp_b1
+      jacobian_nn_b(1, 1) = jacobian_nn_b(1, 1) + hp*temp_b1
       CALL POPREAL4(jacob(1, 2))
+      temp1 = -(hp*hp) + 1
       temp0 = en*hp
       temp = jacobian_nn(2, 2)*(-hp+2._sp)
       temp_b2 = -(inv_cp*dt*jacob_b(1, 2))
-      hp_b = hp_b + (1._sp-2*hp*temp1-fq(3)**2)*temp_b0 + (jacobian_nn(2&
-&       , 2)*temp0-en*temp-2*hp*pn*jacobian_nn(1, 2))*temp_b2
-      temp1 = -(hp*hp) + 1
+      hp_b = hp_b + 2*hp*jacobian_nn(1, 2)*pn*0.9_sp*temp_b3 + &
+&       jacobian_nn(1, 1)*temp_b1 + pn*temp_b0 + (jacobian_nn(2, 2)*&
+&       temp0-en*temp-2*hp*pn*jacobian_nn(1, 2))*temp_b2
+      pn_b = pn_b + hp*temp_b0 + jacobian_nn(1, 2)*temp1*temp_b2
       inv_cp_b = inv_cp_b - (pn*jacobian_nn(1, 2)*temp1-temp*temp0)*dt*&
 &       jacob_b(1, 2)
       jacob_b(1, 2) = 0.0_4
-      pn_b = pn_b + jacobian_nn(1, 2)*temp1*temp_b2
       jacobian_nn_b(1, 2) = jacobian_nn_b(1, 2) + pn*temp1*temp_b2
       jacobian_nn_b(2, 2) = jacobian_nn_b(2, 2) - (2._sp-hp)*temp0*&
 &       temp_b2
@@ -15571,32 +15551,32 @@ CONTAINS
       temp = ht**5
       temp2 = ht**3.5_sp
       temp_b1 = inv_ct*fht_b
-      fq_b(5) = fq_b(5) + ct*temp_b - ct*temp*temp_b1
-      fq_b(4) = fq_b(4) + kexc*temp_b4 + kexc*temp2*temp_b1
-      ht_b = ht_b + dh_b(2) + (3.5_sp*ht**2.5*kexc*(fq(4)+1._sp)-5*ht**4&
-&       *(fq(5)+1._sp)*ct)*temp_b1
+      fq_b(4) = fq_b(4) + 5._sp*temp_b - ct*temp*temp_b1
+      fq_b(3) = fq_b(3) + 3.5_sp*temp_b4 + kexc*temp2*temp_b1
+      ht_b = ht_b + dh_b(2) + (3.5_sp*ht**2.5*kexc*(fq(3)+1._sp)-5*ht**4&
+&       *(fq(4)+1._sp)*ct)*temp_b1
       dh_b(2) = 0.0_4
-      temp_b0 = (1._sp-fq(3)**2)*0.9_sp*temp_b1
-      pn_b = pn_b + temp1*temp_b2 + hp**2*temp_b0
-      ct_b = ct_b - (fq(5)+1._sp)*temp*temp_b1
-      kexc_b = kexc_b + (fq(4)+1._sp)*temp2*temp_b1
+      inv_ct_b = inv_ct_b + (0.9_sp*((fq(1)+1._sp)*pn*hp**2)-(fq(4)+&
+&       1._sp)*ct*temp+temp2*(kexc*(fq(3)+1._sp)))*fht_b
+      temp_b0 = hp**2*0.9_sp*temp_b1
+      pn_b = pn_b + temp1*temp_b2 + (fq(1)+1._sp)*temp_b0
+      hp_b = hp_b + 2*hp*(fq(1)+1._sp)*pn*0.9_sp*temp_b1
+      ct_b = ct_b - (fq(4)+1._sp)*temp*temp_b1
+      kexc_b = kexc_b + (fq(3)+1._sp)*temp2*temp_b1
+      fq_b(1) = fq_b(1) + pn*temp_b0
       CALL POPREAL4(dh(1))
       hp0_b = hp0_b - dh_b(1)
       fhp_b = -(dt*dh_b(1))
       temp1 = (-hp+2._sp)*(fq(2)+1._sp)
       temp_b = inv_cp*fhp_b
       en_b = en_b - temp0*temp_b2 - hp*temp1*temp_b
-      temp0 = pn*(hp*hp)
-      inv_ct_b = inv_ct_b + (0.9_sp*((1._sp-fq(3)**2)*temp0)-(fq(5)+&
-&       1._sp)*ct*temp+temp2*(kexc*(fq(4)+1._sp)))*fht_b
-      fq_b(3) = fq_b(3) - 2*fq(3)*temp0*0.9_sp*temp_b1
       inv_cp_b = inv_cp_b + ((1._sp-hp**2)*(pn*(fq(1)+1._sp))-hp*en*&
 &       temp1)*fhp_b
-      temp_b1 = -(hp*en*temp_b)
-      hp_b = hp_b + 2*hp*pn*temp_b0 + dh_b(1) - (2*hp*pn*(fq(1)+1._sp)+&
-&       en*temp1)*temp_b - (fq(2)+1._sp)*temp_b1
-      dh_b(1) = 0.0_4
       temp_b0 = (1._sp-hp**2)*temp_b
+      temp_b1 = -(hp*en*temp_b)
+      hp_b = hp_b + dh_b(1) - (2*hp*pn*(fq(1)+1._sp)+en*temp1)*temp_b - &
+&       (fq(2)+1._sp)*temp_b1
+      dh_b(1) = 0.0_4
       fq_b(2) = fq_b(2) + (2._sp-hp)*temp_b1
       pn_b = pn_b + (fq(1)+1._sp)*temp_b0
       fq_b(1) = fq_b(1) + pn*temp_b0
@@ -15612,7 +15592,7 @@ CONTAINS
 &   imperviousness, cp, ct, kexc, hp, ht, q, l)
     IMPLICIT NONE
 ! fixed NN output size
-    REAL(sp), DIMENSION(5), INTENT(IN) :: fq
+    REAL(sp), DIMENSION(4), INTENT(IN) :: fq
     INTRINSIC SIZE
 ! fixed NN input size
     REAL(sp), DIMENSION(SIZE(fq), 4), INTENT(IN) :: jacobian_nn
@@ -15642,9 +15622,9 @@ CONTAINS
       fhp = ((1._sp-hp**2)*pn*(1._sp+fq(1))-hp*(2._sp-hp)*en*(1._sp+fq(2&
 &       )))*inv_cp
       dh(1) = hp - hp0 - dt*fhp
-! Range of correction c0.9: (1, 0), for the remaining terms: (0, 2)
-      fht = (0.9_sp*(1._sp-fq(3)**2)*pn*hp**2-(1._sp+fq(5))*ct*ht**5+&
-&       kexc*ht**3.5_sp*(1._sp+fq(4)))*inv_ct
+! Range of correction for the three terms: (0, 2)
+      fht = (0.9_sp*(1._sp+fq(1))*pn*hp**2-(1._sp+fq(4))*ct*ht**5+kexc*&
+&       ht**3.5_sp*(1._sp+fq(3)))*inv_ct
       dh(2) = ht - ht0 - dt*fht
 ! 1 - dt*nabla_hp(fhp)
       jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn(1, 1)*(1-hp**2)-2._sp*hp&
@@ -15654,13 +15634,13 @@ CONTAINS
       jacob(1, 2) = -(dt*(pn*jacobian_nn(1, 2)*(1-hp**2)-en*jacobian_nn(&
 &       2, 2)*hp*(2._sp-hp))*inv_cp)
 ! -dt*nabla_hp(fht)
-      jacob(2, 1) = -(dt*(1.8_sp*pn*(hp*(1._sp-fq(3)**2)-jacobian_nn(3, &
-&       1)*fq(3)*hp**2)-jacobian_nn(5, 1)*ct*ht**5+jacobian_nn(4, 1)*&
-&       kexc*ht**3.5_sp)*inv_ct)
+      jacob(2, 1) = -(dt*(0.9_sp*pn*hp*(2._sp*(1._sp+fq(1))+jacobian_nn(&
+&       1, 1)*hp)-jacobian_nn(4, 1)*ct*ht**5+jacobian_nn(3, 1)*kexc*ht**&
+&       3.5_sp)*inv_ct)
 ! 1 - dt*nabla_ht(fht)
-      jacob(2, 2) = 1._sp - dt*(3.5_sp*(1._sp+fq(4))*kexc*ht**2.5+&
-&       jacobian_nn(4, 2)*ht**3.5-1.8_sp*fq(3)*jacobian_nn(3, 2)*pn*hp**&
-&       2-5._sp*(1._sp+fq(5))*ct*ht**4-jacobian_nn(5, 2)*ht**5)*inv_ct
+      jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp+fq(3))+jacobian_nn(3, 2)*&
+&       ht)*kexc*ht**2.5+0.9_sp*jacobian_nn(1, 2)*pn*hp**2-(5._sp*(1._sp&
+&       +fq(4))+jacobian_nn(4, 2)*ht)*ct*ht**4)*inv_ct
       CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
       hp = hp + delta_h(1)
       IF (hp .LE. 0._sp) hp = 1.e-6_sp
@@ -15674,12 +15654,10 @@ CONTAINS
       j = j + 1
     END DO
 ! Range of correction kexc: (0, 2)
-    l = (1._sp+fq(4))*kexc*ht**3.5_sp
+    l = (1._sp+fq(3))*kexc*ht**3.5_sp
 ! Range of correction ct: (0, 2)
-! Range of correction c0.1: (1, 10)
 ! Range of correction pn: (0, 2)
-    q = (1._sp+fq(5))*ct*ht**5 + (0.1_sp+0.9_sp*fq(3)**2)*(1._sp+fq(1))*&
-&     pn*hp**2 + l
+    q = (1._sp+fq(4))*ct*ht**5 + 0.1_sp*(1._sp+fq(1))*pn*hp**2 + l
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP
 
 !  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
