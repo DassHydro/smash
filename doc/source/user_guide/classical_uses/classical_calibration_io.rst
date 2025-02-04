@@ -139,7 +139,7 @@ These lines show the different iterations of the optimization with information o
 (number of forward runs performed within each iteration of the optimization algorithm), the value of the cost function to minimize ``J`` and the value of the adaptive descent step ``ddx`` of this heuristic search algorithm. 
 So, to summarize, the optimization algorithm has converged after 8 iterations by reaching the descent step tolerance criterion of 0.01. This optimization required performing 240 forward run evaluations and leads to a final cost function value of 0.0367.
 
-Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is one minus the Nash-Sutcliffe efficiency ``nse`` (:math:`1 - \text{NSE}`);
+Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is one minus the Nash-Sutcliffe efficiency ``nse`` (:math:`1 - \text{NSE}`)
 and the optimized parameters are the set of rainfall-runoff parameters (``cp``, ``ct``, ``kexc`` and ``llr``). In the current configuration, spatially
 uniform parameters were optimized, i.e., a spatially uniform map for each parameter. We can visualize the optimized rainfall-runoff parameters.
 
