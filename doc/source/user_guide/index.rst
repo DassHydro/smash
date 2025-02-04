@@ -52,14 +52,14 @@ providing detailed guidance for experienced users looking to maximize the softwa
 .. toctree::
     :maxdepth: 1
 
-    in_depth/advanced_learnable_regionalization
-    in_depth/control_parameters_manipulation
+    in_depth/retrieving_control_parameters
     in_depth/multicriteria_calibration
     in_depth/multisite_calibration
     in_depth/multiset_parameters_estimate
     in_depth/calibration_with_regularization_term
-    in_depth/bayesian_estimation_approach
+    in_depth/advanced_learnable_regionalization
     in_depth/hybrid_model_strutures
+    in_depth/bayesian_estimation_approach
 
 Interfacing `smash` with External Tools
 ---------------------------------------

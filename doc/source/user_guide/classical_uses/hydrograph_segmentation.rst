@@ -71,8 +71,6 @@ Then the segmented event, for instance of catchment ``V3524010``, is shown in th
 
     starts = pd.to_datetime(event_seg["start"])
     ends = pd.to_datetime(event_seg["end"])
-    print(starts)
-    print(ends)
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
     fig.subplots_adjust(hspace=0)

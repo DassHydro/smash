@@ -1,7 +1,7 @@
 .. _user_guide.classical_uses.working_with_your_own_data:
 
 ==========================
-Working With Your Own Data
+Working with Your Own Data
 ==========================
 
 To work with your own data (i.e., observed discharge, precipitation, descriptor, etc.), the data must adhere to specific format conventions, as described in this section.
