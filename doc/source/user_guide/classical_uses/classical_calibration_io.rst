@@ -7,7 +7,7 @@ Classical Calibration and I/O Operations
 .. warning::
     This section is in development.
     
-.. TODO: add i/o guide; simplify this tutorial, moving some parts (e.g., setup, mesh creation) into quickstart.
+.. TODO: add I/O guide; simplify this tutorial, moving some parts (e.g., setup, mesh creation) into quickstart.
 
 This tutorial explains how to perform simple simulations (forward run and simple optimization) and how to use several Input/Output operations. 
 We begin by opening a Python interface:
@@ -54,7 +54,7 @@ Different methods associated with the `smash.Model` object are available to perf
 Forward run
 ***********
 
-The most basic simulation possible is the forward run that consist in runing a forward hydrological model given input data. A forward run can be called with the `Model.forward_run <smash.Model.forward_run>` method.
+The most basic simulation possible is the forward run that consists of running a forward hydrological model given input data. A forward run can be called with the `Model.forward_run <smash.Model.forward_run>` method.
 
 .. To speed up documentation generation
 .. ipython:: python
@@ -68,7 +68,7 @@ The most basic simulation possible is the forward run that consist in runing a f
 
     model.forward_run()
 
-Once the forward run has been completed, we can visualize the simulated discharge for example at the most downstream gauge.
+Once the forward run has been completed, we can visualize the simulated discharge, for example, at the most downstream gauge.
 
 .. ipython:: python
 
@@ -119,7 +119,7 @@ And visualize again the simulated discharge compared to the observed discharge, 
 Of course, the hydrological model optimization problem is a complex one and there are many strategies that can be employed depending on the modeling goals and data available. Here, for a first tutorial, we have run a simple optimization with the function's
 default parameters (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`). The end of this section will be dedicated to a brief explanation of the information associated with the optimization performed.
 
-First, several information were displayed on the screen during optimization
+First, several pieces of information were displayed on the screen during optimization:
 
 .. code-block:: text
 
@@ -136,11 +136,11 @@ First, several information were displayed on the screen during optimization
         CONVERGENCE: DDX < 0.01
 
 These lines show the different iterations of the optimization with information on the number of iterations, the number of cumulative evaluations ``nfg`` 
-(number of foward runs performed within each iteration of the optimization algorithm), the value of the cost function to minimize ``J`` and the value of the adaptive descent step ``ddx`` of this heuristic search algorihtm. 
-So, to summarize, the optimization algorithm has converged after 8 iterations by reaching the descent step tolerance criterion of 0.01. This optimization required to perform 240 forward run evaluations and leads to a final cost function value of 0.0367.
+(number of forward runs performed within each iteration of the optimization algorithm), the value of the cost function to minimize ``J`` and the value of the adaptive descent step ``ddx`` of this heuristic search algorithm. 
+So, to summarize, the optimization algorithm has converged after 8 iterations by reaching the descent step tolerance criterion of 0.01. This optimization required performing 240 forward run evaluations and leads to a final cost function value of 0.0367.
 
-Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is one minus the Nash-Sutcliffe efficiency ``nse`` (:math:`1 - \text{NSE}`)
-and the optimized parameters are the set of rainfall-runoff parameters (``cp``, ``ct``, ``kexc`` and ``llr``). In the current configuration spatially
+Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is one minus the Nash-Sutcliffe efficiency ``nse`` (:math:`1 - \text{NSE}`);
+and the optimized parameters are the set of rainfall-runoff parameters (``cp``, ``ct``, ``kexc`` and ``llr``). In the current configuration, spatially
 uniform parameters were optimized, i.e., a spatially uniform map for each parameter. We can visualize the optimized rainfall-runoff parameters.
 
 .. ipython:: python
@@ -154,7 +154,7 @@ uniform parameters were optimized, i.e., a spatially uniform map for each parame
 Save Model
 ----------
 
-Before finishing this first tutorial, like the ``setup`` and ``mesh`` dictionaries, the `smash.Model` object, including the optimized parameters, can be saved to `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format
+Finally, like the ``setup`` and ``mesh`` dictionaries, the `smash.Model` object, including the optimized parameters, can be saved to `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format
 and read back using the `smash.io.save_model` and `smash.io.read_model` functions, respectively.
 
 .. ipython:: python
