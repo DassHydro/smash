@@ -12,7 +12,7 @@ Classical Calibration and I/O Operations
 This tutorial explains how to perform simple simulations (forward run and simple optimization) and how to use several Input/Output operations. 
 We begin by opening a Python interface:
 
-.. code-block:: shell
+.. code-block:: none
 
     python3
 
@@ -20,12 +20,11 @@ We begin by opening a Python interface:
     :suppress:
 
     import os
-    os.system("python3 generate_dataset.py -d Cance")
 
 Imports
 -------
 
-We will first import everything we need in this tutorial: `smash` of course, the numerical computing library `numpy <https://numpy.org/>`__, the data analysis and manipulation tool library `pandas <https://pandas.pydata.org/>`__,  and the visualization library `matplotlib <https://matplotlib.org/>`__.
+We will first import everything we need in this tutorial.
 
 .. ipython:: python
 
