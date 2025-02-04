@@ -24,7 +24,7 @@ We begin by opening a Python interface:
 Imports
 -------
 
-We will first import everything we need in this tutorial.
+We will first import the necessary libraries for this tutorial.
 
 .. ipython:: python
 
@@ -32,14 +32,6 @@ We will first import everything we need in this tutorial.
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
-
-.. hint::
-
-    The visualization library `matplotlib <https://matplotlib.org/>`__ is not installed by default but can be installed with pip as follows:
-    
-    .. code-block:: none
-
-        pip install matplotlib
 
 Model creation
 --------------

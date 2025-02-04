@@ -20,7 +20,7 @@ We begin by opening a Python interface:
 Imports
 -------
 
-We will first import everything we need in this tutorial. Both ``LogNorm`` and ``SymLogNorm`` will be used for plotting.
+We will first import the necessary libraries for this tutorial. Both ``LogNorm`` and ``SymLogNorm`` will be used for plotting.
 
 .. ipython:: python
 

@@ -7,6 +7,42 @@ Input Data and Model Initialization
 This section details how to initialize the `smash.Model` object using two dictionaries: ``setup`` and ``mesh``, and provides descriptions of the input data.
 The tutorial will take an example with the data downloaded from the :ref:`Cance dataset <user_guide.demo_data.cance>` section.
 
+.. ipython:: python
+    :suppress:
+
+    import os
+    os.system("python3 generate_dataset.py -d Cance")
+
+We begin by opening a Python interface and assuming that the example dataset has been downloaded to the following path: ``'./Cance-dataset/'``.
+
+.. code-block:: none
+
+    python3
+
+.. ipython:: python
+    :suppress:
+
+    import os
+
+Imports
+-------
+
+We will first import the necessary libraries for this tutorial.
+
+.. ipython:: python
+
+    import smash
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+.. hint::
+
+    The visualization library `matplotlib <https://matplotlib.org/>`__ is not installed by default but can be installed with pip as follows:
+    
+    .. code-block:: none
+
+        pip install matplotlib
+
 Model setup creation
 --------------------
 

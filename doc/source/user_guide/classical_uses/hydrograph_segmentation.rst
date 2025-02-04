@@ -16,7 +16,7 @@ First, open a Python interface:
 Imports
 *******
 
-We will first import everything we need in this tutorial.
+We will first import the necessary libraries for this tutorial.
 
 .. ipython:: python
     
