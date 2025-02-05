@@ -35,6 +35,7 @@ It covers standard workflows, including calibration, validation techniques, and 
 .. toctree::
     :maxdepth: 1
 
+    classical_uses/working_with_your_own_data
     classical_uses/classical_calibration_io
     classical_uses/split_sample_temporal_validation
     classical_uses/regionalization_spatial_validation
@@ -42,7 +43,6 @@ It covers standard workflows, including calibration, validation techniques, and 
     classical_uses/hydrograph_segmentation
     classical_uses/hydrological_signatures
     classical_uses/rainfall_indices
-    classical_uses/using_user_provided_data
 
 In-depth
 --------
@@ -52,15 +52,14 @@ providing detailed guidance for experienced users looking to maximize the softwa
 .. toctree::
     :maxdepth: 1
 
-    in_depth/advanced_learnable_regionalization
-    in_depth/control_parameters_manipulation
+    in_depth/retrieving_control_parameters
     in_depth/multicriteria_calibration
     in_depth/multisite_calibration
     in_depth/multiset_parameters_estimate
     in_depth/calibration_with_regularization_term
-    in_depth/bayesian_estimation_approach
+    in_depth/advanced_learnable_regionalization
     in_depth/hybrid_model_strutures
-    in_depth/lat_long_data
+    in_depth/bayesian_estimation_approach
 
 Interfacing `smash` with External Tools
 ---------------------------------------

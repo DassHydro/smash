@@ -1,10 +1,10 @@
-.. _user_guide.classical_uses.using_user_provided_data:
+.. _user_guide.classical_uses.working_with_your_own_data:
 
-========================
-Using User-Provided Data
-========================
+==========================
+Working with Your Own Data
+==========================
 
-To work with user-provided data `smash` (i.e., observed discharge, precipitation, descriptor, etc.), the data must adhere to specific format conventions, as described in this section.
+To work with your own data (i.e., observed discharge, precipitation, descriptor, etc.), the data must adhere to specific format conventions, as described in this section.
 
 Observed discharge
 ------------------

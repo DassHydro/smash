@@ -16,7 +16,7 @@ with :math:`J` the cost function.
 
 We begin by opening a Python interface:
 
-.. code-block:: shell
+.. code-block:: none
 
     python3
 
@@ -24,12 +24,11 @@ We begin by opening a Python interface:
     :suppress:
 
     import os
-    os.system("python3 generate_dataset.py -d Lez")
 
 Imports
 -------
 
-We will first import everything we need in this tutorial.
+We will first import the necessary libraries for this tutorial.
 
 .. ipython:: python
 

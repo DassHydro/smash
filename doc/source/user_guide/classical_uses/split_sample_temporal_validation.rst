@@ -9,7 +9,7 @@ i.e., cross-calibration and temporal validation over two distinct periods ``p1``
 
 Open a Python interface:
 
-.. code-block:: shell
+.. code-block:: none
 
     python3
 
@@ -17,12 +17,11 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 generate_dataset.py -d Lez")
 
 Imports
 -------
 
-We will first import everything we need in this tutorial.
+We will first import the necessary libraries for this tutorial.
 
 .. ipython:: python
 
@@ -36,8 +35,8 @@ Model creation
 
 In this tutorial, we will use the :ref:`user_guide.demo_data.lez` dataset as an example.
 
-Model setup creation
-********************
+Model creation
+**************
 
 Since we are going to work on two different periods, each of 6 months, we need to create two ``setup`` dictionaries where the only difference 
 will be in the simulation period arguments ``start_time`` and ``end_time``. The first period ``p1`` will run from ``2012-08-01`` to
@@ -45,79 +44,27 @@ will be in the simulation period arguments ``start_time`` and ``end_time``. The 
 
 .. ipython:: python
 
-    setup_p1 = {
-        "start_time": "2012-08-01",
-        "end_time": "2013-01-31",
-        "dt": 86_400, # daily time step
-        "hydrological_module": "gr4", 
-        "routing_module": "lr",
-        "read_prcp": True, 
-        "prcp_directory": "./Lez-dataset/prcp", 
-        "read_pet": True,  
-        "pet_directory": "./Lez-dataset/pet",
-        "read_qobs": True,
-        "qobs_directory": "./Lez-dataset/qobs"
-    }
+    setup, mesh = smash.factory.load_dataset("lez")  # load setup and mesh
+    setup["start_time"], setup["end_time"]
 
-    setup_p2 = {
-        "start_time": "2013-02-01",
-        "end_time": "2013-07-31",
-        "dt": 86_400, # daily time step
-        "hydrological_module": "gr4", 
-        "routing_module": "lr",
-        "read_prcp": True, 
-        "prcp_directory": "./Lez-dataset/prcp", 
-        "read_pet": True,  
-        "pet_directory": "./Lez-dataset/pet",
-        "read_qobs": True,
-        "qobs_directory": "./Lez-dataset/qobs" 
-    }
-
-Model mesh creation
-*******************
-
-For the ``mesh``, there is no need to generate two different ``mesh`` dictionaries, the same one can be used for both time periods. Similar to the 
-**Cance** tutorial, we are going to create a ``mesh`` from the attributes of the catchment gauges.
-
-.. ipython:: python
-
-    gauge_attributes = pd.read_csv("./Lez-dataset/gauge_attributes.csv")
-
-    mesh = smash.factory.generate_mesh(
-        flwdir_path="./Lez-dataset/France_flwdir.tif",
-        x=list(gauge_attributes["x"]),
-        y=list(gauge_attributes["y"]),
-        area=list(gauge_attributes["area"] * 1e6), # Convert km² to m²
-        code=list(gauge_attributes["code"]),
+    setup_p1 = setup.copy()
+    setup_p1.update(
+        {
+            "start_time": "2012-08-01",
+            "end_time": "2013-01-31",
+        }
     )
 
-And quickly verify that the generated ``mesh`` is correct
+    setup_p2 = setup.copy()
+    setup_p2.update(
+        {
+            "start_time": "2013-02-01",
+            "end_time": "2013-07-31",
+        }
+    )
 
-.. ipython:: python
-
-    plt.imshow(mesh["flwdst"]);
-    plt.colorbar(label="Flow distance (m)");
-    @savefig user_guide.classical_uses.split_sample_temporal_validation.flwdst.png
-    plt.title("Lez - Flow distance");
-
-.. ipython:: python
-
-    plt.imshow(mesh["flwacc"]);
-    plt.colorbar(label="Flow accumulation (m²)");
-    @savefig user_guide.classical_uses.split_sample_temporal_validation.flwacc.png
-    plt.title("Lez - Flow accumulation");
-
-.. ipython:: python
-
-    base = np.zeros(shape=(mesh["nrow"], mesh["ncol"]))
-    base = np.where(mesh["active_cell"] == 0, np.nan, base)
-    for pos in mesh["gauge_pos"]:
-        base[pos[0], pos[1]] = 1
-    plt.imshow(base, cmap="Set1_r");
-    @savefig user_guide.classical_uses.split_sample_temporal_validation.gauge_position.png
-    plt.title("Lez - Gauge position");
-
-Then, we can initialize the two `smash.Model` objects:
+For the ``mesh``, there is no need to generate two different ``mesh`` dictionaries, the same one can be used for both time periods.
+Now we can initialize the two `smash.Model` objects:
 
 .. ipython:: python
 
@@ -132,13 +79,13 @@ Optimization
 
 First, we will optimize both models for each period to generate two sets of optimized rainfall-runoff parameters.
 So far, to optimize, we have called the method associated with the `smash.Model` object `Model.optimize <smash.Model.optimize>`. This method
-will modify the associated object in place (i.e. the values of the rainfall-runoff parameters after calling this function are modified). Here, we
+will modify the associated object in place (i.e., the values of the rainfall-runoff parameters after calling this function are modified). Here, we
 want to optimize the model but still keep this model object to run the validation afterwards. To do this, instead of calling the
 `Model.optimize <smash.Model.optimize>` method, we can call the `smash.optimize` function, which is identical but takes a
 `smash.Model` object as input and returns a copy of it. This method allows you to optimize a `smash.Model` object and store the results in 
 another object without modifying the initial one.
 
-Similar to the **Cance** tutorial, we will perform a simple spatially uniform optimization (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`) of the rainfall-runoff parameters
+Here, we will perform a simple spatially uniform optimization (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`) of the rainfall-runoff parameters
 by minimizing the cost function equal to one minus the Nash-Sutcliffe efficiency on the most downstream gauge.
 
 .. To speed up documentation generation
