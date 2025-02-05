@@ -7,7 +7,7 @@ Sensitivity Analysis
 ====================
 
 In this tutorial, we will show how to perform sensitivity analysis on a
-single catchment using ``SMASH`` and ``SALib``. We will use Cance catchment as an example in this tutorial.
+single catchment using `smash` and `SAlib <https://salib.readthedocs.io/>`__. We will use the :ref:`user_guide.demo_data.cance` dataset as an example in this tutorial.
 
 First, open a Python interface:
 
@@ -84,11 +84,9 @@ Sample size is the number of distinct values for each parameter.
 
 .. note::
 
-    The bigger the ``sample_size``, the more accurate the estimation of the sensitivity indices.
-    However, it will also take more time to run.
+    A larger ``sample_size`` improves the accuracy of sensitivity index estimates but also increases computational time.
 
-Generate the sample using SALib's Saltelli method. These are the samples
-that will be used for the sensitivity analysis.
+Generate the samples, which will be used for sensitivity analysis, using the Saltelli sampling method implemented in SALib.
 
 .. code-block:: python
 
@@ -113,11 +111,7 @@ Details can be found in the `SALib documentation <https://salib.readthedocs.io/e
 Run the model on the chosen samples
 -----------------------------------
 
-Use smash.multiple_forward_run to get output from all samples quickly.
-
-We define a function ``run_with_params`` to do the forward run from a
-set of parameters to outputs that include all the metrics or signatures
-that you want to analyze post-SMASH. In this case, we use
+We define a function ``run_with_params``, that performs a forward run using a set of parameters to compute performance metrics and/or hydrological signatures based on simulated discharge. In this case, we use
 NSE - a classical hydrological metric, Crc - continuous runoff
 coefficients, and Eff - flood flow as examples.
 
@@ -139,7 +133,7 @@ to the :ref:`api_reference.principal_methods.signal_analysis` section.
     ... 
     ...     return nse, crc, eff
 
-.. tip::
+.. hint::
 
     Using ``common_options={'n_cpu': n}`` (with n based on your system configuration)
     in the ``model.forward_run`` will help accelerate the computation.
@@ -153,7 +147,7 @@ Run the function for all the samples using a simple ``for`` loop.
     >>> for i in range(param_values.shape[0]):
     ...     output.append(np.array(run_with_params(model, param_values[i])))
 
-.. tip::
+.. hint::
 
     Each iteration calls the ``run_with_params`` function, which calls the ``model.forward_run`` function.
     Each ``forward_run`` prints a line of text, which is a lot of redundant text considering the number of iterations.
