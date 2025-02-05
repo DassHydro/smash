@@ -136,8 +136,7 @@ to the :ref:`api_reference.principal_methods.signal_analysis` section.
 .. hint::
 
     Using ``common_options={'n_cpu': n}`` (with n based on your system configuration)
-    in the ``model.forward_run`` will help accelerate the computation.
-
+    in the `smash.Model.forward_run` function will help accelerate the computation.
 
 Run the function for all the samples using a simple ``for`` loop.
 
@@ -149,7 +148,7 @@ Run the function for all the samples using a simple ``for`` loop.
 
 .. hint::
 
-    Each iteration calls the ``run_with_params`` function, which calls the ``model.forward_run`` function.
+    Each iteration calls the ``run_with_params`` function, which calls the `smash.Model.forward_run` function.
     Each ``forward_run`` prints a line of text, which is a lot of redundant text considering the number of iterations.
     You can suppress these outputs by redirecting them to a ``StringIO`` object. For example:
 
@@ -178,14 +177,11 @@ Take out the 3 outputs array from the list.
     >>> Y_crc = np.array(output[:, 1])
     >>> Y_eff = np.array(output[:, 2])
 
-
-
 Normalize the NSE. The normalized NSE is calculated as:
 
 .. math::
 
    \text{NNSE} = \frac{1}{2 - \text{NSE}}
-
 
 This normalized NSE maps the NSE metric from :math:`[-\infty, 1]` to :math:`[0, 1]`
 in a manner that preserves valuable information on effective forward runs
@@ -219,7 +215,6 @@ the sensitivity analysis using SALib and show the results.
     >>> print('Sensitivity indices: ', Si_eff['S1'])
     >>> print('Confidence intervals: ', Si_eff['S1_conf'])
 
-
 .. parsed-literal::
 
     --- First order sensitivity analysis on NSE ---
@@ -232,12 +227,10 @@ the sensitivity analysis using SALib and show the results.
     Sensitivity indices:  [0.40991146 0.0829772  0.01993396 0.00846561]
     Confidence intervals:  [0.25203485 0.15304919 0.04074188 0.01039334]
 
-.. note::
-
-    The sensitivity indices show the relative importance of each parameter in
-    affecting the model outputs. A higher sensitivity index indicates that the
-    parameter has a stronger influence on that particular metric. The confidence
-    intervals provide a measure of uncertainty in these sensitivity estimates.
+The sensitivity indices show the relative importance of each parameter in
+affecting the model outputs. A higher sensitivity index indicates that the
+parameter has a stronger influence on that particular metric. The confidence
+intervals provide a measure of uncertainty in these sensitivity estimates.
 
 .. note::
 
