@@ -22,6 +22,7 @@ We will import everything we need in this tutorial.
     
     import smash
     import matplotlib.pyplot as plt
+    import pandas as pd
 
 Model object creation
 *********************
@@ -103,22 +104,69 @@ For example, we use a multi-criteria cost function based on the peak flow ``Epf`
         cost_options=cost_options,
     )
 
-Finally, the simulated discharges can be visualized as follows:
+Let's compute the Nash-Sutcliffe error for the first gauge of each model.
+
+.. ipython:: python
+          
+    models = [model1, model2, model3]
+    nse = []
+    for m in models:
+        nse.append(1. - smash.evaluation(m, metric='nse')[0][0])
+
+Let's compute the signatures for each model.
 
 .. ipython:: python
 
-    qobs = model.response_data.q[0, :].copy()
-    qobs = np.where(qobs < 0, np.nan, qobs) # to deal with missing data
-    plt.plot(qobs, label="Observed discharge");
-    plt.plot(model1.response.q[0, :], label="Simulated discharge - nse metric");
-    plt.plot(model2.response.q[0,:], label="Simulated discharge - multi-metrics");
-    plt.plot(model3.response.q[0,:], label="Simulated discharge - multi-metrics-segmentation");
-    plt.grid(alpha=.7, ls="--");
-    plt.xlabel("Time step");
-    plt.ylabel("Discharge $(m^3/s)$");
-    plt.title(model.mesh.code[0]);
-    @savefig user_guide.in_depth.optimize.multi_criteria.qsim_mme.png
-    plt.legend();
+    models = [model1, model2, model3]
+    signatures_obs = []
+    signatures_sim = []
+    for m in models:
+        signatures_obs.append(smash.signatures(m, sign=['Crc', 'Erc', 'Epf']))
+        signatures_sim.append(smash.signatures(m, sign=['Crc', 'Erc', 'Epf'], domain='sim'))
+
+For simplicity, we arange the signatures by type.
+
+.. ipython:: python
+
+    crc_obs = []
+    erc_obs = []
+    epf_obs = []
+    for sign in signatures_obs:
+        crc_obs.append(sign.cont.iloc[0]['Crc'])
+        erc_obs.append(sign.event.iloc[0]['Erc'])
+        epf_obs.append(sign.event.iloc[0]['Epf'])
+
+    crc_sim = []
+    erc_sim = []
+    epf_sim = []
+    for sign in signatures_sim:
+        crc_sim.append(sign.cont.iloc[0]['Crc'])
+        erc_sim.append(sign.event.iloc[0]['Erc'])
+        epf_sim.append(sign.event.iloc[0]['Epf'])
+
+We compute the relative error for each signatures.
+
+.. ipython:: python
+
+    RE_Crc = [sim / obs - 1 for (sim, obs) in zip(crc_sim, crc_obs)]
+    RE_Erc = [sim / obs - 1 for (sim, obs) in zip(erc_sim, erc_obs)]
+    RE_Epf = [sim / obs - 1 for (sim, obs) in zip(epf_sim, epf_obs)]
+
+Finally, we group the metric informations together:
+
+.. ipython:: python
+        
+    metric_info = {
+        '1 - NSE': nse,
+        'RE_Crc': RE_Crc,
+        'RE_Erc': RE_Erc,
+        'RE_Epf':RE_Epf,
+    }
+
+    index = ["model1 (NSE)", "model2 (NSE, Crc, Erc)", "model3 (Epf)"]
+
+    df = pd.DataFrame(metric_info, index=index)
+    df
 
 .. ipython:: python
     :suppress:
