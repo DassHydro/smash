@@ -1,4 +1,4 @@
-.. _user_guide.external_tools.sensitivity_analysis:
+.. _user_guide.post_processing_external_tools.sensitivity_analysis:
 
 .. For documentation in external tools, it should be made with pre-existing output, and will not be rerun during compilation.
 
@@ -7,7 +7,7 @@ Sensitivity Analysis
 ====================
 
 In this tutorial, we will show how to perform sensitivity analysis on a
-single catchment using `smash` and `SAlib <https://salib.readthedocs.io/>`__. We will use the :ref:`user_guide.demo_data.cance` dataset as an example in this tutorial.
+single catchment using `smash` and `SAlib <https://salib.readthedocs.io/>`__. We will use the :ref:`user_guide.data_and_format_description.cance` dataset as an example in this tutorial.
 
 First, open a Python interface:
 
