@@ -1,4 +1,4 @@
-.. _user_guide.demo_data.cance:
+.. _user_guide.data_and_format_description.cance:
 
 =====
 Cance

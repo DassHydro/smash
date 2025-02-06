@@ -1,4 +1,4 @@
-.. _user_guide.classical_uses.working_with_your_own_data:
+.. _user_guide.data_and_format_description.working_with_your_own_data:
 
 ==========================
 Working with Your Own Data

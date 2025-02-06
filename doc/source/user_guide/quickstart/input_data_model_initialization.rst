@@ -5,7 +5,7 @@ Input Data and Model Initialization
 ===================================
 
 This section details how to initialize the `smash.Model` object using two dictionaries: ``setup`` and ``mesh``, and provides descriptions of the input data.
-The tutorial will take an example with the data downloaded from the :ref:`Cance dataset <user_guide.demo_data.cance>` section.
+The tutorial will take an example with the data downloaded from the :ref:`Cance dataset <user_guide.data_and_format_description.cance>` section.
 
 .. ipython:: python
     :suppress:
