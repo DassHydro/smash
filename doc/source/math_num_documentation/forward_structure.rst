@@ -999,7 +999,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
             - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
             - Parameters: :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
-            - Normalized states: :math:`\{\tilde{h_i}, \tilde{h_p}, \tilde{h_t}}\}`, where :math:`\tilde{h_i} = \frac{h_i}{c_i}`, :math:`\tilde{h_p} = \frac{h_p}{c_p}`, and :math:`\tilde{h_t} = \frac{h_t}{c_t}`, with states :math:`\{h_i, h_p, h_t\} \in \boldsymbol{h}`
+            - States: :math:`\{h_i, h_p, h_t\} \in \boldsymbol{h}`
         
         The function :math:`f` is resolved numerically as follows:
 
