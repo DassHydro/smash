@@ -33,7 +33,7 @@ We will first import the necessary libraries for this tutorial.
 Model creation
 --------------
 
-In this tutorial, we will use the :ref:`user_guide.demo_data.lez` dataset as an example.
+In this tutorial, we will use the :ref:`user_guide.data_and_format_description.lez` dataset as an example.
 
 Model creation
 **************

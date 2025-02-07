@@ -1,10 +1,10 @@
-.. _user_guide.classical_uses.working_with_your_own_data:
+.. _user_guide.data_and_format_description.format_description:
 
-==========================
-Working with Your Own Data
-==========================
+==================
+Format Description
+==================
 
-To work with your own data (i.e., observed discharge, precipitation, descriptor, etc.), the data must adhere to specific format conventions, as described in this section.
+This section describes the required format for the input data (i.e., observed discharge, precipitation, descriptor, etc.) used in `smash`.
 
 Observed discharge
 ------------------

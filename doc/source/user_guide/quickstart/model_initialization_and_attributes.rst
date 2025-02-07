@@ -1,11 +1,11 @@
-.. _user_guide.quickstart.input_data_model_initialization:
+.. _user_guide.quickstart.model_initialization_and_attributes:
 
 ===================================
-Input Data and Model Initialization
+Model Initialization and Attributes
 ===================================
 
-This section details how to initialize the `smash.Model` object using two dictionaries: ``setup`` and ``mesh``, and provides descriptions of the input data.
-The tutorial will take an example with the data downloaded from the :ref:`Cance dataset <user_guide.demo_data.cance>` section.
+This section details how to initialize the `smash.Model` object and provides descriptions of the model attributes.
+The tutorial will take an example with the data downloaded from the :ref:`Cance dataset <user_guide.data_and_format_description.cance>` section.
 
 .. ipython:: python
     :suppress:
@@ -43,8 +43,10 @@ We will first import the necessary libraries for this tutorial.
 
         pip install matplotlib
 
-Model setup creation
---------------------
+Model creation
+--------------
+
+To create the `smash.Model` object, we need to define the ``setup`` and the ``mesh``.
 
 The ``setup`` is a Python dictionary (i.e., pairs of keys and values) which contains all information relating to the simulation period, 
 the structure of the hydrological model and the reading of input data. For this first simulation let us create the following setup:
@@ -135,9 +137,6 @@ In summary the current ``setup`` you defined above corresponds to :
 .. hint::
 
     Detailed information on the model ``setup`` can be obtained from the API reference section of `smash.Model`.
-
-Model mesh creation
--------------------
 
 Once the ``setup`` has been created, we can move on to the ``mesh`` creation. The ``mesh`` is also a Python dictionary but it is automatically generated
 with the `smash.factory.generate_mesh` function. To run this function, we need to pass the path of the flow direction file ``France_flwdir.tif`` 
@@ -291,9 +290,6 @@ For this ``mesh``, we have a negative relative error on the simulated drainage a
 (which can be explained by the fact that small upstream catchments are more sensitive to the relatively coarse ``mesh`` resolution).
 
 .. TODO FC link to automatic meshing
-
-Save setup and mesh
--------------------
 
 Before constructing the `smash.Model` object, we can save (serialize) the ``setup`` and the ``mesh`` to avoid having to do it every time you want to run a simulation on the same case,
 with the two following functions, `smash.io.save_setup` and `smash.io.save_mesh`. It will save the ``setup`` in `YAML <https://yaml.org/>`__ format and the ``mesh`` in `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format.

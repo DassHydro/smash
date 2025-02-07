@@ -4,16 +4,18 @@
 User Guide
 ==========
 
-Demo Data
----------
-First, this section provides descriptions of the demo data that can be downloaded and will be used for the following tutorials.
+Data and Format Description
+---------------------------
+First, this section provides a description of the input data and their required format used in `smash`.
 
 .. toctree::
     :maxdepth: 1
 
-    demo_data/cance
-    demo_data/france
-    demo_data/lez
+    data_and_format_description/cance
+    data_and_format_description/france
+    data_and_format_description/lez
+    data_and_format_description/format_description
+
 
 Quickstart
 ----------
@@ -23,9 +25,8 @@ It includes beginner tutorials to help users get started quickly and become fami
 .. toctree::
     :maxdepth: 1
 
-    quickstart/input_data_model_initialization
-    quickstart/simulation_model_response
-    quickstart/calibration_visualization
+    quickstart/model_initialization_and_attributes
+    quickstart/forward_run_classical_calibration
 
 Classical Uses
 --------------
@@ -35,11 +36,11 @@ It covers standard workflows, including calibration, validation techniques, and 
 .. toctree::
     :maxdepth: 1
 
-    classical_uses/working_with_your_own_data
-    classical_uses/classical_calibration_io
     classical_uses/split_sample_temporal_validation
+    classical_uses/fully_distributed_calibration
     classical_uses/regionalization_spatial_validation
     classical_uses/large_domain_simulation
+    classical_uses/forecasting_application
     classical_uses/hydrograph_segmentation
     classical_uses/hydrological_signatures
     classical_uses/rainfall_indices
@@ -61,13 +62,13 @@ providing detailed guidance for experienced users looking to maximize the softwa
     in_depth/hybrid_model_strutures
     in_depth/bayesian_estimation_approach
 
-Interfacing `smash` with External Tools
----------------------------------------
-This section focuses on how to integrate `smash` outputs with external tools for extended functionality.
+Post-processing and Interfacing `smash` with External Tools
+-----------------------------------------------------------
+This section focuses on post-processing in `smash` and how to use its outputs with external tools for extended functionality.
 
 .. toctree::
     :maxdepth: 1
 
-    external_tools/results_visualization_over_large_sample
-    external_tools/sensitivity_analysis
-    external_tools/discharge_correction_lstm
+    post_processing_external_tools/results_visualization_over_large_sample
+    post_processing_external_tools/sensitivity_analysis
+    post_processing_external_tools/discharge_correction_lstm
