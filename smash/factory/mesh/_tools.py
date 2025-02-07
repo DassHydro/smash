@@ -258,7 +258,12 @@ def _get_river_line(river_line_path: str, rr_mesh: dict[str, Any]) -> gpd.GeoDat
     return gpd.GeoDataFrame(pd.concat(lriver_line, ignore_index=True))
 
 
-def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict[str, Any]) -> np.ndarray:
+def _get_cross_sections_and_segments(
+    river_line: gpd.GeoDataFrame, 
+    rr_mesh: dict[str, Any],
+    w_coef_a: float,
+    w_coef_b: float
+) -> np.ndarray:
     transform = rasterio.transform.from_origin(
         rr_mesh["xmin"], rr_mesh["ymax"], rr_mesh["xres"], rr_mesh["yres"]
     )
@@ -275,8 +280,12 @@ def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict
     selected_path = {}
     # Iterate over each line segment in the river GeoDataFrame
     for rl in river_line["geometry"]:
-        # Extract line coordinates
-        line_coords = list(rl.coords)
+        # Handle MultiLineString geometries when _get_river_line is bypassed
+        if rl.geom_type == 'LineString':
+            # Extract line coordinates
+            line_coords = list(rl.coords)
+        else:
+            line_coords = [coord for linestring in rl.geoms for coord in linestring.coords] # MultiLineString
 
         # Determine the starting point of the current line segment
         start_point = Point(line_coords[0][0], line_coords[0][1])
@@ -347,6 +356,15 @@ def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict
         if flwdir.idxs_ds[inflow_point] in stream_upstream_cells
     ]
 
+    # Calculate river widths using geomorphological relationship with upstream drainage area
+    # W = w_coef_a * (A)^w_coef_b where:
+    # W is river width in meters
+    # A is upstream drainage area in m² 
+    # w_coef_a and w_coef_b are empirical coefficients
+    flwdir_upstream_area = flwdir.upstream_area(unit='m2')
+    river_cells_widths = np.zeros(flwdir.shape, dtype=np.float32)
+    river_cells_widths[flwpath_rowcol] = w_coef_a * (flwdir_upstream_area[flwpath_rowcol] * 10**-6)**w_coef_b
+    
     # Get flow distance
     flwdst = flwdir.distnc.ravel()
 
@@ -414,7 +432,7 @@ def _get_cross_sections_and_segments(river_line: gpd.GeoDataFrame, rr_mesh: dict
                     "nlevels": 1,
                     "manning": np.full(shape=(1,), fill_value=1 / 100, dtype=np.float32),
                     "level_heights": np.empty(shape=(1,), dtype=np.float32),
-                    "level_widths": np.full(shape=(1,), fill_value=5, dtype=np.float32),
+                    "level_widths": np.array([river_cells_widths[stream["properties"]["midpoint_rowcols"][i]]], dtype=np.float32),
                     "nlat": nlat,
                     "lat_rowcols": cs_lat_rowcols,
                     "nup": nup,

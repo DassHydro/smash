@@ -198,7 +198,7 @@ def _generate_rr_mesh_from_xy(
         dy_win = dy[slice_win]
         flwdir_win = flwdir[slice_win]
 
-        if shp_dataset is not None and code[ind] in shp_dataset["code"].values:
+        if shp_dataset is not None and code[ind] in shp_dataset["code"].values:          
             transform = rasterio.transform.Affine(
                 xres, 0, xmin + slice_win[1].start * xres, 0, -yres, ymax - slice_win[0].start * yres
             )
@@ -376,7 +376,13 @@ def _generate_rr_mesh(
     else:
         return _generate_rr_mesh_from_xy(flwdir_path, x, y, area, code, shp_dataset, max_depth, epsg)
 
-def _generate_hy1d_mesh(rr_mesh: dict[str, Any], river_line_path: FilePath, bbox: ListLike[float] | None = None) -> dict[str, Any]:
+def _generate_hy1d_mesh(
+    rr_mesh: dict[str, Any], 
+    river_line_path: FilePath, 
+    bbox: ListLike[float] | None = None,
+    w_coef_a: float = 1.54,
+    w_coef_b: float = 0.44
+) -> dict[str, Any]:
     (river_line_path,) = _standardize_generate_hy1d_mesh_args(river_line_path)
 
     if bbox is not None:
@@ -386,7 +392,7 @@ def _generate_hy1d_mesh(rr_mesh: dict[str, Any], river_line_path: FilePath, bbox
         print("debug: using _get_river_line for river line preprocessing.")
         river_line = _get_river_line(river_line_path, rr_mesh)
 
-    cross_sections, segments = _get_cross_sections_and_segments(river_line, rr_mesh)
+    cross_sections, segments = _get_cross_sections_and_segments(river_line, rr_mesh,w_coef_a, w_coef_b)
 
     return {
         "ncs": len(cross_sections),
