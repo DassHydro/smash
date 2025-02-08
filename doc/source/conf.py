@@ -15,6 +15,7 @@ import os
 import pathlib
 import sys
 import warnings
+from datetime import datetime
 
 import smash
 
@@ -24,7 +25,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "smash"
-copyright = "2022-2024, INRAE"
+copyright = f"2022-{datetime.now().year}, INRAE"
 author = "INRAE"
 
 # The full version, including alpha/beta/rc tags
