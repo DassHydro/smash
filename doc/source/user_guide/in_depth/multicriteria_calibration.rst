@@ -23,6 +23,7 @@ We will first import the necessary libraries for this tutorial.
     import smash
     import matplotlib.pyplot as plt
     import pandas as pd
+    import numpy as np
 
 Model object creation
 *********************
@@ -166,6 +167,26 @@ Finally, we group the metric information together as follows:
 
     df = pd.DataFrame(metric_info, index=index)
     df
+
+and visualize the simulated discharge for each model.
+
+.. ipython:: python
+
+    code = model.mesh.code[0]
+
+    q_obs = model.response_data.q[0].copy()
+    q_obs[q_obs < 0] = np.nan
+
+    plt.plot(q_obs, linewidth=4, alpha=0.5, label="Observed discharge");
+    plt.plot(model_1.response.q[0, :], linewidth=3, label="Simulated discharge (model_1)");
+    plt.plot(model_2.response.q[0, :], linewidth=2, label="Simulated discharge (model_2)");
+    plt.plot(model_3.response.q[0, :], linewidth=1, label="Simulated discharge (model_3)");
+    plt.xlabel("Time step");
+    plt.ylabel("Discharge ($m^3/s$)");
+    plt.grid(ls="--", alpha=.7);
+    plt.legend();
+    @savefig user_guide.in_depth.multicriteria_calibration.hydrograph.png
+    plt.title(f"Observed and simulated discharge at gauge {code}");
 
 .. ipython:: python
     :suppress:
