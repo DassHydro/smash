@@ -12,7 +12,11 @@ First, open a Python interface:
 .. code-block:: none
 
     python3
-    
+
+
+
+First, import smash and python librairies needed in this tutorial.
+
 Imports
 *******
 
@@ -41,8 +45,8 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
 Multiple metrics calibration using signatures
 *********************************************
 
-This method enables the incorporation of multiple calibration metrics into the observation term of the cost function. 
-Indeed the observations at a gauge :math:`J_{obs, g}` are defined as:
+The smash optimization algorithms enable to use a cost function composed of multiple calibration metrics.
+First, the observation at a single gauge :math:`J_{obs, g} is defined as the sum of several metrics as:
 
 .. math::
 
@@ -50,7 +54,7 @@ Indeed the observations at a gauge :math:`J_{obs, g}` are defined as:
 
 with :math:`j_c` and :math:`w_c` a specific metric and the weight associated respectively.
 
-Then objective function :math:`J_{obs}` agregate observations of all gauges:
+Then objective function :math:`J_{obs}` agregates observations of all considered gauges:
 
 .. math::
 
@@ -62,15 +66,14 @@ For more details, see the :ref:`Math / Num Documentation <math_num_documentation
 Note that this multi-criteria approach is possible for the optimization methods :meth:`smash.Model.optimize` and :meth:`smash.Model.bayesian_optimize`. 
 For simplicity, in this example, we use :meth:`smash.Model.optimize` with a uniform mapping.
 
-Let us consider a classical calibration with a single metric:
+First, let's perform an optimization using the default options, which include a NSE cost function, over the three gauges as defined in the setup.
 
 .. ipython:: python
 
     model1 = smash.optimize(model);
 
 The default evaluation metric :math:`j_c` is the Nash-Sutcliffe efficiency ``nse``.
-
-We use two additional metrics, the continuous ``Crc`` and the flood-event ``Erc`` runoff coefficients for multi-criteria calibration:
+Second, in addition to NSE two other metrics are considered, the continuous Crc and the flood-event Erc runoff coefficients for multi-criteria calibration:
 
 .. ipython:: python
 
@@ -81,7 +84,7 @@ We use two additional metrics, the continuous ``Crc`` and the flood-event ``Erc`
     model2 = smash.optimize(model, cost_options = cost_options);
 
 where the weights of the objective functions :math:`w_c` are based on ``nse``, ``Crc``, ``Erc`` are set to 0.6, 0.1 and 0.3 respectively. 
-If these weights are not given by user, the cost value is computed as the mean of the objective functions.
+If these weights are not given by user, they are equal by default and their sum equals 1, hence the cost value is computed as the mean of the objective functions.
 
 .. code-block:: python
 
@@ -90,8 +93,8 @@ If these weights are not given by user, the cost value is computed as the mean o
         "wjobs_cmpt": "mean",
     }
 
-For multiple metrics based on flood-event signatures, we can further adjust some parameters in the :ref:`segmentation <user_guide.classical_uses.hydrograph_segmentation>` algorithm to compute flood-event signatures. 
-For example, we use a multi-criteria cost function based on the peak flow ``Epf`` to calibrate the Model parameters:
+For multiple metrics based on flood-event signatures, those metrics are computed using flood event detected automatically with the segmentation algorithm (:ref:segmentation <user_guide.classical_uses.hydrograph_segmentation>). The parameters of this segmentation algorithm, which utilizes rainfall and discharge signals, can be adjusted.
+For example, let us perform a calibration on the three gauges of model parameters using a multi-criteria cost function based on continuous NSE and peak flow Epf signature, with weights 0.6 and 0.4 respectively and segmentation criterion of exceeding peak threshold of 0.9.
 
 .. ipython:: python
 
