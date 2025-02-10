@@ -11,7 +11,7 @@ The principle is to estimate parameters by maximizing the density of the :ref:`p
 2. it explicitly recognizes the uncertainties affecting both the model-simulated discharge (structural uncertainty) and the discharge data used to calibrate the model (observation uncertainty);
 3. it naturally handles multi-gauge calibration, with a built-in weighting of the information brought by each gauge. 
 
-This tutorial builds on the :ref:`tutorial on model calibration<user_guide.quickstart.calibration_visualization>`: we recommend that you follow it first.
+This tutorial builds on the :ref:`tutorial on model calibration<user_guide.classical_uses.split_sample_temporal_validation>`: we recommend that you follow it first.
 
 Preliminaries
 -------------
@@ -31,7 +31,7 @@ We then load the Cance dataset, which is included in the `smash` module, and ini
 	setup,mesh=smash.factory.load_dataset('cance')
 	model0 = smash.Model(setup, mesh)
 
-We finally optimize this model using the standard, non-Bayesian approach described in the :ref:`model calibration tutorial<user_guide.quickstart.calibration_visualization>`. Note that in addition to the four model parameters ``cp``, ``ct``, ``kexc`` and ``llr``, we also calibrate the initial state values (``hp`` and ``ht``) so that we work with 'good' initial state values in the remainder of this tutorial. In addition, a single gauge is used for calibration (the most downstream one, with code "V3524010").
+We finally optimize this model using the standard, non-Bayesian approach described in the :ref:`model calibration tutorial<user_guide.classical_uses.split_sample_temporal_validation>`. Note that in addition to the four model parameters ``cp``, ``ct``, ``kexc`` and ``llr``, we also calibrate the initial state values (``hp`` and ``ht``) so that we work with 'good' initial state values in the remainder of this tutorial. In addition, a single gauge is used for calibration (the most downstream one, with code "V3524010").
 
 .. ipython:: python
 	
