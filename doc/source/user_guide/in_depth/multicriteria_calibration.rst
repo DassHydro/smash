@@ -46,7 +46,7 @@ Multiple metrics calibration using signatures
 *********************************************
 
 The smash optimization algorithms enable to use a cost function composed of multiple calibration metrics.
-First, the observation at a single gauge :math:`J_{obs, g} is defined as the sum of several metrics as:
+First, the observation at a single gauge :math:`J_{obs, g}` is defined as the sum of several metrics as:
 
 .. math::
 
