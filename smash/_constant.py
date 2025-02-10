@@ -253,7 +253,7 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
                 (4, 4),  # % gr4_mlp
                 (0, 0),  # % gr4_ri
                 (0, 0),  # % gr4_ode
-                (4, 5),  # % gr4_ode_mlp
+                (4, 4),  # % gr4_ode_mlp
                 (0, 0),  # % gr5
                 (4, 4),  # % gr5_mlp
                 (0, 0),  # % gr5_ri
