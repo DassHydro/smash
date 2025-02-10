@@ -1,4 +1,4 @@
-.. _user_guide.demo_data.france:
+.. _user_guide.data_and_format_description.france:
 
 ======
 France
