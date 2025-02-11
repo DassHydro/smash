@@ -67,7 +67,7 @@ First, we establish a reference benchmark using the default cost options with a 
 The default evaluation metric :math:`j_c` is the Nash-Sutcliffe efficiency (NSE).
 
 In addition to NSE, we now perform a multi-criteria optimization using two other metrics: 
-the relative absolute error based on the continuous runoff coefficient (Crc) and the relative absolute error of the peak flow (Epf) for multi-criteria calibration.
+the relative error based on the continuous runoff coefficient (Crc) and the relative error of the peak flow (Epf) for multi-criteria calibration.
 
 .. ipython:: python
 
@@ -144,13 +144,13 @@ For simplicity, we arange the signatures by type.
         epf_sim.append(sign.event.iloc[0]['Epf'])
         eff_sim.append(sign.event.iloc[0]['Eff'])
 
-We compute the absolute error for each signatures.
+We compute the relative error for each signatures.
 
 .. ipython:: python
 
-    ERR_Crc = [abs(sim / obs - 1) for (sim, obs) in zip(crc_sim, crc_obs)]
-    ERR_Epf = [abs(sim / obs - 1) for (sim, obs) in zip(epf_sim, epf_obs)]
-    ERR_Eff = [abs(sim / obs - 1) for (sim, obs) in zip(eff_sim, eff_obs)]
+    ERR_Crc = [abs(sim - obs)/obs for (sim, obs) in zip(crc_sim, crc_obs)]
+    ERR_Epf = [abs(sim - obs)/obs for (sim, obs) in zip(epf_sim, epf_obs)]
+    ERR_Eff = [abs(sim - obs)/obs for (sim, obs) in zip(eff_sim, eff_obs)]
 
 Finally, we group the metric information together as follows:
 
