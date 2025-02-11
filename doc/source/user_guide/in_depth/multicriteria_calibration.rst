@@ -144,13 +144,13 @@ For simplicity, we arange the signatures by type.
         epf_sim.append(sign.event.iloc[0]['Epf'])
         eff_sim.append(sign.event.iloc[0]['Eff'])
 
-We compute the relative absolute error for each signatures.
+We compute the absolute error for each signatures.
 
 .. ipython:: python
 
-    RAE_Crc = [abs(sim / obs - 1) for (sim, obs) in zip(crc_sim, crc_obs)]
-    RAE_Epf = [abs(sim / obs - 1) for (sim, obs) in zip(epf_sim, epf_obs)]
-    RAE_Eff = [abs(sim / obs - 1) for (sim, obs) in zip(eff_sim, eff_obs)]
+    AE_Crc = [abs(sim / obs - 1) for (sim, obs) in zip(crc_sim, crc_obs)]
+    AE_Epf = [abs(sim / obs - 1) for (sim, obs) in zip(epf_sim, epf_obs)]
+    AE_Eff = [abs(sim / obs - 1) for (sim, obs) in zip(eff_sim, eff_obs)]
 
 Finally, we group the metric information together as follows:
 
@@ -158,9 +158,9 @@ Finally, we group the metric information together as follows:
         
     metric_info = {
         'NSE': nse,
-        'RAE_Crc': RAE_Crc,
-        'RAE_Epf': RAE_Epf,
-        'RAE_Eff': RAE_Eff,
+        'AE_Crc': AE_Crc,
+        'AE_Epf': AE_Epf,
+        'AE_Eff': AE_Eff,
     }
 
     index = ["model_1 (NSE)", "model_2 (NSE, Crc, Epf)", "model_3 (NSE, Eff)"]
