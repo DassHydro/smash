@@ -99,15 +99,20 @@ Now, we visualize, for instance, the simulated and observed peak flow in the box
     @savefig user_guide.classical_uses.hydrological_signatures_boxplot.png
     boxplot = df.boxplot(column=["Epf"], by="domain")
 
-We can also compute the relative errors for any desired signature.
-For example, the computation and visualization of the relative error for the two selected flood event signatures are shown below.
+We can also compute the relative bias for any desired signature.
+For example, the computation and visualization of the relative bias for the two selected flood event signatures are shown below.
 
 .. ipython:: python
 
-    RE_Erc = sig_sim_2.event["Erc"] / sig_obs_2.event["Erc"] - 1
-    RE_Epf = sig_sim_2.event["Epf"] / sig_obs_2.event["Epf"] - 1
+    ERR_Erc = sig_sim_2.event["Erc"] / sig_obs_2.event["Erc"] - 1
+    ERR_Epf = sig_sim_2.event["Epf"] / sig_obs_2.event["Epf"] - 1
 
-    df_re = pd.DataFrame({"RE of Erc": RE_Erc, "RE of Epf": RE_Epf})
+    df_err = pd.DataFrame({"Relative bias (Erc)": ERR_Erc, "Relative bias (Epf)": ERR_Epf})
 
-    @savefig user_guide.classical_uses.hydrological_signatures_relative_error_boxplot.png
-    boxplot_re = df_re.boxplot()
+    @savefig user_guide.classical_uses.hydrological_signatures_relative_bias_boxplot.png
+    boxplot_err = df_err.boxplot()
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')
