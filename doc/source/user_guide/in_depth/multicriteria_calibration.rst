@@ -148,9 +148,9 @@ We compute the absolute error for each signatures.
 
 .. ipython:: python
 
-    AE_Crc = [abs(sim / obs - 1) for (sim, obs) in zip(crc_sim, crc_obs)]
-    AE_Epf = [abs(sim / obs - 1) for (sim, obs) in zip(epf_sim, epf_obs)]
-    AE_Eff = [abs(sim / obs - 1) for (sim, obs) in zip(eff_sim, eff_obs)]
+    ERR_Crc = [abs(sim / obs - 1) for (sim, obs) in zip(crc_sim, crc_obs)]
+    ERR_Epf = [abs(sim / obs - 1) for (sim, obs) in zip(epf_sim, epf_obs)]
+    ERR_Eff = [abs(sim / obs - 1) for (sim, obs) in zip(eff_sim, eff_obs)]
 
 Finally, we group the metric information together as follows:
 
@@ -158,9 +158,9 @@ Finally, we group the metric information together as follows:
         
     metric_info = {
         'NSE': nse,
-        'AE_Crc': AE_Crc,
-        'AE_Epf': AE_Epf,
-        'AE_Eff': AE_Eff,
+        'ERR_Crc': ERR_Crc,
+        'ERR_Epf': ERR_Epf,
+        'ERR_Eff': ERR_Eff,
     }
 
     index = ["model_1 (NSE)", "model_2 (NSE, Crc, Epf)", "model_3 (NSE, Eff)"]
