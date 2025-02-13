@@ -1758,7 +1758,7 @@ The choice between these depends on the complexity and runtime of the tutorial.
     However, this approach requires additional computation time during documentation building.
 
 - code block:
-    The ``.. code-block:: python`` directive, on the other hand, is more suitable for longer or more complex tutorials where execution time (for example, when calibrating models) or dependency on external packages (for example, when estimating hyper-parameter sensitivity using `SALib <https://salib.readthedocs.io/>`__) is a concern.
+    The ``.. code-block:: python`` directive, on the other hand, is better suited for longer or more complex tutorials where execution time (for example, when calibrating models) or dependency on external packages (for example, when estimating hyper-parameter sensitivity using `SALib <https://salib.readthedocs.io/>`__) is a concern.
     It allows you to include static code snippets without running them during documentation generation.
     Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. parsed-literal::`` directive to include the output code and using the ``.. image::`` directive to include figures.
 
@@ -1773,7 +1773,8 @@ The choice between these depends on the complexity and runtime of the tutorial.
 
             smash developer
 
-    However, this way, the documentation may become outdated if the source code changes. To automatically create or update the output code, it is highly recommended to use ``doc/source/user_guide/pyexec_rst.py``.
+    However, this way, the documentation may become outdated if the source code changes.
+    To automatically generate/update the output code and verify correctness in code blocks, it is highly recommended to use ``doc/source/user_guide/pyexec_rst.py``.
     For example, consider a file named ``doc/source/user_guide/in_depth/foo.rst``:
 
     .. code-block:: rst

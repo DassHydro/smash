@@ -40,11 +40,11 @@ def extract_code_blocks(rst_content: str) -> list:
         list: List of tuples containing (cleaned_code, has_parsed_literal, parsed_literal_position)
     """
     pattern = r"""
-    \.\.?\s*code-block::\s*python\s*\n
-    (?:\s*\n)?
-    (\s+>>>.*?(?:\n\s+(?:>>>|\.\.\.).*?)*)
-    (?=\n(?:\s*\n|\.\.?\s*parsed-literal::|\s*\n|\.\.?\s*code-block::|\.\.?\s*note::)|$)
-    (?:\n+(?:[ \t]*\n)*\.\.?\s*parsed-literal::\s*\n\s*(.*?)(?=\n\s*\n|$))?
+        \.\.?\s*code-block::\s*python\s*\n
+        (?:\s*\n)?
+        (\s+>>>.*?(?:\n\s+(?:>>>|\.\.\.).*?)*)
+        (?=\n(?:\s*\n|\s+\n)|$)
+        (?:\n+(?:[ \t]*\n)*\.\.?\s*parsed-literal::\s*\n\s*(.*?)(?=\n\s*\n|$))?
     """
 
     blocks = []
@@ -81,9 +81,9 @@ class CodeExecutor:
                     exec(code[: -len(last_line)], self.globals)  # noqa: S102
                     # Try to print the last line output or execute it
                     try:
-                        result = eval(compile(last_line, "<string>", "eval"), self.globals)
-                        if result is not None:
-                            print(result)
+                        code_last_line = eval(compile(last_line, "<string>", "eval"), self.globals)
+                        if code_last_line is not None:
+                            print(repr(code_last_line))
                     except SyntaxError:
                         exec(last_line, self.globals)  # noqa: S102
                     except Exception as exception:
@@ -171,10 +171,10 @@ if __name__ == "__main__":
         else:
             overwrite = False
 
-        results = process_rst_file(str(file_path), overwrite)
+        outputs = process_rst_file(str(file_path), overwrite)
 
-        for i, (code, output) in enumerate(results, 1):
-            print(f"Block {i} - Output:\n   ", output)
+        for i, (code, output_i) in enumerate(outputs, 1):
+            print(f"Block {i} - Output:\n   ", output_i)
 
     else:
         raise FileNotFoundError(f"File not found at path: {file_path}")
