@@ -50,9 +50,7 @@ def main() -> None:
 
     if args.outfile:
         if not args.outfile.endswith(".py"):
-            raise ValueError(
-                f"Output file must be a Python file. " f"Got: {args.outfile} as filename instead"
-            )
+            raise ValueError(f"Output file must be a Python file. Got: {args.outfile} as filename instead")
 
         write_version_info(args.outfile)
 

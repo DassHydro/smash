@@ -791,7 +791,7 @@ def _standardize_set_nn_parameters_weight_value(
 
     elif isinstance(value, list):
         weights = [
-            getattr(model._parameters.nn_parameters, f"weight_{i+1}") for i in range(model.setup.n_layers)
+            getattr(model._parameters.nn_parameters, f"weight_{i + 1}") for i in range(model.setup.n_layers)
         ]
 
         if len(value) != len(weights):
@@ -829,7 +829,7 @@ def _standardize_set_nn_parameters_bias_value(
 
     elif isinstance(value, list):
         biases = [
-            getattr(model._parameters.nn_parameters, f"bias_{i+1}") for i in range(model.setup.n_layers)
+            getattr(model._parameters.nn_parameters, f"bias_{i + 1}") for i in range(model.setup.n_layers)
         ]
 
         if len(value) != len(biases):
