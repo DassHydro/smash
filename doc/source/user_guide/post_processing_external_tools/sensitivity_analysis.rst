@@ -7,7 +7,7 @@ Sensitivity Analysis
 ====================
 
 In this tutorial, we will show how to perform sensitivity analysis on a
-single catchment using `smash` and `SAlib <https://salib.readthedocs.io/>`__. We will use the :ref:`user_guide.data_and_format_description.cance` dataset as an example in this tutorial.
+single catchment using `smash` and `SALib <https://salib.readthedocs.io/>`__. We will use the :ref:`user_guide.data_and_format_description.cance` dataset as an example in this tutorial.
 
 First, open a Python interface:
 
@@ -28,15 +28,14 @@ We will first import the necessary libraries for this tutorial.
     >>> from SALib.analyze.sobol import analyze
     >>> from SALib.sample.sobol import sample
 
-
 .. note::
 
-    The library `SAlib <https://salib.readthedocs.io/>`__ is a requirement for this tutorial.
+    The library `SALib <https://salib.readthedocs.io/>`__ is a requirement for this tutorial.
     It is not installed by default but can be installed with pip as follows:
 
     .. code-block:: none
 
-        pip install SAlib
+        pip install SALib
 
 Define the catchment, load the model and data
 ---------------------------------------------
@@ -52,7 +51,6 @@ Create the model object. This also loads the data into the model object.
 .. code-block:: python
 
     >>> model = smash.Model(setup, mesh)
-
 
 .. parsed-literal::
 
