@@ -1746,10 +1746,71 @@ Then, you need to call up this file in the desired toctree, for example in the f
 User guide
 **********
 
-The user guide contains all the `smash` tutorials. These tutorials are not hardcoded, the python commands written in the
-``.. ipython:: python`` directives are executed and automatically generate the tutorial output. This is quite handy, as it means you don't have to 
-update the documentation each time the source is modified, and adds an extra layer of testing since the documentation will not compile if 
-there is an error in executing a python command but which, on the other hand, requires a certain amount of computing time.
+The user guide contains tutorials with code examples and explanations of various functionalities of `smash`.
+There are two approaches for writing a tutorial: using the ipython directive or using the code block directive. 
+The choice between these depends on the complexity and runtime of the tutorial.
+
+- ipython:
+    The ``.. ipython:: python`` directive is more suitable for tutorials that execute quickly.
+    Since Python commands within this directive are run during documentation compilation, outputs are automatically generated.
+    This ensures that the documentation stays up to date without manual updates whenever the source code changes.
+    Additionally, it acts as an extra layer of validation, as the documentation compilation will fail if there are execution errors in any code directive.
+    However, this approach requires additional computation time during documentation building.
+
+- code block:
+    The ``.. code-block:: python`` directive, on the other hand, is useful for longer or more complex tutorials where execution time is a concern (for example, when calibrating models).
+    It allows you to include static code snippets without running them during documentation generation.
+    Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. parsed-literal::`` directive to include the output code and using the ``.. image::`` directive to include figures.
+
+    .. code-block:: rst
+
+        .. code-block:: python
+        
+            >>> text = "smash developer"
+            >>> text
+        
+        .. parsed-literal::
+
+            smash developer
+
+    However, this way, the documentation may become outdated if the source code changes. To automatically create or update the output code, it is highly recommended to use ``doc/source/user_guide/pyexec_rst.py``.
+    For example, consider a file named ``doc/source/user_guide/in_depth/foo.rst``:
+
+    .. code-block:: rst
+    
+        .. code-block:: python
+
+            >>> text = "smash developer"
+            >>> text
+    
+        .. parsed-literal::
+
+            type any text here
+
+    To generate or update the output code:
+
+    .. code-block:: shell
+
+        python3 pyexec_rst.py in_depth/foo.rst
+
+    The output code will be generated in the ``doc/source/user_guide/in_depth/foo.rst`` file (if you choose to overwrite this file, otherwise a new file will be generated).
+
+    .. code-block:: rst
+    
+        .. code-block:: python
+
+            >>> text = "smash developer"
+            >>> text
+
+        .. parsed-literal::
+
+            smash developer
+
+    .. note::
+
+        Since the second approach is more manual, it is recommended to add the path of the file written using this approach to ``doc/source/user_guide/files_with_code_block.csv`` (if not already included). 
+        This helps streamline the process of verifying and updating code snippets when the source code changes.
+        You will be asked to do so when running the ``pyexec_rst.py`` script.
 
 API reference
 *************
