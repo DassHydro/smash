@@ -555,9 +555,7 @@ class Net(object):
         cost = _get_cost_value(instance)  # forward_run to update cost inside _get_gradient_value
 
         if verbose:
-            print(
-                f"{' '*4}At iterate {0:>5}    nfg = {1:>5}    J = {cost:>.5e}    " f"|proj g| = {projg:>.5e}"
-            )
+            print(f"{' ' * 4}At iterate {0:>5}    nfg = {1:>5}    J = {cost:>.5e}    |proj g| = {projg:>.5e}")
 
         # % Early stopping
         istop = 0
@@ -610,7 +608,7 @@ class Net(object):
                     # iterations
                     if verbose:
                         print(
-                            f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
+                            f"{' ' * 4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
                             f"ITERATIONS"
                         )
                     break
@@ -642,18 +640,18 @@ class Net(object):
 
             if verbose:
                 print(
-                    f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    J = {cost:>.5e}    "
+                    f"{' ' * 4}At iterate {ite:>5}    nfg = {ite + 1:>5}    J = {cost:>.5e}    "
                     f"|proj g| = {projg:>.5e}"
                 )
 
                 if ite == maxiter:
-                    print(f"{' '*4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
+                    print(f"{' ' * 4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
 
         if early_stopping:
             if opt_info["ite"] < maxiter:
                 if verbose:
                     print(
-                        f"{' '*4}Revert to iteration {opt_info['ite']} with "
+                        f"{' ' * 4}Revert to iteration {opt_info['ite']} with "
                         f"J = {opt_info['cost']:.5e} due to early stopping"
                     )
 
