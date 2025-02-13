@@ -1747,7 +1747,7 @@ User guide
 **********
 
 The user guide contains tutorials with code examples and explanations of various functionalities of `smash`.
-There are two approaches for writing a tutorial: using the ipython directive or using the code block directive. 
+There are two approaches for writing a tutorial: using the ``.. ipython:: python`` directive or using the ``.. code-block:: python`` directive. 
 The choice between these depends on the complexity and runtime of the tutorial.
 
 - ipython:
@@ -1758,7 +1758,7 @@ The choice between these depends on the complexity and runtime of the tutorial.
     However, this approach requires additional computation time during documentation building.
 
 - code block:
-    The ``.. code-block:: python`` directive, on the other hand, is useful for longer or more complex tutorials where execution time is a concern (for example, when calibrating models).
+    The ``.. code-block:: python`` directive, on the other hand, is useful for longer or more complex tutorials where execution time (for example, when calibrating models) or dependency on an external package (for example, when estimate hyper-parameter sensitivity) is a concern.
     It allows you to include static code snippets without running them during documentation generation.
     Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. parsed-literal::`` directive to include the output code and using the ``.. image::`` directive to include figures.
 
@@ -1808,7 +1808,7 @@ The choice between these depends on the complexity and runtime of the tutorial.
 
     .. note::
 
-        Since the second approach is more manual, it is recommended to add the path of the file written using this approach to ``doc/source/user_guide/files_with_code_block.csv`` (if not already included). 
+        Since the ``.. code-block:: python`` directive approach is more manual, it is recommended to add the path of the file written using this approach to ``doc/source/user_guide/files_with_code_block.csv`` (if not already included). 
         This helps streamline the process of verifying and updating code snippets when the source code changes.
         You will be asked to do so when running the ``pyexec_rst.py`` script.
 
