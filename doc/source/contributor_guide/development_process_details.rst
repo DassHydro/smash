@@ -1755,12 +1755,34 @@ The choice between these depends on the complexity and runtime of the tutorial.
     Since Python commands within this directive are run during documentation compilation, outputs are automatically generated.
     This ensures that the documentation stays up to date without manual updates whenever the source code changes.
     Additionally, it acts as an extra layer of validation, as the documentation compilation will fail if there are execution errors in any code directive.
-    However, this approach requires additional computation time during documentation building.
+    However, this approach requires additional computation time during documentation building. Here is an example:
+
+    .. code-block:: rst
+
+        .. ipython:: python
+
+            text = "smash developer"
+            text
+
+    The output of the ipython directive is automatically generated when the documentation is compiled.
 
 - code block:
-    The ``.. code-block:: python`` directive, on the other hand, is better suited for longer or more complex tutorials where execution time (for example, when calibrating models) or dependency on external packages (for example, when estimating hyper-parameter sensitivity using `SALib <https://salib.readthedocs.io/>`__) is a concern.
+    The ``.. code-block:: python`` directive is better suited for longer or more complex tutorials where execution time (e.g., model calibration) or dependency on external packages (e.g., hyper-parameter sensitivity estimation using `SALib <https://salib.readthedocs.io/>`__) is a concern.
     It allows you to include static code snippets without running them during documentation generation.
-    Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. parsed-literal::`` directive to include the output code and using the ``.. image::`` directive to include figures.
+    The code should start with ``>>>`` and use ``...`` for continuation lines or within loops/functions.
+
+    .. code-block:: rst
+
+        .. code-block:: python
+
+            >>> def linear_transform(x, a=23, b=5):  
+            ...     y = a * x + b  
+            ...     return y
+            ... 
+            >>> x = -1
+            >>> y = linear_transform(-1) 
+
+    Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. parsed-literal::`` directive to include the output code and the ``.. image::`` directive to include figures.
 
     .. code-block:: rst
 
@@ -1773,8 +1795,9 @@ The choice between these depends on the complexity and runtime of the tutorial.
 
             smash developer
 
-    However, this way, the documentation may become outdated if the source code changes.
+    However, this approach may result in outdated documentation if the source code changes.
     To automatically generate/update the output code and verify correctness in code blocks, it is highly recommended to use ``doc/source/user_guide/pyexec_rst.py``.
+    This script extracts Python code blocks from the ``rst`` file, executes them, and updates the output accordingly.
     For example, consider a file named ``doc/source/user_guide/in_depth/foo.rst``:
 
     .. code-block:: rst
@@ -1788,13 +1811,13 @@ The choice between these depends on the complexity and runtime of the tutorial.
 
             type any text here
 
-    To generate or update the output code:
+    To extract and execute the Python code from the ``rst`` file, and generate/update the output code:
 
     .. code-block:: shell
 
         python3 pyexec_rst.py in_depth/foo.rst
 
-    The output code will be generated in the ``doc/source/user_guide/in_depth/foo.rst`` file (if you choose to overwrite this file, otherwise a new file will be generated).
+    The output code will be generated in the ``doc/source/user_guide/in_depth/foo.rst`` file (if you choose to overwrite this file, otherwise a new file will be created).
 
     .. code-block:: rst
     
