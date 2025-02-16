@@ -25,7 +25,8 @@ It includes beginner tutorials to help users get started quickly and become fami
 .. toctree::
     :maxdepth: 1
 
-    quickstart/model_initialization_and_attributes
+    quickstart/hydrological_mesh_construction
+    quickstart/model_object_initialization
     quickstart/forward_run_classical_calibration
 
 Classical Uses

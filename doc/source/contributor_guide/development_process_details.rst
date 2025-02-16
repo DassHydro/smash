@@ -1782,7 +1782,7 @@ The choice between these depends on the complexity and runtime of the tutorial.
             >>> x = -1
             >>> y = linear_transform(-1) 
 
-    Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. parsed-literal::`` directive to include the output code and the ``.. image::`` directive to include figures.
+    Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. code-block:: output`` directive to include output blocks and the ``.. image::`` directive to include figures.
 
     .. code-block:: rst
 
@@ -1791,12 +1791,12 @@ The choice between these depends on the complexity and runtime of the tutorial.
             >>> text = "smash developer"
             >>> text
         
-        .. parsed-literal::
+        .. code-block:: output
 
             smash developer
 
     However, this approach may result in outdated documentation if the source code changes.
-    To automatically generate/update the output code and verify correctness in code blocks, it is highly recommended to use ``doc/source/user_guide/pyexec_rst.py``.
+    To automatically generate/update output blocks and verify correctness in code blocks, it is highly recommended to use ``doc/source/user_guide/pyexec_rst.py``.
     This script extracts Python code blocks from the ``rst`` file, executes them, and updates the output accordingly.
     For example, consider a file named ``doc/source/user_guide/in_depth/foo.rst``:
 
@@ -1807,17 +1807,17 @@ The choice between these depends on the complexity and runtime of the tutorial.
             >>> text = "smash developer"
             >>> text
     
-        .. parsed-literal::
+        .. code-block:: output
 
             type any text here
 
-    To extract and execute the Python code from the ``rst`` file, and generate/update the output code:
+    To extract and execute the Python code from the ``rst`` file, and generate/update the output block:
 
     .. code-block:: shell
 
         python3 pyexec_rst.py in_depth/foo.rst
 
-    The output code will be generated in the ``doc/source/user_guide/in_depth/foo.rst`` file (if you choose to overwrite this file, otherwise a new file will be created).
+    The output is written in the ``doc/source/user_guide/in_depth/foo.rst`` file (if you choose to overwrite this file, otherwise a new file will be created).
 
     .. code-block:: rst
     
@@ -1826,7 +1826,7 @@ The choice between these depends on the complexity and runtime of the tutorial.
             >>> text = "smash developer"
             >>> text
 
-        .. parsed-literal::
+        .. code-block:: output
 
             smash developer
 

@@ -1,11 +1,12 @@
-.. _user_guide.quickstart.model_initialization_and_attributes:
+.. _user_guide.quickstart.model_object_initialization:
 
-===================================
-Model Initialization and Attributes
-===================================
+============================
+Model Object Initialization
+============================
 
-This section details how to initialize the `smash.Model` object and provides descriptions of the model attributes.
-The tutorial will take an example with the data downloaded from the :ref:`Cance dataset <user_guide.data_and_format_description.cance>` section.
+`smash` methods are constructed around a `Model <smash.Model>` object. 
+This section details how to initialize this `Model <smash.Model>` object and provides descriptions of the `Model <smash.Model>` attributes.
+The tutorial uses data downloaded from the :ref:`Cance dataset <user_guide.data_and_format_description.cance>` section.
 
 .. ipython:: python
     :suppress:
@@ -18,11 +19,6 @@ We begin by opening a Python interface and assuming that the example dataset has
 .. code-block:: none
 
     python3
-
-.. ipython:: python
-    :suppress:
-
-    import os
 
 Imports
 -------
@@ -43,10 +39,10 @@ We will first import the necessary libraries for this tutorial.
 
         pip install matplotlib
 
-Model creation
+Setup creation
 --------------
 
-To create the `smash.Model` object, we need to define the ``setup`` and the ``mesh``.
+To create the `smash.Model` object, we need to define the ``setup`` and the ``mesh``. See the tutorial on :ref:`user_guide.quickstart.hydrological_mesh_construction` for mesh generation.
 
 The ``setup`` is a Python dictionary (i.e., pairs of keys and values) which contains all information relating to the simulation period, 
 the structure of the hydrological model and the reading of input data. For this first simulation let us create the following setup:
@@ -138,190 +134,38 @@ In summary the current ``setup`` you defined above corresponds to :
 
     Detailed information on the model ``setup`` can be obtained from the API reference section of `smash.Model`.
 
-Once the ``setup`` has been created, we can move on to the ``mesh`` creation. The ``mesh`` is also a Python dictionary but it is automatically generated
-with the `smash.factory.generate_mesh` function. To run this function, we need to pass the path of the flow direction file ``France_flwdir.tif`` 
-as well as the data stored in the csv file ``gauge_attrivutes.csv``.
+Save setup
+----------
 
-.. ipython:: python
-
-    gauge_attributes = pd.read_csv("./Cance-dataset/gauge_attributes.csv")
-
-    mesh = smash.factory.generate_mesh(
-        flwdir_path="./Cance-dataset/France_flwdir.tif",
-        x=list(gauge_attributes["x"]),
-        y=list(gauge_attributes["y"]),
-        area=list(gauge_attributes["area"] * 1e6), # Convert km² to m²
-        code=list(gauge_attributes["code"]),
-    )
-
-.. note::
-
-    We could also have passed on the gauge attributes directly without a csv file.
-
-    .. ipython:: python
-        :verbatim:
-
-        mesh = smash.factory.generate_mesh(
-            flwdir_path="./Cance-dataset/France_flwdir.tif",
-            x=[840_261, 826_553, 828_269],
-            y=[6_457_807, 6_467_115, 6_469_198],
-            area=[381.7 * 1e6, 107 * 1e6, 25.3 * 1e6], # Convert km² to m²
-            code=["V3524010", "V3515010", "V3517010"],
-        )
-
-
-.. ipython:: python
-
-    mesh.keys()
-
-To get into more details, this ``mesh`` is composed of:
-
-- ``xres``, ``yres``
-    The spatial resolution (unit of the flow directions map, **meter**)
-
-    .. ipython:: python
-
-        mesh["xres"], mesh["yres"]
-
-- ``xmin``, ``ymax``
-    The coordinates of the upper left corner (unit of the flow directions map, **meter**)
-
-    .. ipython:: python
-
-        mesh["xmin"], mesh["ymax"]
-
-- ``nrow``, ``ncol``
-    The number of rows and columns
-
-    .. ipython:: python
-
-        mesh["nrow"], mesh["ncol"]
-
-- ``dx``,  ``dy``
-    The spatial step in **meter**. These variables are arrays of shape *(nrow, ncol)*. In this study, the mesh is a regular grid with a constant spatial step defining squared cells.
-
-    .. ipython:: python
-        
-        mesh["dx"][0,0], mesh["dy"][0,0]
-
-- ``flwdir``
-    The flow direction that can be simply visualized that way
-
-    .. ipython:: python
-
-        plt.imshow(mesh["flwdir"]);
-        plt.colorbar(label="Flow direction (D8)");
-        @savefig user_guide.in_depth.classical_calibration_io.flwdir.png
-        plt.title("Cance - Flow direction");
-    
-.. hint::
-
-    If the plot is not displayed, try the ``plt.show()`` command.
-
-- ``flwdst``
-    The flow distance in **meter** from the most downstream outlet
-
-    .. ipython:: python
-
-        plt.imshow(mesh["flwdst"]);
-        plt.colorbar(label="Flow distance (m)");
-        @savefig user_guide.in_depth.classical_calibration_io.flwdst.png
-        plt.title("Cance - Flow distance");
-
-- ``flwacc``
-    The flow accumulation in **square meter**
-
-    .. ipython:: python
-
-        plt.imshow(mesh["flwacc"]);
-        plt.colorbar(label="Flow accumulation (m²)");
-        @savefig user_guide.in_depth.classical_calibration_io.flwacc.png
-        plt.title("Cance - Flow accumulation");
-
-- ``npar``, ``ncpar``, ``cscpar``, ``cpar_to_rowcol``, ``flwpar``
-    All the variables related to independent routing partitions. We won't go into too much detail about these variables,
-    as they simply allow us, in parallel computation, to identify which are the independent cells in the drainage network.
-
-    .. ipython:: python
-
-        mesh["npar"], mesh["ncpar"], mesh["cscpar"], mesh["cpar_to_rowcol"]
-        plt.imshow(mesh["flwpar"]);
-        plt.colorbar(label="Flow partition (-)");
-        @savefig user_guide.in_depth.classical_calibration_io.flwpar.png
-        plt.title("Cance - Flow partition");
-
-- ``nac``, ``active_cell``
-    The number of active cells, ``nac`` and the mask of active cells, ``active_cell``. When meshing, we define a rectangular area of shape *(nrow, ncol)* in which only a certain 
-    number of cells contribute to the discharge at the mesh gauges. This saves us computing time and memory. 
-
-    .. ipython:: python
-
-        mesh["nac"]
-        plt.imshow(mesh["active_cell"]);
-        plt.colorbar(label="Active cell (-)");
-        @savefig user_guide.in_depth.classical_calibration_io.active_cell.png
-        plt.title("Cance - Active cell");
-
-- ``ng``, ``gauge_pos``, ``code``, ``area``, ``area_dln``
-    All the variables related to the gauges. The number of gauges, ``ng``, the gauges position in terms of rows and columns, ``gauge_pos``, the gauges code, ``code``, 
-    the "real" drainage area, ``area`` and the delineated drainage area, ``area_dln``.
-
-    .. ipython:: python
-
-        mesh["ng"], mesh["gauge_pos"], mesh["code"], mesh["area"], mesh["area_dln"]
-
-An important step after generating the ``mesh`` is to check that the stations have been correctly placed on the flow direction map. To do this, we can try to visualize on which cell each station is located and whether the delineated drainage area is close to the "real" drainage area entered.
-
-.. ipython:: python
-
-    base = np.zeros(shape=(mesh["nrow"], mesh["ncol"]))
-    base = np.where(mesh["active_cell"] == 0, np.nan, base)
-    for pos in mesh["gauge_pos"]:
-        base[pos[0], pos[1]] = 1
-    plt.imshow(base, cmap="Set1_r");
-    @savefig user_guide.in_depth.classical_calibration_io.gauge_position.png
-    plt.title("Cance - Gauge position");
-
-.. ipython:: python
-
-    (mesh["area"] - mesh["area_dln"]) / mesh["area"] * 100 # Relative error in %
-
-For this ``mesh``, we have a negative relative error on the simulated drainage area that varies from -0.3% for the most downstream gauge to -10% for the most upstream one
-(which can be explained by the fact that small upstream catchments are more sensitive to the relatively coarse ``mesh`` resolution).
-
-.. TODO FC link to automatic meshing
-
-Before constructing the `smash.Model` object, we can save (serialize) the ``setup`` and the ``mesh`` to avoid having to do it every time you want to run a simulation on the same case,
-with the two following functions, `smash.io.save_setup` and `smash.io.save_mesh`. It will save the ``setup`` in `YAML <https://yaml.org/>`__ format and the ``mesh`` in `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format.
+We can save the ``setup`` to avoid having to do it every time you want to run a simulation on the same case.
+This can be achieved using the `smash.io.save_setup` function, saving it under `YAML <https://yaml.org/>`__ format and read it back using the `smash.io.read_setup` function.
 
 .. ipython:: python
 
     smash.io.save_setup(setup, "setup.yaml")
-    smash.io.save_mesh(mesh, "mesh.hdf5")
+    setup = smash.io.read_setup("setup.yaml")
+    setup.keys()
 
-.. note::
+.. hint::
 
-    The ``setup`` and ``mesh`` can be read back with the `smash.io.read_setup` and `smash.io.read_mesh` functions
+    The setups of demo data in `smash` can also be loaded using the function `smash.factory.load_dataset`.
 
-    .. ipython:: python
+Model initialization and attributes
+-----------------------------------
 
-        setup = smash.io.read_setup("setup.yaml")
-        mesh = smash.io.read_mesh("mesh.hdf5")
+Note that the tutorial on mesh generation has been detailed previously.
+In this guide, we use `smash.factory.load_dataset` to load a demo mesh instead of recreating it for simplicity.
 
-Finally, initialize the `smash.Model` object
+.. ipython:: python
+
+    _, mesh = smash.factory.load_dataset("Cance")
+
+Initialize the `Model <smash.Model>` object by passing the ``setup`` and the ``mesh`` to the `smash.Model` constructor.
 
 .. ipython:: python
 
     model = smash.Model(setup, mesh)
     model
-
-.. hint::
-
-    The demo can also be loaded by using the function `smash.factory.load_dataset`.
-    From now on, we will use this function to load demo datasets for other tutorials.
-
-Model attributes
-----------------
 
 The `smash.Model` object is a complex structure with several attributes and associated methods. Not all of these will be detailed in this tutorial. 
 As you can see by displaying the `smash.Model` object above after initializing it, several attributes are accessible:
@@ -502,3 +346,8 @@ discharge (``q``). The discharge is a `numpy.ndarray` of shape *(ng, ntime_step)
 
 Similar to rainfall-runoff final states, the response discharge is updated each time a simulation is performed. At initialization, response 
 discharge is filled in with -99.
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

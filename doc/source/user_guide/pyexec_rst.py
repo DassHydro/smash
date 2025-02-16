@@ -37,25 +37,30 @@ def extract_code_blocks(rst_content: str) -> list:
         rst_content (str): RST document content
 
     Returns:
-        list: List of tuples containing (cleaned_code, has_parsed_literal, parsed_literal_position)
+        list: List of tuples containing (cleaned_code, has_output_directive, output_directive_position)
     """
     pattern = r"""
-        \.\.?\s*code-block::\s*python\s*\n
+        # match optional whitespace, '.. code-block:: python', and a newline
+        \s*\.\.?\s*code-block::\s*python\s*\n
+        # optionally match a blank line or a line with only whitespace
         (?:\s*\n)?
+        # capture Python interactive session lines starting with '>>>'
         (\s+>>>.*?(?:\n\s+(?:>>>|\.\.\.).*?)*)
+        # assert that the block is followed by a blank line, a line with whitespace, or the end of the string
         (?=\n(?:\s*\n|\s+\n)|$)
-        (?:\n+(?:[ \t]*\n)*\.\.?\s*parsed-literal::\s*\n\s*(.*?)(?=\n\s*\n|$))?
+        # optionally match '.. code-block:: output' and capture the output block
+        (?:\n+(?:[ \t]*\n)*\s*\.\.?\s*code-block::\s*output\s*\n\s*(.*?)(?=\n\s*\n|$))?
     """
 
     blocks = []
     for match in re.finditer(pattern, rst_content, re.VERBOSE | re.DOTALL):
         code_block = match.group(1)
-        has_parsed_literal = match.group(2) is not None
-        parsed_literal_pos = match.end(1) if has_parsed_literal else None
+        has_output_directive = match.group(2) is not None
+        output_directive_pos = match.end(1) if has_output_directive else None
 
         cleaned_code = clean_code_block(code_block)
         if cleaned_code:
-            blocks.append((cleaned_code, has_parsed_literal, parsed_literal_pos))
+            blocks.append((cleaned_code, has_output_directive, output_directive_pos))
 
     return blocks
 
@@ -72,7 +77,7 @@ class CodeExecutor:
             try:
                 last_line = code.split("\n")[-1]  # to print if it is a variable
 
-                if last_line[0] == " ":
+                if last_line.startswith((" ", "\t", ")", "]", "}")):
                     # Execute the entire block
                     exec(code, self.globals)  # noqa: S102
 
@@ -89,19 +94,16 @@ class CodeExecutor:
                     except Exception as exception:
                         raise exception
 
-                output = redirected_output.getvalue().strip()
-                return "\n".join(
-                    [" " * 4 + line if i > 0 else line for i, line in enumerate(output.split("\n"))]
-                    if output
-                    else []
-                )
+                output = redirected_output.getvalue().rstrip()
+                return "\n".join(output.split("\n") if output else [])
+
             finally:
                 sys.stdout = old_stdout
 
 
 def process_rst_file(file_path: str, overwrite: bool) -> list:
     """
-    Process an RST file by executing code blocks and updating parsed-literal sections.
+    Process an RST file by executing code blocks and updating output blocks.
 
     Args:
         file_path (str): Path to the RST file
@@ -119,22 +121,31 @@ def process_rst_file(file_path: str, overwrite: bool) -> list:
     # Execute all blocks to build state
     block_outputs = [executor.execute_block(code) for code, _, _ in blocks]
 
-    # Update parsed-literal sections
+    # Update output blocks
     modified_content = list(content)
     outputs = []
 
-    for (code, has_parsed_literal, parsed_literal_pos), output in zip(
+    for (_, has_output_directive, output_directive_pos), output in zip(
         reversed(blocks), reversed(block_outputs)
     ):
-        outputs.insert(0, (code, output))
-
-        if has_parsed_literal:
-            pattern = r"\.\.?\s*parsed-literal::\s*\n\s*(.*?)(?=\n\s*\n|$)"
-            match = re.search(pattern, content[parsed_literal_pos:], re.DOTALL)
+        if has_output_directive:
+            # Match '.. code-block:: output', optional blank line, capture lines,
+            # ensure followed by blank line/end
+            pattern = r"\s*\.\.?\s*code-block::\s*output\s*\n\s*\n(\s*.*?)(?=\n\s*\n|$)"
+            match = re.search(pattern, content[output_directive_pos:], re.DOTALL)
 
             if match:
-                start = parsed_literal_pos + match.start(1)
-                end = parsed_literal_pos + match.end(1)
+                start = output_directive_pos + match.start(1)
+                end = output_directive_pos + match.end(1)
+
+                # Get indentation for current output directive
+                output_directive = next(
+                    (e for e in match.group(0).split("\n") if ".. code-block:: output" in e)
+                )
+                output_directive_indent = output_directive.split("..")[0] + " " * 4
+
+                # Write output to output block
+                output = "\n".join([output_directive_indent + line for line in output.split("\n")])
                 modified_content[start:end] = list(output)
 
     if not overwrite:
@@ -162,6 +173,7 @@ if __name__ == "__main__":
 
             if path_input.lower() in ["", "y", "yes"]:
                 df = pd.concat([df, pd.DataFrame([{"file_path": str(file_path)}])], ignore_index=True)
+                df = df.sort_values(by="file_path").reset_index(drop=True)
                 df.to_csv("files_with_code_block.csv", index=False)
 
         exists_input = input("Overwrite existing file ([y]/n) ? ")
