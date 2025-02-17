@@ -139,6 +139,6 @@ def test_forward_run_mlp():
         assert np.allclose(
             mlp_instance.response.q[:], cls_instance.response.q[:], atol=1e-06, equal_nan=True
         ), f"forward_run_mlp.{mlp_model.setup.structure}.q"
-        assert np.allclose(mlp_ret.cost, cls_ret.cost, atol=1e-06, equal_nan=True), (
-            f"forward_run_mlp.{mlp_model.setup.structure}.cost"
-        )
+        assert np.allclose(
+            mlp_ret.cost, cls_ret.cost, atol=1e-06, equal_nan=True
+        ), f"forward_run_mlp.{mlp_model.setup.structure}.cost"

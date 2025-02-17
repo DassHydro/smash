@@ -364,7 +364,7 @@ class Model:
         descriptor_name : `list[str]`
             List of descriptor name.
             This option is ``mandatory`` if **read_descriptor** is set to True.
-        
+
         read_imperviousness : `bool`, default False
             Whether or not to read descriptor file(s).
 
@@ -377,7 +377,7 @@ class Model:
         imperviousness_directory : `str`
             Path to the imperviousness file.
             This option is ``mandatory`` if **read_imperviousness** is set to True.
-        
+
     mesh : `dict[str, Any]`
         Model initialization mesh dictionary.
 
