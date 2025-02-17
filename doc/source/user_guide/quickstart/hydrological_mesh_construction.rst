@@ -199,11 +199,11 @@ For this ``mesh``, we have a negative relative error on the simulated drainage a
 
 .. TODO FC link to automatic meshing
 
-Save mesh
----------
+Saving the mesh
+---------------
 
-Finally, we can save the generated ``mesh`` to avoid having to do it every time you want to run a simulation on the same case.
-This can be achieved using the `smash.io.save_mesh` function, saving it in a `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ file and read it back using the `smash.io.read_mesh` function.
+To avoid regenerating the ``mesh`` for each simulation with the same case study, we can save it using the `smash.io.save_mesh` function.
+This function stores the mesh in an `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ file, which can later be read back using the `smash.io.read_mesh` function.
 
 .. ipython:: python
 

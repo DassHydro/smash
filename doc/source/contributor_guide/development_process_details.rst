@@ -1830,6 +1830,16 @@ The choice between these depends on the complexity and runtime of the tutorial.
 
             smash developer
 
+    .. hint::
+        If you only want to display Python code without executing it when running the ``pyexec_rst.py`` script, use an alternative directive like ``.. code-block:: pycon``.  
+        This preserves Python code formatting while ensuring the script does not capture or execute it:
+
+        .. code-block:: rst
+
+            .. code-block:: pycon
+
+                >>> print("A pycon directive is not executed by pyexec_rst.py")
+
     .. note::
 
         Since the ``.. code-block:: python`` directive approach is more manual, it is recommended to add the path of the file written using this approach to ``doc/source/user_guide/files_with_code_block.csv`` (if not already included). 

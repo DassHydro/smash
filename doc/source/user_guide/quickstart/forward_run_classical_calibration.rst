@@ -88,7 +88,7 @@ Similar to the forward run, there are two ways to perform an optimization using 
 The hydrological model optimization problem is complex, and there are many strategies that can be employed depending on the modeling goals and data available.
 Here, for this first tutorial on model optimization, we consider a simple method with the default optimization parameters.
 The default cost function ``J`` to be minimized here is one minus the Nash-Sutcliffe efficiency (:math:`1 - \text{NSE}`), 
-using a global Step-By-Step algorithm (``SBS``, :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`).
+using a global Step-By-Step algorithm (SBS, :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`).
 By default, the optimized parameters are supposed to be spatially uniform, which are conceptual rainfall-runoff parameters (here we consider a classical structure with the parameters: ``cp``, ``ct``, ``kexc``, and ``llr``).
 
 .. code-block:: python
@@ -113,6 +113,21 @@ By default, the optimized parameters are supposed to be spatially uniform, which
 The outputs above show the different iterations of the optimization process, including information on the number of iterations, the cumulative number of evaluations ``nfg`` 
 (the number of forward runs performed within each iteration of the optimization algorithm), the value of the cost function ``J`` to be minimized, and the value of the adaptive descent step ``ddx`` of the heuristic search algorithm. 
 The final message indicates the termination type of the optimization (e.g., converged, stopped by maximum iterations, etc.).
+
+.. hint::
+    The default optimization options depend on the chosen ``mapping`` and ``optimizer``. 
+    To get these default options, use `smash.default_optimize_options` for `smash.optimize`, and `smash.default_bayesian_optimize_options` for `smash.bayesian_optimize`.
+    For example, the default options for the `smash.optimize` method using uniform mapping and the SBS optimizer are:
+
+    .. code-block:: python
+
+        >>> optimize_options = smash.default_optimize_options(model)
+        >>> # Equivalent to smash.default_optimize_options(model, mapping="uniform", optimizer="sbs")
+        >>> optimize_options
+
+    .. code-block:: output
+
+        {'parameters': ['cp', 'ct', 'kexc', 'llr'], 'bounds': {'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0), 'kexc': (-50, 50), 'llr': (1e-06, 1000.0)}, 'control_tfm': 'sbs', 'termination_crit': {'maxiter': 50}}
 
 Now, we visualize again the simulated discharge compared to the observed discharge, but this time with optimized model parameters.
 
@@ -167,8 +182,8 @@ We get the optimized values of the rainfall-runoff parameters.
         >>> # Optimize Model with a warm-up period
         >>> model.optimize(cost_options={"end_warmup": "2014-10-01"})
 
-Save Model
-----------
+Save the Model
+--------------
 
 Finally, the `Model <smash.Model>` object, including all input data and optimized parameters, can be saved to a `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ file,
 and read back using the `smash.io.save_model` and `smash.io.read_model` functions.

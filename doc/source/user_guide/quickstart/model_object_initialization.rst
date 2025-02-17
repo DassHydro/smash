@@ -134,11 +134,11 @@ In summary the current ``setup`` you defined above corresponds to :
 
     Detailed information on the model ``setup`` can be obtained from the API reference section of `smash.Model`.
 
-Save setup
-----------
+Save the setup
+--------------
 
-We can save the ``setup`` to avoid having to do it every time you want to run a simulation on the same case.
-This can be achieved using the `smash.io.save_setup` function, saving it under `YAML <https://yaml.org/>`__ format and read it back using the `smash.io.read_setup` function.
+To avoid regenerating the ``setup`` for each simulation with the same case study, we can save it using the `smash.io.save_setup` function.
+This function stores the setup under `YAML <https://yaml.org/>`__ format, which can later be read back using the `smash.io.read_setup` function.
 
 .. ipython:: python
 

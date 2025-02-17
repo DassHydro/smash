@@ -153,29 +153,68 @@ Artificial neural network (ANN)
 *******************************
 
 We can optimize the rainfall-runoff model using an ANN-based mapping of descriptors to conceptual model parameters.
-This is achieved by setting the ``mapping`` argument to ``'ann'``, which is by default optimized using the :ref:`ADAM algorithm <math_num_documentation.optimization_algorithm>` algorithm.
-While it is possible to define a custom network for this optimization, we will use the default neural network provided by `smash`.
-Additionally, we will specify options specific to the ANN:
+This is achieved by setting the ``mapping`` argument to ``'ann'``, which is by default optimized using the :ref:`ADAM algorithm <math_num_documentation.optimization_algorithm>`.
+We can also specify several parameters for the calibration process with ANN:
 
 - ``optimize_options``
-    - ``random_state``: a random seed used to initialize neural network weights.
-    - ``learning_rate``: the learning rate used for weights updates during training.
+    - ``net``: the neural network configuration used to learn the regionalization mapping,
+    - ``random_state``: a random seed used to initialize neural network parameters (weights and biases),
+    - ``learning_rate``: the learning rate used for weight and bias updates during training,
     - ``termination_crit``: the maximum number of training ``maxiter`` for the neural network and a positive number to stop training when the loss function does not decrease below the current optimal value for ``early_stopping`` consecutive iterations.
 
 - ``return_options``
-    - ``net``: return the optimized neural network
+    - ``net``: return the optimized neural network.
 
 .. code-block:: python
 
+    >>> # Get the default optimization options for ANN mapping
+    >>> optimize_options = smash.default_optimize_options(model, mapping="ann")
+    >>> optimize_options
+
+.. code-block:: output
+
+    {
+        'parameters': ['cp', 'ct', 'kexc', 'llr'], 
+        'bounds': {'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0), 'kexc': (-50, 50), 'llr': (1e-06, 1000.0)}, 
+        'net': 
+            +---------------------------------------------------------+
+            | Layer Type           Input/Output Shape  Num Parameters |
+            +---------------------------------------------------------+
+            | Dense                (6,)/(18,)          126            |
+            | Activation (ReLU)    (18,)/(18,)         0              |
+            | Dense                (18,)/(29,)         551            |
+            | Activation (ReLU)    (29,)/(29,)         0              |
+            | Dense                (29,)/(12,)         360            |
+            | Activation (ReLU)    (12,)/(12,)         0              |
+            | Dense                (12,)/(4,)          52             |
+            | Activation (TanH)    (4,)/(4,)           0              |
+            | Scale (MinMaxScale)  (4,)/(4,)           0              |
+            +---------------------------------------------------------+
+            Total parameters: 1089
+            Trainable parameters: 1089, 
+        'learning_rate': 0.001, 'random_state': None, 
+        'termination_crit': {'maxiter': 200, 'early_stopping': 0}
+    }
+
+In this example, we use the default neural network configuration as shown above.
+It indicates that the default neural network is composed of 3 hidden dense layers, each followed by a ``ReLU`` activation function.
+The output layer is followed by a ``TanH`` (hyperbolic tangent) function and it outputs in :math:`\left]-1,1\right[` are scaled to given conceptual parameter bounds using a ``MinMaxScale`` function.
+
+Now, we can customize several parameters such as the random state, learning rate, and early stopping criterion before optimizing the model.
+
+.. code-block:: python
+
+    >>> optimize_options["random_state"] = 0
+    >>> optimize_options["learning_rate"] = 0.003
+    >>> optimize_options["termination_crit"]["early_stopping"] = 40
+
+.. code-block:: python
+
+    >>> # Optimize model using ANN mapping
     >>> model_ann, opt_ann = smash.optimize(
     ...     model,
     ...     mapping="ann",
-    ...     optimize_options={
-    ...         "random_state": 0,
-    ...         "learning_rate": 0.003,
-    ...         # use default maxiter and set early_stopping=40
-    ...         "termination_crit": {"early_stopping": 40},
-    ...     },
+    ...     optimize_options=optimize_options,
     ...     return_options={"net": True},
     ... )
 
@@ -196,33 +235,16 @@ Additionally, we will specify options specific to the ANN:
     For advanced techniques, such as using customized ANNs, transfer learning, and more,
     refer to the in-depth tutorial on :ref:`Learnable Regionalization Mapping <user_guide.in_depth.advanced_learnable_regionalization>`.
 
-Since we have returned the optimized neural network, we can inspect its structure and parameters:
+The returned `Optimize <smash.Optimize>` object ``opt_ann`` contains a `Net <smash.factory.Net>` object with the trained parameters.
+For example, we can access the bias of the last dense layer as follows:
 
 .. code-block:: python
 
-    >>> opt_ann.net
+    >>> opt_ann.net.layers[-3].bias
 
 .. code-block:: output
 
-    +---------------------------------------------------------+
-    | Layer Type           Input/Output Shape  Num Parameters |
-    +---------------------------------------------------------+
-    | Dense                (6,)/(18,)          126            |
-    | Activation (ReLU)    (18,)/(18,)         0              |
-    | Dense                (18,)/(29,)         551            |
-    | Activation (ReLU)    (29,)/(29,)         0              |
-    | Dense                (29,)/(12,)         360            |
-    | Activation (ReLU)    (12,)/(12,)         0              |
-    | Dense                (12,)/(4,)          52             |
-    | Activation (TanH)    (4,)/(4,)           0              |
-    | Scale (MinMaxScale)  (4,)/(4,)           0              |
-    +---------------------------------------------------------+
-    Total parameters: 1089
-    Trainable parameters: 1089
-
-The above information indicates that the default neural network is composed of 3 hidden dense layers, each followed by a ``ReLU`` activation function.
-The output layer is followed by a ``TanH`` (hyperbolic tangent) function and it outputs in :math:`\left]-1,1\right[` are scaled to given conceptual parameter bounds using a ``MinMaxScale`` function.
-Other information is available in the `smash.factory.Net` object, including the value of the cost function at each iteration.
+    array([[-0.18723589, -0.16801801,  0.04658873, -0.15251763]])
 
 .. code-block:: python
 
