@@ -52,11 +52,8 @@ Create the model object. This also loads the data into the model object.
 
     >>> model = smash.Model(setup, mesh)
 
-.. parsed-literal::
+.. code-block:: output
 
-    </> Reading precipitation: 100%|██████████| 1440/1440 [00:05<00:00, 280.60it/s]
-    </> Reading daily interannual pet: 100%|██████████| 366/366 [00:00<00:00, 811.93it/s] 
-    </> Disaggregating daily interannual pet: 100%|██████████| 1440/1440 [00:00<00:00, 40575.31it/s]
     </> Computing mean atmospheric data
     </> Adjusting GR interception capacity
 
@@ -91,7 +88,7 @@ Generate the samples, which will be used for sensitivity analysis, using the Sal
     >>> param_values = sample(problem, sample_size, seed=1, calc_second_order=False)
     >>> param_values
 
-.. parsed-literal::
+.. code-block:: output
 
     array([[ 467.24048835, 2355.40055781,   -6.77403474,   49.23759794],
            [2537.22270641, 2355.40055781,   -6.77403474,   49.23759794],
@@ -100,7 +97,15 @@ Generate the samples, which will be used for sensitivity analysis, using the Sal
            [ 465.07810281, 1061.24262134,   -8.39497082,    6.94480178],
            [ 465.07810281, 1061.24262134,  -10.48251348,  141.57036807],
            [2627.85471268,  468.67423326,   -8.39497082,  141.57036807]],
-           shape=(6144, 4))
+          shape=(6144, 4))
+
+.. code-block:: python
+
+    >>> param_values.shape
+
+.. code-block:: output
+
+    (6144, 4)
 
 In this example, we have 6144 sets of 4 parameters. The number of sets varies based on
 the sample size, the number of parameters, and whether we want to include second order sensitivity.
@@ -198,32 +203,32 @@ the sensitivity analysis using SALib and show the results.
 
 .. code-block:: python
 
-    >>> Si_nnse = analyze(problem, Y_nnse, print_to_console=False, calc_second_order=False)
+    >>> Si_nnse = analyze(problem, Y_nnse, print_to_console=False, calc_second_order=False, seed=1)
     >>> print('--- First order sensitivity analysis on NSE ---')
     >>> print('Sensitivity indices: ', Si_nnse['S1'])
     >>> print('Confidence intervals: ', Si_nnse['S1_conf'])
     >>> 
-    >>> Si_crc = analyze(problem, Y_crc, print_to_console=False, calc_second_order=False)
+    >>> Si_crc = analyze(problem, Y_crc, print_to_console=False, calc_second_order=False, seed=1)
     >>> print('--- First order sensitivity analysis on CRC ---')
     >>> print('Sensitivity indices: ', Si_crc['S1'])
     >>> print('Confidence intervals: ', Si_crc['S1_conf'])
     >>> 
-    >>> Si_eff = analyze(problem, Y_eff, print_to_console=False, calc_second_order=False)
+    >>> Si_eff = analyze(problem, Y_eff, print_to_console=False, calc_second_order=False, seed=1)
     >>> print('--- First order sensitivity analysis on Eff ---')
     >>> print('Sensitivity indices: ', Si_eff['S1'])
     >>> print('Confidence intervals: ', Si_eff['S1_conf'])
 
-.. parsed-literal::
+.. code-block:: output
 
     --- First order sensitivity analysis on NSE ---
     Sensitivity indices:  [ 0.55052169  0.20563381 -0.02693246  0.02273316]
-    Confidence intervals:  [0.24807971 0.28165997 0.0704906  0.01984534]
+    Confidence intervals:  [0.23071231 0.27603189 0.08007255 0.02181141]
     --- First order sensitivity analysis on CRC ---
     Sensitivity indices:  [1.55958585e-02 3.28269253e-01 4.15976060e-03 2.44881492e-06]
-    Confidence intervals:  [5.54563750e-01 3.00143536e-01 3.50225476e-01 5.25396648e-04]
+    Confidence intervals:  [0.55138231 0.29921365 0.26705503 0.00057764]
     --- First order sensitivity analysis on Eff ---
     Sensitivity indices:  [0.40991146 0.0829772  0.01993396 0.00846561]
-    Confidence intervals:  [0.25203485 0.15304919 0.04074188 0.01039334]
+    Confidence intervals:  [0.24355879 0.13125132 0.04128444 0.01077616]
 
 The sensitivity indices show the relative importance of each parameter in
 affecting the model outputs. A higher sensitivity index indicates that the
