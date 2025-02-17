@@ -42,11 +42,8 @@ Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_datas
     setup, mesh = smash.factory.load_dataset("France")
     model = smash.Model(setup, mesh)
 
-Model simulation
-----------------
-
-Forward run
-***********
+Model simulation with a forward run
+-----------------------------------
 
 We can now call the `Model.forward_run <smash.Model.forward_run>` method, but by default and for memory reasons, the simulated discharge on the 
 entire spatio-temporal domain is not saved. This means storing an `numpy.ndarray` of shape *(nrow, ncol, ntime_step)*, which may be quite large depending on the 
@@ -93,24 +90,26 @@ We can view the simulated discharge for one time step, for example the last one.
 By default, if the returned time steps are not defined, all the time steps are returned. It is possible to return only certain time steps by
 specifying them in the ``return_options`` argument, for example only the two last ones.
 
+.. ipython:: python
+
+    time_step = ["2012-01-02 07:00", "2012-01-02 08:00"]  # define returned time steps
+
 .. To speed up documentation generation
 .. ipython:: python
     :suppress:
     
     ncpu = min(5, max(1, os.cpu_count() - 1))
-    time_step = ["2012-01-02 07:00", "2012-01-02 08:00"]
     fwd_run = model.forward_run(return_options={"time_step": time_step, "q_domain": True}, common_options={"ncpu": ncpu})
 
 .. ipython:: python
     :verbatim:
 
-    time_step = ["2012-01-02 07:00", "2012-01-02 08:00"]
     fwd_run = model.forward_run(
         return_options={
             "time_step": time_step,
             "q_domain": True
         }
-    )
+    )  # forward run and return q_domain at specified time steps
 
 .. ipython:: python
 

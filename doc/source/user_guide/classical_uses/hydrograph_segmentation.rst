@@ -14,7 +14,7 @@ First, open a Python interface:
     python3
 
 Imports
-*******
+-------
 
 We will first import the necessary libraries for this tutorial.
 
@@ -25,7 +25,7 @@ We will first import the necessary libraries for this tutorial.
     import pandas as pd
 
 Model object creation
-*********************
+---------------------
 
 Now, we need to create a :class:`smash.Model` object.
 For this case, we will use the :ref:`user_guide.data_and_format_description.cance` dataset as an example.
@@ -39,7 +39,7 @@ Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_datas
     model = smash.Model(setup, mesh)
 
 Flood event information and visualization
-*****************************************
+-----------------------------------------
 
 Once the :class:`smash.Model` object is created, the flood events information are available using the `smash.hydrograph_segmentation` function.
 
@@ -93,6 +93,11 @@ Then the segmented event, for instance of catchment ``V3524010``, is shown in th
     fig.legend();
     @savefig user_guide.in_depth.hydrograph_segmentation.event_seg.png
     fig.suptitle("V3524010");
+
+Customized flood event segmentation
+-----------------------------------
+
+Several options are available to customize the flood event segmentation algorithm.
 
 Quantile option
 ***************

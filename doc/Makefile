@@ -27,5 +27,5 @@ help:
 clean:
 	@rm -rf $(BUILDDIR)
 	@rm -rf $(SOURCEDIR)/savefig
-	@rm -rf *.hdf5 *yaml *-dataset
+	@rm -rf *.hdf5 *yaml *-dataset $(SOURCEDIR)/user_guide/*.hdf5
 	@find $(SOURCEDIR)/api_reference/ -type d -name "smash" -exec rm -rf {} +
