@@ -4,19 +4,70 @@
 Format Description
 ==================
 
-This section describes the required format for the input data (i.e., gauges' attributs, observed discharge, precipitation, descriptor, etc.) used in `smash`.
+This section describes the required format for the input data (i.e., atmospheric data, gauge information, physiographic data, and observed discharge) and their directory structure used in `smash`.
 
-
-Gauges' attributs
+Input data format
 -----------------
 
-The informations of the gauges could be pass by a `.csv` file containing four columns 
-corresponding to the code of the gauges, the spatial coordinates of outlets and 
-the drainage area. The spatial coordinates must be in the same unit and projection 
-as the flow directions file (**meter** and **Lambert 93** respectively in this example), 
-the drainage area in **square meter**.
+Precipitation
+*************
 
-.. list-table:: gauge_attributs.csv
+The precipitation files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
+search in the ``prcp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``prcp_directory`` (and all subdirectories) can not contains files with similar dates.
+
+Potential evapotranspiration
+****************************
+
+The potential evapotranspiration files must be stored for each each time step of the simulation in ``tif`` format. For one time step, `smash` 
+will recursively search in the ``pet_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``pet_directory`` (and all subdirectories) can not contains files with similar dates.
+    
+In case of ``daily_interannual_pet``, `smash` will recursively search in the ``pet_directory``, a file with the following name 
+structure: ``*%m%d*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the day 09-15: ``dia_pet_0915.tif``. This file will be disaggregated to the corresponding 
+time step ``dt`` using the following distribution.
+
+.. image:: ../../_static/daily_pet_ratio.png
+    :align: center
+    :width: 500
+
+Snow
+****
+
+The snow files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
+search in the ``snow_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``snow_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``snow_directory`` (and all subdirectories) can not contains files with similar dates.
+
+Temperature
+***********
+
+The temperature files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
+search in the ``temp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``temp_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``temp_directory`` (and all subdirectories) can not contains files with similar dates.
+
+Gauges' attributes
+******************
+
+The information of the gauges can be provided by a ``gauge_attributes.csv`` file containing four columns 
+corresponding to the code of the gauges, the spatial coordinates of outlets, and 
+the drainage area. The spatial coordinates must be in the same unit and projection 
+as the flow directions file (**meters** and **Lambert 93** respectively in this example), 
+and the drainage area in **square meters**.
+
+.. list-table:: gauge_attributes.csv
    :widths: 25 25 25 25
    :header-rows: 1
 
@@ -37,9 +88,53 @@ the drainage area in **square meter**.
      - 6469198
      - 25.3
 
-Observed discharge
-------------------
+Physical descriptors
+********************
 
+Physical descriptors are required for model calibration with regionalization methods. 
+The catchment descriptors files must be stored in ``tif`` format. 
+For each descriptor name filled in the setup argument ``descriptor_name``,
+`smash` will recursively search in the ``descriptor_directory``, a file with the following name structure: ``descriptor_name.tif``.
+An example of file name in tif format for the slope descriptor: ``slope.tif``.
+
+.. note::
+    ``descriptor_name`` is a unique key, the ``descriptor_directory`` (and all subdirectories) can not contains files with similar decriptor name.
+
+Imperviousness coefficients
+***************************
+
+The impervious proportion of a pixel's surface is required to enhance modeling and water dynamics in the production reservoir. 
+Imperviousness coefficients are applied to neutralized rainfall as an area percentage, ranging from 0 to 1, for each pixel.
+If not provided, the imperviousness is set to 0 by default.
+When using imperviousness coefficients, the user must supply a ``tif`` file at the same resolution as the flow directions.
+For example, here is a map of imperviousness based on the Corine Land Cover of the Mediterranean arc of France:
+
+.. figure:: ../../_static/clc_imperviousness.svg
+    :align: center
+    :width: 800
+
+.. warning::
+    There are 4 possible warnings when reading geo-referenced data (i.e., precipitation, descriptors, etc.):
+
+    - ``Missing Warning``
+        A file (or more) is missing. It will be interpreted as no data.
+
+    - ``Resolution Warning``
+        A file (or more) has a spatial resolution different from the mesh resolution (i.e., the flow direction resolution).
+        It will be resampled using a Nearest Neighbour algorithm.
+
+    - ``Overlap Warning``
+        A file (or more) has an origin that does not overlap with the mesh origin (i.e., the flow direction origin).
+        The reading window is shifted towards the nearest overlapping cell.
+
+    - ``Out Of Bound Warning``
+        A file (or more) has an extent that does not include, partially or totally, the mesh extent.
+        It will be interpreted as no data where the mesh extent is out of bound.
+
+Observed discharge
+******************
+
+Observed discharges are required for model calibration. 
 The observed discharge for one catchment is read from a ``.csv`` file with the following structure: 
 
 .. csv-table:: V3524010.csv
@@ -60,115 +155,6 @@ gauge which is filled in the ``mesh`` (see the `smash.factory.generate_mesh` met
 .. note::
     The time step of the header does not have to match the first simulation time step. `smash` manages to read the corresponding lines 
     from the ``setup`` variables, ``start_time``, ``end_time`` and ``dt``.
-
-
-Precipitation
--------------
-
-The precipitation files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
-search in the ``prcp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``prcp_directory`` (and all subdirectories) can not contains files with similar dates.
-
-Potential evapotranspiration
-----------------------------
-
-The potential evapotranspiration files must be stored for each each time step of the simulation in ``tif`` format. For one time step, `smash` 
-will recursively search in the ``pet_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``pet_directory`` (and all subdirectories) can not contains files with similar dates.
-    
-In case of ``daily_interannual_pet``, `smash` will recursively search in the ``pet_directory``, a file with the following name 
-structure: ``*%m%d*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the day 09-15: ``dia_pet_0915.tif``. This file will be disaggregated to the corresponding 
-time step ``dt`` using the following distribution.
-
-.. image:: ../../_static/daily_pet_ratio.png
-    :align: center
-    :width: 500
-
-Snow
-----
-
-The snow files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
-search in the ``snow_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``snow_201409150000.tif``.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``snow_directory`` (and all subdirectories) can not contains files with similar dates.
-
-Temperature
------------
-
-The temperature files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
-search in the ``temp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``temp_201409150000.tif``.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``temp_directory`` (and all subdirectories) can not contains files with similar dates.
-
-Descriptor
-----------
-
-The catchment descriptors files must be stored in ``tif`` format. For each descriptor name filled in the setup argument ``descriptor_name``,
-`smash` will recursively search in the ``descriptor_directory``, a file with the following name structure: ``descriptor_name.tif``.
-An example of file name in tif format for the slope descriptor: ``slope.tif``.
-
-.. note::
-    ``descriptor_name`` is a unique key, the ``descriptor_directory`` (and all subdirectories) can not contains files with similar decriptor name.
-
-.. warning::
-    There are 4 possible warnings when reading geo-referenced data (i.e., precipitation, descriptor, etc):
-
-    - ``Missing Warning``
-        A file (or more) is missing. It will be interpreted as no data.
-
-    - ``Resolution Warning``
-        A file (or more) has a spatial resolution different from the mesh resolution (i.e., the flow direction resolution).
-        It will be resampled using a Nearest Neighbour algorithm.
-
-    - ``Overlap Warning``
-        A file (or more) has an origin that does not overlap with the mesh origin (i.e., the flow direction origin).
-        The reading window is shifted towards the nearest overlapping cell.
-
-    - ``Out Of Bound Warning``
-        A file (or more) has an extent that does not include, partially or totally, the mesh extent.
-        It will be interpreted as no data where the mesh extent is out of bound.
-
-Imperviousness coefficients
----------------------------
-
-First of all we show a map of imperviousness based on Corine Land Cover of the 
-Mediterranean arc of France:
-
-.. figure:: ../../_static/clc_imperviousness.svg
-    :align: center
-    :width: 800
-
-The coefficients of imperviousness are applied as area percentage - between 0 and 1 - on each pixel.
-The user must supply to the setup a `.tif` file at the same resolution as the flow directions.
-
-.. warning::
-    There are 4 possible warnings when reading geo-referenced data (i.e., precipitation, descriptor, etc):
-
-    - ``Missing Warning``
-        A file (or more) is missing. It will be interpreted as no data.
-
-    - ``Resolution Warning``
-        A file (or more) has a spatial resolution different from the mesh resolution (i.e., the flow direction resolution).
-        It will be resampled using a Nearest Neighbour algorithm.
-
-    - ``Overlap Warning``
-        A file (or more) has an origin that does not overlap with the mesh origin (i.e., the flow direction origin).
-        The reading window is shifted towards the nearest overlapping cell.
-
-    - ``Out Of Bound Warning``
-        A file (or more) has an extent that does not include, partially or totally, the mesh extent.
-        It will be interpreted as no data where the mesh extent is out of bound.
 
 Directory structure
 -------------------
