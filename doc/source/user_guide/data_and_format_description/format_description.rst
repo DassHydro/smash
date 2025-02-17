@@ -13,7 +13,7 @@ Gauges' attributs
 The informations of the gauges could be pass by a `.csv` file containing four columns 
 corresponding to the code of the gauges, the spatial coordinates of outlets and 
 the drainage area. The spatial coordinates must be in the same unit and projection 
-as the flow direction file (**meter** and **Lambert 93** respectively in this example), 
+as the flow directions file (**meter** and **Lambert 93** respectively in this example), 
 the drainage area in **square meter**.
 
 .. list-table:: gauge_attributs.csv
@@ -139,6 +139,36 @@ An example of file name in tif format for the slope descriptor: ``slope.tif``.
         A file (or more) has an extent that does not include, partially or totally, the mesh extent.
         It will be interpreted as no data where the mesh extent is out of bound.
 
+Imperviousness coefficients
+---------------------------
+
+First of all we show a map of imperviousness based on Corine Land Cover of the 
+Mediterranean arc of France:
+
+.. figure:: ../../_static/clc_imperviousness.svg
+    :align: center
+    :width: 800
+
+The coefficients of imperviousness are applied as area percentage - between 0 and 1 - on each pixel.
+The user must supply to the setup a `.tif` file at the same resolution as the flow directions.
+
+.. warning::
+    There are 4 possible warnings when reading geo-referenced data (i.e., precipitation, descriptor, etc):
+
+    - ``Missing Warning``
+        A file (or more) is missing. It will be interpreted as no data.
+
+    - ``Resolution Warning``
+        A file (or more) has a spatial resolution different from the mesh resolution (i.e., the flow direction resolution).
+        It will be resampled using a Nearest Neighbour algorithm.
+
+    - ``Overlap Warning``
+        A file (or more) has an origin that does not overlap with the mesh origin (i.e., the flow direction origin).
+        The reading window is shifted towards the nearest overlapping cell.
+
+    - ``Out Of Bound Warning``
+        A file (or more) has an extent that does not include, partially or totally, the mesh extent.
+        It will be interpreted as no data where the mesh extent is out of bound.
 
 Directory structure
 -------------------
@@ -173,9 +203,11 @@ Below is the most basic directory structure you can have, with one subdirectory 
     │   ├── V3524010.csv
     │   ├── V3504010.csv
     │   └── ...
-    └── descriptor
-        ├── slope.tif
-        └── dd.tif
+    ├── descriptor
+    │   ├── slope.tif
+    │   └── dd.tif
+    └── imperviousness
+        └── imperviousness.tif
 
 This results in the following ``setup``:
 
@@ -200,6 +232,9 @@ This results in the following ``setup``:
         "read_descriptor": True,
         "descriptor_directory": "./input_data/descriptor",
         "descriptor_name": ["slope", "dd"],
+
+        "read_imperviousness": True,
+        "imperviousness_file": "./input_data/imperviousness/imperviousness.tif",
     }
 
 This structure will be effective if few files are available for atmospheric data (i.e., precipitation, potential 
@@ -247,9 +282,11 @@ We can use the same type of example as above, but this time incorporate sub-dire
     │   ├── V3524010.csv
     │   ├── V3504010.csv
     │   └── ...
-    └── descriptor
-        ├── slope.tif
-        └── dd.tif
+    ├── descriptor
+    │   ├── slope.tif
+    │   └── dd.tif
+    └── imperviousness
+        └── imperviousness.tif
 
 At this point, the ``setup`` used previously will also work, but there will be no difference in access to files if we don't specify
 directory structure. We can therefore take the previous ``setup`` and add the access method.
@@ -279,6 +316,9 @@ directory structure. We can therefore take the previous ``setup`` and add the ac
         "read_descriptor": True,
         "descriptor_directory": "./input_data/descriptor",
         "descriptor_name": ["slope", "dd"],
+
+        "read_imperviousness": True,
+        "imperviousness_file": "./input_data/imperviousness/imperviousness.tif",
     }
 
 The ``prcp_access``, ``pet_access``, ``snow_acces`` and ``temp_access`` variables should therefore be adapted to your structure to 
