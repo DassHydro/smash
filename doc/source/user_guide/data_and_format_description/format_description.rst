@@ -4,7 +4,38 @@
 Format Description
 ==================
 
-This section describes the required format for the input data (i.e., observed discharge, precipitation, descriptor, etc.) used in `smash`.
+This section describes the required format for the input data (i.e., gauges' attributs, observed discharge, precipitation, descriptor, etc.) used in `smash`.
+
+
+Gauges' attributs
+-----------------
+
+The informations of the gauges could be pass by a `.csv` file containing four columns 
+corresponding to the code of the gauges, the spatial coordinates of outlets and 
+the drainage area. The spatial coordinates must be in the same unit and projection 
+as the flow direction file (**meter** and **Lambert 93** respectively in this example), 
+the drainage area in **square meter**.
+
+.. list-table:: gauge_attributs.csv
+   :widths: 25 25 25 25
+   :header-rows: 1
+
+   * - code
+     - x
+     - y
+     - area
+   * - V3524010
+     - 840261
+     - 6457807
+     - 381.7
+   * - V3515010
+     - 826553
+     - 6467115
+     - 107
+   * - V3517010
+     - 828269
+     - 6469198
+     - 25.3
 
 Observed discharge
 ------------------
