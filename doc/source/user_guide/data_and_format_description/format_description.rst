@@ -36,7 +36,7 @@ time step ``dt`` using the following distribution.
 
 .. image:: ../../_static/daily_pet_ratio.png
     :align: center
-    :width: 500
+    :width: 600
 
 Snow
 ****
@@ -104,14 +104,14 @@ Imperviousness coefficients
 ***************************
 
 The impervious proportion of a pixel's surface is required to enhance modeling and water dynamics in the production reservoir. 
-Imperviousness coefficients are applied to neutralized rainfall as an area percentage, ranging from 0 to 1, for each pixel.
+Imperviousness coefficients, ranging from 0 to 1, represent the percentage of a pixel's area that is impervious to water. 
 If not provided, the imperviousness is set to 0 by default.
-When using imperviousness coefficients, the user must supply a ``tif`` file at the same resolution as the flow directions.
-For example, here is a map of imperviousness based on the Corine Land Cover of the Mediterranean arc of France:
+When using imperviousness coefficients, users must supply a ``tif`` file at the same resolution as the flow direction data.
+For example, the following map illustrates imperviousness based on the Corine Land Cover of the Mediterranean arc of France:
 
-.. figure:: ../../_static/clc_imperviousness.svg
+.. figure:: ../../_static/clc_imperviousness.jpg
     :align: center
-    :width: 800
+    :width: 600
 
 .. warning::
     There are 4 possible warnings when reading geo-referenced data (i.e., precipitation, descriptors, etc.):
