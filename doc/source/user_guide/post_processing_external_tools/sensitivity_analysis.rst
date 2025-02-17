@@ -52,7 +52,7 @@ Create the model object. This also loads the data into the model object.
 
     >>> model = smash.Model(setup, mesh)
 
-.. parsed-literal::
+.. code-block:: output
 
     </> Reading precipitation: 100%|██████████| 1440/1440 [00:05<00:00, 280.60it/s]
     </> Reading daily interannual pet: 100%|██████████| 366/366 [00:00<00:00, 811.93it/s] 
@@ -91,7 +91,7 @@ Generate the samples, which will be used for sensitivity analysis, using the Sal
     >>> param_values = sample(problem, sample_size, seed=1, calc_second_order=False)
     >>> param_values
 
-.. parsed-literal::
+.. code-block:: output
 
     array([[ 467.24048835, 2355.40055781,   -6.77403474,   49.23759794],
            [2537.22270641, 2355.40055781,   -6.77403474,   49.23759794],
@@ -213,7 +213,7 @@ the sensitivity analysis using SALib and show the results.
     >>> print('Sensitivity indices: ', Si_eff['S1'])
     >>> print('Confidence intervals: ', Si_eff['S1_conf'])
 
-.. parsed-literal::
+.. code-block:: output
 
     --- First order sensitivity analysis on NSE ---
     Sensitivity indices:  [ 0.55052169  0.20563381 -0.02693246  0.02273316]
