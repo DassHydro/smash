@@ -108,7 +108,6 @@ An example of file name in tif format for the slope descriptor: ``slope.tif``.
         A file (or more) has an extent that does not include, partially or totally, the mesh extent.
         It will be interpreted as no data where the mesh extent is out of bound.
 
-
 Directory structure
 -------------------
 

@@ -44,7 +44,7 @@ Now a folder called ``Lez-dataset`` should be accessible and contain the followi
     A directory containing physiographic descriptors in GeoTiff format.
 
 Flow direction
-**************
+--------------
 
 The flow direction file is a mandatory input in order to create a mesh, its associated drainage plan :math:`\mathcal{D}_{\Omega}(x)`, and the localization on the mesh of the gauging stations that we want to model. Here, 
 the ``France_flwdir.tif`` contains the flow direction data on the whole France, at a spatial resolution of 1km² using a Lambert-93 projection
@@ -60,7 +60,7 @@ the ``France_flwdir.tif`` contains the flow direction data on the whole France, 
     It is therefore important to ensure that flow directions are consistent from upstream to downstream.
 
 Gauge attributes
-****************
+----------------
 
 To create a mesh containing information from the stations in addition to the flow direction file, gauge attributes are mandatory. The gauge 
 attributes correspond to the spatial coordinates, the drainage area and the code of each gauge. The spatial coordinates must be in the same unit
@@ -74,7 +74,7 @@ filled in to provide this information for the 3 gauging stations of the Cance ca
     as it can be read with Python.
 
 Precipitation
-*************
+-------------
 
 Precipitation data are mandatory. `smash` expects a precipitation file per time step whose name contains a date in the following format
 ``%Y%m%d%H%M``. The file must be in GeoTiff format at a resolution and projection identical to the flow direction file. Any unit can be chosen 
@@ -90,7 +90,7 @@ speed up access when reading those (e.g., ``%Y/%m/%d``, ``2014/09/15``).
     `smash` will automatically crop to the correct area when the file is read.
 
 Potential evapotranspiration
-****************************
+----------------------------
 
 Potential evapotranspiration data are mandatory. The way in which potential evapotranspiration data processed is identical to the 
 precipitation. One difference to note is that instead of working with one potential evapotranspiration file per time step, it is possible to
@@ -98,7 +98,7 @@ work with daily interannual data, which therefore requires a file per day whose 
 Here, we provided daily interannual potential evapotranspiration data.
 
 Observed discharge
-******************
+------------------
 
 Observed discharge is optional in case of simulation but mandatory in case of model calibration. `smash` expects a single-column csv file for each gauge
 whose name contains the gauge code provided in the ``gauge_attributes.csv`` file. The header of the column is the first time step of the time series,
@@ -110,7 +110,7 @@ the data are observed discharges in **cubic meter per second** and any negative 
     will only read the lines corresponding to dates after the starting date provided in the header.
 
 Physical descriptors
-********************
+--------------------
 
 Physical descriptors are mandatory for performing regionalization methods.
 These descriptors serve as inputs for the descriptors-to-parameters mapping, which allows for constraining the model parameters based on physical characteristics.
