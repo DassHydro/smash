@@ -23,7 +23,6 @@ We will first import the necessary libraries for this tutorial.
 .. code-block:: python
 
     >>> import smash
-    >>> import pandas as pd
     >>> import numpy as np
     >>> from SALib.analyze.sobol import analyze
     >>> from SALib.sample.sobol import sample
@@ -96,8 +95,7 @@ Generate the samples, which will be used for sensitivity analysis, using the Sal
            ...,
            [ 465.07810281, 1061.24262134,   -8.39497082,    6.94480178],
            [ 465.07810281, 1061.24262134,  -10.48251348,  141.57036807],
-           [2627.85471268,  468.67423326,   -8.39497082,  141.57036807]],
-          shape=(6144, 4))
+           [2627.85471268,  468.67423326,   -8.39497082,  141.57036807]])
 
 .. code-block:: python
 
@@ -204,31 +202,31 @@ the sensitivity analysis using SALib and show the results.
 .. code-block:: python
 
     >>> Si_nnse = analyze(problem, Y_nnse, print_to_console=False, calc_second_order=False, seed=1)
-    >>> print('--- First order sensitivity analysis on NSE ---')
-    >>> print('Sensitivity indices: ', Si_nnse['S1'])
-    >>> print('Confidence intervals: ', Si_nnse['S1_conf'])
+    >>> print('</> First order sensitivity analysis on NSE')
+    >>> print('    Sensitivity indices: ', Si_nnse['S1'])
+    >>> print('    Confidence intervals: ', Si_nnse['S1_conf'])
     >>> 
     >>> Si_crc = analyze(problem, Y_crc, print_to_console=False, calc_second_order=False, seed=1)
-    >>> print('--- First order sensitivity analysis on CRC ---')
-    >>> print('Sensitivity indices: ', Si_crc['S1'])
-    >>> print('Confidence intervals: ', Si_crc['S1_conf'])
+    >>> print('</> First order sensitivity analysis on Crc')
+    >>> print('    Sensitivity indices: ', Si_crc['S1'])
+    >>> print('    Confidence intervals: ', Si_crc['S1_conf'])
     >>> 
     >>> Si_eff = analyze(problem, Y_eff, print_to_console=False, calc_second_order=False, seed=1)
-    >>> print('--- First order sensitivity analysis on Eff ---')
-    >>> print('Sensitivity indices: ', Si_eff['S1'])
-    >>> print('Confidence intervals: ', Si_eff['S1_conf'])
+    >>> print('</> First order sensitivity analysis on Eff')
+    >>> print('    Sensitivity indices: ', Si_eff['S1'])
+    >>> print('    Confidence intervals: ', Si_eff['S1_conf'])
 
 .. code-block:: output
 
-    --- First order sensitivity analysis on NSE ---
-    Sensitivity indices:  [ 0.55052169  0.20563381 -0.02693246  0.02273316]
-    Confidence intervals:  [0.23071231 0.27603189 0.08007255 0.02181141]
-    --- First order sensitivity analysis on CRC ---
-    Sensitivity indices:  [1.55958585e-02 3.28269253e-01 4.15976060e-03 2.44881492e-06]
-    Confidence intervals:  [0.55138231 0.29921365 0.26705503 0.00057764]
-    --- First order sensitivity analysis on Eff ---
-    Sensitivity indices:  [0.40991146 0.0829772  0.01993396 0.00846561]
-    Confidence intervals:  [0.24355879 0.13125132 0.04128444 0.01077616]
+    </> First order sensitivity analysis on NSE
+        Sensitivity indices:  [ 0.55052169  0.20563381 -0.02693246  0.02273316]
+        Confidence intervals:  [0.23071231 0.27603189 0.08007255 0.02181141]
+    </> First order sensitivity analysis on Crc
+        Sensitivity indices:  [1.55958585e-02 3.28269253e-01 4.15976060e-03 2.44881492e-06]
+        Confidence intervals:  [0.55138231 0.29921365 0.26705503 0.00057764]
+    </> First order sensitivity analysis on Eff
+        Sensitivity indices:  [0.40991146 0.0829772  0.01993396 0.00846561]
+        Confidence intervals:  [0.24355879 0.13125132 0.04128444 0.01077616]
 
 The sensitivity indices show the relative importance of each parameter in
 affecting the model outputs. A higher sensitivity index indicates that the
