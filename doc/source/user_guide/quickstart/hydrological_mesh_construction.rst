@@ -42,7 +42,7 @@ Mesh construction
 -----------------
 
 The ``mesh`` is a Python dictionary generated using the `smash.factory.generate_mesh` function.
-This function requires a flow direction file ``France_flwdir.tif`` and gauge attributes information from ``gauge_attributes.csv``.
+This function requires a flow direction file ``France_flwdir.tif`` and gauge attributes information from ``gauge_attributes.csv`` (see the Gauges' attributes section in :ref:`user_guide.data_and_format_description.format_description`).
 
 .. ipython:: python
 

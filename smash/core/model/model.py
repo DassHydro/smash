@@ -365,6 +365,19 @@ class Model:
             List of descriptor name.
             This option is ``mandatory`` if **read_descriptor** is set to True.
 
+        read_imperviousness : `bool`, default False
+            Whether or not to read descriptor file(s).
+
+        imperviousness_format : `str`, default 'tif'
+            This option is only applicable if **read_imperviousness** is set to True.
+
+            .. note::
+                Only the ``tif`` format is currently supported.
+
+        imperviousness_directory : `str`
+            Path to the imperviousness file.
+            This option is ``mandatory`` if **read_imperviousness** is set to True.
+
     mesh : `dict[str, Any]`
         Model initialization mesh dictionary.
 
