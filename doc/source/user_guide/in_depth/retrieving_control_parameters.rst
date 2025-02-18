@@ -55,7 +55,7 @@ Here is an example of how to define and use a callback function in a calibration
     ...     # Store the control vector at the current optimization iteration
     ...     np.savetxt(file_name, iopt.control_vector)
     ...     print(f"    Callback message: stored control values at iteration {iopt.n_iter} in {file_name}")
-    >>> 
+    >>>
     >>> # Calibrate model and store intermediate results using callback
     >>> model.optimize(callback=callback_func)
 
@@ -141,7 +141,7 @@ which is spatially uniform.
     The control values may differ from the actual conceptual parameters because transformation functions might be applied to the control vector before the optimization process.
     Refer to the documentation of ``control_tfm`` in the ``optimize_options`` argument of `smash.optimize` (or `smash.bayesian_optimize`) for more information.
 
-Retrieving Control Parameters
+Retrieving control parameters
 -----------------------------
 
 Next, we will retrieve the control parameters from the stored control vectors and continue the calibration process.
@@ -186,20 +186,21 @@ Finally, we can continue the calibration using the starting point defined by the
         >>> def set_control_to_ann(control_vector: np.ndarray, model: smash.Model) -> smash.factory.Net:
         ...     # Initialize a neural network
         ...     net = smash.factory.Net()
-        ... 
+        ...
         ...     # Add layers to create a neural network without hidden layers
         ...     # using smash.factory.Net methods and model
         ...     ...
-        ... 
+        ...
         ...     # Set the control vector to the neural network weights
         ...     # using net.set_weight and net.set_bias methods
         ...     ...
-        ... 
+        ...
         ...     return net
+        ...
         >>> net = set_control_to_ann(control_vector, model)
-        >>> 
         >>> model.optimize(mapping="ann", optimize_options={"net": net})
 
+.. use this directive to hide the code cell in the documentation while being captured by the script pyexec_rst.py
 .. only:: never
 
     .. code-block:: python
