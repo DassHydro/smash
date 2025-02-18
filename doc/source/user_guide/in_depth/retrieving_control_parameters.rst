@@ -59,9 +59,7 @@ Here is an example of how to define and use a callback function in a calibration
     >>> # Calibrate model and store intermediate results using callback
     >>> model.optimize(callback=callback_func)
 
-.. TODO:!!!!!!!!!!!!!!!!!!!! change none
-
-.. code-block:: none
+.. code-block:: output
 
     </> Optimize
         At iterate     0    nfg =     1    J = 6.85771e-01    ddx = 0.64
