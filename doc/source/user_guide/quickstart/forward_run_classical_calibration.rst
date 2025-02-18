@@ -225,3 +225,12 @@ and read back using the `smash.io.save_model` and `smash.io.read_model` function
     .. code-block:: output
 
         dict_keys(['mesh', 'nn_parameters', 'physio_data', 'response', 'response_data', 'rr_final_states', 'rr_initial_states', 'rr_parameters', 'serr_mu_parameters', 'serr_sigma_parameters', 'setup'])
+
+.. use this directive to hide the code cell in the documentation while being captured by the script pyexec_rst.py
+.. only:: never
+
+    .. code-block:: python
+        
+        >>> import os
+        >>> os.remove("model.hdf5")
+        >>> os.remove("model_ddt.hdf5")
