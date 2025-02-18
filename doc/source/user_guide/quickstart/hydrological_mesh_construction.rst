@@ -219,3 +219,4 @@ This function stores the mesh in an `HDF5 <https://www.hdfgroup.org/solutions/hd
     :suppress:
 
     plt.close('all')
+    os.remove("mesh.hdf5")

@@ -6,11 +6,11 @@ Regionalization and Spatial Validation
 
 This tutorial explains how to perform regionalization and spatial validation methods with `smash` using physical descriptors.
 The parameters :math:`\boldsymbol{\theta}` can be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}`
-(slope, drainage density, soil water storage, etc) and :math:`\boldsymbol{\rho}` a control vector:
+(slope, drainage density, soil water storage, etc.) and :math:`\boldsymbol{\rho}`, a control vector:
 :math:`\boldsymbol{\theta}(x)=\phi\left(\boldsymbol{\mathcal{D}}(x),\boldsymbol{\rho}\right)`.
 See the :ref:`math_num_documentation.mapping` section for more details.
 Then the control vector of the mapping needs to be optimized: :math:`\boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}\;J`,
-with :math:`J` the cost function.
+with :math:`J` being the cost function.
 
 We begin by opening a Python interface:
 
@@ -236,15 +236,17 @@ Now, we can customize several parameters such as the random state, learning rate
     refer to the in-depth tutorial on :ref:`Learnable Regionalization Mapping <user_guide.in_depth.advanced_learnable_regionalization>`.
 
 The returned `Optimize <smash.Optimize>` object ``opt_ann`` contains a `Net <smash.factory.Net>` object with the trained parameters.
-For example, we can access the bias of the last dense layer as follows:
+For example, we can access the bias of the last dense layer:
 
 .. code-block:: python
 
-    >>> opt_ann.net.layers[-3].bias
+    >>> opt_ann.net.get_bias()[-1]
 
 .. code-block:: output
 
     array([[-0.18723589, -0.16801801,  0.04658873, -0.15251763]])
+
+Or plot the cost function descent during the training:
 
 .. code-block:: python
 

@@ -351,3 +351,4 @@ discharge is filled in with -99.
     :suppress:
 
     plt.close('all')
+    os.remove("setup.yaml")
