@@ -43,7 +43,11 @@ release = smash.__version__
 # Get min/max Python versions from pyproject.toml
 with open("../../pyproject.toml", "rb") as f:
     requires_python = load_toml(f)["project"]["requires-python"]
-min_py_version, max_py_version = (v.split("=")[1].strip() for v in requires_python.split(","))
+min_py_version, max_py_version = (
+    v.split(s)[1].strip() for v, s in zip(requires_python.split(","), [">=", "<"])
+)
+major_max_version, minor_max_version = max_py_version.split(".")
+max_py_version = f"{major_max_version}.{int(minor_max_version) - 1}"
 
 # Define RST replacements
 rst_prolog = f"""
