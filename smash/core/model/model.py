@@ -205,7 +205,7 @@ class Model:
             Whether or not to read observed discharge file(s).
 
             .. hint::
-                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
+                See the :ref:`user_guide.data_and_format_description.format_description` section
 
         qobs_directory : `str`
             Path to the root directory of the observed discharge file(s).
@@ -215,7 +215,7 @@ class Model:
             Whether or not to read precipitation file(s).
 
             .. hint::
-                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
+                See the :ref:`user_guide.data_and_format_description.format_description` section
 
         prcp_format : `str`, default 'tif'
             Precipitation file format. This option is only applicable if **read_prcp** is set to True.
@@ -243,7 +243,7 @@ class Model:
             Whether or not to read potential evapotranspiration file(s).
 
             .. hint::
-                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
+                See the :ref:`user_guide.data_and_format_description.format_description` section
 
         pet_format : `str`, default 'tif'
             Potential evapotranspiration file format. This option is only applicable if **read_pet** is set
@@ -278,7 +278,7 @@ class Model:
             This option is only applicable if **snow_module** is set to ``ssn``.
 
             .. hint::
-                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
+                See the :ref:`user_guide.data_and_format_description.format_description` section
 
         snow_format : `str`, default 'tif'
             Snow file format. This option is only applicable if **read_snow** is set to True and if
@@ -310,7 +310,7 @@ class Model:
             Whether or not to read temperature file(s).
 
             .. hint::
-                See the :ref:`user_guide.classical_uses.using_user_provided_data` section
+                See the :ref:`user_guide.data_and_format_description.format_description` section
 
         temp_format : `str`, default 'tif'
             Temperature file format. This option is only applicable if **read_temp** is set to True and if
@@ -364,6 +364,19 @@ class Model:
         descriptor_name : `list[str]`
             List of descriptor name.
             This option is ``mandatory`` if **read_descriptor** is set to True.
+
+        read_imperviousness : `bool`, default False
+            Whether or not to read descriptor file(s).
+
+        imperviousness_format : `str`, default 'tif'
+            This option is only applicable if **read_imperviousness** is set to True.
+
+            .. note::
+                Only the ``tif`` format is currently supported.
+
+        imperviousness_directory : `str`
+            Path to the imperviousness file.
+            This option is ``mandatory`` if **read_imperviousness** is set to True.
 
     mesh : `dict[str, Any]`
         Model initialization mesh dictionary.
@@ -2465,7 +2478,9 @@ class Model:
         The output contains a list of weight values for trainable layers.
         """
 
-        return [getattr(self._parameters.nn_parameters, f"weight_{i+1}") for i in range(self.setup.n_layers)]
+        return [
+            getattr(self._parameters.nn_parameters, f"weight_{i + 1}") for i in range(self.setup.n_layers)
+        ]
 
     def get_nn_parameters_bias(self) -> list[NDArray[np.float32]]:
         """
@@ -2506,7 +2521,7 @@ class Model:
         The output contains a list of bias values for trainable layers.
         """
 
-        return [getattr(self._parameters.nn_parameters, f"bias_{i+1}") for i in range(self.setup.n_layers)]
+        return [getattr(self._parameters.nn_parameters, f"bias_{i + 1}") for i in range(self.setup.n_layers)]
 
     def set_nn_parameters_weight(
         self,
@@ -2593,10 +2608,10 @@ class Model:
                 np.random.seed(random_state)
 
             for i in range(self.setup.n_layers):
-                (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i+1}").shape
+                (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i + 1}").shape
                 setattr(
                     self._parameters.nn_parameters,
-                    f"weight_{i+1}",
+                    f"weight_{i + 1}",
                     _initialize_nn_parameter(n_in, n_neuron, initializer),
                 )
 
@@ -2606,7 +2621,7 @@ class Model:
 
         else:
             for i, val in enumerate(value):
-                setattr(self._parameters.nn_parameters, f"weight_{i+1}", val)
+                setattr(self._parameters.nn_parameters, f"weight_{i + 1}", val)
 
     def set_nn_parameters_bias(
         self,
@@ -2685,10 +2700,10 @@ class Model:
                 np.random.seed(random_state)
 
             for i in range(self.setup.n_layers):
-                n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i+1}").shape[0]
+                n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i + 1}").shape[0]
                 setattr(
                     self._parameters.nn_parameters,
-                    f"bias_{i+1}",
+                    f"bias_{i + 1}",
                     _initialize_nn_parameter(1, n_neuron, initializer).flatten(),
                 )
 
@@ -2698,7 +2713,7 @@ class Model:
 
         else:
             for i, val in enumerate(value):
-                setattr(self._parameters.nn_parameters, f"bias_{i+1}", val)
+                setattr(self._parameters.nn_parameters, f"bias_{i + 1}", val)
 
     @_model_forward_run_doc_substitution
     @_forward_run_doc_appender

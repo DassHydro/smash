@@ -19,19 +19,7 @@ authors = [
     {name = "INRAE RECOVER RHAX Team", email = "pierre-andre.garambois@inrae.fr"},
 ]
 license = {text = "GPL-3.0"}
-requires-python = ">=3.9"
-dependencies = [
-    "numpy>=1.24",
-    "f90wrap>=0.2.15",
-    "geopandas>=1.0",
-    "rasterio>=1.3.10",
-    "pandas>=2.2.2",
-    "h5py>=3.11",
-    "tqdm",
-    "scipy>=1.13",
-    "pyyaml",
-    "terminaltables",
-]
+requires-python = ">=3.9, <3.13"  # required format: ">=min_version, <max_version"
 classifiers = [
     'Development Status :: 5 - Production/Stable',  
     'Intended Audience :: Science/Research',
@@ -50,6 +38,18 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     "Operating System :: MacOS",
 ]
+dependencies = [
+    "numpy>=1.24",
+    "f90wrap>=0.2.15",
+    "geopandas>=1.0",
+    "rasterio>=1.3.10",
+    "pandas>=2.2.2",
+    "h5py>=3.11",
+    "tqdm",
+    "scipy>=1.13",
+    "pyyaml",
+    "terminaltables",
+]
 
 [project.optional-dependencies]
 test = [
@@ -64,7 +64,6 @@ doc = [
     "pickleshare",
     "sphinxcontrib-bibtex",
     "sphinx-design",
-    "sphinx-autosummary-accessors",
     "matplotlib>=3.8.4"
 ]
 dev = [

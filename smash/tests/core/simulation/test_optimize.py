@@ -298,13 +298,17 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
         qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
 
-        res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.sim_q"] = qsim
+        res[f"custom_optimize.{model.setup.structure}.custom_set_{i + 1}.sim_q"] = qsim
 
-        res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_control"] = np.array(iter_control)
-        res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_cost"] = np.array(iter_cost)
+        res[f"custom_optimize.{model.setup.structure}.custom_set_{i + 1}.iter_control"] = np.array(
+            iter_control
+        )
+        res[f"custom_optimize.{model.setup.structure}.custom_set_{i + 1}.iter_cost"] = np.array(iter_cost)
 
         if iter_projg:
-            res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.iter_projg"] = np.array(iter_projg)
+            res[f"custom_optimize.{model.setup.structure}.custom_set_{i + 1}.iter_projg"] = np.array(
+                iter_projg
+            )
 
     return res
 

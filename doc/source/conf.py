@@ -15,6 +15,13 @@ import os
 import pathlib
 import sys
 import warnings
+from datetime import datetime
+
+# % TODO: change this when the minimum Python version is 3.11
+try:  # for Python >= 3.11
+    from tomllib import load as load_toml
+except ModuleNotFoundError:  # for Python < 3.11
+    from tomli import load as load_toml
 
 import smash
 
@@ -24,11 +31,29 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "smash"
-copyright = "2022-2024, INRAE"
+copyright = f"2022-{datetime.now().year}, INRAE"
 author = "INRAE"
 
 # The full version, including alpha/beta/rc tags
 release = smash.__version__
+
+
+# -- Set dynamic variables for the documentation -----------------------------
+
+# Get min/max Python versions from pyproject.toml
+with open("../../pyproject.toml", "rb") as f:
+    requires_python = load_toml(f)["project"]["requires-python"]
+min_py_version, max_py_version = (
+    v.split(s)[1].strip() for v, s in zip(requires_python.split(","), [">=", "<"])
+)
+major_max_version, minor_max_version = max_py_version.split(".")
+max_py_version = f"{major_max_version}.{int(minor_max_version) - 1}"
+
+# Define RST replacements
+rst_prolog = f"""
+.. |min_py_version| replace:: {min_py_version}
+.. |max_py_version| replace:: {max_py_version}
+"""
 
 
 # -- General configuration ---------------------------------------------------
@@ -50,7 +75,6 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "matplotlib.sphinxext.plot_directive",
-    "sphinx_autosummary_accessors",
 ]
 
 
