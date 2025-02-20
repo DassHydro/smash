@@ -101,27 +101,37 @@ Now, for better understanding of the values of the control vector, we can use th
     The same applies to `smash.bayesian_optimize_control_info` when using `smash.bayesian_optimize`.
     In the example above, we used the default values for these arguments.
 
-The ``control_info`` dictionary contains detailed information about the optimization control parameters, such as the size, names, and bounds of the control vector.
-For example, the values in the ``control_vector_u`` above correspond to the following parameters:
+The ``control_info`` dictionary provides detailed information about the optimization control parameters, such as the size, names, values, and bounds of the control vector.
+For instance, the previously optimized control values can be accessed as follows:
 
 .. code-block:: python
 
-    >>> control_info["name"]
+    >>> control_info["x"]
 
 .. code-block:: output
 
-    array(['cp-0', 'ct-0', 'kexc-0', 'llr-0'], dtype='<U128')
+    array([4.4183197, 4.6946096, 1.1200012, 6.147493 ], dtype=float32)
 
-Here, the names are in the format ``<key>-0``, where ``<key>`` represents the conceptual model parameters, and ``0`` indicates that these parameters are spatially uniform since we used the default mapping ``mapping='uniform'``.
+These values are the same as those in ``control_vector_u`` and correspond to the following parameters:
+
+.. code-block:: python
+
+    >>> control_info["name"].tolist()
+
+.. code-block:: output
+
+    ['cp-0', 'ct-0', 'kexc-0', 'llr-0']
+
+Here, the names are in the format ``<key>-0``, where ``<key>`` represents the conceptual model parameters/states, and ``0`` indicates that these parameters/states are spatially uniform since we used the default mapping ``mapping='uniform'``.
 For instance, the optimized value:
 
 .. code-block:: python
 
-    >>> control_vector_u[1]
+    >>> control_vector_u.tolist()[1]
 
 .. code-block:: output
 
-    np.float64(4.694608688354492)
+    4.694608688354492
 
 corresponds to the parameter:
 
@@ -136,8 +146,17 @@ corresponds to the parameter:
 which is spatially uniform.
 
 .. note::
-    The control values may differ from the actual conceptual parameters because transformation functions might be applied to the control vector before the optimization process.
-    Refer to the documentation of ``control_tfm`` in the ``optimize_options`` argument of `smash.optimize` (or `smash.bayesian_optimize`) for more information.
+    The control values may differ from the actual conceptual parameters/states because transformation functions might be applied to the control vector before the optimization process 
+    (refer to the documentation of ``control_tfm`` in the ``optimize_options`` argument of `smash.optimize` or `smash.bayesian_optimize` for more information).
+    The control values without any transformation applied are:
+
+    .. code-block:: python
+
+        >>> control_info["x_bkg"]  # background values before transformation
+
+    .. code-block:: output
+        
+        array([ 82.95676  , 109.3561   ,   1.3692893, 467.5437   ], dtype=float32)
 
 Retrieving control parameters and continuing model calibration
 --------------------------------------------------------------
