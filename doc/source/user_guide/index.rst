@@ -61,7 +61,7 @@ providing detailed guidance for experienced users looking to maximize the softwa
     in_depth/calibration_with_regularization_term
     in_depth/advanced_learnable_regionalization
     in_depth/hybrid_model_strutures
-    in_depth/bayesian_estimation_approach
+    in_depth/bayesian_estimation
 
 Post-processing and Interfacing `smash` with External Tools
 -----------------------------------------------------------
