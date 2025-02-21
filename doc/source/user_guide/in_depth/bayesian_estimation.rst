@@ -49,11 +49,11 @@ By default, the optimization problem setup is:
 .. code-block:: output
 	
     {
-	'parameters': ['cp', 'ct', 'kexc', 'llr'],
-	'bounds': {'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0), 'kexc': (-50, 50), 'llr': (1e-06, 1000.0)},
-	'control_tfm': 'sbs',
-	'termination_crit': {'maxiter': 50}
-	}
+        'parameters': ['cp', 'ct', 'kexc', 'llr'],
+        'bounds': {'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0), 'kexc': (-50, 50), 'llr': (1e-06, 1000.0)},
+        'control_tfm': 'sbs',
+        'termination_crit': {'maxiter': 50}
+    }
 
 In addition to the four model parameters ``cp``, ``ct``, ``kexc`` and ``llr``, we can also calibrate the initial state values (``hp`` and ``ht``) so that we work with "good" initial state values in the remainder of this tutorial.
 
@@ -102,9 +102,9 @@ The function `smash.optimize_control_info` allows retrieving information on the 
 .. code-block:: output
 	
     {
-	'cp-0': 134.668212890625, 'ct-0': 226.844482421875, 'kexc-0': -0.818026602268219,
-	'llr-0': 30.322528839111328, 'hp-0': 2.824860712280497e-05, 'ht-0': 0.2247009128332138
-	}
+        'cp-0': 134.668212890625, 'ct-0': 226.844482421875, 'kexc-0': -0.818026602268219,
+        'llr-0': 30.322528839111328, 'hp-0': 2.824860712280497e-05, 'ht-0': 0.2247009128332138
+    }
 
 .. note::
 	The composition of the control vector is fairly obvious here because model parameters are spatially uniform (which is the default option).
@@ -169,10 +169,9 @@ Then, access to the control values:
 .. code-block:: output
 
     {
-	'cp-0': 129.3557891845703, 'ct-0': 198.18748474121094,
-	'kexc-0': -1.0734275579452515, 'llr-0': 39.20307540893555,
-	'sg0-V3524010': 0.13169874250888824, 'sg1-V3524010': 0.2109578251838684
-	}
+        'cp-0': 129.3557891845703, 'ct-0': 198.18748474121094, 'kexc-0': -1.0734275579452515, 'llr-0': 39.20307540893555,
+        'sg0-V3524010': 0.13169874250888824, 'sg1-V3524010': 0.2109578251838684
+    }
 
 Note that the parameter values changed quite a bit compared with the previous non-Bayesian calibration approach: for instance, parameter ``ct`` moved from 227 to 198 mm.
 This is not surprising since the cost function on which calibration is based changed as well.
@@ -274,10 +273,9 @@ Then, access to the control values:
 .. code-block:: output
 
     {
-	'cp-0': 142.9960174560547, 'ct-0': 168.05076599121094,
-	'kexc-0': 0.003317115129902959, 'llr-0': 40.523681640625,
-	'sg0-V3524010': 0.15000002086162567, 'sg1-V3524010': 0.21000000834465027
-	}
+        'cp-0': 142.9960174560547, 'ct-0': 168.05076599121094, 'kexc-0': 0.003317115129902959, 'llr-0': 40.523681640625,
+        'sg0-V3524010': 0.15000002086162567, 'sg1-V3524010': 0.21000000834465027
+    }
 
 Note that calibrated parameter vector changed quite a bit compared with the previous calibration.
 Parameter ``kexc-0`` is close to zero, as expected given the prior constraint.
@@ -341,13 +339,10 @@ The values estimated for ``(sg0, sg1)`` implicitly define the weighting of each 
 .. code-block:: output
 
     {
-	'cp-0': 126.82528686523438, 'ct-0': 183.87586975097656,
-	'kexc-0': 0.003317079972475767, 'llr-0': 44.7859001159668,
-	'sg0-V3524010': 0.1900000423192978, 'sg0-V3515010': 9.999999974752427e-07,
-	'sg0-V3517010': 9.999999974752427e-07,
-	'sg1-V3524010': 0.20000000298023224, 'sg1-V3515010': 0.3100000321865082,
-	'sg1-V3517010': 0.37000003457069397
-	}
+        'cp-0': 126.82528686523438, 'ct-0': 183.87586975097656, 'kexc-0': 0.003317079972475767, 'llr-0': 44.7859001159668,
+        'sg0-V3524010': 0.1900000423192978, 'sg0-V3515010': 9.999999974752427e-07, 'sg0-V3517010': 9.999999974752427e-07,
+        'sg1-V3524010': 0.20000000298023224, 'sg1-V3515010': 0.3100000321865082, 'sg1-V3517010': 0.37000003457069397
+    }
 
 The figure below compares the observed and the simulated discharge time series at gauge ``V3517010`` and indeed shows a quite poor fit, leading to a rather high uncertainty.
 
@@ -422,13 +417,10 @@ The parameters of structural errors also changed quite markedly: for instance, a
 .. code-block:: output
 
     {
-	'cp-0': 141.57150268554688, 'ct-0': 168.050537109375,
-	'kexc-0': 0.0033170804381370544, 'llr-0': 45.69054412841797,
-	'sg0-V3524010': 0.10000099241733551, 'sg0-V3515010': 9.999999974752427e-07,
-	'sg0-V3517010': 9.999999974752427e-07,
-	'sg1-V3524010': 0.1599999964237213, 'sg1-V3515010': 0.36000004410743713,
-	'sg1-V3517010': 0.12000099569559097
-	}
+        'cp-0': 141.57150268554688, 'ct-0': 168.050537109375, 'kexc-0': 0.0033170804381370544, 'llr-0': 45.69054412841797,
+        'sg0-V3524010': 0.10000099241733551, 'sg0-V3515010': 9.999999974752427e-07, 'sg0-V3517010': 9.999999974752427e-07,
+        'sg1-V3524010': 0.1599999964237213, 'sg1-V3515010': 0.36000004410743713, 'sg1-V3517010': 0.12000099569559097
+    }
 
 .. code-block:: python
 
