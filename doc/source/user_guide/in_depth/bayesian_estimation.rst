@@ -133,14 +133,13 @@ However, this Bayesian approach can also be applied to more complex mappings suc
 
 .. warning::
 	The Bayesian estimation approach is currently not supported for neural network-based mappings (``mapping='ann'``).
-	This is due to the high dimensionality and computational complexity associated with neural networks, which make Bayesian inference impractical with the current implementation.
 
-Before running the Bayesian optimization, it is recommended that we begin from a model with "pre-calibrated" parameters/states.
+Before running the Bayesian optimization, we start from a model with "pre-calibrated" parameters/states.
 For instance, we can take this one obtained by the classical optimization above with ``model_0``.  
 
 .. code-block:: python
 
-	>>> model_bayes = smash.bayesian_optimize(model_0)  # starting with pre-calibrated model_0
+	>>> model_bayes = smash.bayesian_optimize(model_0)  # starting from pre-calibrated model_0
 
 .. code-block:: output
 
