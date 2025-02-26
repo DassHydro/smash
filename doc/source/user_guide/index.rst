@@ -25,7 +25,8 @@ It includes beginner tutorials to help users get started quickly and become fami
 .. toctree::
     :maxdepth: 1
 
-    quickstart/model_initialization_and_attributes
+    quickstart/hydrological_mesh_construction
+    quickstart/model_object_initialization
     quickstart/forward_run_classical_calibration
 
 Classical Uses
@@ -60,7 +61,7 @@ providing detailed guidance for experienced users looking to maximize the softwa
     in_depth/calibration_with_regularization_term
     in_depth/advanced_learnable_regionalization
     in_depth/hybrid_model_strutures
-    in_depth/bayesian_estimation_approach
+    in_depth/bayesian_estimation
 
 Post-processing and Interfacing `smash` with External Tools
 -----------------------------------------------------------

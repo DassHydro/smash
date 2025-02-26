@@ -62,12 +62,12 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
         )
 
         for key, value in ret.lcurve_multiset.items():
-            res[f"multiset_estimate.set_{i+1}.lcurve_multiset.{key}"] = np.array(value, ndmin=1)
+            res[f"multiset_estimate.set_{i + 1}.lcurve_multiset.{key}"] = np.array(value, ndmin=1)
 
         qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
 
-        res[f"multiset_estimate.set_{i+1}.sim_q"] = qsim
+        res[f"multiset_estimate.set_{i + 1}.sim_q"] = qsim
 
     return res
 

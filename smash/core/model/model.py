@@ -365,6 +365,19 @@ class Model:
             List of descriptor name.
             This option is ``mandatory`` if **read_descriptor** is set to True.
 
+        read_imperviousness : `bool`, default False
+            Whether or not to read descriptor file(s).
+
+        imperviousness_format : `str`, default 'tif'
+            This option is only applicable if **read_imperviousness** is set to True.
+
+            .. note::
+                Only the ``tif`` format is currently supported.
+
+        imperviousness_directory : `str`
+            Path to the imperviousness file.
+            This option is ``mandatory`` if **read_imperviousness** is set to True.
+
     mesh : `dict[str, Any]`
         Model initialization mesh dictionary.
 
@@ -2465,7 +2478,9 @@ class Model:
         The output contains a list of weight values for trainable layers.
         """
 
-        return [getattr(self._parameters.nn_parameters, f"weight_{i+1}") for i in range(self.setup.n_layers)]
+        return [
+            getattr(self._parameters.nn_parameters, f"weight_{i + 1}") for i in range(self.setup.n_layers)
+        ]
 
     def get_nn_parameters_bias(self) -> list[NDArray[np.float32]]:
         """
@@ -2506,7 +2521,7 @@ class Model:
         The output contains a list of bias values for trainable layers.
         """
 
-        return [getattr(self._parameters.nn_parameters, f"bias_{i+1}") for i in range(self.setup.n_layers)]
+        return [getattr(self._parameters.nn_parameters, f"bias_{i + 1}") for i in range(self.setup.n_layers)]
 
     def set_nn_parameters_weight(
         self,
@@ -2593,10 +2608,10 @@ class Model:
                 np.random.seed(random_state)
 
             for i in range(self.setup.n_layers):
-                (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i+1}").shape
+                (n_neuron, n_in) = getattr(self._parameters.nn_parameters, f"weight_{i + 1}").shape
                 setattr(
                     self._parameters.nn_parameters,
-                    f"weight_{i+1}",
+                    f"weight_{i + 1}",
                     _initialize_nn_parameter(n_in, n_neuron, initializer),
                 )
 
@@ -2606,7 +2621,7 @@ class Model:
 
         else:
             for i, val in enumerate(value):
-                setattr(self._parameters.nn_parameters, f"weight_{i+1}", val)
+                setattr(self._parameters.nn_parameters, f"weight_{i + 1}", val)
 
     def set_nn_parameters_bias(
         self,
@@ -2685,10 +2700,10 @@ class Model:
                 np.random.seed(random_state)
 
             for i in range(self.setup.n_layers):
-                n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i+1}").shape[0]
+                n_neuron = getattr(self._parameters.nn_parameters, f"bias_{i + 1}").shape[0]
                 setattr(
                     self._parameters.nn_parameters,
-                    f"bias_{i+1}",
+                    f"bias_{i + 1}",
                     _initialize_nn_parameter(1, n_neuron, initializer).flatten(),
                 )
 
@@ -2698,7 +2713,7 @@ class Model:
 
         else:
             for i, val in enumerate(value):
-                setattr(self._parameters.nn_parameters, f"bias_{i+1}", val)
+                setattr(self._parameters.nn_parameters, f"bias_{i + 1}", val)
 
     @_model_forward_run_doc_substitution
     @_forward_run_doc_appender

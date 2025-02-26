@@ -14,7 +14,7 @@ First, open a Python interface:
     python3
 
 Imports
-*******
+-------
 
 We will first import the necessary libraries for this tutorial.
 
@@ -24,9 +24,8 @@ We will first import the necessary libraries for this tutorial.
     import pandas as pd
     import matplotlib.pyplot as plt
 
-
 Model object creation
-*********************
+---------------------
 
 Now, we need to create a :class:`smash.Model` object.
 For this case, we will use the :ref:`user_guide.data_and_format_description.cance` dataset as an example.
@@ -40,7 +39,7 @@ Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_datas
     model = smash.Model(setup, mesh)
 
 Signatures computation
-**********************
+----------------------
 
 We can compute the observed signatures as follows. By default, all signatures are computed, but we choose several of them.
 For example, here we choose to compute the continuous runoff coefficient (``'Crc'``), the flow percentile at 90% (``'Cfp90'``),
@@ -85,7 +84,7 @@ For instance, we can reduce the quantile threshold for flood event detection to 
     sig_sim_2.event
 
 Signatures visualization
-************************
+------------------------
 
 Now, we visualize, for instance, the simulated and observed peak flow in the boxplot below.
 
@@ -99,15 +98,20 @@ Now, we visualize, for instance, the simulated and observed peak flow in the box
     @savefig user_guide.classical_uses.hydrological_signatures_boxplot.png
     boxplot = df.boxplot(column=["Epf"], by="domain")
 
-We can also compute the relative errors for any desired signature.
-For example, the computation and visualization of the relative error for the two selected flood event signatures are shown below.
+We can also compute the relative bias for any desired signature.
+For example, the computation and visualization of the relative bias for the two selected flood event signatures are shown below.
 
 .. ipython:: python
 
-    RE_Erc = sig_sim_2.event["Erc"] / sig_obs_2.event["Erc"] - 1
-    RE_Epf = sig_sim_2.event["Epf"] / sig_obs_2.event["Epf"] - 1
+    ERR_Erc = sig_sim_2.event["Erc"] / sig_obs_2.event["Erc"] - 1
+    ERR_Epf = sig_sim_2.event["Epf"] / sig_obs_2.event["Epf"] - 1
 
-    df_re = pd.DataFrame({"RE of Erc": RE_Erc, "RE of Epf": RE_Epf})
+    df_err = pd.DataFrame({"Relative bias (Erc)": ERR_Erc, "Relative bias (Epf)": ERR_Epf})
 
-    @savefig user_guide.classical_uses.hydrological_signatures_relative_error_boxplot.png
-    boxplot_re = df_re.boxplot()
+    @savefig user_guide.classical_uses.hydrological_signatures_relative_bias_boxplot.png
+    boxplot_err = df_err.boxplot()
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')
