@@ -48,16 +48,14 @@ df1_output, stores the flood event signatures and then both DataFrames are saved
 
 .. code-block:: python
 
-    wdir = "/home/aakhtari/Bureau/smash-dev-doc/doc/source/user_guide/Main_folder/"
-    model_files = sorted(glob.glob(f"{wdir}gr4/di_p2/calibration/model/modelD_*.hdf5"))
-
-    df_output = pd.DataFrame(
-        columns = ['code', 'nse', 'kge', 'cp', 'ct', 'kexc', 'llr', 'WI', 'RC_obs', 'RC_sim'])
-    df_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=True, index=False)
-
-    df1_output = pd.DataFrame(
-        columns = ['code', 'EPF', 'ELT', 'ERC', 'EFF'])
-    df1_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=True, index=False)
+    >>> wdir = "/home/aakhtari/Bureau/smash-dev-doc/doc/source/user_guide/Main_folder/"
+    >>> model_files = sorted(glob.glob(f"{wdir}gr4/di_p2/calibration/model/modelD_*.hdf5"))
+    >>> df_output = pd.DataFrame(
+    ...     columns = ['code', 'nse', 'kge', 'cp', 'ct', 'kexc', 'llr', 'WI', 'RC_obs', 'RC_sim'])
+    >>> df_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=True, index=False)
+    >>> df1_output = pd.DataFrame(
+    ...     columns = ['code', 'EPF', 'ELT', 'ERC', 'EFF'])
+    >>> df1_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=True, index=False)
 
 
 The following code lines perform all the required operations in order to extract desired data and save them into the already generated csv files. The first code line reads the model objects 
@@ -65,96 +63,87 @@ one by one by multiprocessing tool and then performs all the following operation
 
 .. code-block:: python
 
-    def compute_scores(model_file, not_used):
-        model = smash.io.read_model(model_file)
-
-        # Performance_scores 
-        perf_nse = np.round(smash.evaluation(model, metric="nse")[0], 2)
-        perf_kge = np.round(smash.evaluation(model, metric="kge")[0], 2)
-
-        '''
-        # Parameters: To get parameters for distributed mapping, the parameters array 
-        should be multiplied by the active_cells array in order to have parameters only 
-        on active cells and then the mean is calculated for each parameter.
-        '''
-        active_cells = model.mesh.active_cell
-
-        cp=model.get_rr_parameters("cp")*active_cells
-        ct=model.get_rr_parameters("ct")*active_cells
-        kexc=model.get_rr_parameters("kexc")*active_cells
-        llr=model.get_rr_parameters("llr")*active_cells
-
-        cp_mean = cp[np.nonzero(cp)].mean()
-        ct_mean = ct[np.nonzero(ct)].mean()
-        kexc_mean = kexc[np.nonzero(kexc)].mean()
-        llr_mean = llr[np.nonzero(llr)].mean()
-
-        # Continuous hydrological signatures (Run_off coefficient [RC] and Wetness Index [WI])
-        prcp = model.atmos_data.mean_prcp[0, :]
-        pet = model.atmos_data.mean_pet[0, :]
-        # Indices with no-data precipitation 
-        no_data_prcp_indices = np.where(prcp==-99.0)[0] 
-        # Indices with no-data evapotranspiration
-        no_data_pet_indices = np.where(pet==-99.0)[0] 
-        # Combines indices with no-data precipitation and evapotranspiration
-        combined_no_data_indices = np.concatenate((no_data_prcp_indices, no_data_pet_indices)) 
-        # Deletes the combined no_data indices for precipitation
-        prcp = np.delete(prcp, combined_no_data_indices)
-        # Deletes the combined no-data indices for evapotranspiration
-        pet = np.delete(pet, combined_no_data_indices) 
-        prcp_sum=np.sum(prcp)
-        pet_sum=np.sum(pet)
-        # Wetness Index
-        WI = prcp_sum/pet_sum
-        sign_obs = smash.signatures(model, domain="obs")
-        sign_sim = smash.signatures(model, domain="sim")
-        #Runoff Coefficient
-        RC_obs = sign_obs.cont["Crc"].values
-        RC_sim = sign_sim.cont["Crc"].values
-
-        # Reading the saved result.csv file and storing the extracted data of each model object in it
-        df_output = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=0)
-        df_out_this_run = pd.DataFrame(
-            data={
-                'code': [model.mesh.code[0]],
-                'nse': [perf_nse[0]],
-                'kge': [perf_kge[0]],
-                'cp': [cp_mean],
-                'ct': [ct_mean],
-                'kexc': [kexc_mean],
-                'llr': [llr_mean],
-                'WI': [WI],
-                'RC_obs': [RC_obs[0]],
-                'RC_sim': [RC_sim[0]]
-            }
-        )
-        df_output = pd.concat([df_output, df_out_this_run])
-        df_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=True, index=False)
-
-        # Error computation for flood event signatures
-        EPF = sign_sim.event['Epf']/(sign_obs.event['Epf']) -1
-        ELT = sign_sim.event['Elt']-(sign_obs.event['Elt'])
-        ERC = sign_sim.event['Erc']/(sign_obs.event['Erc']) -1
-        EFF = sign_sim.event['Eff']/(sign_obs.event['Eff']) -1
-
-        # Reading the saved sig.csv file and storing the extracted data of each model object in it
-        df1_output = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=0)
-        df1_out_this_run = pd.DataFrame(
-            data={
-                'code': sign_sim.event['code'],
-                'EPF': EPF,
-                'ELT': ELT,
-                'ERC': ERC,
-                'EFF': EFF
-            }
-        )
-        df1_output = pd.concat([df1_output, df1_out_this_run],
-        )
-        df1_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=True, index=False)       
-
-    # Below code defines the multiprocessing tool (15 indicates the number of CPUs to be used for the operation)
-    pool = mp.Pool(15)
-    pool.starmap(compute_scores,[(mf, 1) for mf in model_files])
+    >>> def compute_scores(model_file, not_used):
+    ...     model = smash.io.read_model(model_file)
+    ...     # Performance_scores 
+    ...     perf_nse = np.round(smash.evaluation(model, metric="nse")[0], 2)
+    ...     perf_kge = np.round(smash.evaluation(model, metric="kge")[0], 2)
+    ...     '''
+    ...     # Parameters: To get parameters for distributed mapping, the parameters array 
+    ...     should be multiplied by the active_cells array in order to have parameters only 
+    ...     on active cells and then the mean is calculated for each parameter.
+    ...     '''
+    ...     active_cells = model.mesh.active_cell
+    ...     cp=model.get_rr_parameters("cp")*active_cells
+    ...     ct=model.get_rr_parameters("ct")*active_cells
+    ...     kexc=model.get_rr_parameters("kexc")*active_cells
+    ...     llr=model.get_rr_parameters("llr")*active_cells
+    ...     cp_mean = cp[np.nonzero(cp)].mean()
+    ...     ct_mean = ct[np.nonzero(ct)].mean()
+    ...     kexc_mean = kexc[np.nonzero(kexc)].mean()
+    ...     llr_mean = llr[np.nonzero(llr)].mean()
+    ...     # Continuous hydrological signatures (Run_off coefficient [RC] and Wetness Index [WI])
+    ...     prcp = model.atmos_data.mean_prcp[0, :]
+    ...     pet = model.atmos_data.mean_pet[0, :]
+    ...     # Indices with no-data precipitation 
+    ...     no_data_prcp_indices = np.where(prcp==-99.0)[0] 
+    ...     # Indices with no-data evapotranspiration
+    ...     no_data_pet_indices = np.where(pet==-99.0)[0] 
+    ...     # Combines indices with no-data precipitation and evapotranspiration
+    ...     combined_no_data_indices = np.concatenate((no_data_prcp_indices, no_data_pet_indices)) 
+    ...     # Deletes the combined no_data indices for precipitation
+    ...     prcp = np.delete(prcp, combined_no_data_indices)
+    ...     # Deletes the combined no-data indices for evapotranspiration
+    ...     pet = np.delete(pet, combined_no_data_indices) 
+    ...     prcp_sum=np.sum(prcp)
+    ...     pet_sum=np.sum(pet)
+    ...     # Wetness Index
+    ...     WI = prcp_sum/pet_sum
+    ...     sign_obs = smash.signatures(model, domain="obs")
+    ...     sign_sim = smash.signatures(model, domain="sim")
+    ...     #Runoff Coefficient
+    ...     RC_obs = sign_obs.cont["Crc"].values
+    ...     RC_sim = sign_sim.cont["Crc"].values
+    ...     # Reading the saved result.csv file and storing the extracted data of each model object in it
+    ...     df_output = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=0)
+    ...     df_out_this_run = pd.DataFrame(
+    ...         data={
+    ...             'code': [model.mesh.code[0]],
+    ...             'nse': [perf_nse[0]],
+    ...             'kge': [perf_kge[0]],
+    ...             'cp': [cp_mean],
+    ...             'ct': [ct_mean],
+     ...            'kexc': [kexc_mean],
+    ...             'llr': [llr_mean],
+    ...             'WI': [WI],
+    ...             'RC_obs': [RC_obs[0]],
+    ...             'RC_sim': [RC_sim[0]]
+    ...         }
+    ...     )
+    ...     df_output = pd.concat([df_output, df_out_this_run])
+    ...     df_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=True, index=False)
+    ...     # Error computation for flood event signatures
+    ...     EPF = sign_sim.event['Epf']/(sign_obs.event['Epf']) -1
+    ...     ELT = sign_sim.event['Elt']-(sign_obs.event['Elt'])
+    ...     ERC = sign_sim.event['Erc']/(sign_obs.event['Erc']) -1
+    ...     EFF = sign_sim.event['Eff']/(sign_obs.event['Eff']) -1
+    ...     # Reading the saved sig.csv file and storing the extracted data of each model object in it
+    ...     df1_output = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=0)
+    ...     df1_out_this_run = pd.DataFrame(
+    ...         data={
+    ...             'code': sign_sim.event['code'],
+    ...             'EPF': EPF,
+    ...             'ELT': ELT,
+    ...             'ERC': ERC,
+    ...             'EFF': EFF
+    ...         }
+    ...     )
+    ...     df1_output = pd.concat([df1_output, df1_out_this_run],
+    ...     )
+    ...     df1_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=True, index=False)       
+    >>> # Below code defines the multiprocessing tool (15 indicates the number of CPUs to be used for the operation)
+    >>> pool = mp.Pool(15)
+    >>> pool.starmap(compute_scores,[(mf, 1) for mf in model_files])
 
 By the end of the operations we will have two csv files (result.csv and sig.csv) having all the extracted data stored in them. following shows how the csv files look like.
 
