@@ -1,8 +1,24 @@
-commit d5f5608a508550a9f0f125b479a1d72305f27c56
-Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Tue Feb 4 10:38:14 2025 +0100
+commit b57dc197539457979dd5adfda6ec2ca4d929c201
+Author: benRenard <84188144+benRenard@users.noreply.github.com>
+Date:   Tue Feb 25 17:31:32 2025 +0100
 
-    Fix workflow, test_constant
+    DOC: Finished Bayesian tutorial (#383)
+    
+    * Finished Bayesian tutorial
+    
+    * Update bayesian_estimation_approach.rst
+    
+    Updated broken link
+    
+    * Change to code-block style doc + review PR
+    
+    * Fix indent tab in output blocks
+    
+    * Minor fix doc
+    
+    ---------
+    
+    Co-authored-by: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -103,50 +119,50 @@ forward_run.zero-gr4-lr.rr_states.hlr                          |NON MODIFIED
 forward_run.zero-gr4-lr.rr_states.hp                           |NON MODIFIED
 forward_run.zero-gr4-lr.rr_states.ht                           |NON MODIFIED
 forward_run.zero-gr4-lr.sim_q                                  |NON MODIFIED
-forward_run.zero-gr4_mlp-kw.cost                               |NON MODIFIED
-forward_run.zero-gr4_mlp-kw.jobs                               |NON MODIFIED
-forward_run.zero-gr4_mlp-kw.q_domain                           |NON MODIFIED
+forward_run.zero-gr4_mlp-kw.cost                               |MODIFIED
+forward_run.zero-gr4_mlp-kw.jobs                               |MODIFIED
+forward_run.zero-gr4_mlp-kw.q_domain                           |MODIFIED
 forward_run.zero-gr4_mlp-kw.rr_states.hi                       |NON MODIFIED
-forward_run.zero-gr4_mlp-kw.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr4_mlp-kw.rr_states.ht                       |NON MODIFIED
-forward_run.zero-gr4_mlp-kw.sim_q                              |NON MODIFIED
-forward_run.zero-gr4_mlp-lag0.cost                             |NON MODIFIED
-forward_run.zero-gr4_mlp-lag0.jobs                             |NON MODIFIED
-forward_run.zero-gr4_mlp-lag0.q_domain                         |NON MODIFIED
+forward_run.zero-gr4_mlp-kw.rr_states.hp                       |MODIFIED
+forward_run.zero-gr4_mlp-kw.rr_states.ht                       |MODIFIED
+forward_run.zero-gr4_mlp-kw.sim_q                              |MODIFIED
+forward_run.zero-gr4_mlp-lag0.cost                             |MODIFIED
+forward_run.zero-gr4_mlp-lag0.jobs                             |MODIFIED
+forward_run.zero-gr4_mlp-lag0.q_domain                         |MODIFIED
 forward_run.zero-gr4_mlp-lag0.rr_states.hi                     |NON MODIFIED
-forward_run.zero-gr4_mlp-lag0.rr_states.hp                     |NON MODIFIED
-forward_run.zero-gr4_mlp-lag0.rr_states.ht                     |NON MODIFIED
-forward_run.zero-gr4_mlp-lag0.sim_q                            |NON MODIFIED
-forward_run.zero-gr4_mlp-lr.cost                               |NON MODIFIED
-forward_run.zero-gr4_mlp-lr.jobs                               |NON MODIFIED
-forward_run.zero-gr4_mlp-lr.q_domain                           |NON MODIFIED
+forward_run.zero-gr4_mlp-lag0.rr_states.hp                     |MODIFIED
+forward_run.zero-gr4_mlp-lag0.rr_states.ht                     |MODIFIED
+forward_run.zero-gr4_mlp-lag0.sim_q                            |MODIFIED
+forward_run.zero-gr4_mlp-lr.cost                               |MODIFIED
+forward_run.zero-gr4_mlp-lr.jobs                               |MODIFIED
+forward_run.zero-gr4_mlp-lr.q_domain                           |MODIFIED
 forward_run.zero-gr4_mlp-lr.rr_states.hi                       |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.rr_states.hlr                      |NON MODIFIED
-forward_run.zero-gr4_mlp-lr.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr4_mlp-lr.rr_states.ht                       |NON MODIFIED
-forward_run.zero-gr4_mlp-lr.sim_q                              |NON MODIFIED
-forward_run.zero-gr4_ode-kw.cost                               |MODIFIED
-forward_run.zero-gr4_ode-kw.jobs                               |MODIFIED
-forward_run.zero-gr4_ode-kw.q_domain                           |MODIFIED
+forward_run.zero-gr4_mlp-lr.rr_states.hp                       |MODIFIED
+forward_run.zero-gr4_mlp-lr.rr_states.ht                       |MODIFIED
+forward_run.zero-gr4_mlp-lr.sim_q                              |MODIFIED
+forward_run.zero-gr4_ode-kw.cost                               |NON MODIFIED
+forward_run.zero-gr4_ode-kw.jobs                               |NON MODIFIED
+forward_run.zero-gr4_ode-kw.q_domain                           |NON MODIFIED
 forward_run.zero-gr4_ode-kw.rr_states.hi                       |NON MODIFIED
 forward_run.zero-gr4_ode-kw.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr4_ode-kw.rr_states.ht                       |MODIFIED
-forward_run.zero-gr4_ode-kw.sim_q                              |MODIFIED
-forward_run.zero-gr4_ode-lag0.cost                             |MODIFIED
-forward_run.zero-gr4_ode-lag0.jobs                             |MODIFIED
-forward_run.zero-gr4_ode-lag0.q_domain                         |MODIFIED
+forward_run.zero-gr4_ode-kw.rr_states.ht                       |NON MODIFIED
+forward_run.zero-gr4_ode-kw.sim_q                              |NON MODIFIED
+forward_run.zero-gr4_ode-lag0.cost                             |NON MODIFIED
+forward_run.zero-gr4_ode-lag0.jobs                             |NON MODIFIED
+forward_run.zero-gr4_ode-lag0.q_domain                         |NON MODIFIED
 forward_run.zero-gr4_ode-lag0.rr_states.hi                     |NON MODIFIED
 forward_run.zero-gr4_ode-lag0.rr_states.hp                     |NON MODIFIED
-forward_run.zero-gr4_ode-lag0.rr_states.ht                     |MODIFIED
-forward_run.zero-gr4_ode-lag0.sim_q                            |MODIFIED
-forward_run.zero-gr4_ode-lr.cost                               |MODIFIED
-forward_run.zero-gr4_ode-lr.jobs                               |MODIFIED
-forward_run.zero-gr4_ode-lr.q_domain                           |MODIFIED
+forward_run.zero-gr4_ode-lag0.rr_states.ht                     |NON MODIFIED
+forward_run.zero-gr4_ode-lag0.sim_q                            |NON MODIFIED
+forward_run.zero-gr4_ode-lr.cost                               |NON MODIFIED
+forward_run.zero-gr4_ode-lr.jobs                               |NON MODIFIED
+forward_run.zero-gr4_ode-lr.q_domain                           |NON MODIFIED
 forward_run.zero-gr4_ode-lr.rr_states.hi                       |NON MODIFIED
 forward_run.zero-gr4_ode-lr.rr_states.hlr                      |NON MODIFIED
 forward_run.zero-gr4_ode-lr.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr4_ode-lr.rr_states.ht                       |MODIFIED
-forward_run.zero-gr4_ode-lr.sim_q                              |MODIFIED
+forward_run.zero-gr4_ode-lr.rr_states.ht                       |NON MODIFIED
+forward_run.zero-gr4_ode-lr.sim_q                              |NON MODIFIED
 forward_run.zero-gr4_ode_mlp-kw.cost                           |MODIFIED
 forward_run.zero-gr4_ode_mlp-kw.jobs                           |MODIFIED
 forward_run.zero-gr4_ode_mlp-kw.q_domain                       |MODIFIED
@@ -213,28 +229,28 @@ forward_run.zero-gr5-lr.rr_states.hlr                          |NON MODIFIED
 forward_run.zero-gr5-lr.rr_states.hp                           |NON MODIFIED
 forward_run.zero-gr5-lr.rr_states.ht                           |NON MODIFIED
 forward_run.zero-gr5-lr.sim_q                                  |NON MODIFIED
-forward_run.zero-gr5_mlp-kw.cost                               |NON MODIFIED
-forward_run.zero-gr5_mlp-kw.jobs                               |NON MODIFIED
-forward_run.zero-gr5_mlp-kw.q_domain                           |NON MODIFIED
+forward_run.zero-gr5_mlp-kw.cost                               |MODIFIED
+forward_run.zero-gr5_mlp-kw.jobs                               |MODIFIED
+forward_run.zero-gr5_mlp-kw.q_domain                           |MODIFIED
 forward_run.zero-gr5_mlp-kw.rr_states.hi                       |NON MODIFIED
-forward_run.zero-gr5_mlp-kw.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr5_mlp-kw.rr_states.ht                       |NON MODIFIED
-forward_run.zero-gr5_mlp-kw.sim_q                              |NON MODIFIED
-forward_run.zero-gr5_mlp-lag0.cost                             |NON MODIFIED
-forward_run.zero-gr5_mlp-lag0.jobs                             |NON MODIFIED
-forward_run.zero-gr5_mlp-lag0.q_domain                         |NON MODIFIED
+forward_run.zero-gr5_mlp-kw.rr_states.hp                       |MODIFIED
+forward_run.zero-gr5_mlp-kw.rr_states.ht                       |MODIFIED
+forward_run.zero-gr5_mlp-kw.sim_q                              |MODIFIED
+forward_run.zero-gr5_mlp-lag0.cost                             |MODIFIED
+forward_run.zero-gr5_mlp-lag0.jobs                             |MODIFIED
+forward_run.zero-gr5_mlp-lag0.q_domain                         |MODIFIED
 forward_run.zero-gr5_mlp-lag0.rr_states.hi                     |NON MODIFIED
-forward_run.zero-gr5_mlp-lag0.rr_states.hp                     |NON MODIFIED
-forward_run.zero-gr5_mlp-lag0.rr_states.ht                     |NON MODIFIED
-forward_run.zero-gr5_mlp-lag0.sim_q                            |NON MODIFIED
-forward_run.zero-gr5_mlp-lr.cost                               |NON MODIFIED
-forward_run.zero-gr5_mlp-lr.jobs                               |NON MODIFIED
-forward_run.zero-gr5_mlp-lr.q_domain                           |NON MODIFIED
+forward_run.zero-gr5_mlp-lag0.rr_states.hp                     |MODIFIED
+forward_run.zero-gr5_mlp-lag0.rr_states.ht                     |MODIFIED
+forward_run.zero-gr5_mlp-lag0.sim_q                            |MODIFIED
+forward_run.zero-gr5_mlp-lr.cost                               |MODIFIED
+forward_run.zero-gr5_mlp-lr.jobs                               |MODIFIED
+forward_run.zero-gr5_mlp-lr.q_domain                           |MODIFIED
 forward_run.zero-gr5_mlp-lr.rr_states.hi                       |NON MODIFIED
 forward_run.zero-gr5_mlp-lr.rr_states.hlr                      |NON MODIFIED
-forward_run.zero-gr5_mlp-lr.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr5_mlp-lr.rr_states.ht                       |NON MODIFIED
-forward_run.zero-gr5_mlp-lr.sim_q                              |NON MODIFIED
+forward_run.zero-gr5_mlp-lr.rr_states.hp                       |MODIFIED
+forward_run.zero-gr5_mlp-lr.rr_states.ht                       |MODIFIED
+forward_run.zero-gr5_mlp-lr.sim_q                              |MODIFIED
 forward_run.zero-gr5_ri-kw.cost                                |NON MODIFIED
 forward_run.zero-gr5_ri-kw.jobs                                |NON MODIFIED
 forward_run.zero-gr5_ri-kw.q_domain                            |NON MODIFIED
@@ -282,31 +298,31 @@ forward_run.zero-gr6-lr.rr_states.hlr                          |NON MODIFIED
 forward_run.zero-gr6-lr.rr_states.hp                           |NON MODIFIED
 forward_run.zero-gr6-lr.rr_states.ht                           |NON MODIFIED
 forward_run.zero-gr6-lr.sim_q                                  |NON MODIFIED
-forward_run.zero-gr6_mlp-kw.cost                               |NON MODIFIED
-forward_run.zero-gr6_mlp-kw.jobs                               |NON MODIFIED
+forward_run.zero-gr6_mlp-kw.cost                               |MODIFIED
+forward_run.zero-gr6_mlp-kw.jobs                               |MODIFIED
 forward_run.zero-gr6_mlp-kw.q_domain                           |NON MODIFIED
 forward_run.zero-gr6_mlp-kw.rr_states.he                       |NON MODIFIED
 forward_run.zero-gr6_mlp-kw.rr_states.hi                       |NON MODIFIED
 forward_run.zero-gr6_mlp-kw.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr6_mlp-kw.rr_states.ht                       |NON MODIFIED
-forward_run.zero-gr6_mlp-kw.sim_q                              |NON MODIFIED
-forward_run.zero-gr6_mlp-lag0.cost                             |NON MODIFIED
-forward_run.zero-gr6_mlp-lag0.jobs                             |NON MODIFIED
+forward_run.zero-gr6_mlp-kw.rr_states.ht                       |MODIFIED
+forward_run.zero-gr6_mlp-kw.sim_q                              |MODIFIED
+forward_run.zero-gr6_mlp-lag0.cost                             |MODIFIED
+forward_run.zero-gr6_mlp-lag0.jobs                             |MODIFIED
 forward_run.zero-gr6_mlp-lag0.q_domain                         |NON MODIFIED
 forward_run.zero-gr6_mlp-lag0.rr_states.he                     |NON MODIFIED
 forward_run.zero-gr6_mlp-lag0.rr_states.hi                     |NON MODIFIED
 forward_run.zero-gr6_mlp-lag0.rr_states.hp                     |NON MODIFIED
-forward_run.zero-gr6_mlp-lag0.rr_states.ht                     |NON MODIFIED
-forward_run.zero-gr6_mlp-lag0.sim_q                            |NON MODIFIED
-forward_run.zero-gr6_mlp-lr.cost                               |NON MODIFIED
-forward_run.zero-gr6_mlp-lr.jobs                               |NON MODIFIED
+forward_run.zero-gr6_mlp-lag0.rr_states.ht                     |MODIFIED
+forward_run.zero-gr6_mlp-lag0.sim_q                            |MODIFIED
+forward_run.zero-gr6_mlp-lr.cost                               |MODIFIED
+forward_run.zero-gr6_mlp-lr.jobs                               |MODIFIED
 forward_run.zero-gr6_mlp-lr.q_domain                           |NON MODIFIED
 forward_run.zero-gr6_mlp-lr.rr_states.he                       |NON MODIFIED
 forward_run.zero-gr6_mlp-lr.rr_states.hi                       |NON MODIFIED
 forward_run.zero-gr6_mlp-lr.rr_states.hlr                      |NON MODIFIED
 forward_run.zero-gr6_mlp-lr.rr_states.hp                       |NON MODIFIED
-forward_run.zero-gr6_mlp-lr.rr_states.ht                       |NON MODIFIED
-forward_run.zero-gr6_mlp-lr.sim_q                              |NON MODIFIED
+forward_run.zero-gr6_mlp-lr.rr_states.ht                       |MODIFIED
+forward_run.zero-gr6_mlp-lr.sim_q                              |MODIFIED
 forward_run.zero-grc-kw.cost                                   |NON MODIFIED
 forward_run.zero-grc-kw.jobs                                   |NON MODIFIED
 forward_run.zero-grc-kw.q_domain                               |NON MODIFIED
@@ -332,31 +348,31 @@ forward_run.zero-grc-lr.rr_states.hlr                          |NON MODIFIED
 forward_run.zero-grc-lr.rr_states.hp                           |NON MODIFIED
 forward_run.zero-grc-lr.rr_states.ht                           |NON MODIFIED
 forward_run.zero-grc-lr.sim_q                                  |NON MODIFIED
-forward_run.zero-grc_mlp-kw.cost                               |NON MODIFIED
-forward_run.zero-grc_mlp-kw.jobs                               |NON MODIFIED
-forward_run.zero-grc_mlp-kw.q_domain                           |NON MODIFIED
+forward_run.zero-grc_mlp-kw.cost                               |MODIFIED
+forward_run.zero-grc_mlp-kw.jobs                               |MODIFIED
+forward_run.zero-grc_mlp-kw.q_domain                           |MODIFIED
 forward_run.zero-grc_mlp-kw.rr_states.hi                       |NON MODIFIED
-forward_run.zero-grc_mlp-kw.rr_states.hl                       |NON MODIFIED
-forward_run.zero-grc_mlp-kw.rr_states.hp                       |NON MODIFIED
-forward_run.zero-grc_mlp-kw.rr_states.ht                       |NON MODIFIED
-forward_run.zero-grc_mlp-kw.sim_q                              |NON MODIFIED
-forward_run.zero-grc_mlp-lag0.cost                             |NON MODIFIED
-forward_run.zero-grc_mlp-lag0.jobs                             |NON MODIFIED
-forward_run.zero-grc_mlp-lag0.q_domain                         |NON MODIFIED
+forward_run.zero-grc_mlp-kw.rr_states.hl                       |MODIFIED
+forward_run.zero-grc_mlp-kw.rr_states.hp                       |MODIFIED
+forward_run.zero-grc_mlp-kw.rr_states.ht                       |MODIFIED
+forward_run.zero-grc_mlp-kw.sim_q                              |MODIFIED
+forward_run.zero-grc_mlp-lag0.cost                             |MODIFIED
+forward_run.zero-grc_mlp-lag0.jobs                             |MODIFIED
+forward_run.zero-grc_mlp-lag0.q_domain                         |MODIFIED
 forward_run.zero-grc_mlp-lag0.rr_states.hi                     |NON MODIFIED
-forward_run.zero-grc_mlp-lag0.rr_states.hl                     |NON MODIFIED
-forward_run.zero-grc_mlp-lag0.rr_states.hp                     |NON MODIFIED
-forward_run.zero-grc_mlp-lag0.rr_states.ht                     |NON MODIFIED
-forward_run.zero-grc_mlp-lag0.sim_q                            |NON MODIFIED
-forward_run.zero-grc_mlp-lr.cost                               |NON MODIFIED
-forward_run.zero-grc_mlp-lr.jobs                               |NON MODIFIED
-forward_run.zero-grc_mlp-lr.q_domain                           |NON MODIFIED
+forward_run.zero-grc_mlp-lag0.rr_states.hl                     |MODIFIED
+forward_run.zero-grc_mlp-lag0.rr_states.hp                     |MODIFIED
+forward_run.zero-grc_mlp-lag0.rr_states.ht                     |MODIFIED
+forward_run.zero-grc_mlp-lag0.sim_q                            |MODIFIED
+forward_run.zero-grc_mlp-lr.cost                               |MODIFIED
+forward_run.zero-grc_mlp-lr.jobs                               |MODIFIED
+forward_run.zero-grc_mlp-lr.q_domain                           |MODIFIED
 forward_run.zero-grc_mlp-lr.rr_states.hi                       |NON MODIFIED
-forward_run.zero-grc_mlp-lr.rr_states.hl                       |NON MODIFIED
+forward_run.zero-grc_mlp-lr.rr_states.hl                       |MODIFIED
 forward_run.zero-grc_mlp-lr.rr_states.hlr                      |NON MODIFIED
-forward_run.zero-grc_mlp-lr.rr_states.hp                       |NON MODIFIED
-forward_run.zero-grc_mlp-lr.rr_states.ht                       |NON MODIFIED
-forward_run.zero-grc_mlp-lr.sim_q                              |NON MODIFIED
+forward_run.zero-grc_mlp-lr.rr_states.hp                       |MODIFIED
+forward_run.zero-grc_mlp-lr.rr_states.ht                       |MODIFIED
+forward_run.zero-grc_mlp-lr.sim_q                              |MODIFIED
 forward_run.zero-grd-kw.cost                                   |NON MODIFIED
 forward_run.zero-grd-kw.jobs                                   |NON MODIFIED
 forward_run.zero-grd-kw.q_domain                               |NON MODIFIED
@@ -376,25 +392,25 @@ forward_run.zero-grd-lr.rr_states.hlr                          |NON MODIFIED
 forward_run.zero-grd-lr.rr_states.hp                           |NON MODIFIED
 forward_run.zero-grd-lr.rr_states.ht                           |NON MODIFIED
 forward_run.zero-grd-lr.sim_q                                  |NON MODIFIED
-forward_run.zero-grd_mlp-kw.cost                               |NON MODIFIED
-forward_run.zero-grd_mlp-kw.jobs                               |NON MODIFIED
-forward_run.zero-grd_mlp-kw.q_domain                           |NON MODIFIED
-forward_run.zero-grd_mlp-kw.rr_states.hp                       |NON MODIFIED
-forward_run.zero-grd_mlp-kw.rr_states.ht                       |NON MODIFIED
-forward_run.zero-grd_mlp-kw.sim_q                              |NON MODIFIED
-forward_run.zero-grd_mlp-lag0.cost                             |NON MODIFIED
-forward_run.zero-grd_mlp-lag0.jobs                             |NON MODIFIED
-forward_run.zero-grd_mlp-lag0.q_domain                         |NON MODIFIED
-forward_run.zero-grd_mlp-lag0.rr_states.hp                     |NON MODIFIED
-forward_run.zero-grd_mlp-lag0.rr_states.ht                     |NON MODIFIED
-forward_run.zero-grd_mlp-lag0.sim_q                            |NON MODIFIED
-forward_run.zero-grd_mlp-lr.cost                               |NON MODIFIED
-forward_run.zero-grd_mlp-lr.jobs                               |NON MODIFIED
-forward_run.zero-grd_mlp-lr.q_domain                           |NON MODIFIED
+forward_run.zero-grd_mlp-kw.cost                               |MODIFIED
+forward_run.zero-grd_mlp-kw.jobs                               |MODIFIED
+forward_run.zero-grd_mlp-kw.q_domain                           |MODIFIED
+forward_run.zero-grd_mlp-kw.rr_states.hp                       |MODIFIED
+forward_run.zero-grd_mlp-kw.rr_states.ht                       |MODIFIED
+forward_run.zero-grd_mlp-kw.sim_q                              |MODIFIED
+forward_run.zero-grd_mlp-lag0.cost                             |MODIFIED
+forward_run.zero-grd_mlp-lag0.jobs                             |MODIFIED
+forward_run.zero-grd_mlp-lag0.q_domain                         |MODIFIED
+forward_run.zero-grd_mlp-lag0.rr_states.hp                     |MODIFIED
+forward_run.zero-grd_mlp-lag0.rr_states.ht                     |MODIFIED
+forward_run.zero-grd_mlp-lag0.sim_q                            |MODIFIED
+forward_run.zero-grd_mlp-lr.cost                               |MODIFIED
+forward_run.zero-grd_mlp-lr.jobs                               |MODIFIED
+forward_run.zero-grd_mlp-lr.q_domain                           |MODIFIED
 forward_run.zero-grd_mlp-lr.rr_states.hlr                      |NON MODIFIED
-forward_run.zero-grd_mlp-lr.rr_states.hp                       |NON MODIFIED
-forward_run.zero-grd_mlp-lr.rr_states.ht                       |NON MODIFIED
-forward_run.zero-grd_mlp-lr.sim_q                              |NON MODIFIED
+forward_run.zero-grd_mlp-lr.rr_states.hp                       |MODIFIED
+forward_run.zero-grd_mlp-lr.rr_states.ht                       |MODIFIED
+forward_run.zero-grd_mlp-lr.sim_q                              |MODIFIED
 forward_run.zero-loieau-kw.cost                                |NON MODIFIED
 forward_run.zero-loieau-kw.jobs                                |NON MODIFIED
 forward_run.zero-loieau-kw.q_domain                            |NON MODIFIED
@@ -414,25 +430,25 @@ forward_run.zero-loieau-lr.rr_states.ha                        |NON MODIFIED
 forward_run.zero-loieau-lr.rr_states.hc                        |NON MODIFIED
 forward_run.zero-loieau-lr.rr_states.hlr                       |NON MODIFIED
 forward_run.zero-loieau-lr.sim_q                               |NON MODIFIED
-forward_run.zero-loieau_mlp-kw.cost                            |NON MODIFIED
-forward_run.zero-loieau_mlp-kw.jobs                            |NON MODIFIED
-forward_run.zero-loieau_mlp-kw.q_domain                        |NON MODIFIED
-forward_run.zero-loieau_mlp-kw.rr_states.ha                    |NON MODIFIED
-forward_run.zero-loieau_mlp-kw.rr_states.hc                    |NON MODIFIED
-forward_run.zero-loieau_mlp-kw.sim_q                           |NON MODIFIED
-forward_run.zero-loieau_mlp-lag0.cost                          |NON MODIFIED
-forward_run.zero-loieau_mlp-lag0.jobs                          |NON MODIFIED
-forward_run.zero-loieau_mlp-lag0.q_domain                      |NON MODIFIED
-forward_run.zero-loieau_mlp-lag0.rr_states.ha                  |NON MODIFIED
-forward_run.zero-loieau_mlp-lag0.rr_states.hc                  |NON MODIFIED
-forward_run.zero-loieau_mlp-lag0.sim_q                         |NON MODIFIED
-forward_run.zero-loieau_mlp-lr.cost                            |NON MODIFIED
-forward_run.zero-loieau_mlp-lr.jobs                            |NON MODIFIED
-forward_run.zero-loieau_mlp-lr.q_domain                        |NON MODIFIED
-forward_run.zero-loieau_mlp-lr.rr_states.ha                    |NON MODIFIED
-forward_run.zero-loieau_mlp-lr.rr_states.hc                    |NON MODIFIED
+forward_run.zero-loieau_mlp-kw.cost                            |MODIFIED
+forward_run.zero-loieau_mlp-kw.jobs                            |MODIFIED
+forward_run.zero-loieau_mlp-kw.q_domain                        |MODIFIED
+forward_run.zero-loieau_mlp-kw.rr_states.ha                    |MODIFIED
+forward_run.zero-loieau_mlp-kw.rr_states.hc                    |MODIFIED
+forward_run.zero-loieau_mlp-kw.sim_q                           |MODIFIED
+forward_run.zero-loieau_mlp-lag0.cost                          |MODIFIED
+forward_run.zero-loieau_mlp-lag0.jobs                          |MODIFIED
+forward_run.zero-loieau_mlp-lag0.q_domain                      |MODIFIED
+forward_run.zero-loieau_mlp-lag0.rr_states.ha                  |MODIFIED
+forward_run.zero-loieau_mlp-lag0.rr_states.hc                  |MODIFIED
+forward_run.zero-loieau_mlp-lag0.sim_q                         |MODIFIED
+forward_run.zero-loieau_mlp-lr.cost                            |MODIFIED
+forward_run.zero-loieau_mlp-lr.jobs                            |MODIFIED
+forward_run.zero-loieau_mlp-lr.q_domain                        |MODIFIED
+forward_run.zero-loieau_mlp-lr.rr_states.ha                    |MODIFIED
+forward_run.zero-loieau_mlp-lr.rr_states.hc                    |MODIFIED
 forward_run.zero-loieau_mlp-lr.rr_states.hlr                   |NON MODIFIED
-forward_run.zero-loieau_mlp-lr.sim_q                           |NON MODIFIED
+forward_run.zero-loieau_mlp-lr.sim_q                           |MODIFIED
 forward_run.zero-vic3l-kw.cost                                 |NON MODIFIED
 forward_run.zero-vic3l-kw.jobs                                 |NON MODIFIED
 forward_run.zero-vic3l-kw.q_domain                             |NON MODIFIED
@@ -543,33 +559,33 @@ internal_fluxes.zero-gr4_mlp-lr.qup                            |NON MODIFIED
 internal_fluxes.zero-gr4_ode-kw.en                             |NON MODIFIED
 internal_fluxes.zero-gr4_ode-kw.lexc                           |NON MODIFIED
 internal_fluxes.zero-gr4_ode-kw.pn                             |NON MODIFIED
-internal_fluxes.zero-gr4_ode-kw.qim1j                          |MODIFIED
-internal_fluxes.zero-gr4_ode-kw.qt                             |MODIFIED
+internal_fluxes.zero-gr4_ode-kw.qim1j                          |NON MODIFIED
+internal_fluxes.zero-gr4_ode-kw.qt                             |NON MODIFIED
 internal_fluxes.zero-gr4_ode-lag0.en                           |NON MODIFIED
 internal_fluxes.zero-gr4_ode-lag0.lexc                         |NON MODIFIED
 internal_fluxes.zero-gr4_ode-lag0.pn                           |NON MODIFIED
-internal_fluxes.zero-gr4_ode-lag0.qt                           |MODIFIED
-internal_fluxes.zero-gr4_ode-lag0.qup                          |MODIFIED
+internal_fluxes.zero-gr4_ode-lag0.qt                           |NON MODIFIED
+internal_fluxes.zero-gr4_ode-lag0.qup                          |NON MODIFIED
 internal_fluxes.zero-gr4_ode-lr.en                             |NON MODIFIED
 internal_fluxes.zero-gr4_ode-lr.lexc                           |NON MODIFIED
 internal_fluxes.zero-gr4_ode-lr.pn                             |NON MODIFIED
-internal_fluxes.zero-gr4_ode-lr.qt                             |MODIFIED
-internal_fluxes.zero-gr4_ode-lr.qup                            |MODIFIED
+internal_fluxes.zero-gr4_ode-lr.qt                             |NON MODIFIED
+internal_fluxes.zero-gr4_ode-lr.qup                            |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-kw.en                         |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-kw.lexc                       |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-kw.pn                         |NON MODIFIED
-internal_fluxes.zero-gr4_ode_mlp-kw.qim1j                      |MODIFIED
-internal_fluxes.zero-gr4_ode_mlp-kw.qt                         |MODIFIED
+internal_fluxes.zero-gr4_ode_mlp-kw.qim1j                      |NON MODIFIED
+internal_fluxes.zero-gr4_ode_mlp-kw.qt                         |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lag0.en                       |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lag0.lexc                     |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lag0.pn                       |NON MODIFIED
-internal_fluxes.zero-gr4_ode_mlp-lag0.qt                       |MODIFIED
-internal_fluxes.zero-gr4_ode_mlp-lag0.qup                      |MODIFIED
+internal_fluxes.zero-gr4_ode_mlp-lag0.qt                       |NON MODIFIED
+internal_fluxes.zero-gr4_ode_mlp-lag0.qup                      |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lr.en                         |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lr.lexc                       |NON MODIFIED
 internal_fluxes.zero-gr4_ode_mlp-lr.pn                         |NON MODIFIED
-internal_fluxes.zero-gr4_ode_mlp-lr.qt                         |MODIFIED
-internal_fluxes.zero-gr4_ode_mlp-lr.qup                        |MODIFIED
+internal_fluxes.zero-gr4_ode_mlp-lr.qt                         |NON MODIFIED
+internal_fluxes.zero-gr4_ode_mlp-lr.qup                        |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.en                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.es                              |NON MODIFIED
 internal_fluxes.zero-gr4_ri-kw.lexc                            |NON MODIFIED
@@ -1192,66 +1208,66 @@ optimize.zero-gr4-lr.multi-polynomial.control_vector           |NON MODIFIED
 optimize.zero-gr4-lr.multi-polynomial.sim_q                    |NON MODIFIED
 optimize.zero-gr4-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr4-lr.uniform.sim_q                             |NON MODIFIED
-optimize.zero-gr4_mlp-kw.ann.control_vector                    |NON MODIFIED
-optimize.zero-gr4_mlp-kw.ann.sim_q                             |NON MODIFIED
-optimize.zero-gr4_mlp-kw.distributed.control_vector            |NON MODIFIED
-optimize.zero-gr4_mlp-kw.distributed.sim_q                     |NON MODIFIED
-optimize.zero-gr4_mlp-kw.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-gr4_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr4_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr4_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-gr4_mlp-kw.uniform.control_vector                |NON MODIFIED
-optimize.zero-gr4_mlp-kw.uniform.sim_q                         |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.ann.control_vector                  |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.ann.sim_q                           |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.distributed.control_vector          |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.distributed.sim_q                   |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.uniform.control_vector              |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.uniform.sim_q                       |NON MODIFIED
-optimize.zero-gr4_mlp-lr.ann.control_vector                    |NON MODIFIED
-optimize.zero-gr4_mlp-lr.ann.sim_q                             |NON MODIFIED
-optimize.zero-gr4_mlp-lr.distributed.control_vector            |NON MODIFIED
-optimize.zero-gr4_mlp-lr.distributed.sim_q                     |NON MODIFIED
-optimize.zero-gr4_mlp-lr.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-gr4_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr4_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr4_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-gr4_mlp-lr.uniform.control_vector                |NON MODIFIED
-optimize.zero-gr4_mlp-lr.uniform.sim_q                         |NON MODIFIED
-optimize.zero-gr4_ode-kw.ann.control_vector                    |MODIFIED
-optimize.zero-gr4_ode-kw.ann.sim_q                             |MODIFIED
-optimize.zero-gr4_ode-kw.distributed.control_vector            |MODIFIED
-optimize.zero-gr4_ode-kw.distributed.sim_q                     |MODIFIED
-optimize.zero-gr4_ode-kw.multi-linear.control_vector           |MODIFIED
-optimize.zero-gr4_ode-kw.multi-linear.sim_q                    |MODIFIED
-optimize.zero-gr4_ode-kw.multi-polynomial.control_vector       |MODIFIED
-optimize.zero-gr4_ode-kw.multi-polynomial.sim_q                |MODIFIED
-optimize.zero-gr4_ode-kw.uniform.control_vector                |MODIFIED
-optimize.zero-gr4_ode-kw.uniform.sim_q                         |MODIFIED
-optimize.zero-gr4_ode-lag0.ann.control_vector                  |MODIFIED
-optimize.zero-gr4_ode-lag0.ann.sim_q                           |MODIFIED
-optimize.zero-gr4_ode-lag0.distributed.control_vector          |MODIFIED
-optimize.zero-gr4_ode-lag0.distributed.sim_q                   |MODIFIED
-optimize.zero-gr4_ode-lag0.multi-linear.control_vector         |MODIFIED
-optimize.zero-gr4_ode-lag0.multi-linear.sim_q                  |MODIFIED
-optimize.zero-gr4_ode-lag0.multi-polynomial.control_vector     |MODIFIED
-optimize.zero-gr4_ode-lag0.multi-polynomial.sim_q              |MODIFIED
-optimize.zero-gr4_ode-lag0.uniform.control_vector              |MODIFIED
-optimize.zero-gr4_ode-lag0.uniform.sim_q                       |MODIFIED
-optimize.zero-gr4_ode-lr.ann.control_vector                    |MODIFIED
-optimize.zero-gr4_ode-lr.ann.sim_q                             |MODIFIED
-optimize.zero-gr4_ode-lr.distributed.control_vector            |MODIFIED
-optimize.zero-gr4_ode-lr.distributed.sim_q                     |MODIFIED
-optimize.zero-gr4_ode-lr.multi-linear.control_vector           |MODIFIED
-optimize.zero-gr4_ode-lr.multi-linear.sim_q                    |MODIFIED
-optimize.zero-gr4_ode-lr.multi-polynomial.control_vector       |MODIFIED
-optimize.zero-gr4_ode-lr.multi-polynomial.sim_q                |MODIFIED
-optimize.zero-gr4_ode-lr.uniform.control_vector                |MODIFIED
-optimize.zero-gr4_ode-lr.uniform.sim_q                         |MODIFIED
+optimize.zero-gr4_mlp-kw.ann.control_vector                    |MODIFIED
+optimize.zero-gr4_mlp-kw.ann.sim_q                             |MODIFIED
+optimize.zero-gr4_mlp-kw.distributed.control_vector            |MODIFIED
+optimize.zero-gr4_mlp-kw.distributed.sim_q                     |MODIFIED
+optimize.zero-gr4_mlp-kw.multi-linear.control_vector           |MODIFIED
+optimize.zero-gr4_mlp-kw.multi-linear.sim_q                    |MODIFIED
+optimize.zero-gr4_mlp-kw.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-gr4_mlp-kw.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-gr4_mlp-kw.uniform.control_vector                |MODIFIED
+optimize.zero-gr4_mlp-kw.uniform.sim_q                         |MODIFIED
+optimize.zero-gr4_mlp-lag0.ann.control_vector                  |MODIFIED
+optimize.zero-gr4_mlp-lag0.ann.sim_q                           |MODIFIED
+optimize.zero-gr4_mlp-lag0.distributed.control_vector          |MODIFIED
+optimize.zero-gr4_mlp-lag0.distributed.sim_q                   |MODIFIED
+optimize.zero-gr4_mlp-lag0.multi-linear.control_vector         |MODIFIED
+optimize.zero-gr4_mlp-lag0.multi-linear.sim_q                  |MODIFIED
+optimize.zero-gr4_mlp-lag0.multi-polynomial.control_vector     |MODIFIED
+optimize.zero-gr4_mlp-lag0.multi-polynomial.sim_q              |MODIFIED
+optimize.zero-gr4_mlp-lag0.uniform.control_vector              |MODIFIED
+optimize.zero-gr4_mlp-lag0.uniform.sim_q                       |MODIFIED
+optimize.zero-gr4_mlp-lr.ann.control_vector                    |MODIFIED
+optimize.zero-gr4_mlp-lr.ann.sim_q                             |MODIFIED
+optimize.zero-gr4_mlp-lr.distributed.control_vector            |MODIFIED
+optimize.zero-gr4_mlp-lr.distributed.sim_q                     |MODIFIED
+optimize.zero-gr4_mlp-lr.multi-linear.control_vector           |MODIFIED
+optimize.zero-gr4_mlp-lr.multi-linear.sim_q                    |MODIFIED
+optimize.zero-gr4_mlp-lr.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-gr4_mlp-lr.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-gr4_mlp-lr.uniform.control_vector                |MODIFIED
+optimize.zero-gr4_mlp-lr.uniform.sim_q                         |MODIFIED
+optimize.zero-gr4_ode-kw.ann.control_vector                    |NON MODIFIED
+optimize.zero-gr4_ode-kw.ann.sim_q                             |NON MODIFIED
+optimize.zero-gr4_ode-kw.distributed.control_vector            |NON MODIFIED
+optimize.zero-gr4_ode-kw.distributed.sim_q                     |NON MODIFIED
+optimize.zero-gr4_ode-kw.multi-linear.control_vector           |NON MODIFIED
+optimize.zero-gr4_ode-kw.multi-linear.sim_q                    |NON MODIFIED
+optimize.zero-gr4_ode-kw.multi-polynomial.control_vector       |NON MODIFIED
+optimize.zero-gr4_ode-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr4_ode-kw.uniform.control_vector                |NON MODIFIED
+optimize.zero-gr4_ode-kw.uniform.sim_q                         |NON MODIFIED
+optimize.zero-gr4_ode-lag0.ann.control_vector                  |NON MODIFIED
+optimize.zero-gr4_ode-lag0.ann.sim_q                           |NON MODIFIED
+optimize.zero-gr4_ode-lag0.distributed.control_vector          |NON MODIFIED
+optimize.zero-gr4_ode-lag0.distributed.sim_q                   |NON MODIFIED
+optimize.zero-gr4_ode-lag0.multi-linear.control_vector         |NON MODIFIED
+optimize.zero-gr4_ode-lag0.multi-linear.sim_q                  |NON MODIFIED
+optimize.zero-gr4_ode-lag0.multi-polynomial.control_vector     |NON MODIFIED
+optimize.zero-gr4_ode-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-gr4_ode-lag0.uniform.control_vector              |NON MODIFIED
+optimize.zero-gr4_ode-lag0.uniform.sim_q                       |NON MODIFIED
+optimize.zero-gr4_ode-lr.ann.control_vector                    |NON MODIFIED
+optimize.zero-gr4_ode-lr.ann.sim_q                             |NON MODIFIED
+optimize.zero-gr4_ode-lr.distributed.control_vector            |NON MODIFIED
+optimize.zero-gr4_ode-lr.distributed.sim_q                     |NON MODIFIED
+optimize.zero-gr4_ode-lr.multi-linear.control_vector           |NON MODIFIED
+optimize.zero-gr4_ode-lr.multi-linear.sim_q                    |NON MODIFIED
+optimize.zero-gr4_ode-lr.multi-polynomial.control_vector       |NON MODIFIED
+optimize.zero-gr4_ode-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr4_ode-lr.uniform.control_vector                |NON MODIFIED
+optimize.zero-gr4_ode-lr.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr4_ode_mlp-kw.ann.control_vector                |MODIFIED
 optimize.zero-gr4_ode_mlp-kw.ann.sim_q                         |MODIFIED
 optimize.zero-gr4_ode_mlp-kw.distributed.control_vector        |MODIFIED
@@ -1342,36 +1358,36 @@ optimize.zero-gr5-lr.multi-polynomial.control_vector           |NON MODIFIED
 optimize.zero-gr5-lr.multi-polynomial.sim_q                    |NON MODIFIED
 optimize.zero-gr5-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr5-lr.uniform.sim_q                             |NON MODIFIED
-optimize.zero-gr5_mlp-kw.ann.control_vector                    |NON MODIFIED
-optimize.zero-gr5_mlp-kw.ann.sim_q                             |NON MODIFIED
-optimize.zero-gr5_mlp-kw.distributed.control_vector            |NON MODIFIED
-optimize.zero-gr5_mlp-kw.distributed.sim_q                     |NON MODIFIED
-optimize.zero-gr5_mlp-kw.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-gr5_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr5_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr5_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-gr5_mlp-kw.uniform.control_vector                |NON MODIFIED
-optimize.zero-gr5_mlp-kw.uniform.sim_q                         |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.ann.control_vector                  |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.ann.sim_q                           |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.distributed.control_vector          |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.distributed.sim_q                   |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.uniform.control_vector              |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.uniform.sim_q                       |NON MODIFIED
-optimize.zero-gr5_mlp-lr.ann.control_vector                    |NON MODIFIED
-optimize.zero-gr5_mlp-lr.ann.sim_q                             |NON MODIFIED
-optimize.zero-gr5_mlp-lr.distributed.control_vector            |NON MODIFIED
-optimize.zero-gr5_mlp-lr.distributed.sim_q                     |NON MODIFIED
-optimize.zero-gr5_mlp-lr.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-gr5_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr5_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr5_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-gr5_mlp-lr.uniform.control_vector                |NON MODIFIED
-optimize.zero-gr5_mlp-lr.uniform.sim_q                         |NON MODIFIED
+optimize.zero-gr5_mlp-kw.ann.control_vector                    |MODIFIED
+optimize.zero-gr5_mlp-kw.ann.sim_q                             |MODIFIED
+optimize.zero-gr5_mlp-kw.distributed.control_vector            |MODIFIED
+optimize.zero-gr5_mlp-kw.distributed.sim_q                     |MODIFIED
+optimize.zero-gr5_mlp-kw.multi-linear.control_vector           |MODIFIED
+optimize.zero-gr5_mlp-kw.multi-linear.sim_q                    |MODIFIED
+optimize.zero-gr5_mlp-kw.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-gr5_mlp-kw.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-gr5_mlp-kw.uniform.control_vector                |MODIFIED
+optimize.zero-gr5_mlp-kw.uniform.sim_q                         |MODIFIED
+optimize.zero-gr5_mlp-lag0.ann.control_vector                  |MODIFIED
+optimize.zero-gr5_mlp-lag0.ann.sim_q                           |MODIFIED
+optimize.zero-gr5_mlp-lag0.distributed.control_vector          |MODIFIED
+optimize.zero-gr5_mlp-lag0.distributed.sim_q                   |MODIFIED
+optimize.zero-gr5_mlp-lag0.multi-linear.control_vector         |MODIFIED
+optimize.zero-gr5_mlp-lag0.multi-linear.sim_q                  |MODIFIED
+optimize.zero-gr5_mlp-lag0.multi-polynomial.control_vector     |MODIFIED
+optimize.zero-gr5_mlp-lag0.multi-polynomial.sim_q              |MODIFIED
+optimize.zero-gr5_mlp-lag0.uniform.control_vector              |MODIFIED
+optimize.zero-gr5_mlp-lag0.uniform.sim_q                       |MODIFIED
+optimize.zero-gr5_mlp-lr.ann.control_vector                    |MODIFIED
+optimize.zero-gr5_mlp-lr.ann.sim_q                             |MODIFIED
+optimize.zero-gr5_mlp-lr.distributed.control_vector            |MODIFIED
+optimize.zero-gr5_mlp-lr.distributed.sim_q                     |MODIFIED
+optimize.zero-gr5_mlp-lr.multi-linear.control_vector           |MODIFIED
+optimize.zero-gr5_mlp-lr.multi-linear.sim_q                    |MODIFIED
+optimize.zero-gr5_mlp-lr.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-gr5_mlp-lr.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-gr5_mlp-lr.uniform.control_vector                |MODIFIED
+optimize.zero-gr5_mlp-lr.uniform.sim_q                         |MODIFIED
 optimize.zero-gr5_ri-kw.ann.control_vector                     |NON MODIFIED
 optimize.zero-gr5_ri-kw.ann.sim_q                              |NON MODIFIED
 optimize.zero-gr5_ri-kw.distributed.control_vector             |NON MODIFIED
@@ -1432,36 +1448,36 @@ optimize.zero-gr6-lr.multi-polynomial.control_vector           |NON MODIFIED
 optimize.zero-gr6-lr.multi-polynomial.sim_q                    |NON MODIFIED
 optimize.zero-gr6-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr6-lr.uniform.sim_q                             |NON MODIFIED
-optimize.zero-gr6_mlp-kw.ann.control_vector                    |NON MODIFIED
-optimize.zero-gr6_mlp-kw.ann.sim_q                             |NON MODIFIED
-optimize.zero-gr6_mlp-kw.distributed.control_vector            |NON MODIFIED
-optimize.zero-gr6_mlp-kw.distributed.sim_q                     |NON MODIFIED
-optimize.zero-gr6_mlp-kw.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-gr6_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr6_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr6_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-gr6_mlp-kw.uniform.control_vector                |NON MODIFIED
-optimize.zero-gr6_mlp-kw.uniform.sim_q                         |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.ann.control_vector                  |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.ann.sim_q                           |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.distributed.control_vector          |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.distributed.sim_q                   |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-gr6_mlp-kw.ann.control_vector                    |MODIFIED
+optimize.zero-gr6_mlp-kw.ann.sim_q                             |MODIFIED
+optimize.zero-gr6_mlp-kw.distributed.control_vector            |MODIFIED
+optimize.zero-gr6_mlp-kw.distributed.sim_q                     |MODIFIED
+optimize.zero-gr6_mlp-kw.multi-linear.control_vector           |MODIFIED
+optimize.zero-gr6_mlp-kw.multi-linear.sim_q                    |MODIFIED
+optimize.zero-gr6_mlp-kw.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-gr6_mlp-kw.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-gr6_mlp-kw.uniform.control_vector                |MODIFIED
+optimize.zero-gr6_mlp-kw.uniform.sim_q                         |MODIFIED
+optimize.zero-gr6_mlp-lag0.ann.control_vector                  |MODIFIED
+optimize.zero-gr6_mlp-lag0.ann.sim_q                           |MODIFIED
+optimize.zero-gr6_mlp-lag0.distributed.control_vector          |MODIFIED
+optimize.zero-gr6_mlp-lag0.distributed.sim_q                   |MODIFIED
+optimize.zero-gr6_mlp-lag0.multi-linear.control_vector         |MODIFIED
+optimize.zero-gr6_mlp-lag0.multi-linear.sim_q                  |MODIFIED
+optimize.zero-gr6_mlp-lag0.multi-polynomial.control_vector     |MODIFIED
+optimize.zero-gr6_mlp-lag0.multi-polynomial.sim_q              |MODIFIED
 optimize.zero-gr6_mlp-lag0.uniform.control_vector              |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.uniform.sim_q                       |NON MODIFIED
-optimize.zero-gr6_mlp-lr.ann.control_vector                    |NON MODIFIED
-optimize.zero-gr6_mlp-lr.ann.sim_q                             |NON MODIFIED
-optimize.zero-gr6_mlp-lr.distributed.control_vector            |NON MODIFIED
-optimize.zero-gr6_mlp-lr.distributed.sim_q                     |NON MODIFIED
-optimize.zero-gr6_mlp-lr.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-gr6_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr6_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr6_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-gr6_mlp-lr.uniform.control_vector                |NON MODIFIED
-optimize.zero-gr6_mlp-lr.uniform.sim_q                         |NON MODIFIED
+optimize.zero-gr6_mlp-lag0.uniform.sim_q                       |MODIFIED
+optimize.zero-gr6_mlp-lr.ann.control_vector                    |MODIFIED
+optimize.zero-gr6_mlp-lr.ann.sim_q                             |MODIFIED
+optimize.zero-gr6_mlp-lr.distributed.control_vector            |MODIFIED
+optimize.zero-gr6_mlp-lr.distributed.sim_q                     |MODIFIED
+optimize.zero-gr6_mlp-lr.multi-linear.control_vector           |MODIFIED
+optimize.zero-gr6_mlp-lr.multi-linear.sim_q                    |MODIFIED
+optimize.zero-gr6_mlp-lr.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-gr6_mlp-lr.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-gr6_mlp-lr.uniform.control_vector                |MODIFIED
+optimize.zero-gr6_mlp-lr.uniform.sim_q                         |MODIFIED
 optimize.zero-grc-kw.ann.control_vector                        |NON MODIFIED
 optimize.zero-grc-kw.ann.sim_q                                 |NON MODIFIED
 optimize.zero-grc-kw.distributed.control_vector                |NON MODIFIED
@@ -1492,36 +1508,36 @@ optimize.zero-grc-lr.multi-polynomial.control_vector           |NON MODIFIED
 optimize.zero-grc-lr.multi-polynomial.sim_q                    |NON MODIFIED
 optimize.zero-grc-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-grc-lr.uniform.sim_q                             |NON MODIFIED
-optimize.zero-grc_mlp-kw.ann.control_vector                    |NON MODIFIED
-optimize.zero-grc_mlp-kw.ann.sim_q                             |NON MODIFIED
-optimize.zero-grc_mlp-kw.distributed.control_vector            |NON MODIFIED
-optimize.zero-grc_mlp-kw.distributed.sim_q                     |NON MODIFIED
-optimize.zero-grc_mlp-kw.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-grc_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grc_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grc_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-grc_mlp-kw.uniform.control_vector                |NON MODIFIED
-optimize.zero-grc_mlp-kw.uniform.sim_q                         |NON MODIFIED
-optimize.zero-grc_mlp-lag0.ann.control_vector                  |NON MODIFIED
-optimize.zero-grc_mlp-lag0.ann.sim_q                           |NON MODIFIED
-optimize.zero-grc_mlp-lag0.distributed.control_vector          |NON MODIFIED
-optimize.zero-grc_mlp-lag0.distributed.sim_q                   |NON MODIFIED
-optimize.zero-grc_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
-optimize.zero-grc_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-grc_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-grc_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
-optimize.zero-grc_mlp-lag0.uniform.control_vector              |NON MODIFIED
-optimize.zero-grc_mlp-lag0.uniform.sim_q                       |NON MODIFIED
-optimize.zero-grc_mlp-lr.ann.control_vector                    |NON MODIFIED
-optimize.zero-grc_mlp-lr.ann.sim_q                             |NON MODIFIED
-optimize.zero-grc_mlp-lr.distributed.control_vector            |NON MODIFIED
-optimize.zero-grc_mlp-lr.distributed.sim_q                     |NON MODIFIED
-optimize.zero-grc_mlp-lr.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-grc_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grc_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grc_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
-optimize.zero-grc_mlp-lr.uniform.control_vector                |NON MODIFIED
-optimize.zero-grc_mlp-lr.uniform.sim_q                         |NON MODIFIED
+optimize.zero-grc_mlp-kw.ann.control_vector                    |MODIFIED
+optimize.zero-grc_mlp-kw.ann.sim_q                             |MODIFIED
+optimize.zero-grc_mlp-kw.distributed.control_vector            |MODIFIED
+optimize.zero-grc_mlp-kw.distributed.sim_q                     |MODIFIED
+optimize.zero-grc_mlp-kw.multi-linear.control_vector           |MODIFIED
+optimize.zero-grc_mlp-kw.multi-linear.sim_q                    |MODIFIED
+optimize.zero-grc_mlp-kw.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-grc_mlp-kw.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-grc_mlp-kw.uniform.control_vector                |MODIFIED
+optimize.zero-grc_mlp-kw.uniform.sim_q                         |MODIFIED
+optimize.zero-grc_mlp-lag0.ann.control_vector                  |MODIFIED
+optimize.zero-grc_mlp-lag0.ann.sim_q                           |MODIFIED
+optimize.zero-grc_mlp-lag0.distributed.control_vector          |MODIFIED
+optimize.zero-grc_mlp-lag0.distributed.sim_q                   |MODIFIED
+optimize.zero-grc_mlp-lag0.multi-linear.control_vector         |MODIFIED
+optimize.zero-grc_mlp-lag0.multi-linear.sim_q                  |MODIFIED
+optimize.zero-grc_mlp-lag0.multi-polynomial.control_vector     |MODIFIED
+optimize.zero-grc_mlp-lag0.multi-polynomial.sim_q              |MODIFIED
+optimize.zero-grc_mlp-lag0.uniform.control_vector              |MODIFIED
+optimize.zero-grc_mlp-lag0.uniform.sim_q                       |MODIFIED
+optimize.zero-grc_mlp-lr.ann.control_vector                    |MODIFIED
+optimize.zero-grc_mlp-lr.ann.sim_q                             |MODIFIED
+optimize.zero-grc_mlp-lr.distributed.control_vector            |MODIFIED
+optimize.zero-grc_mlp-lr.distributed.sim_q                     |MODIFIED
+optimize.zero-grc_mlp-lr.multi-linear.control_vector           |MODIFIED
+optimize.zero-grc_mlp-lr.multi-linear.sim_q                    |MODIFIED
+optimize.zero-grc_mlp-lr.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-grc_mlp-lr.multi-polynomial.sim_q                |MODIFIED
+optimize.zero-grc_mlp-lr.uniform.control_vector                |MODIFIED
+optimize.zero-grc_mlp-lr.uniform.sim_q                         |MODIFIED
 optimize.zero-grd-kw.ann.control_vector                        |NON MODIFIED
 optimize.zero-grd-kw.ann.sim_q                                 |NON MODIFIED
 optimize.zero-grd-kw.distributed.control_vector                |NON MODIFIED
@@ -1552,36 +1568,36 @@ optimize.zero-grd-lr.multi-polynomial.control_vector           |NON MODIFIED
 optimize.zero-grd-lr.multi-polynomial.sim_q                    |NON MODIFIED
 optimize.zero-grd-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-grd-lr.uniform.sim_q                             |NON MODIFIED
-optimize.zero-grd_mlp-kw.ann.control_vector                    |NON MODIFIED
-optimize.zero-grd_mlp-kw.ann.sim_q                             |NON MODIFIED
-optimize.zero-grd_mlp-kw.distributed.control_vector            |NON MODIFIED
-optimize.zero-grd_mlp-kw.distributed.sim_q                     |NON MODIFIED
-optimize.zero-grd_mlp-kw.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-grd_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grd_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grd_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-grd_mlp-kw.ann.control_vector                    |MODIFIED
+optimize.zero-grd_mlp-kw.ann.sim_q                             |MODIFIED
+optimize.zero-grd_mlp-kw.distributed.control_vector            |MODIFIED
+optimize.zero-grd_mlp-kw.distributed.sim_q                     |MODIFIED
+optimize.zero-grd_mlp-kw.multi-linear.control_vector           |MODIFIED
+optimize.zero-grd_mlp-kw.multi-linear.sim_q                    |MODIFIED
+optimize.zero-grd_mlp-kw.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-grd_mlp-kw.multi-polynomial.sim_q                |MODIFIED
 optimize.zero-grd_mlp-kw.uniform.control_vector                |NON MODIFIED
-optimize.zero-grd_mlp-kw.uniform.sim_q                         |NON MODIFIED
-optimize.zero-grd_mlp-lag0.ann.control_vector                  |NON MODIFIED
-optimize.zero-grd_mlp-lag0.ann.sim_q                           |NON MODIFIED
-optimize.zero-grd_mlp-lag0.distributed.control_vector          |NON MODIFIED
-optimize.zero-grd_mlp-lag0.distributed.sim_q                   |NON MODIFIED
-optimize.zero-grd_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
-optimize.zero-grd_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-grd_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-grd_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-grd_mlp-kw.uniform.sim_q                         |MODIFIED
+optimize.zero-grd_mlp-lag0.ann.control_vector                  |MODIFIED
+optimize.zero-grd_mlp-lag0.ann.sim_q                           |MODIFIED
+optimize.zero-grd_mlp-lag0.distributed.control_vector          |MODIFIED
+optimize.zero-grd_mlp-lag0.distributed.sim_q                   |MODIFIED
+optimize.zero-grd_mlp-lag0.multi-linear.control_vector         |MODIFIED
+optimize.zero-grd_mlp-lag0.multi-linear.sim_q                  |MODIFIED
+optimize.zero-grd_mlp-lag0.multi-polynomial.control_vector     |MODIFIED
+optimize.zero-grd_mlp-lag0.multi-polynomial.sim_q              |MODIFIED
 optimize.zero-grd_mlp-lag0.uniform.control_vector              |NON MODIFIED
-optimize.zero-grd_mlp-lag0.uniform.sim_q                       |NON MODIFIED
-optimize.zero-grd_mlp-lr.ann.control_vector                    |NON MODIFIED
-optimize.zero-grd_mlp-lr.ann.sim_q                             |NON MODIFIED
-optimize.zero-grd_mlp-lr.distributed.control_vector            |NON MODIFIED
-optimize.zero-grd_mlp-lr.distributed.sim_q                     |NON MODIFIED
-optimize.zero-grd_mlp-lr.multi-linear.control_vector           |NON MODIFIED
-optimize.zero-grd_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grd_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grd_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-grd_mlp-lag0.uniform.sim_q                       |MODIFIED
+optimize.zero-grd_mlp-lr.ann.control_vector                    |MODIFIED
+optimize.zero-grd_mlp-lr.ann.sim_q                             |MODIFIED
+optimize.zero-grd_mlp-lr.distributed.control_vector            |MODIFIED
+optimize.zero-grd_mlp-lr.distributed.sim_q                     |MODIFIED
+optimize.zero-grd_mlp-lr.multi-linear.control_vector           |MODIFIED
+optimize.zero-grd_mlp-lr.multi-linear.sim_q                    |MODIFIED
+optimize.zero-grd_mlp-lr.multi-polynomial.control_vector       |MODIFIED
+optimize.zero-grd_mlp-lr.multi-polynomial.sim_q                |MODIFIED
 optimize.zero-grd_mlp-lr.uniform.control_vector                |NON MODIFIED
-optimize.zero-grd_mlp-lr.uniform.sim_q                         |NON MODIFIED
+optimize.zero-grd_mlp-lr.uniform.sim_q                         |MODIFIED
 optimize.zero-loieau-kw.ann.control_vector                     |NON MODIFIED
 optimize.zero-loieau-kw.ann.sim_q                              |NON MODIFIED
 optimize.zero-loieau-kw.distributed.control_vector             |NON MODIFIED
@@ -1612,36 +1628,36 @@ optimize.zero-loieau-lr.multi-polynomial.control_vector        |NON MODIFIED
 optimize.zero-loieau-lr.multi-polynomial.sim_q                 |NON MODIFIED
 optimize.zero-loieau-lr.uniform.control_vector                 |NON MODIFIED
 optimize.zero-loieau-lr.uniform.sim_q                          |NON MODIFIED
-optimize.zero-loieau_mlp-kw.ann.control_vector                 |NON MODIFIED
-optimize.zero-loieau_mlp-kw.ann.sim_q                          |NON MODIFIED
-optimize.zero-loieau_mlp-kw.distributed.control_vector         |NON MODIFIED
-optimize.zero-loieau_mlp-kw.distributed.sim_q                  |NON MODIFIED
-optimize.zero-loieau_mlp-kw.multi-linear.control_vector        |NON MODIFIED
-optimize.zero-loieau_mlp-kw.multi-linear.sim_q                 |NON MODIFIED
-optimize.zero-loieau_mlp-kw.multi-polynomial.control_vector    |NON MODIFIED
-optimize.zero-loieau_mlp-kw.multi-polynomial.sim_q             |NON MODIFIED
-optimize.zero-loieau_mlp-kw.uniform.control_vector             |NON MODIFIED
-optimize.zero-loieau_mlp-kw.uniform.sim_q                      |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.ann.control_vector               |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.ann.sim_q                        |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.distributed.control_vector       |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.distributed.sim_q                |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.multi-linear.control_vector      |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.multi-linear.sim_q               |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.multi-polynomial.control_vector  |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.multi-polynomial.sim_q           |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.uniform.control_vector           |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.uniform.sim_q                    |NON MODIFIED
-optimize.zero-loieau_mlp-lr.ann.control_vector                 |NON MODIFIED
-optimize.zero-loieau_mlp-lr.ann.sim_q                          |NON MODIFIED
-optimize.zero-loieau_mlp-lr.distributed.control_vector         |NON MODIFIED
-optimize.zero-loieau_mlp-lr.distributed.sim_q                  |NON MODIFIED
-optimize.zero-loieau_mlp-lr.multi-linear.control_vector        |NON MODIFIED
-optimize.zero-loieau_mlp-lr.multi-linear.sim_q                 |NON MODIFIED
-optimize.zero-loieau_mlp-lr.multi-polynomial.control_vector    |NON MODIFIED
-optimize.zero-loieau_mlp-lr.multi-polynomial.sim_q             |NON MODIFIED
-optimize.zero-loieau_mlp-lr.uniform.control_vector             |NON MODIFIED
-optimize.zero-loieau_mlp-lr.uniform.sim_q                      |NON MODIFIED
+optimize.zero-loieau_mlp-kw.ann.control_vector                 |MODIFIED
+optimize.zero-loieau_mlp-kw.ann.sim_q                          |MODIFIED
+optimize.zero-loieau_mlp-kw.distributed.control_vector         |MODIFIED
+optimize.zero-loieau_mlp-kw.distributed.sim_q                  |MODIFIED
+optimize.zero-loieau_mlp-kw.multi-linear.control_vector        |MODIFIED
+optimize.zero-loieau_mlp-kw.multi-linear.sim_q                 |MODIFIED
+optimize.zero-loieau_mlp-kw.multi-polynomial.control_vector    |MODIFIED
+optimize.zero-loieau_mlp-kw.multi-polynomial.sim_q             |MODIFIED
+optimize.zero-loieau_mlp-kw.uniform.control_vector             |MODIFIED
+optimize.zero-loieau_mlp-kw.uniform.sim_q                      |MODIFIED
+optimize.zero-loieau_mlp-lag0.ann.control_vector               |MODIFIED
+optimize.zero-loieau_mlp-lag0.ann.sim_q                        |MODIFIED
+optimize.zero-loieau_mlp-lag0.distributed.control_vector       |MODIFIED
+optimize.zero-loieau_mlp-lag0.distributed.sim_q                |MODIFIED
+optimize.zero-loieau_mlp-lag0.multi-linear.control_vector      |MODIFIED
+optimize.zero-loieau_mlp-lag0.multi-linear.sim_q               |MODIFIED
+optimize.zero-loieau_mlp-lag0.multi-polynomial.control_vector  |MODIFIED
+optimize.zero-loieau_mlp-lag0.multi-polynomial.sim_q           |MODIFIED
+optimize.zero-loieau_mlp-lag0.uniform.control_vector           |MODIFIED
+optimize.zero-loieau_mlp-lag0.uniform.sim_q                    |MODIFIED
+optimize.zero-loieau_mlp-lr.ann.control_vector                 |MODIFIED
+optimize.zero-loieau_mlp-lr.ann.sim_q                          |MODIFIED
+optimize.zero-loieau_mlp-lr.distributed.control_vector         |MODIFIED
+optimize.zero-loieau_mlp-lr.distributed.sim_q                  |MODIFIED
+optimize.zero-loieau_mlp-lr.multi-linear.control_vector        |MODIFIED
+optimize.zero-loieau_mlp-lr.multi-linear.sim_q                 |MODIFIED
+optimize.zero-loieau_mlp-lr.multi-polynomial.control_vector    |MODIFIED
+optimize.zero-loieau_mlp-lr.multi-polynomial.sim_q             |MODIFIED
+optimize.zero-loieau_mlp-lr.uniform.control_vector             |MODIFIED
+optimize.zero-loieau_mlp-lr.uniform.sim_q                      |MODIFIED
 optimize.zero-vic3l-kw.ann.control_vector                      |NON MODIFIED
 optimize.zero-vic3l-kw.ann.sim_q                               |NON MODIFIED
 optimize.zero-vic3l-kw.distributed.control_vector              |NON MODIFIED
