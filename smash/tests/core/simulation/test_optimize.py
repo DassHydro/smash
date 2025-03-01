@@ -32,6 +32,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
         # % Hybrid forward hydrological model with NN
         if model.setup.n_layers > 0:
             model.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
+            model.set_nn_parameters_weight([w*0.2 for w in model.get_nn_parameters_weight()])
 
         for mp in MAPPING:
             if mp == "ann":
