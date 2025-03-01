@@ -1,8 +1,8 @@
-commit ad0fed2194c193dc44e5c795d50b0380a45835de
+commit 050d0c49b02080ec564b83e32cde03372b63bff6
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Fri Feb 28 18:14:07 2025 +0100
+Date:   Sat Mar 1 18:48:12 2025 +0100
 
-    MAINT/ENH: add SiLU activation function
+    FIX: decrease initialize weight NN to avoid precision issue with exp function
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
