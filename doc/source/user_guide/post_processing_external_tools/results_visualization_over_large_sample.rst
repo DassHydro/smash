@@ -37,6 +37,7 @@ The libraries that need to be imported are as follows:
     >>> import smash
     >>> import numpy as np
     >>> import pandas as pd
+    >>> import os
     >>> import multiprocessing as mp
     >>> import glob
     >>> import matplotlib.pyplot as plt
