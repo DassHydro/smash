@@ -21,7 +21,7 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
 
         # % Hybrid forward hydrological model with NN
         if model.setup.n_layers > 0:
-            model.set_nn_parameters_weight(initializer="normal", random_state=11)
+            model.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
 
         instance, ret = smash.forward_run(
             model,
@@ -37,7 +37,7 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
         mask = model.mesh.active_cell == 0
 
         qsim = instance.response.q[:].flatten()
-        qsim = qsim[::10]  # extract values at every 10th position
+        qsim = qsim[qsim > np.quantile(qsim, 0.95)]  # extract values depassing 0.95-quantile
 
         res[f"forward_run.{instance.setup.structure}.sim_q"] = qsim
         res[f"forward_run.{instance.setup.structure}.cost"] = np.array(ret.cost, ndmin=1)
