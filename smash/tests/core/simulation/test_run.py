@@ -58,7 +58,7 @@ def test_forward_run():
 
     for key, value in res.items():
         # % Check qsim in run
-        if key in ("sim_q", "q_domain"):
+        if key.split(".")[-1] in ("sim_q", "q_domain"):
             atol = 1e-02  # sim_q and q_domain with high tolerance
         else:
             atol = 1e-06
@@ -71,7 +71,7 @@ def test_sparse_forward_run():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        if key in ("sim_q", "q_domain"):
+        if key.split(".")[-1] in ("sim_q", "q_domain"):
             atol = 1e-02  # sim_q and q_domain with high tolerance
         else:
             atol = 1e-06

@@ -77,7 +77,7 @@ def test_multiset_estimate():
 
     for key, value in res.items():
         # % Check qsim in run
-        if key == "sim_q":
+        if key.split(".")[-1] == "sim_q":
             atol = 1e-01  # sim_q with high tolerance for high values
         else:
             atol = 1e-03
