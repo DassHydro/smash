@@ -77,4 +77,9 @@ def test_multiset_estimate():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key
+        if key == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), key

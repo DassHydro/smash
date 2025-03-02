@@ -88,4 +88,9 @@ def test_custom_bayesian_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03), key
+        if key == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol), key

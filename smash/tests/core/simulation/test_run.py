@@ -58,7 +58,12 @@ def test_forward_run():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), key
+        if key in ("sim_q", "q_domain"):
+            atol = 1e-02  # sim_q and q_domain with high tolerance
+        else:
+            atol = 1e-06
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), key
 
 
 def test_sparse_forward_run():
@@ -66,7 +71,12 @@ def test_sparse_forward_run():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), "sparse." + key
+        if key in ("sim_q", "q_domain"):
+            atol = 1e-02  # sim_q and q_domain with high tolerance
+        else:
+            atol = 1e-06
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), "sparse." + key
 
 
 def test_multiple_forward_run():

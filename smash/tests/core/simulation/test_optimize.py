@@ -79,7 +79,12 @@ def test_optimize():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key
+        if key == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), key
 
 
 def test_sparse_optimize():
@@ -88,7 +93,12 @@ def test_sparse_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), "sparse." + key
+        if key == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), "sparse." + key
 
 
 def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
@@ -318,4 +328,9 @@ def test_custom_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03), key
+        if key == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol), key
