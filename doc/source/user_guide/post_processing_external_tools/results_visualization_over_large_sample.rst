@@ -4,80 +4,91 @@
 Results Visualization Over Large Sample 
 =======================================
 
-The objective of this tutorial is to explain how to work with large data samples, mainly data extraction and results visualization. For the objective of this tutorial model calibration and validation using SMASH is done for 30 catchments across France. Uniform and distributed optimizations are performed for each catchment over two periods, p1 (from 1 August 2006 to 31 July 2013) and p2 (from 1 August 2013 to 31 July 2020), both periods are used for calibration and validation.
-The calibration and validation model objects are saved in hdf5 format. The location and the regime of the catchments are shown in the below figure.
+The objective of this tutorial is to explain how to work with large data samples, focusing on data extraction and results visualization. 
+We assume that model calibration and validation have already been performed with `smash`, and the `Model <smash.Model>` objects have been saved using the `smash.io.save_model` method. 
+For example, we consider calibration methods with spatially uniform and distributed parameters on period ``p1`` (from 1 August 2006 to 31 July 2013), and validation on period ``p2`` (from 1 August 2013 to 31 July 2020), over 30 French catchments as shown in the figure below.
 
 .. image:: ../../_static/user_guide.post_processing_external_tools.results_visualization_over_large_sample.catchments.png
     :align: center
-    :width: 700
 
-Following diagram represents the directory path of the model objects, results and extra files that will be used in this tutorial. The calibrated and validated model objects are saved in the model folder for each set of calculations (un_p1, un_p2, di_p1 and di_p2), un stands for uniform and di for distributed optimization. The extracted data will be stored in the results folder.
+The following diagram represents the directory path of the `Model <smash.Model>` objects, results, and extra files that will be used in this tutorial.
+The `Model <smash.Model>` objects used for calibration and validation are saved in the ``model`` folder for each set of calculations (``un_p1``, ``un_p2``, ``di_p1``, and ``di_p2``), where ``un`` stands for uniform and ``di`` for distributed mapping.
+The extracted data will be stored in the ``results`` folder.
 
 .. image:: ../../_static/user_guide.post_processing_external_tools.results_visualization_over_large_sample.directory_flow_chart.png
     :align: center
-    :width: 700
-
 
 .. note::
-    It is mentionable that the arrangement of the directory path is not mandatory to be like shown in the above diagram chart, it is optional and can be arranged by the user arbitrary.
+    The directory structure shown in the diagram is optional and can be customized by the user as needed.
 
+First, open a Python interface:
 
-The libraries which are needed to be imported are as following:
+.. code-block:: none
+
+    python3
+
+Imports
+-------
+
+The libraries that need to be imported are as follows:
 
 .. code-block:: python
     
     >>> import smash
     >>> import numpy as np
     >>> import pandas as pd
-    >>> import os 
-    >>> import csv
     >>> import multiprocessing as mp
     >>> import glob
     >>> import matplotlib.pyplot as plt
     >>> import matplotlib as mpl
     >>> from functools import reduce
-    >>> import geopandas as gpd 
+    >>> import geopandas as gpd
 
-Data extraction
----------------
-This section represents how to extract data (performance_scores, model parameters and signatures) from multiple model objects using multiprocessing tool.
-As an example we want to extract data for the model objects of distributed calibration over period p2.
-The first code line below assigns the path to the main folder where model objects are saved and the second line sorts the model object files by glob tool. 
-Then two DataFrames are generated, df_output which stores the performance scores(nse and kge), calibrated Parameters (cp, ct, kexc and llr) and Continuous hydrological signatures (Runoff coefficient and Wetness index). The second DataFrame,
-df1_output, stores the flood event signatures and then both DataFrames are saved as csv files (result.csv and sig.csv). 
+Model evaluation
+----------------
+This section demonstrates how to evaluate calibration results (model parameters, scoring metrics, signatures) from multiple model objects using the multiprocessing tool.
+As an example, we perform this evaluation for distributed calibration over period ``p2``.
+
+First, assign the path to the main folder where model objects are saved and sort the model object files:
 
 .. code-block:: python
 
-    >>> wdir = "/home/aakhtari/Bureau/smash-dev-doc/doc/source/user_guide/Main_folder/"
-    >>> model_files = sorted(glob.glob(f"{wdir}gr4/di_p2/calibration/model/modelD_*.hdf5"))
+    >>> wdir = "./Main_folder/"
+    >>> model_files = sorted(glob.glob(os.path.join(wdir, "gr4/di_p2/calibration/model/modelD_*.hdf5")))
+
+Next, generate two `DataFrame <pandas.DataFrame>` objects:
+
+- ``df_output``: Stores the performance scores (``NSE`` and ``KGE``), calibrated parameters (``cp``, ``ct``, ``kexc``, and ``llr``), and continuous hydrological signatures (runoff coefficients and wetness index).
+- ``df1_output``: Stores the flood event signatures.
+
+Save these DataFrames as ``result.csv`` and ``sig.csv``:
+
+.. code-block:: python
+
     >>> df_output = pd.DataFrame(
-    ...     columns = ['code', 'nse', 'kge', 'cp', 'ct', 'kexc', 'llr', 'WI', 'RC_obs', 'RC_sim'])
-    >>> df_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=True, index=False)
-    >>> df1_output = pd.DataFrame(
-    ...     columns = ['code', 'EPF', 'ELT', 'ERC', 'EFF'])
-    >>> df1_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=True, index=False)
+    ...     columns=['code', 'nse', 'kge', 'cp', 'ct', 'kexc', 'llr', 'WI', 'RC_obs', 'RC_sim']
+    ... )
+    >>> df_output.to_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/result.csv"), header=True, index=False)
+    >>> df1_output = pd.DataFrame(columns=['code', 'Epf', 'Elt', 'Erc', 'Eff'])
+    >>> df1_output.to_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/sig.csv"), header=True, index=False)
 
-
-The following code lines perform all the required operations in order to extract desired data and save them into the already generated csv files. The first code line reads the model objects 
-one by one by multiprocessing tool and then performs all the following operations for each model object.
+The following function performs all the required operations to extract the desired results and save them into the previously generated ``csv`` files.
 
 .. code-block:: python
 
-    >>> def compute_scores(model_file, not_used):
+    >>> def evaluate_models(model_file, not_used):
     ...     model = smash.io.read_model(model_file)
     ...     # Performance_scores 
     ...     perf_nse = np.round(smash.evaluation(model, metric="nse")[0], 2)
     ...     perf_kge = np.round(smash.evaluation(model, metric="kge")[0], 2)
-    ...     '''
     ...     # Parameters: To get parameters for distributed mapping, the parameters array 
-    ...     should be multiplied by the active_cells array in order to have parameters only 
-    ...     on active cells and then the mean is calculated for each parameter.
-    ...     '''
+    ...     # should be multiplied by the active_cells array in order to have parameters only 
+    ...     # on active cells and then the mean is calculated for each parameter.
     ...     active_cells = model.mesh.active_cell
-    ...     cp=model.get_rr_parameters("cp")*active_cells
-    ...     ct=model.get_rr_parameters("ct")*active_cells
-    ...     kexc=model.get_rr_parameters("kexc")*active_cells
-    ...     llr=model.get_rr_parameters("llr")*active_cells
+    ...     cp = model.get_rr_parameters("cp")*active_cells
+    ...     ct = model.get_rr_parameters("ct")*active_cells
+    ...     kexc = model.get_rr_parameters("kexc")*active_cells
+    ...     llr = model.get_rr_parameters("llr")*active_cells
     ...     cp_mean = cp[np.nonzero(cp)].mean()
     ...     ct_mean = ct[np.nonzero(ct)].mean()
     ...     kexc_mean = kexc[np.nonzero(kexc)].mean()
@@ -95,8 +106,8 @@ one by one by multiprocessing tool and then performs all the following operation
     ...     prcp = np.delete(prcp, combined_no_data_indices)
     ...     # Deletes the combined no-data indices for evapotranspiration
     ...     pet = np.delete(pet, combined_no_data_indices) 
-    ...     prcp_sum=np.sum(prcp)
-    ...     pet_sum=np.sum(pet)
+    ...     prcp_sum = np.sum(prcp)
+    ...     pet_sum = np.sum(pet)
     ...     # Wetness Index
     ...     WI = prcp_sum/pet_sum
     ...     sign_obs = smash.signatures(model, domain="obs")
@@ -105,15 +116,15 @@ one by one by multiprocessing tool and then performs all the following operation
     ...     RC_obs = sign_obs.cont["Crc"].values
     ...     RC_sim = sign_sim.cont["Crc"].values
     ...     # Reading the saved result.csv file and storing the extracted data of each model object in it
-    ...     df_output = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=0)
+    ...     df_output = pd.read_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/result.csv"), header=0)
     ...     df_out_this_run = pd.DataFrame(
-    ...         data={
+    ...         data = {
     ...             'code': [model.mesh.code[0]],
     ...             'nse': [perf_nse[0]],
     ...             'kge': [perf_kge[0]],
     ...             'cp': [cp_mean],
     ...             'ct': [ct_mean],
-     ...            'kexc': [kexc_mean],
+    ...             'kexc': [kexc_mean],
     ...             'llr': [llr_mean],
     ...             'WI': [WI],
     ...             'RC_obs': [RC_obs[0]],
@@ -121,36 +132,40 @@ one by one by multiprocessing tool and then performs all the following operation
     ...         }
     ...     )
     ...     df_output = pd.concat([df_output, df_out_this_run])
-    ...     df_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=True, index=False)
+    ...     df_output.to_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/result.csv"), header=True, index=False)
     ...     # Error computation for flood event signatures
-    ...     EPF = sign_sim.event['Epf']/(sign_obs.event['Epf']) -1
-    ...     ELT = sign_sim.event['Elt']-(sign_obs.event['Elt'])
-    ...     ERC = sign_sim.event['Erc']/(sign_obs.event['Erc']) -1
-    ...     EFF = sign_sim.event['Eff']/(sign_obs.event['Eff']) -1
+    ...     Epf = sign_sim.event['Epf']/(sign_obs.event['Epf']) -1
+    ...     Elt = sign_sim.event['Elt']-(sign_obs.event['Elt'])
+    ...     Erc = sign_sim.event['Erc']/(sign_obs.event['Erc']) -1
+    ...     Eff = sign_sim.event['Eff']/(sign_obs.event['Eff']) -1
     ...     # Reading the saved sig.csv file and storing the extracted data of each model object in it
-    ...     df1_output = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=0)
+    ...     df1_output = pd.read_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/sig.csv"), header=0)
     ...     df1_out_this_run = pd.DataFrame(
-    ...         data={
+    ...         data = {
     ...             'code': sign_sim.event['code'],
-    ...             'EPF': EPF,
-    ...             'ELT': ELT,
-    ...             'ERC': ERC,
-    ...             'EFF': EFF
+    ...             'Epf': Epf,
+    ...             'Elt': Elt,
+    ...             'Erc': Erc,
+    ...             'Eff': Eff
     ...         }
     ...     )
-    ...     df1_output = pd.concat([df1_output, df1_out_this_run],
-    ...     )
-    ...     df1_output.to_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=True, index=False)       
-    >>> # Below code defines the multiprocessing tool (15 indicates the number of CPUs to be used for the operation)
-    >>> pool = mp.Pool(15)
-    >>> pool.starmap(compute_scores,[(mf, 1) for mf in model_files])
+    ...     df1_output = pd.concat([df1_output, df1_out_this_run], ignore_index=True)
+    ...     df1_output.to_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/sig.csv"), header=True, index=False)
+    ...
 
-By the end of the operations we will have two csv files (result.csv and sig.csv) having all the extracted data stored in them. following shows how the csv files look like.
+Evaluate `Model <smash.Model>` objects using 10 CPUs with the multiprocessing tool.
 
 .. code-block:: python
 
-    >>> wdir = "/home/aakhtari/Bureau/smash-dev-doc/doc/source/user_guide/Main_folder/"
-    >>> result_csv_file = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/result.csv", header=0)
+    >>> pool = mp.Pool(10)
+    >>> pool.starmap(evaluate_models,[(mf, 1) for mf in model_files])
+    >>> pool.close()
+
+Then, the computed values are saved to the ``result.csv`` and ``sig.csv`` files.
+
+.. code-block:: python
+
+    >>> result_csv_file = pd.read_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/result.csv"), header=0)
     >>> result_csv_file.head()
 
 .. code-block:: output
@@ -162,43 +177,43 @@ By the end of the operations we will have two csv files (result.csv and sig.csv)
     3  O3314010  0.84  0.86  374.452489  586.756746  2.929307   41.757472  2.979111  0.951228  0.966503
     4  J5704810  0.93  0.88  192.298131  892.015079  0.883080  127.961232  1.583767  0.581201  0.573484
 
-
-
 .. code-block:: python
 
-    >>> sig_csv_file = pd.read_csv(f"{wdir}gr4/di_p2/calibration/results/sig.csv", header=0)
+    >>> sig_csv_file = pd.read_csv(os.path.join(wdir, "gr4/di_p2/calibration/results/sig.csv"), header=0)
     >>> sig_csv_file.head()
 
 .. code-block:: output
 
-           code       EPF   ELT       ERC       EFF
+           code       Epf   Elt       Erc       Eff
     0  A0220200 -0.995463  82.0 -0.998180 -0.991648
     1  A0220200 -0.957354   0.0 -0.979879 -0.949528
     2  A0220200 -0.903731  -1.0 -0.859178 -0.889341
     3  A0220200 -0.766359  -2.0 -0.741470 -0.747489
     4  A0220200 -0.792389  -4.0 -0.769544 -0.799484
 
-
-
-Now we can Visualize the results and make plots with the extracted data stored inside the two mentioned csv files (result.csv and sig.csv) for any set of computations.
-
+Now we can visualize the results and make plots using both ``csv`` files (``result.csv`` and ``sig.csv``) for any set of computations.
 
 Boxplot of performance scores by class
 --------------------------------------
 
-The aim of this section is to generate boxplot of performance_scores by catchment class. As an example we want to create boxplot of NSE for the period p1_calibration of both uniform and distributed optimizations based on the class of each catchment. The first step is to create a DataFrame for the desired performance_score. 
-In the following code lines, gauge is the BVs_class.csv file containing two columns (catchment code and corresponding class). Simu_list defines the directory of csv files (result and sig) for each set of computations (calibration/validation; uniform/distributed). Simu_type, perdiod and metric_name defines the type of simulation, period and the score name which we want to plot. The remaining lines are the process of creating the final DataFrame.
+The aim of this section is to generate boxplots of performance scores by catchment class.
+As an example, we create boxplots of ``NSE`` for the calibration period ``p1`` (for both uniform and distributed mappings) based on the class of each catchment.
+The first step is to create a `DataFrame <pandas.DataFrame>` for performance scores. 
+In the following code lines, ``gauge`` refers to the ``BVs_class.csv`` file containing two columns: catchment ``code`` and corresponding ``class``.
+``simu_list`` defines the directories of the ``csv`` files (``result.csv`` and ``sig.csv``) for each set of computations (calibration/validation; uniform/distributed).
+``simu_type``, ``period``, and ``metric_name`` specify the type of simulation, period, and the metric score criterion.
+The remaining lines process the creation of the final `DataFrame <pandas.DataFrame>`.
 
 .. code-block:: python
 
-    >>> gauge = pd.read_csv(f"{wdir}/extra/BVs_class.csv", usecols=["code", "class"])
+    >>> gauge = pd.read_csv(os.path.join(wdir, "extra", "BVs_class.csv"), usecols=["code", "class"])
     >>> gauge.replace({'M': 'Mediterranean', 'O': 'Oceanic', 'U': 'Uniform'}, inplace=True)
     >>> simu_type = "cal"
     >>> period = "p1"
     >>> metric_name = "nse"
     >>> simu_list = [
-        ... {"simu_type": "cal", "mapping": "u", "period": "p1", "name": "GR4_U", "path": f"{wdir}/gr4/un_p1/calibration/results"},
-        ... {"simu_type": "cal", "mapping": "d", "period": "p1", "name": "GR4_D", "path": f"{wdir}/gr4/di_p1/calibration/results"},
+    ...     {"simu_type": "cal", "mapping": "u", "period": "p1", "name": "GR4_U", "path": os.path.join(wdir, "gr4/un_p1/calibration/results")},
+    ...     {"simu_type": "cal", "mapping": "d", "period": "p1", "name": "GR4_D", "path": os.path.join(wdir, "gr4/di_p1/calibration/results")},
     ... ]
     >>> dat_list = []
     >>> simu_name = []
@@ -225,10 +240,7 @@ In the following code lines, gauge is the BVs_class.csv file containing two colu
     3  -4.31  -2.32  Uniform
     4   0.41   0.65  Uniform
 
-
-
-
-Once the DataFrame is created, the boxplot will be ploted using following code block which includes different parts (color, title, x_axis, y_axis and legend).
+Once the `DataFrame <pandas.DataFrame>` is created, the boxplot can be ploted as below:
 
 .. code-block:: python
 
@@ -290,27 +302,24 @@ Once the DataFrame is created, the boxplot will be ploted using following code b
 
 .. image:: ../../_static/user_guide.post_processing_external_tools.results_visualization_over_large_sample.bxplt_by_class_cal_p1.png
     :align: center
-    :width: 500
-
-
-
 
 Plot of performance scores in map
 ---------------------------------
 
-In this section we show how to plot performance scores over France map considering the location of each station. The objective is to plot NSE score of validation for both uniform and distributed optimizations.
-In below code block, France_shp is the France border shapefile and gauge is the BVs_class.csv file which contains code and class of all catchments.
+In this section we show how to plot performance scores over the map of France considering the location of each station.
+The objective is to plot the metric score of validation for optimization methods.
+In the code below, ``France_shp`` is created from the France border shapefile and ``gauge`` is the ``BVs_class.csv`` file which contains the ``code`` and ``class`` of all catchments.
 
-First we create DataFrame for uniform optimization by below code lines, the DataFrame includes NSE score of each catchment, latitude and longitude which is displayed.
+First, we create a `DataFrame <pandas.DataFrame>` that includes the ``NSE`` score of each catchment, latitude, and longitude, for uniform mapping.
 
 .. code-block:: python
 
-    >>> gauge = pd.read_csv(f"{wdir}/extra/BVs_class.csv", usecols=["code", "class"])
+    >>> gauge = pd.read_csv(os.path.join(wdir, "extra", "BVs_class.csv"), usecols=["code", "class"])
     >>> gauge.replace({'M': 'Mediterranean', 'O': 'Oceanic', 'U': 'Uniform'}, inplace=True)
-    >>> France_shp = gpd.read_file(f"{wdir}/extra/France_polygone_L93.shp")
+    >>> France_shp = gpd.read_file(os.path.join(wdir, "extra", "France_polygone_L93.shp"))
     >>> simu_list = [
-    ...     {"simu_type": "val", "mapping": "u", "period": "p1", "name": "GR4_U", "path": f"{wdir}/gr4/un_p2/validation/results"},
-    ...     {"simu_type": "val", "mapping": "d", "period": "p1", "name": "GR4_D", "path": f"{wdir}/gr4/di_p2/validation/results"}, 
+    ...     {"simu_type": "val", "mapping": "u", "period": "p1", "name": "GR4_U", "path": os.path.join(wdir, "gr4/un_p2/validation/results")},
+    ...     {"simu_type": "val", "mapping": "d", "period": "p1", "name": "GR4_D", "path": os.path.join(wdir, "gr4/di_p2/validation/results")},
     ... ]
     >>> metric_name = "nse"
     >>> simu_type1 = "val"
@@ -333,7 +342,7 @@ First we create DataFrame for uniform optimization by below code lines, the Data
     >>> # Reading the full_batch_data.csv file which contains the latitue and longitude of each station,
     >>> # generating two new column having the lat and long coordinates and combining it with 
     >>> # the NSE values (Uniform) already in df1
-    >>> dat = pd.read_csv(f"{wdir}/extra/full_batch_data.csv")
+    >>> dat = pd.read_csv(os.path.join(wdir, "extra", "full_batch_data.csv"))
     >>> dat = dat.loc[dat["code"].isin(gauge["code"])]
     >>> dat.reset_index(drop=True, inplace=True)
     >>> dat.replace({"PM": "Mediterranean", "PO": "Oceanic"}, inplace=True)
@@ -352,9 +361,7 @@ First we create DataFrame for uniform optimization by below code lines, the Data
     
     [5 rows x 65 columns]
 
-
-
-Now we creat DataFrame for distributed optimization, the DataFrame includes NSE score of each catchment, latitude and longitude.
+Then, for distributed mapping.
 
 .. code-block:: python
 
@@ -378,7 +385,7 @@ Now we creat DataFrame for distributed optimization, the DataFrame includes NSE 
     >>> # Reading the full_batch_data.csv file which contains the latitue and longitude of each station,
     >>> # generating two new column having the lat and long coordinates and combining it with
     >>> # the NSE values (Distributed) already in df2.
-    >>> dat = pd.read_csv(f"{wdir}/extra/full_batch_data.csv")
+    >>> dat = pd.read_csv(os.path.join(wdir, "extra", "full_batch_data.csv"))
     >>> dat = dat.loc[dat["code"].isin(gauge["code"])]
     >>> dat.reset_index(drop=True, inplace=True)
     >>> dat.replace({"PM": "Mediterranean", "PO": "Oceanic"}, inplace=True)
@@ -396,10 +403,8 @@ Now we creat DataFrame for distributed optimization, the DataFrame includes NSE 
     4  H3403102  Uniform   POINT (683912 6779077)   0.24
     
     [5 rows x 65 columns]
-    
 
-
-Using the two created DataFrames we are able to plot the NSE scores over France map along with the colorbar as following.
+Using these DataFrames, we are able to plot the NSE scores over France map along with the colorbar as following.
 
 .. code-block:: python
     
@@ -428,30 +433,27 @@ Using the two created DataFrames we are able to plot the NSE scores over France 
     >>> cbar.set_ticklabels(["< 0", "0.2", "0.4", "0.6", "0.8", "1"], fontsize=8)
     >>> fig.suptitle("Validation P1 with $\\hat{{\\theta}}$ of p2", fontsize=15)
 
-
 .. image:: ../../_static/user_guide.post_processing_external_tools.results_visualization_over_large_sample.map_cost_nse_val_p1.png
     :align: center
-
-
-
 
 Boxplot of signatures by class
 ------------------------------
 
-To plot signatures, one more csv file is needed to be read in order to be used in defining the code of each catchment and this file can be the sig.csv file of any of the simulation sets that we want to plot its signatures. The reason behind is that for signatures we have multiple events for each catchment while for scores there is just one for each, so in order to show to number of events in the boxplot we need this extra csv file.
-In the following we want to plot ELT signature for the period p1 of uniform and distributed calibration, so the extra csv file (called gauge_event) should be the sig.csv file of either un_p1 or di_p1.
+To plot signatures, one more ``csv`` file is needed to be read in order to be used in defining the code of each catchment and this file can be the ``sig.csv`` file of any of the simulation sets that we want to plot its signatures.
+The reason behind is that for signatures we have multiple events for each catchment while for scores there is just one for each, so in order to show to number of events in the boxplot we need this extra ``csv`` file.
+In the following we want to plot ``Elt`` signature for the period ``p1`` of uniform and distributed calibration methods, so the extra ``csv`` file (called ``gauge_event.csv``) should be the ``sig.csv`` file of either ``un_p1`` or ``di_p1``.
 
 .. code-block:: python
 
-    >>> gauge = pd.read_csv(f"{wdir}/extra/BVs_class.csv", usecols=["code", "class"])
+    >>> gauge = pd.read_csv(os.path.join(wdir, "extra", "BVs_class.csv"), usecols=["code", "class"])
     >>> gauge.replace({'M': 'Mediterranean', 'O': 'Oceanic', 'U': 'Uniform'}, inplace=True)
-    >>> gauge_event = pd.read_csv(f"{wdir}/gr4/un_p1/calibration/results/sig.csv")
+    >>> gauge_event = pd.read_csv(os.path.join(wdir, "gr4", "un_p1", "calibration", "results", "sig.csv"))
     >>> simu_type = "cal"
     >>> period = "p1"
-    >>> metric_name = "ELT"
+    >>> metric_name = "Elt"
     >>> simu_list = [
-    ...     {"simu_type": "cal", "mapping": "u", "period": "p1", "name": "GR4_U", "path": f"{wdir}/gr4/un_p1/calibration/results"},
-    ...     {"simu_type": "cal", "mapping": "d", "period": "p1", "name": "GR4_D", "path": f"{wdir}/gr4/di_p1/calibration/results"},
+    ...     {"simu_type": "cal", "mapping": "u", "period": "p1", "name": "GR4_U", "path": os.path.join(wdir, "gr4", "un_p1", "calibration", "results")},
+    ...     {"simu_type": "cal", "mapping": "d", "period": "p1", "name": "GR4_D", "path": os.path.join(wdir, "gr4", "di_p1", "calibration", "results")},
     ... ]
     >>> dat_list = []
     >>> simu_name = []
@@ -483,31 +485,28 @@ In the following we want to plot ELT signature for the period p1 of uniform and 
     3    0.0   26.0  Uniform
     4    0.0    0.0  Uniform
 
-    
-The rest of code lines for plotting the boxplots remains the same as in Boxplot of performance scores by class section which provides the following figure.
+The rest of code lines for plotting the boxplots remains the same as in the boxplot of performance scores by class, which provides the following figure.
 
 .. image:: ../../_static/user_guide.post_processing_external_tools.results_visualization_over_large_sample.bxplt_by_class_ELT_cal_p1.png
     :align: center
-    :width: 500
-
-
-
 
 Scatterplot of parameters
 -------------------------
 
-In this section we want to show how to scatter-plot calibrated parameters. As an example uniform calibrated parameters for both periods of p1 and p2 are ploted. Three csv files are needed which are the result.csv files for p1 and p2 which contains calibrated parameters for each catchment and the BVs_class.csv file for class.
+In this section we want to show how to scatter-plot calibrated parameters.
+As an example, spatially uniform calibrated parameters for both periods of ``p1`` and ``p2`` are ploted.
+Three ``csv`` files are needed which are the ``result.csv`` files for ``p1`` and ``p2`` which contains calibrated parameters for each catchment, and the ``BVs_class.csv`` file for catchment classification.
 
 .. code-block:: python
 
-    >>> gauge = pd.read_csv(f"{wdir}/extra/BVs_class.csv", usecols=["code", "class"])
+    >>> gauge = pd.read_csv(os.path.join(wdir, "extra", "BVs_class.csv"), usecols=["code", "class"])
     >>> gauge.replace({'M': 'Mediterranean', 'O': 'Oceanic', 'U': 'Uniform'}, inplace=True)
     >>> structure_name = "GR4_U"
     >>> STRUCTURE_PARAMETERS = {
     ...     "GR4_U": ["cp", "ct", "kexc", "llr"],
     ... }
-    >>> dat_p1 = pd.read_csv(f"{wdir}/gr4/un_p1/calibration/results/result.csv")
-    >>> dat_p2 = pd.read_csv(f"{wdir}/gr4/un_p2/calibration/results/result.csv")
+    >>> dat_p1 = pd.read_csv(os.path.join(wdir, "gr4", "un_p1", "calibration", "results", "result.csv"))
+    >>> dat_p2 = pd.read_csv(os.path.join(wdir, "gr4", "un_p2", "calibration", "results", "result.csv"))
     >>> dat_p1 = pd.merge(dat_p1, gauge, on="code")
     >>> dat_p2 = pd.merge(dat_p2, gauge, on="code")
     >>> 
@@ -539,18 +538,5 @@ In this section we want to show how to scatter-plot calibrated parameters. As an
     ...     ax[row, col].plot([t_min, t_max], [t_min, t_max], color="black", ls="--", alpha=.8, zorder=1)
     >>> f.legend(cls, loc='upper center')
 
-
 .. image:: ../../_static/user_guide.post_processing_external_tools.results_visualization_over_large_sample.scatter_parameters_uniform_p1_p2.png
     :align: center
-    :width: 800
-
-
-
-
-
-
-
-
-
-
-
