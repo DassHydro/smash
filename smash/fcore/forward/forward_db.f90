@@ -17151,13 +17151,13 @@ CONTAINS
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
 &   output_layer_d
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_1
+&   output_jacobian_1
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_1_d
+&   output_jacobian_1_d
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_2
+&   output_jacobian_2
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_2_d
+&   output_jacobian_2_d
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
@@ -17190,9 +17190,9 @@ CONTAINS
         END IF
       END DO
     END DO
+    output_jacobian_1_d = 0.0_4
+    output_jacobian_2_d = 0.0_4
     output_layer_d = 0.0_4
-    jacobian_nn_1_d = 0.0_4
-    jacobian_nn_2_d = 0.0_4
 ! Forward MLP without OPENMP
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
@@ -17209,17 +17209,17 @@ CONTAINS
 &                                     weight_3_d, bias_3, bias_3_d, &
 &                                     input_layer, input_layer_d, &
 &                                     output_layer(:, k), output_layer_d&
-&                                     (:, k), jacobian_nn_1(:, k), &
-&                                     jacobian_nn_1_d(:, k), &
-&                                     jacobian_nn_2(:, k), &
-&                                     jacobian_nn_2_d(:, k))
+&                                     (:, k), output_jacobian_1(:, k), &
+&                                     output_jacobian_1_d(:, k), &
+&                                     output_jacobian_2(:, k), &
+&                                     output_jacobian_2_d(:, k))
           ELSE
             output_layer_d(:, k) = 0.0_4
             output_layer(:, k) = 0._sp
-            jacobian_nn_1_d(:, k) = 0.0_4
-            jacobian_nn_1(:, k) = 0._sp
-            jacobian_nn_2_d(:, k) = 0.0_4
-            jacobian_nn_2(:, k) = 0._sp
+            output_jacobian_1_d(:, k) = 0.0_4
+            output_jacobian_1(:, k) = 0._sp
+            output_jacobian_2_d(:, k) = 0.0_4
+            output_jacobian_2(:, k) = 0._sp
           END IF
         END IF
       END DO
@@ -17234,11 +17234,11 @@ CONTAINS
 &           col)
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP_D(output_layer(:, k), &
 &                                         output_layer_d(:, k), &
-&                                         jacobian_nn_1(:, k), &
-&                                         jacobian_nn_1_d(:, k), &
-&                                         jacobian_nn_2(:, k), &
-&                                         jacobian_nn_2_d(:, k), pn(k), &
-&                                         pn_d(k), en(k), en_d(k), &
+&                                         output_jacobian_1(:, k), &
+&                                         output_jacobian_1_d(:, k), &
+&                                         output_jacobian_2(:, k), &
+&                                         output_jacobian_2_d(:, k), pn(&
+&                                         k), pn_d(k), en(k), en_d(k), &
 &                                         imperviousness, ac_cp(k), &
 &                                         ac_cp_d(k), ac_ct(k), ac_ct_d(&
 &                                         k), ac_kexc(k), ac_kexc_d(k), &
@@ -17310,13 +17310,13 @@ CONTAINS
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
 &   output_layer_b
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_1
+&   output_jacobian_1
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_1_b
+&   output_jacobian_1_b
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_2
+&   output_jacobian_2
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_2_b
+&   output_jacobian_2_b
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
@@ -17362,13 +17362,13 @@ CONTAINS
             CALL FORWARD_AND_BACKWARD_MLP(weight_1, bias_1, weight_2, &
 &                                   bias_2, weight_3, bias_3, &
 &                                   input_layer, output_layer(:, k), &
-&                                   jacobian_nn_1(:, k), jacobian_nn_2(:&
-&                                   , k))
+&                                   output_jacobian_1(:, k), &
+&                                   output_jacobian_2(:, k))
             CALL PUSHCONTROL2B(2)
           ELSE
             output_layer(:, k) = 0._sp
-            jacobian_nn_1(:, k) = 0._sp
-            jacobian_nn_2(:, k) = 0._sp
+            output_jacobian_1(:, k) = 0._sp
+            output_jacobian_2(:, k) = 0._sp
             CALL PUSHCONTROL2B(1)
           END IF
         END IF
@@ -17389,20 +17389,20 @@ CONTAINS
           CALL PUSHREAL4(ac_hp(k))
           CALL PUSHREAL4(pn(k))
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
-&                                       jacobian_nn_1(:, k), &
-&                                       jacobian_nn_2(:, k), pn(k), en(k&
-&                                       ), imperviousness, ac_cp(k), &
-&                                       ac_ct(k), ac_kexc(k), ac_hp(k), &
-&                                       ac_ht(k), ac_qt(k), l)
+&                                       output_jacobian_1(:, k), &
+&                                       output_jacobian_2(:, k), pn(k), &
+&                                       en(k), imperviousness, ac_cp(k)&
+&                                       , ac_ct(k), ac_kexc(k), ac_hp(k)&
+&                                       , ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
     END DO
+    output_jacobian_1_b = 0.0_4
+    output_jacobian_2_b = 0.0_4
     output_layer_b = 0.0_4
     en_b = 0.0_4
-    jacobian_nn_1_b = 0.0_4
-    jacobian_nn_2_b = 0.0_4
     pn_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
@@ -17419,11 +17419,11 @@ CONTAINS
           CALL POPREAL4(ac_qt(k))
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP_B(output_layer(:, k), &
 &                                         output_layer_b(:, k), &
-&                                         jacobian_nn_1(:, k), &
-&                                         jacobian_nn_1_b(:, k), &
-&                                         jacobian_nn_2(:, k), &
-&                                         jacobian_nn_2_b(:, k), pn(k), &
-&                                         pn_b(k), en(k), en_b(k), &
+&                                         output_jacobian_1(:, k), &
+&                                         output_jacobian_1_b(:, k), &
+&                                         output_jacobian_2(:, k), &
+&                                         output_jacobian_2_b(:, k), pn(&
+&                                         k), pn_b(k), en(k), en_b(k), &
 &                                         imperviousness, ac_cp(k), &
 &                                         ac_cp_b(k), ac_ct(k), ac_ct_b(&
 &                                         k), ac_kexc(k), ac_kexc_b(k), &
@@ -17440,8 +17440,8 @@ CONTAINS
         IF (branch .NE. 0) THEN
           IF (branch .EQ. 1) THEN
             k = mesh%rowcol_to_ind_ac(row, col)
-            jacobian_nn_2_b(:, k) = 0.0_4
-            jacobian_nn_1_b(:, k) = 0.0_4
+            output_jacobian_2_b(:, k) = 0.0_4
+            output_jacobian_1_b(:, k) = 0.0_4
             output_layer_b(:, k) = 0.0_4
           ELSE
             k = mesh%rowcol_to_ind_ac(row, col)
@@ -17451,13 +17451,13 @@ CONTAINS
 &                                     weight_3_b, bias_3, bias_3_b, &
 &                                     input_layer, input_layer_b, &
 &                                     output_layer(:, k), output_layer_b&
-&                                     (:, k), jacobian_nn_1(:, k), &
-&                                     jacobian_nn_1_b(:, k), &
-&                                     jacobian_nn_2(:, k), &
-&                                     jacobian_nn_2_b(:, k))
+&                                     (:, k), output_jacobian_1(:, k), &
+&                                     output_jacobian_1_b(:, k), &
+&                                     output_jacobian_2(:, k), &
+&                                     output_jacobian_2_b(:, k))
             output_layer_b(:, k) = 0.0_4
-            jacobian_nn_1_b(:, k) = 0.0_4
-            jacobian_nn_2_b(:, k) = 0.0_4
+            output_jacobian_1_b(:, k) = 0.0_4
+            output_jacobian_2_b(:, k) = 0.0_4
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
             ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
@@ -17520,9 +17520,9 @@ CONTAINS
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
 &   output_layer
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_1
+&   output_jacobian_1
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   jacobian_nn_2
+&   output_jacobian_2
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: imperviousness, l
@@ -17558,12 +17558,12 @@ CONTAINS
             CALL FORWARD_AND_BACKWARD_MLP(weight_1, bias_1, weight_2, &
 &                                   bias_2, weight_3, bias_3, &
 &                                   input_layer, output_layer(:, k), &
-&                                   jacobian_nn_1(:, k), jacobian_nn_2(:&
-&                                   , k))
+&                                   output_jacobian_1(:, k), &
+&                                   output_jacobian_2(:, k))
           ELSE
             output_layer(:, k) = 0._sp
-            jacobian_nn_1(:, k) = 0._sp
-            jacobian_nn_2(:, k) = 0._sp
+            output_jacobian_1(:, k) = 0._sp
+            output_jacobian_2(:, k) = 0._sp
           END IF
         END IF
       END DO
@@ -17577,11 +17577,11 @@ CONTAINS
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
-&                                       jacobian_nn_1(:, k), &
-&                                       jacobian_nn_2(:, k), pn(k), en(k&
-&                                       ), imperviousness, ac_cp(k), &
-&                                       ac_ct(k), ac_kexc(k), ac_hp(k), &
-&                                       ac_ht(k), ac_qt(k), l)
+&                                       output_jacobian_1(:, k), &
+&                                       output_jacobian_2(:, k), pn(k), &
+&                                       en(k), imperviousness, ac_cp(k)&
+&                                       , ac_ct(k), ac_kexc(k), ac_hp(k)&
+&                                       , ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt

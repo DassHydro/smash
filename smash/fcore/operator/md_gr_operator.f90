@@ -848,8 +848,8 @@ contains
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: jacobian_nn_1
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: jacobian_nn_2
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_jacobian_1
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_jacobian_2
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
         real(sp) :: imperviousness, l
@@ -901,12 +901,12 @@ contains
 
                     input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
                     call forward_and_backward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k), jacobian_nn_1(:, k), jacobian_nn_2(:, k))
+                    & input_layer, output_layer(:, k), output_jacobian_1(:, k), output_jacobian_2(:, k))
 
                 else
                     output_layer(:, k) = 0._sp
-                    jacobian_nn_1(:, k) = 0._sp
-                    jacobian_nn_2(:, k) = 0._sp
+                    output_jacobian_1(:, k) = 0._sp
+                    output_jacobian_2(:, k) = 0._sp
 
                 end if
 
@@ -923,7 +923,7 @@ contains
 
                 imperviousness = input_data%physio_data%imperviousness(row, col)
 
-                call gr_production_transfer_ode_mlp(output_layer(:, k), jacobian_nn_1(:, k), jacobian_nn_2(:, k), &
+                call gr_production_transfer_ode_mlp(output_layer(:, k), output_jacobian_1(:, k), output_jacobian_2(:, k), &
                 & pn(k), en(k), imperviousness, ac_cp(k), ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
 
                 ! Transform from mm/dt to m3/s
