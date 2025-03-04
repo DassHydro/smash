@@ -12895,18 +12895,19 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_d
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_d
-    INTRINSIC MAX
+    INTRINSIC EXP
     INTRINSIC TANH
+    REAL(sp), DIMENSION(SIZE(bias_1)) :: temp
+    REAL(sp), DIMENSION(SIZE(bias_2)) :: temp0
     CALL DOT_PRODUCT_2D_1D_D(weight_1, weight_1_d, input_layer, &
 &                      input_layer_d, inter_layer_1, inter_layer_1_d)
     inter_layer_1_d = inter_layer_1_d + bias_1_d
     inter_layer_1 = inter_layer_1 + bias_1
-    WHERE (0.01_sp*inter_layer_1 .LT. inter_layer_1) 
-      inter_layer_1 = inter_layer_1
-    ELSEWHERE
-      inter_layer_1_d = 0.01_sp*inter_layer_1_d
-      inter_layer_1 = 0.01_sp*inter_layer_1
-    END WHERE
+! SiLU
+    temp = EXP(-inter_layer_1) + 1._sp
+    inter_layer_1_d = (inter_layer_1*EXP(-inter_layer_1)/temp+1.0)*&
+&     inter_layer_1_d/temp
+    inter_layer_1 = inter_layer_1/temp
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D_D(weight_2, weight_2_d, inter_layer_1, &
@@ -12914,12 +12915,11 @@ CONTAINS
 &                       )
       inter_layer_2_d = inter_layer_2_d + bias_2_d
       inter_layer_2 = inter_layer_2 + bias_2
-      WHERE (0.01_sp*inter_layer_2 .LT. inter_layer_2) 
-        inter_layer_2 = inter_layer_2
-      ELSEWHERE
-        inter_layer_2_d = 0.01_sp*inter_layer_2_d
-        inter_layer_2 = 0.01_sp*inter_layer_2
-      END WHERE
+! SiLU
+      temp0 = EXP(-inter_layer_2) + 1._sp
+      inter_layer_2_d = (inter_layer_2*EXP(-inter_layer_2)/temp0+1.0)*&
+&       inter_layer_2_d/temp0
+      inter_layer_2 = inter_layer_2/temp0
       CALL DOT_PRODUCT_2D_1D_D(weight_3, weight_3_d, inter_layer_2, &
 &                        inter_layer_2_d, output_layer, output_layer_d)
 ! TanH
@@ -12968,28 +12968,24 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_b
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_b
-    INTRINSIC MAX
+    INTRINSIC EXP
     INTRINSIC TANH
+    REAL(sp), DIMENSION(SIZE(bias_1)) :: temp
+    REAL(sp), DIMENSION(SIZE(bias_2)) :: temp0
     REAL(sp), DIMENSION(SIZE(bias_3, 1)) :: temp_b
     REAL(sp), DIMENSION(SIZE(bias_2, 1)) :: temp_b0
     CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
     inter_layer_1 = inter_layer_1 + bias_1
+! SiLU
     CALL PUSHREAL4ARRAY(inter_layer_1, SIZE(bias_1))
-    WHERE (0.01_sp*inter_layer_1 .LT. inter_layer_1) inter_layer_1 = &
-&       inter_layer_1
-    CALL PUSHREAL4ARRAY(inter_layer_1, SIZE(bias_1))
-    WHERE (.NOT.0.01_sp*inter_layer_1 .LT. inter_layer_1) inter_layer_1&
-&      = 0.01_sp*inter_layer_1
+    inter_layer_1 = inter_layer_1*(1._sp/(1._sp+EXP(-inter_layer_1)))
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, inter_layer_2)
       inter_layer_2 = inter_layer_2 + bias_2
+! SiLU
       CALL PUSHREAL4ARRAY(inter_layer_2, SIZE(bias_2))
-      WHERE (0.01_sp*inter_layer_2 .LT. inter_layer_2) inter_layer_2 = &
-&         inter_layer_2
-      CALL PUSHREAL4ARRAY(inter_layer_2, SIZE(bias_2))
-      WHERE (.NOT.0.01_sp*inter_layer_2 .LT. inter_layer_2) &
-&       inter_layer_2 = 0.01_sp*inter_layer_2
+      inter_layer_2 = inter_layer_2*(1._sp/(1._sp+EXP(-inter_layer_2)))
       CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2, output_layer)
 ! TanH
       temp_b = (1.0-TANH(output_layer+bias_3)**2)*output_layer_b
@@ -12998,9 +12994,9 @@ CONTAINS
       CALL DOT_PRODUCT_2D_1D_B(weight_3, weight_3_b, inter_layer_2, &
 &                        inter_layer_2_b, output_layer, output_layer_b)
       CALL POPREAL4ARRAY(inter_layer_2, SIZE(bias_2))
-      CALL POPREAL4ARRAY(inter_layer_2, SIZE(bias_2))
-      WHERE (.NOT.0.01_sp*inter_layer_2 .LT. inter_layer_2) &
-&       inter_layer_2_b = 0.01_sp*inter_layer_2_b
+      temp0 = EXP(-inter_layer_2) + 1._sp
+      inter_layer_2_b = (1.0/temp0+EXP(-inter_layer_2)*inter_layer_2/&
+&       temp0**2)*inter_layer_2_b
       bias_2_b = bias_2_b + inter_layer_2_b
       CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1, &
 &                        inter_layer_1_b, inter_layer_2, inter_layer_2_b&
@@ -13015,10 +13011,10 @@ CONTAINS
       CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1, &
 &                        inter_layer_1_b, output_layer, output_layer_b)
     END IF
-    WHERE (.NOT.0.01_sp*inter_layer_1 .LT. inter_layer_1) &
-&     inter_layer_1_b = 0.01_sp*inter_layer_1_b
     CALL POPREAL4ARRAY(inter_layer_1, SIZE(bias_1))
-    CALL POPREAL4ARRAY(inter_layer_1, SIZE(bias_1))
+    temp = EXP(-inter_layer_1) + 1._sp
+    inter_layer_1_b = (1.0/temp+EXP(-inter_layer_1)*inter_layer_1/temp**&
+&     2)*inter_layer_1_b
     bias_1_b = bias_1_b + inter_layer_1_b
     CALL DOT_PRODUCT_2D_1D_B(weight_1, weight_1_b, input_layer, &
 &                      input_layer_b, inter_layer_1, inter_layer_1_b)
@@ -13038,24 +13034,18 @@ CONTAINS
     INTRINSIC SIZE
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
-    INTRINSIC MAX
+    INTRINSIC EXP
     INTRINSIC TANH
     CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
     inter_layer_1 = inter_layer_1 + bias_1
-    WHERE (0.01_sp*inter_layer_1 .LT. inter_layer_1) 
-      inter_layer_1 = inter_layer_1
-    ELSEWHERE
-      inter_layer_1 = 0.01_sp*inter_layer_1
-    END WHERE
+! SiLU
+    inter_layer_1 = inter_layer_1*(1._sp/(1._sp+EXP(-inter_layer_1)))
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, inter_layer_2)
       inter_layer_2 = inter_layer_2 + bias_2
-      WHERE (0.01_sp*inter_layer_2 .LT. inter_layer_2) 
-        inter_layer_2 = inter_layer_2
-      ELSEWHERE
-        inter_layer_2 = 0.01_sp*inter_layer_2
-      END WHERE
+! SiLU
+      inter_layer_2 = inter_layer_2*(1._sp/(1._sp+EXP(-inter_layer_2)))
       CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2, output_layer)
 ! TanH
       output_layer = TANH(output_layer + bias_3)
@@ -13068,13 +13058,15 @@ CONTAINS
   END SUBROUTINE FORWARD_MLP
 
 !  Differentiation of forward_and_backward_mlp in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
-!   variations   of useful results: output_layer output_jacobian
+!   variations   of useful results: output_jacobian_1 output_jacobian_2
+!                output_layer
 !   with respect to varying inputs: bias_1 bias_2 bias_3 input_layer
 !                weight_1 weight_2 weight_3
   SUBROUTINE FORWARD_AND_BACKWARD_MLP_D(weight_1, weight_1_d, bias_1, &
 &   bias_1_d, weight_2, weight_2_d, bias_2, bias_2_d, weight_3, &
 &   weight_3_d, bias_3, bias_3_d, input_layer, input_layer_d, &
-&   output_layer, output_layer_d, output_jacobian, output_jacobian_d)
+&   output_layer, output_layer_d, output_jacobian_1, output_jacobian_1_d&
+&   , output_jacobian_2, output_jacobian_2_d)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1
     REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1_d
@@ -13092,35 +13084,42 @@ CONTAINS
     REAL(sp), DIMENSION(:), INTENT(IN) :: input_layer_d
     REAL(sp), DIMENSION(:), INTENT(OUT) :: output_layer
     REAL(sp), DIMENSION(:), INTENT(OUT) :: output_layer_d
-    REAL(sp), DIMENSION(:, :), INTENT(OUT) :: output_jacobian
-    REAL(sp), DIMENSION(:, :), INTENT(OUT) :: output_jacobian_d
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_jacobian_1
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_jacobian_1_d
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_jacobian_2
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_jacobian_2_d
     INTRINSIC SIZE
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1, inter_layer_1_tf&
-&   , layer_1_gradient
+&   , inter_layer_1_grad, layer_1_grad
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_d, &
-&   inter_layer_1_tf_d, layer_1_gradient_d
+&   inter_layer_1_tf_d, inter_layer_1_grad_d, layer_1_grad_d
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2, inter_layer_2_tf&
-&   , layer_2_gradient
+&   , inter_layer_2_grad, layer_2_grad
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_d, &
-&   inter_layer_2_tf_d, layer_2_gradient_d
+&   inter_layer_2_tf_d, inter_layer_2_grad_d, layer_2_grad_d
     INTEGER :: i, j, k
-    INTRINSIC MAX
+    INTRINSIC EXP
     INTRINSIC TANH
-    output_jacobian = 0._sp
-    layer_1_gradient = 0._sp
-    layer_2_gradient = 0._sp
+    REAL(sp), DIMENSION(size(bias_1)) :: temp
+    REAL(sp), DIMENSION(size(bias_2)) :: temp0
+    output_jacobian_1 = 0._sp
+    output_jacobian_2 = 0._sp
     CALL DOT_PRODUCT_2D_1D_D(weight_1, weight_1_d, input_layer, &
 &                      input_layer_d, inter_layer_1, inter_layer_1_d)
     inter_layer_1_d = inter_layer_1_d + bias_1_d
     inter_layer_1 = inter_layer_1 + bias_1
-    inter_layer_1_tf_d = 0.0_4
-    WHERE (0.01_sp*inter_layer_1 .LT. inter_layer_1) 
-      inter_layer_1_tf_d = inter_layer_1_d
-      inter_layer_1_tf = inter_layer_1
-    ELSEWHERE
-      inter_layer_1_tf_d = 0.01_sp*inter_layer_1_d
-      inter_layer_1_tf = 0.01_sp*inter_layer_1
-    END WHERE
+! SiLU
+    temp = EXP(-inter_layer_1) + 1._sp
+    inter_layer_1_tf_d = (inter_layer_1*EXP(-inter_layer_1)/temp+1.0)*&
+&     inter_layer_1_d/temp
+    inter_layer_1_tf = inter_layer_1/temp
+! Derivative of SiLU
+    temp = EXP(-inter_layer_1) + 1._sp
+    inter_layer_1_grad_d = inter_layer_1_tf_d + ((1._sp-inter_layer_1_tf&
+&     )*EXP(-inter_layer_1)*inter_layer_1_d/temp-inter_layer_1_tf_d)/&
+&     temp
+    inter_layer_1_grad = inter_layer_1_tf + (1._sp-inter_layer_1_tf)/&
+&     temp
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D_D(weight_2, weight_2_d, inter_layer_1_tf, &
@@ -13128,14 +13127,18 @@ CONTAINS
 &                        inter_layer_2_d)
       inter_layer_2_d = inter_layer_2_d + bias_2_d
       inter_layer_2 = inter_layer_2 + bias_2
-      inter_layer_2_tf_d = 0.0_4
-      WHERE (0.01_sp*inter_layer_2 .LT. inter_layer_2) 
-        inter_layer_2_tf_d = inter_layer_2_d
-        inter_layer_2_tf = inter_layer_2
-      ELSEWHERE
-        inter_layer_2_tf_d = 0.01_sp*inter_layer_2_d
-        inter_layer_2_tf = 0.01_sp*inter_layer_2
-      END WHERE
+! SiLU
+      temp0 = EXP(-inter_layer_2) + 1._sp
+      inter_layer_2_tf_d = (inter_layer_2*EXP(-inter_layer_2)/temp0+1.0)&
+&       *inter_layer_2_d/temp0
+      inter_layer_2_tf = inter_layer_2/temp0
+! Derivative of SiLU
+      temp0 = EXP(-inter_layer_2) + 1._sp
+      inter_layer_2_grad_d = inter_layer_2_tf_d + ((1._sp-&
+&       inter_layer_2_tf)*EXP(-inter_layer_2)*inter_layer_2_d/temp0-&
+&       inter_layer_2_tf_d)/temp0
+      inter_layer_2_grad = inter_layer_2_tf + (1._sp-inter_layer_2_tf)/&
+&       temp0
       CALL DOT_PRODUCT_2D_1D_D(weight_3, weight_3_d, inter_layer_2_tf, &
 &                        inter_layer_2_tf_d, output_layer, &
 &                        output_layer_d)
@@ -13143,49 +13146,45 @@ CONTAINS
       output_layer_d = (1.0-TANH(output_layer+bias_3)**2)*(&
 &       output_layer_d+bias_3_d)
       output_layer = TANH(output_layer + bias_3)
-      output_jacobian_d = 0.0_4
+      output_jacobian_1_d = 0.0_4
+      output_jacobian_2_d = 0.0_4
+      layer_2_grad_d = 0.0_4
 ! Compute Jacobian matrix of output wrt input MLP
       DO i=1,SIZE(output_layer)
-        layer_2_gradient_d = 0.0_4
         DO j=1,SIZE(inter_layer_2)
 ! Derivative of TanH
-          layer_2_gradient_d(j) = (1._sp-output_layer(i)**2)*weight_3_d(&
-&           i, j) - weight_3(i, j)*2*output_layer(i)*output_layer_d(i)
-          layer_2_gradient(j) = (1._sp-output_layer(i)**2)*weight_3(i, j&
-&           )
-          IF (inter_layer_2(j) .LT. 0._sp) THEN
-            layer_2_gradient_d(j) = 0.01_sp*layer_2_gradient_d(j)
-            layer_2_gradient(j) = layer_2_gradient(j)*0.01_sp
-          END IF
+          layer_2_grad_d(j) = (1._sp-output_layer(i)**2)*weight_3_d(i, j&
+&           ) - weight_3(i, j)*2*output_layer(i)*output_layer_d(i)
+          layer_2_grad(j) = (1._sp-output_layer(i)**2)*weight_3(i, j)
+          layer_2_grad_d(j) = inter_layer_2_grad(j)*layer_2_grad_d(j) + &
+&           layer_2_grad(j)*inter_layer_2_grad_d(j)
+          layer_2_grad(j) = layer_2_grad(j)*inter_layer_2_grad(j)
         END DO
-        layer_1_gradient_d = 0.0_4
 ! Gradient of second layer wrt first layer
+        layer_1_grad = 0._sp
+        layer_1_grad_d = 0.0_4
         DO j=1,SIZE(inter_layer_1)
           DO k=1,SIZE(inter_layer_2)
-            layer_1_gradient_d(j) = layer_1_gradient_d(j) + weight_2(k, &
-&             j)*layer_2_gradient_d(k) + layer_2_gradient(k)*weight_2_d(&
-&             k, j)
-            layer_1_gradient(j) = layer_1_gradient(j) + layer_2_gradient&
-&             (k)*weight_2(k, j)
+            layer_1_grad_d(j) = layer_1_grad_d(j) + weight_2(k, j)*&
+&             layer_2_grad_d(k) + layer_2_grad(k)*weight_2_d(k, j)
+            layer_1_grad(j) = layer_1_grad(j) + layer_2_grad(k)*weight_2&
+&             (k, j)
           END DO
-          IF (inter_layer_1(j) .LT. 0._sp) THEN
-            layer_1_gradient_d(j) = 0.01_sp*layer_1_gradient_d(j)
-            layer_1_gradient(j) = layer_1_gradient(j)*0.01_sp
-          END IF
+          layer_1_grad_d(j) = inter_layer_1_grad(j)*layer_1_grad_d(j) + &
+&           layer_1_grad(j)*inter_layer_1_grad_d(j)
+          layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
         END DO
 ! Gradient of first layer wrt input layer
-        DO j=1,SIZE(input_layer)
-          DO k=1,SIZE(inter_layer_1)
-            output_jacobian_d(i, j) = output_jacobian_d(i, j) + weight_1&
-&             (k, j)*layer_1_gradient_d(k) + layer_1_gradient(k)*&
-&             weight_1_d(k, j)
-            output_jacobian(i, j) = output_jacobian(i, j) + &
-&             layer_1_gradient(k)*weight_1(k, j)
-          END DO
+        DO k=1,SIZE(inter_layer_1)
+          output_jacobian_1_d(i) = output_jacobian_1_d(i) + weight_1(k, &
+&           1)*layer_1_grad_d(k) + layer_1_grad(k)*weight_1_d(k, 1)
+          output_jacobian_1(i) = output_jacobian_1(i) + layer_1_grad(k)*&
+&           weight_1(k, 1)
+          output_jacobian_2_d(i) = output_jacobian_2_d(i) + weight_1(k, &
+&           2)*layer_1_grad_d(k) + layer_1_grad(k)*weight_1_d(k, 2)
+          output_jacobian_2(i) = output_jacobian_2(i) + layer_1_grad(k)*&
+&           weight_1(k, 2)
         END DO
-! Reset tmp gradients
-        layer_2_gradient = 0._sp
-        layer_1_gradient = 0._sp
       END DO
     ELSE
 ! Case with 2 layers
@@ -13195,46 +13194,46 @@ CONTAINS
       output_layer_d = (1.0-TANH(output_layer+bias_2)**2)*(&
 &       output_layer_d+bias_2_d)
       output_layer = TANH(output_layer + bias_2)
-      output_jacobian_d = 0.0_4
+      output_jacobian_1_d = 0.0_4
+      output_jacobian_2_d = 0.0_4
+      layer_1_grad_d = 0.0_4
 ! Compute Jacobian matrix of output wrt input MLP
       DO i=1,SIZE(output_layer)
-        layer_1_gradient_d = 0.0_4
         DO j=1,SIZE(inter_layer_1)
 ! Derivative of TanH
-          layer_1_gradient_d(j) = (1._sp-output_layer(i)**2)*weight_2_d(&
-&           i, j) - weight_2(i, j)*2*output_layer(i)*output_layer_d(i)
-          layer_1_gradient(j) = (1._sp-output_layer(i)**2)*weight_2(i, j&
-&           )
-          IF (inter_layer_1(j) .LT. 0._sp) THEN
-            layer_1_gradient_d(j) = 0.01_sp*layer_1_gradient_d(j)
-            layer_1_gradient(j) = layer_1_gradient(j)*0.01_sp
-          END IF
+          layer_1_grad_d(j) = (1._sp-output_layer(i)**2)*weight_2_d(i, j&
+&           ) - weight_2(i, j)*2*output_layer(i)*output_layer_d(i)
+          layer_1_grad(j) = (1._sp-output_layer(i)**2)*weight_2(i, j)
+          layer_1_grad_d(j) = inter_layer_1_grad(j)*layer_1_grad_d(j) + &
+&           layer_1_grad(j)*inter_layer_1_grad_d(j)
+          layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
         END DO
 ! Gradient of first layer wrt input layer
-        DO j=1,SIZE(input_layer)
-          DO k=1,SIZE(inter_layer_1)
-            output_jacobian_d(i, j) = output_jacobian_d(i, j) + weight_1&
-&             (k, j)*layer_1_gradient_d(k) + layer_1_gradient(k)*&
-&             weight_1_d(k, j)
-            output_jacobian(i, j) = output_jacobian(i, j) + &
-&             layer_1_gradient(k)*weight_1(k, j)
-          END DO
+        DO k=1,SIZE(inter_layer_1)
+          output_jacobian_1_d(i) = output_jacobian_1_d(i) + weight_1(k, &
+&           1)*layer_1_grad_d(k) + layer_1_grad(k)*weight_1_d(k, 1)
+          output_jacobian_1(i) = output_jacobian_1(i) + layer_1_grad(k)*&
+&           weight_1(k, 1)
+          output_jacobian_2_d(i) = output_jacobian_2_d(i) + weight_1(k, &
+&           2)*layer_1_grad_d(k) + layer_1_grad(k)*weight_1_d(k, 2)
+          output_jacobian_2(i) = output_jacobian_2(i) + layer_1_grad(k)*&
+&           weight_1(k, 2)
         END DO
-! Reset tmp gradients
-        layer_1_gradient = 0._sp
       END DO
     END IF
   END SUBROUTINE FORWARD_AND_BACKWARD_MLP_D
 
 !  Differentiation of forward_and_backward_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
-!   gradient     of useful results: output_layer bias_1 bias_2
-!                bias_3 output_jacobian weight_1 weight_2 weight_3
+!   gradient     of useful results: output_jacobian_1 output_jacobian_2
+!                output_layer bias_1 bias_2 bias_3 weight_1 weight_2
+!                weight_3
 !   with respect to varying inputs: bias_1 bias_2 bias_3 input_layer
 !                weight_1 weight_2 weight_3
   SUBROUTINE FORWARD_AND_BACKWARD_MLP_B(weight_1, weight_1_b, bias_1, &
 &   bias_1_b, weight_2, weight_2_b, bias_2, bias_2_b, weight_3, &
 &   weight_3_b, bias_3, bias_3_b, input_layer, input_layer_b, &
-&   output_layer, output_layer_b, output_jacobian, output_jacobian_b)
+&   output_layer, output_layer_b, output_jacobian_1, output_jacobian_1_b&
+&   , output_jacobian_2, output_jacobian_2_b)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1
     REAL(sp), DIMENSION(:, :) :: weight_1_b
@@ -13252,24 +13251,27 @@ CONTAINS
     REAL(sp), DIMENSION(:) :: input_layer_b
     REAL(sp), DIMENSION(:) :: output_layer
     REAL(sp), DIMENSION(:) :: output_layer_b
-    REAL(sp), DIMENSION(:, :) :: output_jacobian
-    REAL(sp), DIMENSION(:, :) :: output_jacobian_b
+    REAL(sp), DIMENSION(:) :: output_jacobian_1
+    REAL(sp), DIMENSION(:) :: output_jacobian_1_b
+    REAL(sp), DIMENSION(:) :: output_jacobian_2
+    REAL(sp), DIMENSION(:) :: output_jacobian_2_b
     INTRINSIC SIZE
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1, inter_layer_1_tf&
-&   , layer_1_gradient
+&   , inter_layer_1_grad, layer_1_grad
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_b, &
-&   inter_layer_1_tf_b, layer_1_gradient_b
+&   inter_layer_1_tf_b, inter_layer_1_grad_b, layer_1_grad_b
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2, inter_layer_2_tf&
-&   , layer_2_gradient
+&   , inter_layer_2_grad, layer_2_grad
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_b, &
-&   inter_layer_2_tf_b, layer_2_gradient_b
+&   inter_layer_2_tf_b, inter_layer_2_grad_b, layer_2_grad_b
     INTEGER :: i, j, k
-    INTRINSIC MAX
+    INTRINSIC EXP
     INTRINSIC TANH
+    REAL(sp), DIMENSION(size(bias_1)) :: temp
+    REAL(sp), DIMENSION(size(bias_2)) :: temp0
     REAL(sp), DIMENSION(SIZE(bias_3, 1)) :: temp_b
     REAL(sp), DIMENSION(SIZE(bias_2, 1)) :: temp_b0
     INTEGER :: ad_to
-    INTEGER :: branch
     INTEGER :: ad_to0
     INTEGER :: ad_to1
     INTEGER :: ad_to2
@@ -13277,26 +13279,23 @@ CONTAINS
     INTEGER :: ad_to4
     INTEGER :: ad_to5
     INTEGER :: ad_to6
-    INTEGER :: ad_to7
-    INTEGER :: ad_to8
-    layer_1_gradient = 0._sp
-    layer_2_gradient = 0._sp
     CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
     inter_layer_1 = inter_layer_1 + bias_1
-    WHERE (0.01_sp*inter_layer_1 .LT. inter_layer_1) 
-      inter_layer_1_tf = inter_layer_1
-    ELSEWHERE
-      inter_layer_1_tf = 0.01_sp*inter_layer_1
-    END WHERE
+! SiLU
+    inter_layer_1_tf = inter_layer_1*(1._sp/(1._sp+EXP(-inter_layer_1)))
+! Derivative of SiLU
+    inter_layer_1_grad = inter_layer_1_tf + (1._sp-inter_layer_1_tf)/(&
+&     1._sp+EXP(-inter_layer_1))
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1_tf, inter_layer_2)
       inter_layer_2 = inter_layer_2 + bias_2
-      WHERE (0.01_sp*inter_layer_2 .LT. inter_layer_2) 
-        inter_layer_2_tf = inter_layer_2
-      ELSEWHERE
-        inter_layer_2_tf = 0.01_sp*inter_layer_2
-      END WHERE
+! SiLU
+      inter_layer_2_tf = inter_layer_2*(1._sp/(1._sp+EXP(-inter_layer_2)&
+&       ))
+! Derivative of SiLU
+      inter_layer_2_grad = inter_layer_2_tf + (1._sp-inter_layer_2_tf)/(&
+&       1._sp+EXP(-inter_layer_2))
       CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2_tf, output_layer)
 ! TanH
       CALL PUSHREAL4ARRAY(output_layer, SIZE(output_layer, 1))
@@ -13305,84 +13304,74 @@ CONTAINS
       DO i=1,SIZE(output_layer)
         DO j=1,SIZE(inter_layer_2)
 ! Derivative of TanH
-          layer_2_gradient(j) = (1._sp-output_layer(i)**2)*weight_3(i, j&
-&           )
-          IF (inter_layer_2(j) .LT. 0._sp) THEN
-            layer_2_gradient(j) = layer_2_gradient(j)*0.01_sp
-            CALL PUSHCONTROL1B(1)
-          ELSE
-            CALL PUSHCONTROL1B(0)
-          END IF
+          CALL PUSHREAL4(layer_2_grad(j))
+          layer_2_grad(j) = (1._sp-output_layer(i)**2)*weight_3(i, j)
+          CALL PUSHREAL4(layer_2_grad(j))
+          layer_2_grad(j) = layer_2_grad(j)*inter_layer_2_grad(j)
         END DO
         CALL PUSHINTEGER4(j - 1)
 ! Gradient of second layer wrt first layer
+        CALL PUSHREAL4ARRAY(layer_1_grad, SIZE(bias_1))
+        layer_1_grad = 0._sp
         DO j=1,SIZE(inter_layer_1)
           DO k=1,SIZE(inter_layer_2)
-            layer_1_gradient(j) = layer_1_gradient(j) + layer_2_gradient&
-&             (k)*weight_2(k, j)
+            layer_1_grad(j) = layer_1_grad(j) + layer_2_grad(k)*weight_2&
+&             (k, j)
           END DO
           CALL PUSHINTEGER4(k - 1)
-          IF (inter_layer_1(j) .LT. 0._sp) THEN
-            layer_1_gradient(j) = layer_1_gradient(j)*0.01_sp
-            CALL PUSHCONTROL1B(1)
-          ELSE
-            CALL PUSHCONTROL1B(0)
-          END IF
+          CALL PUSHREAL4(layer_1_grad(j))
+          layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
         END DO
         CALL PUSHINTEGER4(j - 1)
 ! Gradient of first layer wrt input layer
-        DO j=1,SIZE(input_layer)
-          DO k=1,SIZE(inter_layer_1)
+        DO k=1,SIZE(inter_layer_1)
 
-          END DO
-          CALL PUSHINTEGER4(k - 1)
         END DO
-        CALL PUSHINTEGER4(j - 1)
-! Reset tmp gradients
-        CALL PUSHREAL4ARRAY(layer_2_gradient, SIZE(bias_2))
-        layer_2_gradient = 0._sp
-        CALL PUSHREAL4ARRAY(layer_1_gradient, SIZE(bias_1))
-        layer_1_gradient = 0._sp
+        CALL PUSHINTEGER4(k - 1)
       END DO
-      ad_to4 = i - 1
-      DO i=ad_to4,1,-1
-        CALL POPREAL4ARRAY(layer_1_gradient, SIZE(bias_1))
-        CALL POPREAL4ARRAY(layer_2_gradient, SIZE(bias_2))
-        layer_1_gradient_b = 0.0_4
-        CALL POPINTEGER4(ad_to3)
-        DO j=ad_to3,1,-1
-          CALL POPINTEGER4(ad_to2)
-          DO k=ad_to2,1,-1
-            layer_1_gradient_b(k) = layer_1_gradient_b(k) + weight_1(k, &
-&             j)*output_jacobian_b(i, j)
-            weight_1_b(k, j) = weight_1_b(k, j) + layer_1_gradient(k)*&
-&             output_jacobian_b(i, j)
-          END DO
+      ad_to3 = i - 1
+      inter_layer_1_grad_b = 0.0_4
+      layer_2_grad_b = 0.0_4
+      inter_layer_2_grad_b = 0.0_4
+      DO i=ad_to3,1,-1
+        layer_1_grad_b = 0.0_4
+        CALL POPINTEGER4(ad_to2)
+        DO k=ad_to2,1,-1
+          layer_1_grad_b(k) = layer_1_grad_b(k) + weight_1(k, 2)*&
+&           output_jacobian_2_b(i) + weight_1(k, 1)*output_jacobian_1_b(&
+&           i)
+          weight_1_b(k, 2) = weight_1_b(k, 2) + layer_1_grad(k)*&
+&           output_jacobian_2_b(i)
+          weight_1_b(k, 1) = weight_1_b(k, 1) + layer_1_grad(k)*&
+&           output_jacobian_1_b(i)
         END DO
-        layer_2_gradient_b = 0.0_4
         CALL POPINTEGER4(ad_to1)
         DO j=ad_to1,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) layer_1_gradient_b(j) = 0.01_sp*&
-&             layer_1_gradient_b(j)
+          CALL POPREAL4(layer_1_grad(j))
+          inter_layer_1_grad_b(j) = inter_layer_1_grad_b(j) + &
+&           layer_1_grad(j)*layer_1_grad_b(j)
+          layer_1_grad_b(j) = inter_layer_1_grad(j)*layer_1_grad_b(j)
           CALL POPINTEGER4(ad_to0)
           DO k=ad_to0,1,-1
-            layer_2_gradient_b(k) = layer_2_gradient_b(k) + weight_2(k, &
-&             j)*layer_1_gradient_b(j)
-            weight_2_b(k, j) = weight_2_b(k, j) + layer_2_gradient(k)*&
-&             layer_1_gradient_b(j)
+            layer_2_grad_b(k) = layer_2_grad_b(k) + weight_2(k, j)*&
+&             layer_1_grad_b(j)
+            weight_2_b(k, j) = weight_2_b(k, j) + layer_2_grad(k)*&
+&             layer_1_grad_b(j)
           END DO
         END DO
+        CALL POPREAL4ARRAY(layer_1_grad, SIZE(bias_1))
         CALL POPINTEGER4(ad_to)
         DO j=ad_to,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) layer_2_gradient_b(j) = 0.01_sp*&
-&             layer_2_gradient_b(j)
+          CALL POPREAL4(layer_2_grad(j))
+          inter_layer_2_grad_b(j) = inter_layer_2_grad_b(j) + &
+&           layer_2_grad(j)*layer_2_grad_b(j)
+          layer_2_grad_b(j) = inter_layer_2_grad(j)*layer_2_grad_b(j)
+          CALL POPREAL4(layer_2_grad(j))
           output_layer_b(i) = output_layer_b(i) - 2*output_layer(i)*&
-&           weight_3(i, j)*layer_2_gradient_b(j)
+&           weight_3(i, j)*layer_2_grad_b(j)
           weight_3_b(i, j) = weight_3_b(i, j) + (1._sp-output_layer(i)**&
-&           2)*layer_2_gradient_b(j)
-          layer_2_gradient_b(j) = 0.0_4
+&           2)*layer_2_grad_b(j)
+          layer_2_grad_b(j) = 0.0_4
         END DO
       END DO
       CALL POPREAL4ARRAY(output_layer, SIZE(output_layer, 1))
@@ -13393,12 +13382,14 @@ CONTAINS
 &                        inter_layer_2_tf_b, output_layer, &
 &                        output_layer_b)
       inter_layer_2_b = 0.0_4
-      WHERE (.NOT.0.01_sp*inter_layer_2 .LT. inter_layer_2) 
-        inter_layer_2_b = 0.01_sp*inter_layer_2_tf_b
-        inter_layer_2_tf_b = 0.0_4
-      ELSEWHERE
-        inter_layer_2_b = inter_layer_2_b + inter_layer_2_tf_b
-      END WHERE
+      temp0 = EXP(-inter_layer_2) + 1._sp
+      inter_layer_2_tf_b = inter_layer_2_tf_b + (1.0-1.0/temp0)*&
+&       inter_layer_2_grad_b
+      inter_layer_2_b = EXP(-inter_layer_2)*(1._sp-inter_layer_2_tf)*&
+&       inter_layer_2_grad_b/temp0**2
+      temp0 = EXP(-inter_layer_2) + 1._sp
+      inter_layer_2_b = inter_layer_2_b + (1.0/temp0+EXP(-inter_layer_2)&
+&       *inter_layer_2/temp0**2)*inter_layer_2_tf_b
       bias_2_b = bias_2_b + inter_layer_2_b
       CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1_tf, &
 &                        inter_layer_1_tf_b, inter_layer_2, &
@@ -13412,52 +13403,44 @@ CONTAINS
       DO i=1,SIZE(output_layer)
         DO j=1,SIZE(inter_layer_1)
 ! Derivative of TanH
-          layer_1_gradient(j) = (1._sp-output_layer(i)**2)*weight_2(i, j&
-&           )
-          IF (inter_layer_1(j) .LT. 0._sp) THEN
-            layer_1_gradient(j) = layer_1_gradient(j)*0.01_sp
-            CALL PUSHCONTROL1B(1)
-          ELSE
-            CALL PUSHCONTROL1B(0)
-          END IF
+          CALL PUSHREAL4(layer_1_grad(j))
+          layer_1_grad(j) = (1._sp-output_layer(i)**2)*weight_2(i, j)
+          CALL PUSHREAL4(layer_1_grad(j))
+          layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
         END DO
         CALL PUSHINTEGER4(j - 1)
 ! Gradient of first layer wrt input layer
-        DO j=1,SIZE(input_layer)
-          DO k=1,SIZE(inter_layer_1)
+        DO k=1,SIZE(inter_layer_1)
 
-          END DO
-          CALL PUSHINTEGER4(k - 1)
         END DO
-        CALL PUSHINTEGER4(j - 1)
-! Reset tmp gradients
-        CALL PUSHREAL4ARRAY(layer_1_gradient, SIZE(bias_1))
-        layer_1_gradient = 0._sp
+        CALL PUSHINTEGER4(k - 1)
       END DO
-      ad_to8 = i - 1
-      DO i=ad_to8,1,-1
-        CALL POPREAL4ARRAY(layer_1_gradient, SIZE(bias_1))
-        layer_1_gradient_b = 0.0_4
-        CALL POPINTEGER4(ad_to7)
-        DO j=ad_to7,1,-1
-          CALL POPINTEGER4(ad_to6)
-          DO k=ad_to6,1,-1
-            layer_1_gradient_b(k) = layer_1_gradient_b(k) + weight_1(k, &
-&             j)*output_jacobian_b(i, j)
-            weight_1_b(k, j) = weight_1_b(k, j) + layer_1_gradient(k)*&
-&             output_jacobian_b(i, j)
-          END DO
-        END DO
+      ad_to6 = i - 1
+      inter_layer_1_grad_b = 0.0_4
+      layer_1_grad_b = 0.0_4
+      DO i=ad_to6,1,-1
         CALL POPINTEGER4(ad_to5)
-        DO j=ad_to5,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) layer_1_gradient_b(j) = 0.01_sp*&
-&             layer_1_gradient_b(j)
+        DO k=ad_to5,1,-1
+          layer_1_grad_b(k) = layer_1_grad_b(k) + weight_1(k, 2)*&
+&           output_jacobian_2_b(i) + weight_1(k, 1)*output_jacobian_1_b(&
+&           i)
+          weight_1_b(k, 2) = weight_1_b(k, 2) + layer_1_grad(k)*&
+&           output_jacobian_2_b(i)
+          weight_1_b(k, 1) = weight_1_b(k, 1) + layer_1_grad(k)*&
+&           output_jacobian_1_b(i)
+        END DO
+        CALL POPINTEGER4(ad_to4)
+        DO j=ad_to4,1,-1
+          CALL POPREAL4(layer_1_grad(j))
+          inter_layer_1_grad_b(j) = inter_layer_1_grad_b(j) + &
+&           layer_1_grad(j)*layer_1_grad_b(j)
+          layer_1_grad_b(j) = inter_layer_1_grad(j)*layer_1_grad_b(j)
+          CALL POPREAL4(layer_1_grad(j))
           output_layer_b(i) = output_layer_b(i) - 2*output_layer(i)*&
-&           weight_2(i, j)*layer_1_gradient_b(j)
+&           weight_2(i, j)*layer_1_grad_b(j)
           weight_2_b(i, j) = weight_2_b(i, j) + (1._sp-output_layer(i)**&
-&           2)*layer_1_gradient_b(j)
-          layer_1_gradient_b(j) = 0.0_4
+&           2)*layer_1_grad_b(j)
+          layer_1_grad_b(j) = 0.0_4
         END DO
       END DO
       CALL POPREAL4ARRAY(output_layer, SIZE(output_layer, 1))
@@ -13469,19 +13452,22 @@ CONTAINS
 &                        output_layer_b)
     END IF
     inter_layer_1_b = 0.0_4
-    WHERE (.NOT.0.01_sp*inter_layer_1 .LT. inter_layer_1) 
-      inter_layer_1_b = 0.01_sp*inter_layer_1_tf_b
-      inter_layer_1_tf_b = 0.0_4
-    ELSEWHERE
-      inter_layer_1_b = inter_layer_1_b + inter_layer_1_tf_b
-    END WHERE
+    temp = EXP(-inter_layer_1) + 1._sp
+    inter_layer_1_tf_b = inter_layer_1_tf_b + (1.0-1.0/temp)*&
+&     inter_layer_1_grad_b
+    inter_layer_1_b = EXP(-inter_layer_1)*(1._sp-inter_layer_1_tf)*&
+&     inter_layer_1_grad_b/temp**2
+    temp = EXP(-inter_layer_1) + 1._sp
+    inter_layer_1_b = inter_layer_1_b + (1.0/temp+EXP(-inter_layer_1)*&
+&     inter_layer_1/temp**2)*inter_layer_1_tf_b
     bias_1_b = bias_1_b + inter_layer_1_b
     CALL DOT_PRODUCT_2D_1D_B(weight_1, weight_1_b, input_layer, &
 &                      input_layer_b, inter_layer_1, inter_layer_1_b)
   END SUBROUTINE FORWARD_AND_BACKWARD_MLP_B
 
   SUBROUTINE FORWARD_AND_BACKWARD_MLP(weight_1, bias_1, weight_2, bias_2&
-&   , weight_3, bias_3, input_layer, output_layer, output_jacobian)
+&   , weight_3, bias_3, input_layer, output_layer, output_jacobian_1, &
+&   output_jacobian_2)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:, :), INTENT(IN) :: weight_1
     REAL(sp), DIMENSION(:), INTENT(IN) :: bias_1
@@ -13491,34 +13477,35 @@ CONTAINS
     REAL(sp), DIMENSION(:), INTENT(IN) :: bias_3
     REAL(sp), DIMENSION(:), INTENT(IN) :: input_layer
     REAL(sp), DIMENSION(:), INTENT(OUT) :: output_layer
-    REAL(sp), DIMENSION(:, :), INTENT(OUT) :: output_jacobian
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_jacobian_1
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: output_jacobian_2
     INTRINSIC SIZE
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1, inter_layer_1_tf&
-&   , layer_1_gradient
+&   , inter_layer_1_grad, layer_1_grad
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2, inter_layer_2_tf&
-&   , layer_2_gradient
+&   , inter_layer_2_grad, layer_2_grad
     INTEGER :: i, j, k
-    INTRINSIC MAX
+    INTRINSIC EXP
     INTRINSIC TANH
-    output_jacobian = 0._sp
-    layer_1_gradient = 0._sp
-    layer_2_gradient = 0._sp
+    output_jacobian_1 = 0._sp
+    output_jacobian_2 = 0._sp
     CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
     inter_layer_1 = inter_layer_1 + bias_1
-    WHERE (0.01_sp*inter_layer_1 .LT. inter_layer_1) 
-      inter_layer_1_tf = inter_layer_1
-    ELSEWHERE
-      inter_layer_1_tf = 0.01_sp*inter_layer_1
-    END WHERE
+! SiLU
+    inter_layer_1_tf = inter_layer_1*(1._sp/(1._sp+EXP(-inter_layer_1)))
+! Derivative of SiLU
+    inter_layer_1_grad = inter_layer_1_tf + (1._sp-inter_layer_1_tf)/(&
+&     1._sp+EXP(-inter_layer_1))
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1_tf, inter_layer_2)
       inter_layer_2 = inter_layer_2 + bias_2
-      WHERE (0.01_sp*inter_layer_2 .LT. inter_layer_2) 
-        inter_layer_2_tf = inter_layer_2
-      ELSEWHERE
-        inter_layer_2_tf = 0.01_sp*inter_layer_2
-      END WHERE
+! SiLU
+      inter_layer_2_tf = inter_layer_2*(1._sp/(1._sp+EXP(-inter_layer_2)&
+&       ))
+! Derivative of SiLU
+      inter_layer_2_grad = inter_layer_2_tf + (1._sp-inter_layer_2_tf)/(&
+&       1._sp+EXP(-inter_layer_2))
       CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2_tf, output_layer)
 ! TanH
       output_layer = TANH(output_layer + bias_3)
@@ -13526,30 +13513,25 @@ CONTAINS
       DO i=1,SIZE(output_layer)
         DO j=1,SIZE(inter_layer_2)
 ! Derivative of TanH
-          layer_2_gradient(j) = (1._sp-output_layer(i)**2)*weight_3(i, j&
-&           )
-          IF (inter_layer_2(j) .LT. 0._sp) layer_2_gradient(j) = &
-&             layer_2_gradient(j)*0.01_sp
+          layer_2_grad(j) = (1._sp-output_layer(i)**2)*weight_3(i, j)
+          layer_2_grad(j) = layer_2_grad(j)*inter_layer_2_grad(j)
         END DO
 ! Gradient of second layer wrt first layer
+        layer_1_grad = 0._sp
         DO j=1,SIZE(inter_layer_1)
           DO k=1,SIZE(inter_layer_2)
-            layer_1_gradient(j) = layer_1_gradient(j) + layer_2_gradient&
-&             (k)*weight_2(k, j)
+            layer_1_grad(j) = layer_1_grad(j) + layer_2_grad(k)*weight_2&
+&             (k, j)
           END DO
-          IF (inter_layer_1(j) .LT. 0._sp) layer_1_gradient(j) = &
-&             layer_1_gradient(j)*0.01_sp
+          layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
         END DO
 ! Gradient of first layer wrt input layer
-        DO j=1,SIZE(input_layer)
-          DO k=1,SIZE(inter_layer_1)
-            output_jacobian(i, j) = output_jacobian(i, j) + &
-&             layer_1_gradient(k)*weight_1(k, j)
-          END DO
+        DO k=1,SIZE(inter_layer_1)
+          output_jacobian_1(i) = output_jacobian_1(i) + layer_1_grad(k)*&
+&           weight_1(k, 1)
+          output_jacobian_2(i) = output_jacobian_2(i) + layer_1_grad(k)*&
+&           weight_1(k, 2)
         END DO
-! Reset tmp gradients
-        layer_2_gradient = 0._sp
-        layer_1_gradient = 0._sp
       END DO
     ELSE
 ! Case with 2 layers
@@ -13559,20 +13541,16 @@ CONTAINS
       DO i=1,SIZE(output_layer)
         DO j=1,SIZE(inter_layer_1)
 ! Derivative of TanH
-          layer_1_gradient(j) = (1._sp-output_layer(i)**2)*weight_2(i, j&
-&           )
-          IF (inter_layer_1(j) .LT. 0._sp) layer_1_gradient(j) = &
-&             layer_1_gradient(j)*0.01_sp
+          layer_1_grad(j) = (1._sp-output_layer(i)**2)*weight_2(i, j)
+          layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
         END DO
 ! Gradient of first layer wrt input layer
-        DO j=1,SIZE(input_layer)
-          DO k=1,SIZE(inter_layer_1)
-            output_jacobian(i, j) = output_jacobian(i, j) + &
-&             layer_1_gradient(k)*weight_1(k, j)
-          END DO
+        DO k=1,SIZE(inter_layer_1)
+          output_jacobian_1(i) = output_jacobian_1(i) + layer_1_grad(k)*&
+&           weight_1(k, 1)
+          output_jacobian_2(i) = output_jacobian_2(i) + layer_1_grad(k)*&
+&           weight_1(k, 2)
         END DO
-! Reset tmp gradients
-        layer_1_gradient = 0._sp
       END DO
     END IF
   END SUBROUTINE FORWARD_AND_BACKWARD_MLP
@@ -15199,19 +15177,23 @@ CONTAINS
 !  Differentiation of gr_production_transfer_ode_mlp in forward (tangent) mode (with options fixinterface noISIZE context OpenMP)
 !:
 !   variations   of useful results: q hp ht pn
-!   with respect to varying inputs: kexc hp ht en jacobian_nn fq
-!                cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D(fq, fq_d, jacobian_nn, &
-&   jacobian_nn_d, pn, pn_d, en, en_d, imperviousness, cp, cp_d, ct, &
-&   ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, q, q_d, l)
+!   with respect to varying inputs: kexc hp ht en jacobian_nn_1
+!                jacobian_nn_2 fq cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_D(fq, fq_d, jacobian_nn_1, &
+&   jacobian_nn_1_d, jacobian_nn_2, jacobian_nn_2_d, pn, pn_d, en, en_d&
+&   , imperviousness, cp, cp_d, ct, ct_d, kexc, kexc_d, hp, hp_d, ht, &
+&   ht_d, q, q_d, l)
     IMPLICIT NONE
 ! fixed NN output size
     REAL(sp), DIMENSION(4), INTENT(IN) :: fq
     REAL(sp), DIMENSION(4), INTENT(IN) :: fq_d
     INTRINSIC SIZE
-! fixed NN input size
-    REAL(sp), DIMENSION(SIZE(fq), 4), INTENT(IN) :: jacobian_nn
-    REAL(sp), DIMENSION(SIZE(fq), 4), INTENT(IN) :: jacobian_nn_d
+! grad wrt hp
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_1
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_1_d
+! grad wrt ht
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_2
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_2_d
     REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
     REAL(sp), INTENT(IN) :: en_d, cp_d, ct_d, kexc_d
     REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
@@ -15277,50 +15259,51 @@ CONTAINS
       dh_d(2) = ht_d - ht0_d - dt*fht_d
       dh(2) = ht - ht0 - dt*fht
 ! 1 - dt*nabla_hp(fhp)
-      temp1 = jacobian_nn(1, 1)*(-(hp*hp)+1) - 2._sp*hp*(fq(1)+1._sp)
-      temp0 = jacobian_nn(2, 1)*hp*(-hp+2._sp) + 2._sp*(-hp+1._sp)*(fq(2&
-&       )+1._sp)
+      temp1 = jacobian_nn_1(1)*(-(hp*hp)+1) - 2._sp*hp*(fq(1)+1._sp)
+      temp0 = jacobian_nn_1(2)*hp*(-hp+2._sp) + 2._sp*(-hp+1._sp)*(fq(2)&
+&       +1._sp)
       temp = pn*temp1 - en*temp0
       jacob_d(1, 1) = -(dt*(inv_cp*(temp1*pn_d+pn*((1-hp**2)*&
-&       jacobian_nn_d(1, 1)-jacobian_nn(1, 1)*2*hp*hp_d-2._sp*((fq(1)+&
-&       1._sp)*hp_d+hp*fq_d(1)))-temp0*en_d-en*(hp*(2._sp-hp)*&
-&       jacobian_nn_d(2, 1)+jacobian_nn(2, 1)*(2._sp-2*hp)*hp_d+2._sp*((&
-&       1._sp-hp)*fq_d(2)-(fq(2)+1._sp)*hp_d)))+temp*inv_cp_d))
+&       jacobian_nn_1_d(1)-jacobian_nn_1(1)*2*hp*hp_d-2._sp*((fq(1)+&
+&       1._sp)*hp_d+hp*fq_d(1)))-temp0*en_d-en*((2._sp-hp)*(hp*&
+&       jacobian_nn_1_d(2)+jacobian_nn_1(2)*hp_d)-jacobian_nn_1(2)*hp*&
+&       hp_d+2._sp*((1._sp-hp)*fq_d(2)-(fq(2)+1._sp)*hp_d)))+temp*&
+&       inv_cp_d))
       jacob(1, 1) = 1._sp - dt*(temp*inv_cp)
 ! -dt*nabla_ht(fhp)
-      temp1 = jacobian_nn(2, 2)*(-hp+2._sp)
-      temp0 = pn*jacobian_nn(1, 2)*(-(hp*hp)+1) - temp1*en*hp
-      jacob_d(1, 2) = -(dt*(inv_cp*((1-hp**2)*(jacobian_nn(1, 2)*pn_d+pn&
-&       *jacobian_nn_d(1, 2))-pn*jacobian_nn(1, 2)*2*hp*hp_d-en*hp*((&
-&       2._sp-hp)*jacobian_nn_d(2, 2)-jacobian_nn(2, 2)*hp_d)-temp1*(hp*&
-&       en_d+en*hp_d))+temp0*inv_cp_d))
-      jacob(1, 2) = -(dt*(temp0*inv_cp))
+      temp1 = pn*jacobian_nn_2(1)*(-(hp*hp)+1) - en*hp*jacobian_nn_2(2)*&
+&       (-hp+2._sp)
+      jacob_d(1, 2) = -(dt*(inv_cp*((1-hp**2)*(jacobian_nn_2(1)*pn_d+pn*&
+&       jacobian_nn_2_d(1))-pn*jacobian_nn_2(1)*2*hp*hp_d-jacobian_nn_2(&
+&       2)*(2._sp-hp)*(hp*en_d+en*hp_d)-en*hp*((2._sp-hp)*&
+&       jacobian_nn_2_d(2)-jacobian_nn_2(2)*hp_d))+temp1*inv_cp_d))
+      jacob(1, 2) = -(dt*(temp1*inv_cp))
 ! -dt*nabla_hp(fht)
-      temp1 = 2._sp*(fq(1)+1._sp) + jacobian_nn(1, 1)*hp
+      temp1 = 2._sp*(fq(1)+1._sp) + jacobian_nn_1(1)*hp
       temp0 = ht**5
       temp = ht**3.5_sp
-      temp2 = 0.9_sp*pn*hp*temp1 - 0.25_sp*jacobian_nn(4, 1)*ct*temp0 + &
-&       jacobian_nn(3, 1)*kexc*temp
+      temp2 = 0.9_sp*pn*hp*temp1 - 0.25_sp*jacobian_nn_1(4)*ct*temp0 + &
+&       jacobian_nn_1(3)*kexc*temp
       jacob_d(2, 1) = -(dt*(inv_ct*(0.9_sp*(temp1*(hp*pn_d+pn*hp_d)+pn*&
-&       hp*(2._sp*fq_d(1)+hp*jacobian_nn_d(1, 1)+jacobian_nn(1, 1)*hp_d)&
-&       )-0.25_sp*(temp0*(ct*jacobian_nn_d(4, 1)+jacobian_nn(4, 1)*ct_d)&
-&       +jacobian_nn(4, 1)*ct*5*ht**4*ht_d)+temp*(kexc*jacobian_nn_d(3, &
-&       1)+jacobian_nn(3, 1)*kexc_d)+jacobian_nn(3, 1)*kexc*3.5_sp*ht**&
-&       2.5*ht_d)+temp2*inv_ct_d))
+&       hp*(2._sp*fq_d(1)+hp*jacobian_nn_1_d(1)+jacobian_nn_1(1)*hp_d))-&
+&       0.25_sp*(temp0*(ct*jacobian_nn_1_d(4)+jacobian_nn_1(4)*ct_d)+&
+&       jacobian_nn_1(4)*ct*5*ht**4*ht_d)+temp*(kexc*jacobian_nn_1_d(3)+&
+&       jacobian_nn_1(3)*kexc_d)+jacobian_nn_1(3)*kexc*3.5_sp*ht**2.5*&
+&       ht_d)+temp2*inv_ct_d))
       jacob(2, 1) = -(dt*(temp2*inv_ct))
 ! 1 - dt*nabla_ht(fht)
       temp3 = ht**2.5
-      temp2 = 3.5_sp*(fq(3)+1._sp) + jacobian_nn(3, 2)*ht
+      temp2 = 3.5_sp*(fq(3)+1._sp) + jacobian_nn_2(3)*ht
       temp1 = ht**4
-      temp0 = 1.25_sp*(fq(4)+1._sp) + 0.25_sp*jacobian_nn(4, 2)*ht
-      temp4 = temp2*kexc*temp3 + 0.9_sp*jacobian_nn(1, 2)*pn*(hp*hp) - &
+      temp0 = 1.25_sp*(fq(4)+1._sp) + 0.25_sp*jacobian_nn_2(4)*ht
+      temp4 = temp2*kexc*temp3 + 0.9_sp*jacobian_nn_2(1)*pn*(hp*hp) - &
 &       temp0*ct*temp1
       jacob_d(2, 2) = -(dt*(inv_ct*(temp3*(kexc*(3.5_sp*fq_d(3)+ht*&
-&       jacobian_nn_d(3, 2)+jacobian_nn(3, 2)*ht_d)+temp2*kexc_d)+temp2*&
-&       kexc*2.5*ht**1.5*ht_d+0.9_sp*(hp**2*(pn*jacobian_nn_d(1, 2)+&
-&       jacobian_nn(1, 2)*pn_d)+jacobian_nn(1, 2)*pn*2*hp*hp_d)-ct*temp1&
-&       *(1.25_sp*fq_d(4)+0.25_sp*(ht*jacobian_nn_d(4, 2)+jacobian_nn(4&
-&       , 2)*ht_d))-temp0*(temp1*ct_d+ct*4*ht**3*ht_d))+temp4*inv_ct_d))
+&       jacobian_nn_2_d(3)+jacobian_nn_2(3)*ht_d)+temp2*kexc_d)+temp2*&
+&       kexc*2.5*ht**1.5*ht_d+0.9_sp*(hp**2*(pn*jacobian_nn_2_d(1)+&
+&       jacobian_nn_2(1)*pn_d)+jacobian_nn_2(1)*pn*2*hp*hp_d)-ct*temp1*(&
+&       1.25_sp*fq_d(4)+0.25_sp*(ht*jacobian_nn_2_d(4)+jacobian_nn_2(4)*&
+&       ht_d))-temp0*(temp1*ct_d+ct*4*ht**3*ht_d))+temp4*inv_ct_d))
       jacob(2, 2) = 1._sp - dt*(temp4*inv_ct)
       CALL SOLVE_LINEAR_SYSTEM_2VARS_D(jacob, jacob_d, delta_h, &
 &                                delta_h_d, dh, dh_d)
@@ -15366,21 +15349,25 @@ CONTAINS
 
 !  Differentiation of gr_production_transfer_ode_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP)
 !:
-!   gradient     of useful results: q kexc hp ht en jacobian_nn
-!                fq cp pn ct
-!   with respect to varying inputs: kexc hp ht en jacobian_nn fq
-!                cp pn ct
-  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B(fq, fq_b, jacobian_nn, &
-&   jacobian_nn_b, pn, pn_b, en, en_b, imperviousness, cp, cp_b, ct, &
-&   ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, q, q_b, l)
+!   gradient     of useful results: q kexc hp ht en jacobian_nn_1
+!                jacobian_nn_2 fq cp pn ct
+!   with respect to varying inputs: kexc hp ht en jacobian_nn_1
+!                jacobian_nn_2 fq cp pn ct
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B(fq, fq_b, jacobian_nn_1, &
+&   jacobian_nn_1_b, jacobian_nn_2, jacobian_nn_2_b, pn, pn_b, en, en_b&
+&   , imperviousness, cp, cp_b, ct, ct_b, kexc, kexc_b, hp, hp_b, ht, &
+&   ht_b, q, q_b, l)
     IMPLICIT NONE
 ! fixed NN output size
     REAL(sp), DIMENSION(4), INTENT(IN) :: fq
     REAL(sp), DIMENSION(4) :: fq_b
     INTRINSIC SIZE
-! fixed NN input size
-    REAL(sp), DIMENSION(SIZE(fq), 4), INTENT(IN) :: jacobian_nn
-    REAL(sp), DIMENSION(SIZE(fq), 4) :: jacobian_nn_b
+! grad wrt hp
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_1
+    REAL(sp), DIMENSION(SIZE(fq)) :: jacobian_nn_1_b
+! grad wrt ht
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_2
+    REAL(sp), DIMENSION(SIZE(fq)) :: jacobian_nn_2_b
     REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
     REAL(sp) :: en_b, cp_b, ct_b, kexc_b
     REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
@@ -15439,23 +15426,23 @@ CONTAINS
       dh(2) = ht - ht0 - dt*fht
 ! 1 - dt*nabla_hp(fhp)
       CALL PUSHREAL4(jacob(1, 1))
-      jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn(1, 1)*(1-hp**2)-2._sp*hp&
-&       *(1._sp+fq(1)))-en*(jacobian_nn(2, 1)*hp*(2._sp-hp)+2._sp*(1._sp&
-&       -hp)*(1._sp+fq(2))))*inv_cp
+      jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn_1(1)*(1-hp**2)-2._sp*hp*&
+&       (1._sp+fq(1)))-en*(jacobian_nn_1(2)*hp*(2._sp-hp)+2._sp*(1._sp-&
+&       hp)*(1._sp+fq(2))))*inv_cp
 ! -dt*nabla_ht(fhp)
       CALL PUSHREAL4(jacob(1, 2))
-      jacob(1, 2) = -(dt*(pn*jacobian_nn(1, 2)*(1-hp**2)-en*jacobian_nn(&
-&       2, 2)*hp*(2._sp-hp))*inv_cp)
+      jacob(1, 2) = -(dt*(pn*jacobian_nn_2(1)*(1-hp**2)-en*jacobian_nn_2&
+&       (2)*hp*(2._sp-hp))*inv_cp)
 ! -dt*nabla_hp(fht)
       CALL PUSHREAL4(jacob(2, 1))
-      jacob(2, 1) = -(dt*(0.9_sp*pn*hp*(2._sp*(1._sp+fq(1))+jacobian_nn(&
-&       1, 1)*hp)-0.25_sp*jacobian_nn(4, 1)*ct*ht**5+jacobian_nn(3, 1)*&
-&       kexc*ht**3.5_sp)*inv_ct)
+      jacob(2, 1) = -(dt*(0.9_sp*pn*hp*(2._sp*(1._sp+fq(1))+&
+&       jacobian_nn_1(1)*hp)-0.25_sp*jacobian_nn_1(4)*ct*ht**5+&
+&       jacobian_nn_1(3)*kexc*ht**3.5_sp)*inv_ct)
 ! 1 - dt*nabla_ht(fht)
       CALL PUSHREAL4(jacob(2, 2))
-      jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp+fq(3))+jacobian_nn(3, 2)*&
-&       ht)*kexc*ht**2.5+0.9_sp*jacobian_nn(1, 2)*pn*hp**2-(1.25_sp*(&
-&       1._sp+fq(4))+0.25_sp*jacobian_nn(4, 2)*ht)*ct*ht**4)*inv_ct
+      jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp+fq(3))+jacobian_nn_2(3)*&
+&       ht)*kexc*ht**2.5+0.9_sp*jacobian_nn_2(1)*pn*hp**2-(1.25_sp*(&
+&       1._sp+fq(4))+0.25_sp*jacobian_nn_2(4)*ht)*ct*ht**4)*inv_ct
       CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
       CALL PUSHREAL4(hp)
       hp = hp + delta_h(1)
@@ -15535,12 +15522,12 @@ CONTAINS
 &                                delta_h_b, dh, dh_b)
       CALL POPREAL4(jacob(2, 2))
       temp5 = ht**2.5
-      temp4 = 3.5_sp*(fq(3)+1._sp) + jacobian_nn(3, 2)*ht
+      temp4 = 3.5_sp*(fq(3)+1._sp) + jacobian_nn_2(3)*ht
       temp2 = ht**4
       temp1 = ct*temp2
-      temp0 = 1.25_sp*(fq(4)+1._sp) + 0.25_sp*jacobian_nn(4, 2)*ht
+      temp0 = 1.25_sp*(fq(4)+1._sp) + 0.25_sp*jacobian_nn_2(4)*ht
       temp_b4 = -(inv_ct*dt*jacob_b(2, 2))
-      inv_ct_b = inv_ct_b - (temp4*kexc*temp5+0.9_sp*(jacobian_nn(1, 2)*&
+      inv_ct_b = inv_ct_b - (temp4*kexc*temp5+0.9_sp*(jacobian_nn_2(1)*&
 &       pn*hp**2)-temp0*temp1)*dt*jacob_b(2, 2)
       jacob_b(2, 2) = 0.0_4
       temp_b5 = kexc*temp5*temp_b4
@@ -15549,70 +15536,70 @@ CONTAINS
       temp_b0 = -(temp1*temp_b4)
       ct_b = ct_b - temp2*temp0*temp_b4
       fq_b(4) = fq_b(4) + 1.25_sp*temp_b0
-      jacobian_nn_b(4, 2) = jacobian_nn_b(4, 2) + ht*0.25_sp*temp_b0
-      jacobian_nn_b(1, 2) = jacobian_nn_b(1, 2) + pn*temp_b3
-      pn_b = pn_b + jacobian_nn(1, 2)*temp_b3
-      jacobian_nn_b(3, 2) = jacobian_nn_b(3, 2) + ht*temp_b5
+      jacobian_nn_2_b(4) = jacobian_nn_2_b(4) + ht*0.25_sp*temp_b0
+      jacobian_nn_2_b(1) = jacobian_nn_2_b(1) + pn*temp_b3
+      pn_b = pn_b + jacobian_nn_2(1)*temp_b3
+      jacobian_nn_2_b(3) = jacobian_nn_2_b(3) + ht*temp_b5
       CALL POPREAL4(jacob(2, 1))
-      temp2 = 2._sp*(fq(1)+1._sp) + jacobian_nn(1, 1)*hp
+      temp2 = 2._sp*(fq(1)+1._sp) + jacobian_nn_1(1)*hp
       temp_b3 = -(inv_ct*dt*jacob_b(2, 1))
       ht_b = ht_b + (2.5*ht**1.5*temp4*kexc-4*ht**3*ct*temp0)*temp_b4 + &
-&       jacobian_nn(4, 2)*0.25_sp*temp_b0 + jacobian_nn(3, 2)*temp_b5 + &
-&       (3.5_sp*ht**2.5*jacobian_nn(3, 1)*kexc-5*ht**4*jacobian_nn(4, 1)&
-&       *ct*0.25_sp)*temp_b3
+&       jacobian_nn_2(4)*0.25_sp*temp_b0 + jacobian_nn_2(3)*temp_b5 + (&
+&       3.5_sp*ht**2.5*jacobian_nn_1(3)*kexc-5*ht**4*jacobian_nn_1(4)*ct&
+&       *0.25_sp)*temp_b3
       temp0 = ht**5
       temp4 = ht**3.5_sp
       temp_b1 = temp2*0.9_sp*temp_b3
       temp_b2 = pn*hp*0.9_sp*temp_b3
+      hp_b = hp_b + 2*hp*jacobian_nn_2(1)*pn*0.9_sp*temp_b4 + &
+&       jacobian_nn_1(1)*temp_b2 + pn*temp_b1
       temp_b = -(temp0*0.25_sp*temp_b3)
-      jacobian_nn_b(3, 1) = jacobian_nn_b(3, 1) + kexc*temp4*temp_b3
-      kexc_b = kexc_b + jacobian_nn(3, 1)*temp4*temp_b3
-      jacobian_nn_b(4, 1) = jacobian_nn_b(4, 1) + ct*temp_b
+      jacobian_nn_1_b(3) = jacobian_nn_1_b(3) + kexc*temp4*temp_b3
+      kexc_b = kexc_b + jacobian_nn_1(3)*temp4*temp_b3
+      jacobian_nn_1_b(4) = jacobian_nn_1_b(4) + ct*temp_b
       fq_b(1) = fq_b(1) + 2._sp*temp_b2
-      jacobian_nn_b(1, 1) = jacobian_nn_b(1, 1) + hp*temp_b2
+      jacobian_nn_1_b(1) = jacobian_nn_1_b(1) + hp*temp_b2
       CALL POPREAL4(jacob(1, 2))
-      temp1 = en*hp
+      temp1 = jacobian_nn_2(2)*(-hp+2._sp)
       temp_b3 = -(inv_cp*dt*jacob_b(1, 2))
-      jacobian_nn_b(2, 2) = jacobian_nn_b(2, 2) - (2._sp-hp)*temp1*&
-&       temp_b3
+      en_b = en_b - hp*temp1*temp_b3
       CALL POPREAL4(jacob(1, 1))
       CALL POPREAL4(dh(2))
       ht0_b = ht0_b - dh_b(2)
       fht_b = -(dt*dh_b(2))
       inv_ct_b = inv_ct_b + (0.9_sp*((fq(1)+1._sp)*pn*hp**2)-0.25_sp*((&
 &       fq(4)+1._sp)*ct*temp)+temp3*(kexc*(fq(3)+1._sp)))*fht_b - (&
-&       0.9_sp*(pn*hp*temp2)-0.25_sp*(jacobian_nn(4, 1)*ct*temp0)+&
-&       jacobian_nn(3, 1)*kexc*temp4)*dt*jacob_b(2, 1)
+&       0.9_sp*(pn*hp*temp2)-0.25_sp*(jacobian_nn_1(4)*ct*temp0)+&
+&       jacobian_nn_1(3)*kexc*temp4)*dt*jacob_b(2, 1)
       jacob_b(2, 1) = 0.0_4
       temp2 = -(hp*hp) + 1
-      pn_b = pn_b + hp*temp_b1 + jacobian_nn(1, 2)*temp2*temp_b3
-      temp0 = jacobian_nn(2, 2)*(-hp+2._sp)
-      hp_b = hp_b + 2*hp*jacobian_nn(1, 2)*pn*0.9_sp*temp_b4 + &
-&       jacobian_nn(1, 1)*temp_b2 + pn*temp_b1 + (jacobian_nn(2, 2)*&
-&       temp1-en*temp0-2*hp*pn*jacobian_nn(1, 2))*temp_b3
-      inv_cp_b = inv_cp_b - (pn*jacobian_nn(1, 2)*temp2-temp0*temp1)*dt*&
+      pn_b = pn_b + hp*temp_b1 + jacobian_nn_2(1)*temp2*temp_b3
+      inv_cp_b = inv_cp_b - (pn*jacobian_nn_2(1)*temp2-en*hp*temp1)*dt*&
 &       jacob_b(1, 2)
       jacob_b(1, 2) = 0.0_4
-      jacobian_nn_b(1, 2) = jacobian_nn_b(1, 2) + pn*temp2*temp_b3
-      en_b = en_b - hp*temp0*temp_b3
-      temp2 = jacobian_nn(1, 1)*(-(hp*hp)+1) - 2._sp*hp*(fq(1)+1._sp)
-      temp1 = jacobian_nn(2, 1)*hp*(-hp+2._sp) + 2._sp*(-hp+1._sp)*(fq(2&
-&       )+1._sp)
+      jacobian_nn_2_b(1) = jacobian_nn_2_b(1) + pn*temp2*temp_b3
+      temp_b1 = -(en*hp*temp_b3)
+      hp_b = hp_b - (2*hp*pn*jacobian_nn_2(1)+en*temp1)*temp_b3 - &
+&       jacobian_nn_2(2)*temp_b1
+      jacobian_nn_2_b(2) = jacobian_nn_2_b(2) + (2._sp-hp)*temp_b1
+      temp2 = jacobian_nn_1(1)*(-(hp*hp)+1) - 2._sp*hp*(fq(1)+1._sp)
+      temp1 = jacobian_nn_1(2)*hp*(-hp+2._sp) + 2._sp*(-hp+1._sp)*(fq(2)&
+&       +1._sp)
       temp_b3 = -(inv_cp*dt*jacob_b(1, 1))
       inv_cp_b = inv_cp_b - (pn*temp2-en*temp1)*dt*jacob_b(1, 1)
       jacob_b(1, 1) = 0.0_4
       temp_b2 = pn*temp_b3
       en_b = en_b - temp1*temp_b3
       temp_b1 = -(en*temp_b3)
-      jacobian_nn_b(2, 1) = jacobian_nn_b(2, 1) + hp*(2._sp-hp)*temp_b1
-      hp_b = hp_b + ((2._sp-hp)*jacobian_nn(2, 1)-hp*jacobian_nn(2, 1)-(&
-&       fq(2)+1._sp)*2._sp)*temp_b1
+      jacobian_nn_1_b(2) = jacobian_nn_1_b(2) + hp*(2._sp-hp)*temp_b1
+      hp_b = hp_b + (jacobian_nn_1(2)*(2._sp-hp)-jacobian_nn_1(2)*hp-(fq&
+&       (2)+1._sp)*2._sp)*temp_b1
       fq_b(2) = fq_b(2) + (1._sp-hp)*2._sp*temp_b1
-      jacobian_nn_b(1, 1) = jacobian_nn_b(1, 1) + (1-hp**2)*temp_b2
+      jacobian_nn_1_b(1) = jacobian_nn_1_b(1) + (1-hp**2)*temp_b2
       temp_b1 = inv_ct*fht_b
       fq_b(3) = fq_b(3) + 3.5_sp*temp_b5 + kexc*temp3*temp_b1
       hp_b = hp_b + 2*hp*(fq(1)+1._sp)*pn*0.9_sp*temp_b1 - (2*hp*&
-&       jacobian_nn(1, 1)+(fq(1)+1._sp)*2._sp)*temp_b2
+&       jacobian_nn_1(1)+(fq(1)+1._sp)*2._sp)*temp_b2
       ht_b = ht_b + dh_b(2) + (3.5_sp*ht**2.5*kexc*(fq(3)+1._sp)-5*ht**4&
 &       *(fq(4)+1._sp)*ct*0.25_sp)*temp_b1
       dh_b(2) = 0.0_4
@@ -15620,7 +15607,7 @@ CONTAINS
       pn_b = pn_b + temp2*temp_b3 + (fq(1)+1._sp)*temp_b0
       fq_b(1) = fq_b(1) + pn*temp_b0 - hp*2._sp*temp_b2
       temp_b2 = -(temp*0.25_sp*temp_b1)
-      ct_b = ct_b + jacobian_nn(4, 1)*temp_b + (fq(4)+1._sp)*temp_b2
+      ct_b = ct_b + jacobian_nn_1(4)*temp_b + (fq(4)+1._sp)*temp_b2
       kexc_b = kexc_b + (fq(3)+1._sp)*temp3*temp_b1
       fq_b(4) = fq_b(4) + ct*temp_b2
       CALL POPREAL4(dh(1))
@@ -15647,14 +15634,16 @@ CONTAINS
     cp_b = cp_b - inv_cp_b/cp**2
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP_B
 
-  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP(fq, jacobian_nn, pn, en, &
-&   imperviousness, cp, ct, kexc, hp, ht, q, l)
+  SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_MLP(fq, jacobian_nn_1, &
+&   jacobian_nn_2, pn, en, imperviousness, cp, ct, kexc, hp, ht, q, l)
     IMPLICIT NONE
 ! fixed NN output size
     REAL(sp), DIMENSION(4), INTENT(IN) :: fq
     INTRINSIC SIZE
-! fixed NN input size
-    REAL(sp), DIMENSION(SIZE(fq), 4), INTENT(IN) :: jacobian_nn
+! grad wrt hp
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_1
+! grad wrt ht
+    REAL(sp), DIMENSION(SIZE(fq)), INTENT(IN) :: jacobian_nn_2
     REAL(sp), INTENT(IN) :: en, imperviousness, cp, ct, kexc
     REAL(sp), INTENT(INOUT) :: pn, hp, ht, q
     REAL(sp), INTENT(OUT) :: l
@@ -15686,20 +15675,20 @@ CONTAINS
 &       5+kexc*ht**3.5_sp*(1._sp+fq(3)))*inv_ct
       dh(2) = ht - ht0 - dt*fht
 ! 1 - dt*nabla_hp(fhp)
-      jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn(1, 1)*(1-hp**2)-2._sp*hp&
-&       *(1._sp+fq(1)))-en*(jacobian_nn(2, 1)*hp*(2._sp-hp)+2._sp*(1._sp&
-&       -hp)*(1._sp+fq(2))))*inv_cp
+      jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn_1(1)*(1-hp**2)-2._sp*hp*&
+&       (1._sp+fq(1)))-en*(jacobian_nn_1(2)*hp*(2._sp-hp)+2._sp*(1._sp-&
+&       hp)*(1._sp+fq(2))))*inv_cp
 ! -dt*nabla_ht(fhp)
-      jacob(1, 2) = -(dt*(pn*jacobian_nn(1, 2)*(1-hp**2)-en*jacobian_nn(&
-&       2, 2)*hp*(2._sp-hp))*inv_cp)
+      jacob(1, 2) = -(dt*(pn*jacobian_nn_2(1)*(1-hp**2)-en*jacobian_nn_2&
+&       (2)*hp*(2._sp-hp))*inv_cp)
 ! -dt*nabla_hp(fht)
-      jacob(2, 1) = -(dt*(0.9_sp*pn*hp*(2._sp*(1._sp+fq(1))+jacobian_nn(&
-&       1, 1)*hp)-0.25_sp*jacobian_nn(4, 1)*ct*ht**5+jacobian_nn(3, 1)*&
-&       kexc*ht**3.5_sp)*inv_ct)
+      jacob(2, 1) = -(dt*(0.9_sp*pn*hp*(2._sp*(1._sp+fq(1))+&
+&       jacobian_nn_1(1)*hp)-0.25_sp*jacobian_nn_1(4)*ct*ht**5+&
+&       jacobian_nn_1(3)*kexc*ht**3.5_sp)*inv_ct)
 ! 1 - dt*nabla_ht(fht)
-      jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp+fq(3))+jacobian_nn(3, 2)*&
-&       ht)*kexc*ht**2.5+0.9_sp*jacobian_nn(1, 2)*pn*hp**2-(1.25_sp*(&
-&       1._sp+fq(4))+0.25_sp*jacobian_nn(4, 2)*ht)*ct*ht**4)*inv_ct
+      jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp+fq(3))+jacobian_nn_2(3)*&
+&       ht)*kexc*ht**2.5+0.9_sp*jacobian_nn_2(1)*pn*hp**2-(1.25_sp*(&
+&       1._sp+fq(4))+0.25_sp*jacobian_nn_2(4)*ht)*ct*ht**4)*inv_ct
       CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
       hp = hp + delta_h(1)
       IF (hp .LE. 0._sp) hp = 1.e-6_sp
@@ -17403,10 +17392,14 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
 &   output_layer_d
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), setup%neurons(1&
-&   ), mesh%nac) :: jacobian_nn
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), setup%neurons(1&
-&   ), mesh%nac) :: jacobian_nn_d
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_1
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_1_d
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_2
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_2_d
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
     INTEGER :: row, col, k, time_step_returns
@@ -17442,8 +17435,9 @@ CONTAINS
         END IF
       END DO
     END DO
+    output_jacobian_1_d = 0.0_4
+    output_jacobian_2_d = 0.0_4
     output_layer_d = 0.0_4
-    jacobian_nn_d = 0.0_4
 ! Forward MLP without OPENMP
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
@@ -17460,11 +17454,17 @@ CONTAINS
 &                                     weight_3_d, bias_3, bias_3_d, &
 &                                     input_layer, input_layer_d, &
 &                                     output_layer(:, k), output_layer_d&
-&                                     (:, k), jacobian_nn(:, :, k), &
-&                                     jacobian_nn_d(:, :, k))
+&                                     (:, k), output_jacobian_1(:, k), &
+&                                     output_jacobian_1_d(:, k), &
+&                                     output_jacobian_2(:, k), &
+&                                     output_jacobian_2_d(:, k))
           ELSE
             output_layer_d(:, k) = 0.0_4
             output_layer(:, k) = 0._sp
+            output_jacobian_1_d(:, k) = 0.0_4
+            output_jacobian_1(:, k) = 0._sp
+            output_jacobian_2_d(:, k) = 0.0_4
+            output_jacobian_2(:, k) = 0._sp
           END IF
         END IF
       END DO
@@ -17479,9 +17479,11 @@ CONTAINS
 &           col)
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP_D(output_layer(:, k), &
 &                                         output_layer_d(:, k), &
-&                                         jacobian_nn(:, :, k), &
-&                                         jacobian_nn_d(:, :, k), pn(k)&
-&                                         , pn_d(k), en(k), en_d(k), &
+&                                         output_jacobian_1(:, k), &
+&                                         output_jacobian_1_d(:, k), &
+&                                         output_jacobian_2(:, k), &
+&                                         output_jacobian_2_d(:, k), pn(&
+&                                         k), pn_d(k), en(k), en_d(k), &
 &                                         imperviousness, ac_cp(k), &
 &                                         ac_cp_d(k), ac_ct(k), ac_ct_d(&
 &                                         k), ac_kexc(k), ac_kexc_d(k), &
@@ -17552,10 +17554,14 @@ CONTAINS
 &   output_layer
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
 &   output_layer_b
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), setup%neurons(1&
-&   ), mesh%nac) :: jacobian_nn
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), setup%neurons(1&
-&   ), mesh%nac) :: jacobian_nn_b
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_1
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_1_b
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_2
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_2_b
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
     INTEGER :: row, col, k, time_step_returns
@@ -17610,10 +17616,13 @@ CONTAINS
             CALL FORWARD_AND_BACKWARD_MLP(weight_1, bias_1, weight_2, &
 &                                   bias_2, weight_3, bias_3, &
 &                                   input_layer, output_layer(:, k), &
-&                                   jacobian_nn(:, :, k))
+&                                   output_jacobian_1(:, k), &
+&                                   output_jacobian_2(:, k))
             CALL PUSHCONTROL2B(2)
           ELSE
             output_layer(:, k) = 0._sp
+            output_jacobian_1(:, k) = 0._sp
+            output_jacobian_2(:, k) = 0._sp
             CALL PUSHCONTROL2B(1)
           END IF
         END IF
@@ -17634,18 +17643,20 @@ CONTAINS
           CALL PUSHREAL4(ac_hp(k))
           CALL PUSHREAL4(pn(k))
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
-&                                       jacobian_nn(:, :, k), pn(k), en(&
-&                                       k), imperviousness, ac_cp(k), &
-&                                       ac_ct(k), ac_kexc(k), ac_hp(k), &
-&                                       ac_ht(k), ac_qt(k), l)
+&                                       output_jacobian_1(:, k), &
+&                                       output_jacobian_2(:, k), pn(k), &
+&                                       en(k), imperviousness, ac_cp(k)&
+&                                       , ac_ct(k), ac_kexc(k), ac_hp(k)&
+&                                       , ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
     END DO
+    output_jacobian_1_b = 0.0_4
+    output_jacobian_2_b = 0.0_4
     output_layer_b = 0.0_4
     en_b = 0.0_4
-    jacobian_nn_b = 0.0_4
     pn_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
@@ -17662,9 +17673,11 @@ CONTAINS
           CALL POPREAL4(ac_qt(k))
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP_B(output_layer(:, k), &
 &                                         output_layer_b(:, k), &
-&                                         jacobian_nn(:, :, k), &
-&                                         jacobian_nn_b(:, :, k), pn(k)&
-&                                         , pn_b(k), en(k), en_b(k), &
+&                                         output_jacobian_1(:, k), &
+&                                         output_jacobian_1_b(:, k), &
+&                                         output_jacobian_2(:, k), &
+&                                         output_jacobian_2_b(:, k), pn(&
+&                                         k), pn_b(k), en(k), en_b(k), &
 &                                         imperviousness, ac_cp(k), &
 &                                         ac_cp_b(k), ac_ct(k), ac_ct_b(&
 &                                         k), ac_kexc(k), ac_kexc_b(k), &
@@ -17681,6 +17694,8 @@ CONTAINS
         IF (branch .NE. 0) THEN
           IF (branch .EQ. 1) THEN
             k = mesh%rowcol_to_ind_ac(row, col)
+            output_jacobian_2_b(:, k) = 0.0_4
+            output_jacobian_1_b(:, k) = 0.0_4
             output_layer_b(:, k) = 0.0_4
           ELSE
             k = mesh%rowcol_to_ind_ac(row, col)
@@ -17690,10 +17705,13 @@ CONTAINS
 &                                     weight_3_b, bias_3, bias_3_b, &
 &                                     input_layer, input_layer_b, &
 &                                     output_layer(:, k), output_layer_b&
-&                                     (:, k), jacobian_nn(:, :, k), &
-&                                     jacobian_nn_b(:, :, k))
+&                                     (:, k), output_jacobian_1(:, k), &
+&                                     output_jacobian_1_b(:, k), &
+&                                     output_jacobian_2(:, k), &
+&                                     output_jacobian_2_b(:, k))
             output_layer_b(:, k) = 0.0_4
-            jacobian_nn_b(:, :, k) = 0.0_4
+            output_jacobian_1_b(:, k) = 0.0_4
+            output_jacobian_2_b(:, k) = 0.0_4
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
             ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
@@ -17765,8 +17783,10 @@ CONTAINS
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
 &   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), setup%neurons(1&
-&   ), mesh%nac) :: jacobian_nn
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_1
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+&   output_jacobian_2
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: imperviousness, l
@@ -17805,9 +17825,12 @@ CONTAINS
             CALL FORWARD_AND_BACKWARD_MLP(weight_1, bias_1, weight_2, &
 &                                   bias_2, weight_3, bias_3, &
 &                                   input_layer, output_layer(:, k), &
-&                                   jacobian_nn(:, :, k))
+&                                   output_jacobian_1(:, k), &
+&                                   output_jacobian_2(:, k))
           ELSE
             output_layer(:, k) = 0._sp
+            output_jacobian_1(:, k) = 0._sp
+            output_jacobian_2(:, k) = 0._sp
           END IF
         END IF
       END DO
@@ -17821,10 +17844,11 @@ CONTAINS
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
           CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
-&                                       jacobian_nn(:, :, k), pn(k), en(&
-&                                       k), imperviousness, ac_cp(k), &
-&                                       ac_ct(k), ac_kexc(k), ac_hp(k), &
-&                                       ac_ht(k), ac_qt(k), l)
+&                                       output_jacobian_1(:, k), &
+&                                       output_jacobian_2(:, k), pn(k), &
+&                                       en(k), imperviousness, ac_cp(k)&
+&                                       , ac_ct(k), ac_kexc(k), ac_hp(k)&
+&                                       , ac_ht(k), ac_qt(k), l)
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt

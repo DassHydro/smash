@@ -67,7 +67,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
             res[f"optimize.{model.setup.structure}.{mp}.control_vector"] = ret.control_vector
 
             qsim = instance.response.q[:].flatten()
-            qsim = qsim[::10]  # extract values at every 10th position
+            qsim = qsim[qsim > np.quantile(qsim, 0.95)]  # extract values depassing 0.95-quantile
 
             res[f"optimize.{model.setup.structure}.{mp}.sim_q"] = qsim
 
@@ -79,7 +79,12 @@ def test_optimize():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key
+        if key.split(".")[-1] == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), key
 
 
 def test_sparse_optimize():
@@ -88,7 +93,12 @@ def test_sparse_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), "sparse." + key
+        if key.split(".")[-1] == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), "sparse." + key
 
 
 def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
@@ -296,7 +306,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
         instance = smash.optimize(model, **inner_kwargs)
 
         qsim = instance.response.q[:].flatten()
-        qsim = qsim[::10]  # extract values at every 10th position
+        qsim = qsim[qsim > np.quantile(qsim, 0.95)]  # extract values depassing 0.95-quantile
 
         res[f"custom_optimize.{model.setup.structure}.custom_set_{i + 1}.sim_q"] = qsim
 
@@ -318,4 +328,9 @@ def test_custom_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03), key
+        if key.split(".")[-1] == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol), key

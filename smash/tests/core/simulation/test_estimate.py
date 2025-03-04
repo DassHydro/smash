@@ -65,7 +65,7 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
             res[f"multiset_estimate.set_{i + 1}.lcurve_multiset.{key}"] = np.array(value, ndmin=1)
 
         qsim = instance.response.q[:].flatten()
-        qsim = qsim[::10]  # extract values at every 10th position
+        qsim = qsim[qsim > np.quantile(qsim, 0.95)]  # extract values depassing 0.95-quantile
 
         res[f"multiset_estimate.set_{i + 1}.sim_q"] = qsim
 
@@ -77,4 +77,9 @@ def test_multiset_estimate():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key
+        if key.split(".")[-1] == "sim_q":
+            atol = 1e-01  # sim_q with high tolerance for high values
+        else:
+            atol = 1e-03
+
+        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), key

@@ -203,6 +203,7 @@ class Net(object):
             - ``'leakyrelu'`` : Leaky Rectified Linear Unit
             - ``'tanh'`` : Hyperbolic Tangent
             - ``'softplus'`` : Softplus
+            - ``'silu'`` : Sigmoid Linear Unit
 
         kernel_initializer : str, default 'glorot_uniform'
             Kernel initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
@@ -283,6 +284,7 @@ class Net(object):
             - ``'leakyrelu'`` : Leaky Rectified Linear Unit
             - ``'tanh'`` : Hyperbolic Tangent
             - ``'softplus'`` : Softplus
+            - ``'silu'`` : Sigmoid Linear Unit
 
         kernel_initializer : str, default 'glorot_uniform'
             Kernel initialization method. Should be one of ``'uniform'``, ``'glorot_uniform'``,
