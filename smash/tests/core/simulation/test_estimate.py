@@ -34,7 +34,7 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
                 instance.set_rr_initial_states(k, getattr(sample, k)[i])
 
         instance.optimize(
-            mapping="uniform",
+            mapping="multi-linear",
             optimize_options={"parameters": problem["names"], "termination_crit": {"maxiter": 1}},
             common_options={"ncpu": ncpu, "verbose": False},
         )
