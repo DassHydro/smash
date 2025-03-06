@@ -56,7 +56,7 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
         instance, ret = smash.multiset_estimate(
             model,
             multiset,
-            alpha=np.linspace(-1, 6, 10),
+            alpha=np.linspace(-1, 4, 8),
             common_options={"ncpu": ncpu, "verbose": False},
             return_options={"lcurve_multiset": True},
         )

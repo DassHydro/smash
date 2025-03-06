@@ -1,14 +1,8 @@
-commit 8c55ce49d60f67e685968b446e514500d573f301
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Tue Mar 4 12:24:23 2025 +0100
+commit 94a8d84d3749902ce67a60509d08d9908ca6c980
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Thu Mar 6 17:24:09 2025 +0100
 
-    MAINT/ENH: add SiLU activation function (#400)
-    
-    * MAINT/ENH: add SiLU activation function
-    
-    * Fix baseline
-    
-    * Apply suggestions from PAG review
+    FIX: fix the mahal distance calculation in case of distributed parameters
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -1148,12 +1142,12 @@ model_io.rr_parameters.values                                  |NON MODIFIED
 model_io.setup.end_time                                        |NON MODIFIED
 model_io.setup.start_time                                      |NON MODIFIED
 model_io.setup.structure                                       |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.alpha                  |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.alpha_opt              |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.cost                   |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.mahal_dist             |NON MODIFIED
-multiset_estimate.set_1.sim_q                                  |NON MODIFIED
-multiset_estimate.set_2.lcurve_multiset.alpha                  |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.alpha                  |MODIFIED
+multiset_estimate.set_1.lcurve_multiset.alpha_opt              |MODIFIED
+multiset_estimate.set_1.lcurve_multiset.cost                   |MODIFIED
+multiset_estimate.set_1.lcurve_multiset.mahal_dist             |MODIFIED
+multiset_estimate.set_1.sim_q                                  |MODIFIED
+multiset_estimate.set_2.lcurve_multiset.alpha                  |MODIFIED
 multiset_estimate.set_2.lcurve_multiset.alpha_opt              |MODIFIED
 multiset_estimate.set_2.lcurve_multiset.cost                   |MODIFIED
 multiset_estimate.set_2.lcurve_multiset.mahal_dist             |MODIFIED
