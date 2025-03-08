@@ -152,7 +152,7 @@ which is spatially uniform.
 
     .. code-block:: python
 
-        >>> control_info["x_bkg"]  # background values before transformation
+        >>> control_info["x_raw"]  # raw values before transformation
 
     .. code-block:: output
         

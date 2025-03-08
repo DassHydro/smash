@@ -2205,9 +2205,9 @@ END MODULE MWD_OUTPUT_DIFF
 !%          ``x``                      Control vector
 !%          ``l``                      Control vector lower bound
 !%          ``u``                      Control vector upper bound
-!%          ``x_bkg``                  Control vector background
-!%          ``l_bkg``                  Control vector lower bound background
-!%          ``u_bkg``                  Control vector upper bound background
+!%          ``x_raw``                  Control vector raw
+!%          ``l_raw``                  Control vector lower bound raw
+!%          ``u_raw``                  Control vector upper bound raw
 !%          ``nbd``                    Control vector kind of bound
 !%
 !§      Subroutine
@@ -2227,9 +2227,9 @@ MODULE MWD_CONTROL_DIFF
       REAL(sp), DIMENSION(:), ALLOCATABLE :: x
       REAL(sp), DIMENSION(:), ALLOCATABLE :: l
       REAL(sp), DIMENSION(:), ALLOCATABLE :: u
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: x_bkg
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: l_bkg
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: u_bkg
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: x_raw
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: l_raw
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: u_raw
       INTEGER, DIMENSION(:), ALLOCATABLE :: nbd
       CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: name
   END TYPE CONTROLDT
@@ -2237,8 +2237,8 @@ MODULE MWD_CONTROL_DIFF
       REAL(sp), DIMENSION(:), ALLOCATABLE :: x
       REAL(sp), DIMENSION(:), ALLOCATABLE :: l
       REAL(sp), DIMENSION(:), ALLOCATABLE :: u
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: l_bkg
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: u_bkg
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: l_raw
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: u_raw
       INTEGER, DIMENSION(:), ALLOCATABLE :: nbd
   END TYPE CONTROLDT_DIFF
 
@@ -2258,12 +2258,12 @@ CONTAINS
     this%l = -99._sp
     ALLOCATE(this%u(this%n))
     this%u = -99._sp
-    ALLOCATE(this%x_bkg(this%n))
-    this%x_bkg = 0._sp
-    ALLOCATE(this%l_bkg(this%n))
-    this%l_bkg = -99._sp
-    ALLOCATE(this%u_bkg(this%n))
-    this%u_bkg = -99._sp
+    ALLOCATE(this%x_raw(this%n))
+    this%x_raw = 0._sp
+    ALLOCATE(this%l_raw(this%n))
+    this%l_raw = -99._sp
+    ALLOCATE(this%u_raw(this%n))
+    this%u_raw = -99._sp
     ALLOCATE(this%nbd(this%n))
     this%nbd = -99
     ALLOCATE(this%name(this%n))
@@ -2278,9 +2278,9 @@ CONTAINS
       DEALLOCATE(this%x)
       DEALLOCATE(this%l)
       DEALLOCATE(this%u)
-      DEALLOCATE(this%x_bkg)
-      DEALLOCATE(this%l_bkg)
-      DEALLOCATE(this%u_bkg)
+      DEALLOCATE(this%x_raw)
+      DEALLOCATE(this%l_raw)
+      DEALLOCATE(this%u_raw)
       DEALLOCATE(this%nbd)
       DEALLOCATE(this%name)
     END IF
@@ -5779,8 +5779,8 @@ CONTAINS
 !  Differentiation of sbs_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE SBS_CONTROL_TFM_D(parameters, parameters_d)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -5796,12 +5796,12 @@ CONTAINS
 ! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
-        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+        IF (parameters%control%l_raw(i) .LT. 0._sp) THEN
           parameters_d%control%x(i) = parameters_d%control%x(i)/SQRT(1.0&
 &           +parameters%control%x(i)**2)
           parameters%control%x(i) = ASINH(parameters%control%x(i))
-        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
-&           %control%u_bkg(i) .LE. 1._sp) THEN
+        ELSE IF (parameters%control%l_raw(i) .GE. 0._sp .AND. parameters&
+&           %control%u_raw(i) .LE. 1._sp) THEN
           temp = parameters%control%x(i)/(-parameters%control%x(i)+1._sp&
 &           )
           parameters_d%control%x(i) = (temp+1.0)*parameters_d%control%x(&
@@ -5819,8 +5819,8 @@ CONTAINS
 !  Differentiation of sbs_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE SBS_CONTROL_TFM_B(parameters, parameters_b)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -5840,12 +5840,12 @@ CONTAINS
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
-      ELSE IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+      ELSE IF (parameters%control%l_raw(i) .LT. 0._sp) THEN
         CALL PUSHREAL4(parameters%control%x(i))
         parameters%control%x(i) = ASINH(parameters%control%x(i))
         CALL PUSHCONTROL2B(3)
-      ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters%&
-&         control%u_bkg(i) .LE. 1._sp) THEN
+      ELSE IF (parameters%control%l_raw(i) .GE. 0._sp .AND. parameters%&
+&         control%u_raw(i) .LE. 1._sp) THEN
         CALL PUSHREAL4(parameters%control%x(i))
         parameters%control%x(i) = LOG(parameters%control%x(i)/(1._sp-&
 &         parameters%control%x(i)))
@@ -5892,22 +5892,22 @@ CONTAINS
 ! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
-        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+        IF (parameters%control%l_raw(i) .LT. 0._sp) THEN
           parameters%control%x(i) = ASINH(parameters%control%x(i))
-          parameters%control%l(i) = ASINH(parameters%control%l_bkg(i))
-          parameters%control%u(i) = ASINH(parameters%control%u_bkg(i))
-        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
-&           %control%u_bkg(i) .LE. 1._sp) THEN
+          parameters%control%l(i) = ASINH(parameters%control%l_raw(i))
+          parameters%control%u(i) = ASINH(parameters%control%u_raw(i))
+        ELSE IF (parameters%control%l_raw(i) .GE. 0._sp .AND. parameters&
+&           %control%u_raw(i) .LE. 1._sp) THEN
           parameters%control%x(i) = LOG(parameters%control%x(i)/(1._sp-&
 &           parameters%control%x(i)))
-          parameters%control%l(i) = LOG(parameters%control%l_bkg(i)/(&
-&           1._sp-parameters%control%l_bkg(i)))
-          parameters%control%u(i) = LOG(parameters%control%u_bkg(i)/(&
-&           1._sp-parameters%control%u_bkg(i)))
+          parameters%control%l(i) = LOG(parameters%control%l_raw(i)/(&
+&           1._sp-parameters%control%l_raw(i)))
+          parameters%control%u(i) = LOG(parameters%control%u_raw(i)/(&
+&           1._sp-parameters%control%u_raw(i)))
         ELSE
           parameters%control%x(i) = LOG(parameters%control%x(i))
-          parameters%control%l(i) = LOG(parameters%control%l_bkg(i))
-          parameters%control%u(i) = LOG(parameters%control%u_bkg(i))
+          parameters%control%l(i) = LOG(parameters%control%l_raw(i))
+          parameters%control%u(i) = LOG(parameters%control%u_raw(i))
         END IF
       END IF
     END DO
@@ -5916,8 +5916,8 @@ CONTAINS
 !  Differentiation of sbs_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE SBS_INV_CONTROL_TFM_D(parameters, parameters_d)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -5934,12 +5934,12 @@ CONTAINS
 ! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
-        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+        IF (parameters%control%l_raw(i) .LT. 0._sp) THEN
           parameters_d%control%x(i) = COSH(parameters%control%x(i))*&
 &           parameters_d%control%x(i)
           parameters%control%x(i) = SINH(parameters%control%x(i))
-        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
-&           %control%u_bkg(i) .LE. 1._sp) THEN
+        ELSE IF (parameters%control%l_raw(i) .GE. 0._sp .AND. parameters&
+&           %control%u_raw(i) .LE. 1._sp) THEN
           temp = EXP(parameters%control%x(i)) + 1._sp
           temp0 = EXP(parameters%control%x(i))/temp
           parameters_d%control%x(i) = (EXP(parameters%control%x(i))-&
@@ -5958,8 +5958,8 @@ CONTAINS
 !  Differentiation of sbs_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE SBS_INV_CONTROL_TFM_B(parameters, parameters_b)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -5978,12 +5978,12 @@ CONTAINS
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
-      ELSE IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+      ELSE IF (parameters%control%l_raw(i) .LT. 0._sp) THEN
         CALL PUSHREAL4(parameters%control%x(i))
         parameters%control%x(i) = SINH(parameters%control%x(i))
         CALL PUSHCONTROL2B(3)
-      ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters%&
-&         control%u_bkg(i) .LE. 1._sp) THEN
+      ELSE IF (parameters%control%l_raw(i) .GE. 0._sp .AND. parameters%&
+&         control%u_raw(i) .LE. 1._sp) THEN
         CALL PUSHREAL4(parameters%control%x(i))
         parameters%control%x(i) = EXP(parameters%control%x(i))/(1._sp+&
 &         EXP(parameters%control%x(i)))
@@ -6031,10 +6031,10 @@ CONTAINS
 ! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
-        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+        IF (parameters%control%l_raw(i) .LT. 0._sp) THEN
           parameters%control%x(i) = SINH(parameters%control%x(i))
-        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
-&           %control%u_bkg(i) .LE. 1._sp) THEN
+        ELSE IF (parameters%control%l_raw(i) .GE. 0._sp .AND. parameters&
+&           %control%u_raw(i) .LE. 1._sp) THEN
           parameters%control%x(i) = EXP(parameters%control%x(i))/(1._sp+&
 &           EXP(parameters%control%x(i)))
         ELSE
@@ -6042,8 +6042,8 @@ CONTAINS
         END IF
       END IF
     END DO
-    parameters%control%l = parameters%control%l_bkg
-    parameters%control%u = parameters%control%u_bkg
+    parameters%control%l = parameters%control%l_raw
+    parameters%control%u = parameters%control%u_raw
   END SUBROUTINE SBS_INV_CONTROL_TFM
 
 !  Differentiation of normalize_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
@@ -6059,9 +6059,9 @@ CONTAINS
     nbd_mask = parameters%control%nbd(:) .EQ. 2
     WHERE (nbd_mask) 
       parameters_d%control%x = parameters_d%control%x/(parameters%&
-&       control%u_bkg-parameters%control%l_bkg)
+&       control%u_raw-parameters%control%l_raw)
       parameters%control%x = (parameters%control%x-parameters%control%&
-&       l_bkg)/(parameters%control%u_bkg-parameters%control%l_bkg)
+&       l_raw)/(parameters%control%u_raw-parameters%control%l_raw)
     END WHERE
   END SUBROUTINE NORMALIZE_CONTROL_TFM_D
 
@@ -6077,7 +6077,7 @@ CONTAINS
 !% Need lower and upper bound to normalize
     nbd_mask = parameters%control%nbd(:) .EQ. 2
     WHERE (nbd_mask) parameters_b%control%x = parameters_b%control%x/(&
-&       parameters%control%u_bkg-parameters%control%l_bkg)
+&       parameters%control%u_raw-parameters%control%l_raw)
   END SUBROUTINE NORMALIZE_CONTROL_TFM_B
 
   SUBROUTINE NORMALIZE_CONTROL_TFM(parameters)
@@ -6088,7 +6088,7 @@ CONTAINS
     nbd_mask = parameters%control%nbd(:) .EQ. 2
     WHERE (nbd_mask) 
       parameters%control%x = (parameters%control%x-parameters%control%&
-&       l_bkg)/(parameters%control%u_bkg-parameters%control%l_bkg)
+&       l_raw)/(parameters%control%u_raw-parameters%control%l_raw)
       parameters%control%l = 0._sp
       parameters%control%u = 1._sp
     END WHERE
@@ -6097,8 +6097,8 @@ CONTAINS
 !  Differentiation of normalize_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE NORMALIZE_INV_CONTROL_TFM_D(parameters, parameters_d)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -6107,18 +6107,18 @@ CONTAINS
 !% Need lower and upper bound to denormalize
     nbd_mask = parameters%control%nbd(:) .EQ. 2
     WHERE (nbd_mask) 
-      parameters_d%control%x = (parameters%control%u_bkg-parameters%&
-&       control%l_bkg)*parameters_d%control%x
+      parameters_d%control%x = (parameters%control%u_raw-parameters%&
+&       control%l_raw)*parameters_d%control%x
       parameters%control%x = parameters%control%x*(parameters%control%&
-&       u_bkg-parameters%control%l_bkg) + parameters%control%l_bkg
+&       u_raw-parameters%control%l_raw) + parameters%control%l_raw
     END WHERE
   END SUBROUTINE NORMALIZE_INV_CONTROL_TFM_D
 
 !  Differentiation of normalize_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE NORMALIZE_INV_CONTROL_TFM_B(parameters, parameters_b)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -6126,8 +6126,8 @@ CONTAINS
     LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
 !% Need lower and upper bound to denormalize
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-    WHERE (nbd_mask) parameters_b%control%x = (parameters%control%u_bkg-&
-&       parameters%control%l_bkg)*parameters_b%control%x
+    WHERE (nbd_mask) parameters_b%control%x = (parameters%control%u_raw-&
+&       parameters%control%l_raw)*parameters_b%control%x
   END SUBROUTINE NORMALIZE_INV_CONTROL_TFM_B
 
   SUBROUTINE NORMALIZE_INV_CONTROL_TFM(parameters)
@@ -6138,9 +6138,9 @@ CONTAINS
     nbd_mask = parameters%control%nbd(:) .EQ. 2
     WHERE (nbd_mask) 
       parameters%control%x = parameters%control%x*(parameters%control%&
-&       u_bkg-parameters%control%l_bkg) + parameters%control%l_bkg
-      parameters%control%l = parameters%control%l_bkg
-      parameters%control%u = parameters%control%u_bkg
+&       u_raw-parameters%control%l_raw) + parameters%control%l_raw
+      parameters%control%l = parameters%control%l_raw
+      parameters%control%u = parameters%control%u_raw
     END WHERE
   END SUBROUTINE NORMALIZE_INV_CONTROL_TFM
 
@@ -6148,8 +6148,8 @@ CONTAINS
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE CONTROL_TFM_D(parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -6167,8 +6167,8 @@ CONTAINS
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE CONTROL_TFM_B(parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -6208,8 +6208,8 @@ CONTAINS
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE INV_CONTROL_TFM_D(parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -6227,8 +6227,8 @@ CONTAINS
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in
   SUBROUTINE INV_CONTROL_TFM_B(parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -6902,10 +6902,10 @@ CONTAINS
     CALL SERR_SIGMA_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
 &                                     options)
     CALL NN_PARAMETERS_FILL_CONTROL(setup, options, parameters)
-! Store background
-    parameters%control%x_bkg = parameters%control%x
-    parameters%control%l_bkg = parameters%control%l
-    parameters%control%u_bkg = parameters%control%u
+! Store raw control values
+    parameters%control%x_raw = parameters%control%x
+    parameters%control%l_raw = parameters%control%l
+    parameters%control%u_raw = parameters%control%u
   END SUBROUTINE FILL_CONTROL
 
 !  Differentiation of uniform_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context 
@@ -8876,8 +8876,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -8919,8 +8919,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -9056,7 +9056,7 @@ CONTAINS
     INTRINSIC SUM
 ! Tapenade needs to know the size somehow
     dbkg_d = parameters_d%control%x
-    dbkg = parameters%control%x - parameters%control%x_bkg
+    dbkg = parameters%control%x - parameters%control%x_raw
     res_d = SUM(2*dbkg*dbkg_d)
     res = SUM(dbkg*dbkg)
   END FUNCTION PRIOR_REGULARIZATION_D
@@ -9075,8 +9075,8 @@ CONTAINS
     REAL(sp), DIMENSION(parameters%control%n) :: dbkg_b
     INTRINSIC SUM
 ! Tapenade needs to know the size somehow
-    dbkg = parameters%control%x - parameters%control%x_bkg
-    dbkg = parameters%control%x - parameters%control%x_bkg
+    dbkg = parameters%control%x - parameters%control%x_raw
+    dbkg = parameters%control%x - parameters%control%x_raw
     dbkg_b = 0.0_4
     dbkg_b = 2*dbkg*res_b
     parameters_b%control%x = parameters_b%control%x + dbkg_b
@@ -9089,7 +9089,7 @@ CONTAINS
     REAL(sp), DIMENSION(parameters%control%n) :: dbkg
     INTRINSIC SUM
 ! Tapenade needs to know the size somehow
-    dbkg = parameters%control%x - parameters%control%x_bkg
+    dbkg = parameters%control%x - parameters%control%x_raw
     res = SUM(dbkg*dbkg)
   END FUNCTION PRIOR_REGULARIZATION
 
@@ -9312,8 +9312,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -9343,7 +9343,7 @@ CONTAINS
     parameters_bkg_d = parameters_d
     parameters_bkg = parameters
     parameters_bkg_d%control%x = 0.0_4
-    parameters_bkg%control%x = parameters%control%x_bkg
+    parameters_bkg%control%x = parameters%control%x_raw
     CALL CONTROL_TFM_D(parameters_bkg, parameters_bkg_d, options)
     CALL CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters_bkg&
 &                          , parameters_bkg_d, options)
@@ -9392,8 +9392,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -9428,7 +9428,7 @@ CONTAINS
     parameters_bkg = parameters
     CALL PUSHREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
 &                 control%x, 1))
-    parameters_bkg%control%x = parameters%control%x_bkg
+    parameters_bkg%control%x = parameters%control%x_raw
     CALL PUSHREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
 &                 control%x, 1))
     CALL CONTROL_TFM(parameters_bkg, options)
@@ -9602,9 +9602,9 @@ CONTAINS
     res = 0._sp
 ! This allows to retrieve a parameters structure with background values
     parameters_bkg = parameters
-    parameters_bkg%control%x = parameters%control%x_bkg
-    parameters_bkg%control%l = parameters%control%l_bkg
-    parameters_bkg%control%u = parameters%control%u_bkg
+    parameters_bkg%control%x = parameters%control%x_raw
+    parameters_bkg%control%l = parameters%control%l_raw
+    parameters_bkg%control%u = parameters%control%u_raw
     CALL CONTROL_TFM(parameters_bkg, options)
     CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters_bkg, &
 &                        options)
@@ -11571,8 +11571,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -11629,8 +11629,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -11851,8 +11851,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -11888,8 +11888,8 @@ CONTAINS
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -12000,8 +12000,8 @@ CONTAINS
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -12038,8 +12038,8 @@ CONTAINS
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -30395,8 +30395,8 @@ END MODULE MD_SIMULATION_DIFF
 !                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
 !                *(output.response.q):(loc) output.cost:out
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
@@ -30463,8 +30463,8 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
 !                *(output.response.q):(loc) output.cost:in-killed
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
