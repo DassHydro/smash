@@ -96,7 +96,7 @@ The function `smash.optimize_control_info` allows retrieving information on the 
 	... 	model_0, optimize_options=optimize_options_0
 	... )
 	>>> control_names = control_info["name"].tolist()  # names of control values
-	>>> control_values = control_info["x_bkg"].tolist()  # background values before transformation
+	>>> control_values = control_info["x_raw"].tolist()  # raw values before transformation
 	>>> dict(zip(control_names, control_values))
 
 .. code-block:: output
@@ -161,7 +161,7 @@ Then, access to the control values:
 	>>> print(dict(
 	... 	zip(
 	... 		control_info_bayes["name"].tolist(), 
-	... 		control_info_bayes["x_bkg"].tolist()
+	... 		control_info_bayes["x_raw"].tolist()
 	... 	)
 	... ))
 
@@ -208,8 +208,8 @@ Note how the values of ``sg0`` and ``sg1`` are used to compute the standard devi
 	>>> igauge = 0  # index of the calibration gauge
 	>>> obs = model_bayes.response_data.q[igauge]
 	>>> sim = model_bayes.response.q[igauge]
-	>>> sg0 = control_info_bayes['x_bkg'][4]
-	>>> sg1 = control_info_bayes['x_bkg'][5]
+	>>> sg0 = control_info_bayes['x_raw'][4]
+	>>> sg1 = control_info_bayes['x_raw'][5]
 	>>>
 	>>> plot_hydrograph(obs=obs, sim=sim, sg0=sg0, sg1=sg1, xlim=[500, 1440])
 
@@ -265,7 +265,7 @@ Then, access to the control values:
 	>>> print(dict(
 	... 	zip(
 	... 		control_info_bayes_priors["name"].tolist(), 
-	... 		control_info_bayes_priors["x_bkg"].tolist()
+	... 		control_info_bayes_priors["x_raw"].tolist()
 	... 	)
 	... ))
 
@@ -285,8 +285,8 @@ Other parameters compensated by changing values, with no obvious loss of perform
 	>>> igauge = 0  # index of the calibration gauge
 	>>> obs = model_bayes_priors.response_data.q[igauge]
 	>>> sim = model_bayes_priors.response.q[igauge]
-	>>> sg0 = control_info_bayes_priors['x_bkg'][4]
-	>>> sg1 = control_info_bayes_priors['x_bkg'][5]
+	>>> sg0 = control_info_bayes_priors['x_raw'][4]
+	>>> sg1 = control_info_bayes_priors['x_raw'][5]
 	>>>
 	>>> plot_hydrograph(obs=obs, sim=sim, sg0=sg0, sg1=sg1, xlim=[500, 1440])
 
@@ -331,7 +331,7 @@ The values estimated for ``(sg0, sg1)`` implicitly define the weighting of each 
 	>>> print(dict(
 	... 	zip(
 	... 		control_info_bayes_mg["name"].tolist(), 
-	... 		control_info_bayes_mg["x_bkg"].tolist()
+	... 		control_info_bayes_mg["x_raw"].tolist()
 	... 	)
 	... ))
 
@@ -350,8 +350,8 @@ The figure below compares the observed and the simulated discharge time series a
 	>>> igauge = 2  # index of gauge V3517010
 	>>> obs = model_bayes_mg.response_data.q[igauge]
 	>>> sim = model_bayes_mg.response.q[igauge]
-	>>> sg0 = control_info_bayes_mg['x_bkg'][6]
-	>>> sg1 = control_info_bayes_mg['x_bkg'][9]
+	>>> sg0 = control_info_bayes_mg['x_raw'][6]
+	>>> sg1 = control_info_bayes_mg['x_raw'][9]
 	>>>
 	>>> plot_hydrograph(obs=obs, sim=sim, sg0=sg0, sg1=sg1, xlim=[500, 1440])
 
@@ -409,7 +409,7 @@ The parameters of structural errors also changed quite markedly: for instance, a
 	>>> print(dict(
 	... 	zip(
 	... 		control_info_bayes_mg["name"].tolist(), 
-	... 		control_info_bayes_mg["x_bkg"].tolist()
+	... 		control_info_bayes_mg["x_raw"].tolist()
 	... 	)
 	... ))
 
@@ -426,8 +426,8 @@ The parameters of structural errors also changed quite markedly: for instance, a
 	>>> igauge = 2  # index of gauge V3517010
 	>>> obs = model_bayes_mg.response_data.q[igauge]
 	>>> sim = model_bayes_mg.response.q[igauge]
-	>>> sg0 = control_info_bayes_mg['x_bkg'][6]
-	>>> sg1 = control_info_bayes_mg['x_bkg'][9]
+	>>> sg0 = control_info_bayes_mg['x_raw'][6]
+	>>> sg1 = control_info_bayes_mg['x_raw'][9]
 	>>>
 	>>> plot_hydrograph(obs=obs, sim=sim, sg0=sg0, sg1=sg1, xlim=[500, 1440])
 

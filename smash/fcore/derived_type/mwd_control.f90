@@ -12,9 +12,9 @@
 !%          ``x``                      Control vector
 !%          ``l``                      Control vector lower bound
 !%          ``u``                      Control vector upper bound
-!%          ``x_bkg``                  Control vector background
-!%          ``l_bkg``                  Control vector lower bound background
-!%          ``u_bkg``                  Control vector upper bound background
+!%          ``x_raw``                  Control vector raw
+!%          ``l_raw``                  Control vector lower bound raw
+!%          ``u_raw``                  Control vector upper bound raw
 !%          ``nbd``                    Control vector kind of bound
 !%
 !§      Subroutine
@@ -38,9 +38,9 @@ module mwd_control
         real(sp), dimension(:), allocatable :: l
         real(sp), dimension(:), allocatable :: u
 
-        real(sp), dimension(:), allocatable :: x_bkg
-        real(sp), dimension(:), allocatable :: l_bkg
-        real(sp), dimension(:), allocatable :: u_bkg
+        real(sp), dimension(:), allocatable :: x_raw
+        real(sp), dimension(:), allocatable :: l_raw
+        real(sp), dimension(:), allocatable :: u_raw
 
         integer, dimension(:), allocatable :: nbd
         character(lchar), dimension(:), allocatable :: name !$F90W char-array
@@ -70,14 +70,14 @@ contains
         allocate (this%u(this%n))
         this%u = -99._sp
 
-        allocate (this%x_bkg(this%n))
-        this%x_bkg = 0._sp
+        allocate (this%x_raw(this%n))
+        this%x_raw = 0._sp
 
-        allocate (this%l_bkg(this%n))
-        this%l_bkg = -99._sp
+        allocate (this%l_raw(this%n))
+        this%l_raw = -99._sp
 
-        allocate (this%u_bkg(this%n))
-        this%u_bkg = -99._sp
+        allocate (this%u_raw(this%n))
+        this%u_raw = -99._sp
 
         allocate (this%nbd(this%n))
         this%nbd = -99
@@ -101,11 +101,11 @@ contains
 
             deallocate (this%u)
 
-            deallocate (this%x_bkg)
+            deallocate (this%x_raw)
 
-            deallocate (this%l_bkg)
+            deallocate (this%l_raw)
 
-            deallocate (this%u_bkg)
+            deallocate (this%u_raw)
 
             deallocate (this%nbd)
 
