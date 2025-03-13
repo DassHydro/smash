@@ -84,14 +84,13 @@ def _estimate_parameter(
 
     estim_param = 1 / sum_weighting * np.sum(prior_data * weighting, axis=2)  # 2D-array
 
-    var_param = (
-        1 / sum_weighting * np.sum((prior_data - estim_param[..., np.newaxis]) ** 2 * weighting, axis=2)
+    inv_var_param = sum_weighting / np.sum(
+        (prior_data - estim_param[..., np.newaxis]) ** 2 * weighting, axis=2
     )  # 2D-array
-    var_param = np.mean(var_param)
 
     mean_prior_data = np.mean(prior_data, axis=2)  # 2D-array
 
-    mahal_distance = np.mean(np.square(estim_param - mean_prior_data)) / var_param
+    mahal_distance = np.mean(np.square(estim_param - mean_prior_data) * inv_var_param)
 
     return (estim_param, mahal_distance)
 
