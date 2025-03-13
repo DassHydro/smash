@@ -60,6 +60,10 @@ The values of these descriptors can be obtained in the ``physio_data`` derived t
 
     (27, 14, 6)
 
+.. note::
+    In this tutorial, we load the setup dictionary using the `smash.factory.load_dataset` function.
+    If you need to define your own setup, ensure that the keys ``read_descriptor``, ``descriptor_name``, and ``descriptor_directory`` are properly set.
+
 Model simulation
 ----------------
 
