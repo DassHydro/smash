@@ -59,7 +59,7 @@ def get_sorted_smash_versions():
     # Sort the versions
     sorted_versions = sorted(versions, key=lambda v: tuple(map(int, v.split("."))), reverse=True)
 
-    return sorted_versions[:-6]  # exclude versions before 0.5.0
+    return sorted_versions[1:-6]  # exclude latest version and versions before 0.5.0
 
 
 # -- Project information -----------------------------------------------------
@@ -153,7 +153,7 @@ html_theme_options = {
 html_context = {
     "default_mode": "light",
     "versions": [
-        {"name": "dev", "url": "https://smash.recover.inrae.fr/dev"},
+        {"name": "rc (dev)", "url": "https://smash.recover.inrae.fr/dev"},
         {"name": "stable", "url": "https://smash.recover.inrae.fr"},
     ]
     + [{"name": v, "url": f"https://smash.recover.inrae.fr/{v}"} for v in get_sorted_smash_versions()],
