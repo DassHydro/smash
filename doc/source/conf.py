@@ -12,8 +12,8 @@
 #
 import inspect
 import os
-import re
 import pathlib
+import re
 import sys
 import warnings
 from datetime import datetime
