@@ -157,7 +157,7 @@ html_context = {
         {"name": "stable", "url": "https://smash.recover.inrae.fr"},
     ]
     + [{"name": v, "url": f"https://smash.recover.inrae.fr/{v}"} for v in get_sorted_smash_versions()],
-    "current_version": "dev" if "+" in release else release,
+    "current_version": release.split("+")[0],
 }
 
 html_css_files = [
