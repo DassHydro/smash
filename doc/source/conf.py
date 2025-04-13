@@ -12,6 +12,7 @@
 #
 import inspect
 import os
+import re
 import pathlib
 import sys
 import warnings
@@ -27,6 +28,39 @@ import smash
 
 sys.path.insert(0, os.path.abspath("../.."))
 
+# -- Additional functions ----------------------------------------------------
+
+
+# Get min/max Python versions from pyproject.toml
+def get_min_max_python_versions():
+    with open("../../pyproject.toml", "rb") as f:
+        requires_python = load_toml(f)["project"]["requires-python"]
+
+    min_py_version, max_py_version = (
+        v.split(s)[1].strip() for v, s in zip(requires_python.split(","), [">=", "<"])
+    )
+
+    major_max_version, minor_max_version = max_py_version.split(".")
+    max_py_version = f"{major_max_version}.{int(minor_max_version) - 1}"
+
+    return min_py_version, max_py_version
+
+
+# Get the list of versions from the release directory
+def get_sorted_smash_versions():
+    files = os.listdir("release")
+
+    # Regular expression to match version numbers
+    version_pattern = re.compile(r"(\d+\.\d+\.\d+)-notes\.rst")
+
+    # Extract and filter valid versions
+    versions = [match.group(1) for file in files if (match := version_pattern.match(file))]
+
+    # Sort the versions
+    sorted_versions = sorted(versions, key=lambda v: tuple(map(int, v.split("."))), reverse=True)
+
+    return sorted_versions[:-6]  # exclude versions before 0.5.0
+
 
 # -- Project information -----------------------------------------------------
 
@@ -40,14 +74,7 @@ release = smash.__version__
 
 # -- Set dynamic variables for the documentation -----------------------------
 
-# Get min/max Python versions from pyproject.toml
-with open("../../pyproject.toml", "rb") as f:
-    requires_python = load_toml(f)["project"]["requires-python"]
-min_py_version, max_py_version = (
-    v.split(s)[1].strip() for v, s in zip(requires_python.split(","), [">=", "<"])
-)
-major_max_version, minor_max_version = max_py_version.split(".")
-max_py_version = f"{major_max_version}.{int(minor_max_version) - 1}"
+min_py_version, max_py_version = get_min_max_python_versions()
 
 # Define RST replacements
 rst_prolog = f"""
@@ -123,7 +150,15 @@ html_theme_options = {
     "footer_end": ["theme-version"],
 }
 
-html_context = {"default_mode": "light"}
+html_context = {
+    "default_mode": "light",
+    "versions": [
+        {"name": "dev", "url": "https://smash.recover.inrae.fr/dev"},
+        {"name": "stable", "url": "https://smash.recover.inrae.fr"},
+    ]
+    + [{"name": v, "url": f"https://smash.recover.inrae.fr/{v}"} for v in get_sorted_smash_versions()],
+    "current_version": "dev" if "+" in release else release.split("+")[0],
+}
 
 html_css_files = [
     "css/smash.css",

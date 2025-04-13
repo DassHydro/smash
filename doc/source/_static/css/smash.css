@@ -146,3 +146,62 @@ html[data-theme=dark] h3 {
 html[data-theme=dark] h4 {
   color: #F6F1F1;
 }
+
+/* Dropdown button styling - base */
+.nav-item .dropdown-button {
+  padding: 4px 8px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* Dropdown content styling - base */
+.nav-item .dropdown-content {
+  display: none;
+  position: absolute;
+  min-width: 100px;
+  font-size: 1rem;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  border-radius: 4px;
+  margin-top: 5px;
+  padding: 0;
+  list-style: none;
+  background-color: #F6F1F1;
+}
+
+.nav-item .dropdown-content a {
+  padding: 6px 8px;
+  text-decoration: none;
+  display: block;
+  font-size: 1rem;
+  border-radius: 0;
+  color: inherit;
+}
+
+/* Show dropdown on hover */
+.nav-item:hover .dropdown-content {
+  display: block;
+}
+
+/* Light theme hover state */
+.nav-item .dropdown-content a:hover {
+  color: inherit;
+}
+
+/* Dark theme */
+html[data-theme="dark"] .nav-item .dropdown-button {
+  background-color: #434349;
+  color: inherit;
+}
+
+html[data-theme="dark"] .nav-item .dropdown-content {
+  background-color: #434349;
+}
+
+html[data-theme="dark"] .nav-item .dropdown-content a:hover {
+  background-color: #434349;
+  color: inherit;
+}
