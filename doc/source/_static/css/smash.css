@@ -152,7 +152,8 @@ html[data-theme=dark] h4 {
   padding: 4px 8px;
   font-size: 0.95rem;
   width: 95px;
-  border-radius: 3.3px;
+  border-radius: 3px;
+  background-color: #E5E5E5;
   color: inherit;
 }
 
@@ -162,13 +163,17 @@ html[data-theme=dark] h4 {
   position: absolute;
   font-size: 0.95rem;
   width: 95px;
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
   margin-top: 30px;
   background-color: #E5E5E5;
-  border-radius: 3.3px;
+  border-radius: 3px;
+  text-align: center;
+  padding: 0;
 }
 
+/* Dropdown content a styling - base */
 .nav-item .dropdown-content a {
+  display: block;
+  text-align: center;
   color: inherit;
 }
 
@@ -177,13 +182,12 @@ html[data-theme=dark] h4 {
   display: block;
 }
 
-/* Dark theme */
+/* Customize options - dark theme */
 html[data-theme="dark"] .nav-item .dropdown-button {
   background-color: #434349;
 }
 
 html[data-theme="dark"] .nav-item .dropdown-content {
-  box-shadow: 0px 6px 12px rgba(255, 255, 255, 0.08);
   background-color: #434349;
 }
 
