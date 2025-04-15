@@ -4,19 +4,18 @@
 Forward Structure
 =================
 
-In `smash` a forward/direct spatially distributed model is obtained by chaining **differentiable hydrological-hydraulic operators** via simulated fluxes:
+In `smash`, a forward/direct spatially distributed model is obtained by chaining **differentiable hydrological-hydraulic operators** via simulated fluxes:
 
-- (optional) a descriptors-to-parameters mapping :math:`\phi` either for parameters imposing spatial constrain and/or regional mapping between physical descriptor and model conceptual parameters, see :ref:`mapping section <math_num_documentation.mapping>`.
-- (optional) a ``snow`` operator :math:`\mathcal{M}_{snw}` generating a melt flux :math:`m_{lt}` which is then summed with the precipitation flux to feed the ``hydrological`` operator :math:`\mathcal{M}_{rr}`.
-- A ``hydrological`` production operator :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t` which feeds the routing operator. 
-- A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating propagation of discharge :math:`Q`.
+- (optional) a descriptors-to-parameters mapping :math:`\phi`, either for parameters imposing spatial constraints and/or regional mapping between physical descriptors and model conceptual parameters, see :ref:`mapping section <math_num_documentation.mapping>`.
+- (optional) a ``snow`` operator :math:`\mathcal{M}_{snw}` generating a melt flux :math:`m_{lt}`, which is then summed with the precipitation flux to feed the ``hydrological`` operator :math:`\mathcal{M}_{rr}`.
+- A ``hydrological`` production operator :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t`, which feeds the routing operator. 
+- A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating the propagation of discharge :math:`Q`.
 
-The operators chaining principle  is presented in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem.chaining>` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>` ) and the chaining fluxes are explicitated in the diagram below. The forward model obtained reads :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` .
+The operators' chaining principle is presented in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem.chaining>` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`), and the chaining fluxes are explicated in the diagram below. The forward model obtained reads :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)`.
 
-This section describes the various operators available in `smash` with mathematical/numerical expression, **input data** :math:`\left[\boldsymbol{I},\boldsymbol{D}\right](x,t)`, **tunable conceptual parameters** :math:`\boldsymbol{\theta}(x,t)` and simulated **state and fluxes** :math:`\boldsymbol{U}(x,t)=\left[Q,\boldsymbol{h},\boldsymbol{q}\right](x,t)`.
+This section describes the various operators available in `smash` with mathematical/numerical expressions, **input data** :math:`\left[\boldsymbol{I},\boldsymbol{D}\right](x,t)`, **tunable conceptual parameters** :math:`\boldsymbol{\theta}(x,t)`, and simulated **state and fluxes** :math:`\boldsymbol{U}(x,t)=\left[Q,\boldsymbol{h},\boldsymbol{q}\right](x,t)`.
 
 These operators are written below for a given pixel :math:`x` of the 2D spatial domain :math:`\Omega` and for a time :math:`t` in the simulation window :math:`\left]0,T\right]`.
-
 
 .. figure:: ../_static/forward_flowchart_detail_input_params_states_fluxes.png
     :align: center
