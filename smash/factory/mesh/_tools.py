@@ -3,14 +3,21 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, Any
 
+from smash.factory.mesh._libmesh import mw_mesh
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pyflwdir
 import rasterio
 import rasterio.features
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, LineString, Polygon
+from rasterio.mask import mask
+from rasterio.transform import Affine
+from rasterio.features import shapes
 from pyflwdir.gis_utils import degree_metres_x, degree_metres_y
+from pyflwdir.core import confluence_indices
+
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -474,3 +481,739 @@ def _get_cross_sections_and_segments(
         )
 
     return cross_sections, segments
+
+def _compute_flow_direction(
+    input_raster_path: str,
+    river_line_path: str,
+    is_flwdir_raster: bool,
+    outlets: str,
+    upscale_factor: int,
+    burning_depth: int,
+) -> tuple[pyflwdir.FlwdirRaster, pyflwdir.FlwdirRaster, np.ndarray]:
+    """
+    Compute upscaled flow direction from fine-resolution input raster.
+    
+    Parameters
+    ----------
+    input_raster_path : str
+        Path to input raster (DEM or flow direction)
+    is_flwdir_raster : bool
+        Whether input is flow direction (True) or DEM (False)
+    upscale_factor : int
+        Factor by which to upscale the flow direction
+        
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - flwdir: Fine resolution flow direction object
+        - ups_flwdir: Upscaled flow direction object
+        - flwdir_smash_array: Upscaled flow direction array in SMASH convention
+        - idxs_out: Linear indices of subgrid outlets (in fine-resolution grid)
+        - epsg: EPSG code of input raster
+    """
+    # Read input raster
+    with rasterio.open(input_raster_path, "r") as src:
+        raster_data = src.read(1)
+        transform = src.transform
+        latlon = src.crs.is_geographic
+        epsg = src.crs.to_epsg()
+        profile = src.profile
+        if is_flwdir_raster:
+            flwdir = pyflwdir.from_array(
+                data=raster_data,
+                ftype='d8',
+                transform=transform,
+                latlon=latlon,
+            )
+        else:
+            profile.update(nodata=-9999.0) # WARNING: set dem nodata to -9999.0 to match pyflwdir nodata (by default -9999.0)
+            if burning_depth > 0:
+                # Read river line
+                river_gdf = gpd.read_file(river_line_path)
+                # Generate river mask
+                river_mask, _ = mask(
+                    src, river_gdf.geometry, all_touched=False, nodata=0)
+                # Create a boolean mask
+                river_cells_mask = river_mask[0] != 0
+                # Create a copy of the raw DEM data
+                burned_dem_data = raster_data.copy()
+                # Burn river cells with defined offset
+                burned_dem_data[river_cells_mask] -= burning_depth
+                # Generate flow direction object from burned DEM
+                flwdir = pyflwdir.from_dem(
+                        data=burned_dem_data,
+                        transform=transform,
+                        latlon=latlon,
+                        outlets=outlets
+                    )
+            else:
+                # Generate flow direction object from raw DEM (no stream burning)
+                flwdir = pyflwdir.from_dem(
+                    data=raster_data,
+                    transform=transform,
+                    latlon=latlon,
+                    outlets=outlets
+                )
+            # Adjust elevation using Yamazaki et al., 2012 method
+            # Hydrologically Adjusted DEM: downstream cells are not higher than upstream cells
+            # WARNING: Adjusted DEM from RAW DEM (no stream burning)
+            adjusted_dem = pyflwdir.dem.adjust_elevation(flwdir.idxs_ds, flwdir.idxs_seq, raster_data.flatten())
+
+    # Upscale flow direction
+    uparea = flwdir.upstream_area()
+    ups_flwdir, idxs_out = flwdir.upscale(
+        scale_factor=upscale_factor,
+        uparea=uparea,
+        method="ihu"
+    )
+    ups_flwdir_smash_array = _switch_flwdir_convention(ups_flwdir.to_array(ftype='d8'), "d8-smash")
+
+    results = {
+            # Coarse (Upscaled) Grid properties
+            "xres": ups_flwdir.transform.a,
+            "yres": abs(ups_flwdir.transform.e),
+            "xmin": ups_flwdir.bounds[0],
+            "ymax": ups_flwdir.bounds[3],
+            "epsg": epsg,
+
+            # Flow direction data
+            "fine_flwdir_object": flwdir, 
+            "ups_flwdir_object": ups_flwdir,
+            "ups_flwdir_smash_array": ups_flwdir_smash_array,
+            "idxs_out": idxs_out, 
+            }
+    if not is_flwdir_raster:
+        results.update(
+            {
+            "adjusted_dem": adjusted_dem,
+            }
+        )
+    return results
+
+
+def _generate_masked_mesh(
+    flow_dir_data: dict,
+    gauge_attributes: dict,
+    max_depth: int
+) -> dict:
+    """
+    Generate masked mesh using SMASH's catchment delineation algorithm.
+    
+    Parameters
+    ----------
+    flow_dir_data : dict
+        Dictionary containing:
+        - xres, yres: Grid resolutions
+        - xmin, ymax: Grid coordinates
+        - epsg: EPSG code
+        - flwdir_smash_array: Flow direction array in SMASH convention
+    gauge_attributes : dict
+        Dictionary containing gauge information:
+        - x: x-coordinates
+        - y: y-coordinates
+        - area: catchment areas
+        - code: gauge codes
+    max_depth : int
+        Maximum search depth for catchment delineation
+    
+    Returns
+    -------
+    dict
+        Mesh dictionary containing grid and flow properties
+    """
+    # Get flow direction array in smash convention
+    flwdir = flow_dir_data["ups_flwdir_smash_array"]
+    
+    # Get CRS
+    crs = rasterio.CRS.from_epsg(flow_dir_data["epsg"])
+    
+    # Calculate dx, dy based on coordinate system
+    if crs.units_factor[0].lower() == "degree":
+        dx, dy = mw_mesh.latlon_dxdy(
+            flwdir.shape[0],
+            flwdir.shape[1],
+            flow_dir_data["xres"],
+            flow_dir_data["yres"],
+            flow_dir_data["ymax"]
+        )
+    else:
+        dx = np.zeros(shape=flwdir.shape, dtype=np.float32) + flow_dir_data["xres"]
+        dy = np.zeros(shape=flwdir.shape, dtype=np.float32) + flow_dir_data["yres"]
+    
+    # Extract gauge information
+    x = np.array(gauge_attributes["x"])
+    y = np.array(gauge_attributes["y"])
+    area = np.array(gauge_attributes["area"])
+    code = np.array(gauge_attributes["code"])
+    
+    # Initialize delineation arrays
+    row_dln = np.zeros(shape=x.shape, dtype=np.int32)
+    col_dln = np.zeros(shape=x.shape, dtype=np.int32)
+    area_dln = np.zeros(shape=x.shape, dtype=np.float32)
+    sink_dln = np.zeros(shape=x.shape, dtype=np.bool)
+    mask_dln = np.zeros(shape=flwdir.shape, dtype=np.int32)
+    
+    # Delineate catchments
+    for ind in range(x.size):
+        row, col = _xy_to_rowcol(
+            x[ind], y[ind],
+            flow_dir_data["xmin"], flow_dir_data["ymax"],
+            flow_dir_data["xres"], flow_dir_data["yres"]
+        )
+        slice_win = _get_catchment_slice_window(
+            *flwdir.shape, row, col,
+            area[ind], dx[row, col], dy[row, col],
+            max_depth
+        )
+        row_win = row - slice_win[0].start
+        col_win = col - slice_win[1].start
+        
+        dx_win = dx[slice_win]
+        dy_win = dy[slice_win]
+        flwdir_win = flwdir[slice_win]
+        
+        mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln_area_based(
+            flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
+        )
+
+        row_dln[ind] = row_dln_win + slice_win[0].start
+        col_dln[ind] = col_dln_win + slice_win[1].start
+        area_dln[ind] = np.sum(mask_dln_win * dx_win * dy_win)
+        mask_dln[slice_win] = np.where(mask_dln_win == 1, 1, mask_dln[slice_win])
+    
+    # Handle sinks warning
+    if np.any(sink_dln):
+        warnings.warn(
+            f"One or more sinks were detected when trying to delineate the catchment(s): "
+            f"'{code[sink_dln == 1]}'. The catchment(s) might not be correctly delineated avoiding the sink cells.",
+            stacklevel=2,
+        )
+    
+    # Create masked arrays and compute properties
+    flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
+    flwdir, slice_win = _trim_mask_2d(flwdir, slice_win=True)
+    dx = dx[slice_win]
+    dy = dy[slice_win]
+    
+    # Update coordinates
+    ymax_shifted = flow_dir_data["ymax"] - slice_win[0].start * flow_dir_data["yres"]
+    xmin_shifted = flow_dir_data["xmin"] + slice_win[1].start * flow_dir_data["xres"]
+    row_dln = row_dln - slice_win[0].start
+    col_dln = col_dln - slice_win[1].start
+    
+    # Compute flow properties
+    flwacc, flwpar = mw_mesh.flow_accumulation_partition(flwdir, dx, dy)
+    flwdst = mw_mesh.flow_distance(flwdir, dx, dy, row_dln, col_dln, area_dln)
+    
+    # Mask flow properties
+    flwdst = np.ma.masked_array(flwdst, mask=flwdir.mask)
+    flwacc = np.ma.masked_array(flwacc, mask=flwdir.mask)
+    
+    # Compute partitioning
+    npar = np.max(flwpar)
+    ncpar, cscpar, cpar_to_rowcol = mw_mesh.flow_partition_variable(npar, flwpar)
+    flwpar = np.ma.masked_array(flwpar, mask=flwdir.mask)
+    
+    # Compute active cells
+    nac = np.count_nonzero(~flwdir.mask)
+    active_cell = 1 - flwdir.mask.astype(np.int32)
+    
+    # Prepare gauge information
+    ng = x.size
+    gauge_pos = np.column_stack((row_dln, col_dln))
+    
+    return {
+        "xmin": xmin_shifted,
+        "ymax": ymax_shifted,
+        "xres": flow_dir_data["xres"],
+        "yres": flow_dir_data["yres"],
+        "epsg": flow_dir_data["epsg"],
+        "nrow": flwdir.shape[0],
+        "ncol": flwdir.shape[1],
+        "dx": dx,
+        "dy": dy,
+        "flwdir": flwdir,
+        "flwdst": flwdst,
+        "flwacc": flwacc,
+        "flwpar": flwpar,
+        "npar": npar,
+        "ncpar": ncpar,
+        "cscpar": cscpar,
+        "cpar_to_rowcol": cpar_to_rowcol,
+        "nac": nac,
+        "active_cell": active_cell,
+        "ng": ng,
+        "gauge_pos": gauge_pos,
+        "code": code,
+        "area": area,
+        "area_dln": area_dln
+    }
+
+
+def _compute_subgrid_network(
+    masked_mesh: dict,
+    flow_dir_data: dict,
+    river_line_path: str,
+    width_coef_a: float,
+    width_coef_b: float,
+    depth_coef_a: float,
+    depth_coef_b: float,
+    return_analysis_data: bool = False
+) -> dict: 
+
+    # Get flow direction data from masked mesh at smash convention
+    masked_flwdir_data = _switch_flwdir_convention(masked_mesh['flwdir'].data, "smash-d8")
+
+    # Create transform from masked mesh
+    smash_transform = Affine(masked_mesh['xres'],  0, masked_mesh['xmin'], 0, -masked_mesh['yres'],masked_mesh['ymax'])
+
+    # Create masked upscaled flow direction object using masked_mesh extent
+    ups_flwdir = pyflwdir.from_array(
+        data=masked_flwdir_data,
+        ftype='d8',
+        mask=~masked_mesh['flwdir'].mask, # WARNING: need to invert smash active cells mask
+        transform=smash_transform,
+        latlon=flow_dir_data["ups_flwdir_object"].latlon,
+    )
+
+    # Get fine resolution flow direction object, WARNING: at the initial extent !
+    flwdir = flow_dir_data["fine_flwdir_object"]
+    
+    # Get linear indices of subgrid outlets (WARNING: at the initial extent !) and clip to masked mesh extent
+    # Calculate the offset between full grid and masked grid
+    x_offset = int((masked_mesh['xmin'] - flow_dir_data["ups_flwdir_object"].bounds[0]) / masked_mesh['xres'])
+    y_offset = int((flow_dir_data["ups_flwdir_object"].bounds[3] - masked_mesh['ymax']) / masked_mesh['yres'])
+    # Extract the slice based on these offsets
+    idxs_out = flow_dir_data["idxs_out"][y_offset:y_offset+masked_mesh['nrow'], 
+                           x_offset:x_offset+masked_mesh['ncol']]
+    
+    
+    ### ----- CLIP RIVER NETWORK TO SMASH MASK -----------------------------------------------------------
+    river_line = gpd.read_file(river_line_path)
+    mask = ~masked_mesh['flwdir'].mask    
+    mask_shapes = list(shapes(mask.astype(np.uint8), mask=mask, transform=smash_transform))
+    polygons = [Polygon(s[0]["coordinates"][0]) for s in mask_shapes if s[1] == 1]
+    mask_gdf = gpd.GeoDataFrame(geometry=polygons, crs=str(masked_mesh['epsg'])).dissolve()
+    mask_geom = mask_gdf.union_all()
+    # Check if all rivers are fully within mask
+    within_mask = river_line.geometry.within(mask_geom)
+    if not within_mask.all():
+        # some river features fall outside the flow direction mask, clipping...
+        cropped_river_gdf = gpd.clip(river_line, mask_geom)
+        river_line = cropped_river_gdf  # overwrite original river network with clipped
+
+    ### ----- COMPUTE COARSE RESOLUTION FLOW PATH -----------------------------------------------------------
+
+    selected_path = {}
+    # Iterate over each line segment in the river GeoDataFrame
+    for rl in river_line["geometry"]:
+        if rl.geom_type == 'LineString':
+            line_coords = list(rl.coords)
+        else:
+            line_coords = [coord for linestring in rl.geoms for coord in linestring.coords] # MultiLineString
+
+        # Determine the starting point of the current line segment
+        start_point = Point(line_coords[0][0], line_coords[0][1])
+
+        # Transform the starting point coordinates to raster cell coordinates
+        start_cell_col, start_cell_row = map(int, ~ups_flwdir.transform * (start_point.x, start_point.y))
+
+        # Get the linear index of the start cell
+        start_cell_idx = int(start_cell_row * ups_flwdir.shape[1] + start_cell_col)
+
+        # Get the indices of the eight neighboring cells of the start cell
+        neighbors_cells_idxs = _d8_idx(start_cell_idx, ups_flwdir.shape)
+        neighbors_cells_idxs = neighbors_cells_idxs[np.isin(neighbors_cells_idxs, ups_flwdir.idxs_seq)]
+
+        # Define flow path source cells as the start cell and its eight neighbors
+        source_cells = np.concatenate(([start_cell_idx], neighbors_cells_idxs)).astype(np.int32)
+
+        # Compute flow paths starting from the source cells
+        flwpaths, _ = ups_flwdir.path(idxs=source_cells)
+
+        flwpaths_analysis = {}
+        for fp in flwpaths:
+            count = sum(
+                sum(1 for x, y, *_ in line_coords if x_min <= x < x_max and y_min <= y < y_max)
+                for cell in fp
+                for row, col in [np.unravel_index(cell, ups_flwdir.shape)]
+                for x_min, y_max in [ups_flwdir.transform * (col, row)]
+                for x_max, y_min in [ups_flwdir.transform * (col + 1, row + 1)]
+            )
+            flwpaths_analysis[fp[0]] = count
+
+        # Select the start cell index of the flow path with the highest number of line segment points
+        best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])
+
+        # Store the selected path of the best start cell index
+        selected_path[best_cell_idx] = flwpaths[np.where(source_cells == best_cell_idx)[0][0]]
+
+    # Compute the flow path
+    ups_flwpath = np.unique(np.concatenate(list(selected_path.values())))
+    ups_flwpath = ups_flwpath[np.isin(ups_flwpath, ups_flwdir.idxs_seq)]
+    ups_flwpath_rowcol = np.unravel_index(ups_flwpath, ups_flwdir.shape)
+    ups_flwpath_mask = np.zeros(ups_flwdir.shape, dtype=bool)
+    ups_flwpath_mask[ups_flwpath_rowcol] = True
+
+    # Extract inflow cell indices from the final flow path mask
+    inflows_idxs = ups_flwdir.inflow_idxs(ups_flwpath_mask)
+
+    # Generate stream segments (defined by flow path between two confluences)
+    streams = ups_flwdir.streams(mask=ups_flwpath_mask)
+
+    # Get upstream cell for each stream segment excluding cells in flow path
+    downstream_indices = {stream['properties']['idx_ds'] for stream in streams}
+    stream_upstream_cells = [
+        stream['properties']['idx'] for stream in streams
+        if stream['properties']['idx'] not in downstream_indices]
+
+    # Separate inflows into upstream and lateral inflows based on whether their downstream cell is in the
+    # flow path upstream cells
+    lat_inflows_idxs = [
+        inflow_point
+        for inflow_point in inflows_idxs
+        if ups_flwdir.idxs_ds[inflow_point] not in stream_upstream_cells
+    ]
+    # lateral_inflows_rowcol = np.unravel_index(lateral_inflows, flwdir.shape)
+    up_inflows_idxs = [
+        inflow_point
+        for inflow_point in inflows_idxs
+        if ups_flwdir.idxs_ds[inflow_point] in stream_upstream_cells
+    ]
+
+    ### ----- COMPUTE FINE RESOLUTION FLOW PATH FROM SUBGRID OULETS-----------------------------------------------------------
+
+    # Filter unit catchment outlets using river mask
+    river_cells_outlet_pixels = idxs_out[ups_flwpath_mask]
+    # Create a mask where only the basin outlet is True
+    fine_res_basin_outlet_mask = np.zeros(flwdir.shape, dtype=bool)
+    # Get the outlet cell from the last stream segment
+    outlet_cell_idx = streams[-1]['properties']['idx']
+    # Get outlet pixel of outlet cell
+    outlet_pixel_idx = idxs_out.ravel()[outlet_cell_idx] 
+    # Set only the basin outlet pixel to True
+    fine_res_basin_outlet_mask.flat[outlet_pixel_idx] = True
+    # Trace paths, stopping at the basin outlet
+    fine_res_flwpath, _ = flwdir.path(
+        idxs=river_cells_outlet_pixels, 
+        mask=fine_res_basin_outlet_mask
+    )
+    fine_res_flwpath = np.unique(np.concatenate(fine_res_flwpath))
+
+    fine_res_flwpath_mask = np.zeros(flwdir.shape, dtype=bool)
+    fine_res_flwpath_mask[np.unravel_index(fine_res_flwpath, flwdir.shape)] = True
+    # Create a masked flow direction object
+    masked_fine_flwdir = pyflwdir.from_array(
+        data=flwdir.to_array(),
+        ftype='d8',
+        mask=fine_res_flwpath_mask,  # Only cells in flow path are valid
+        transform=flwdir.transform,
+        latlon=flwdir.latlon
+    )
+    # Compute Fine Resolution Stream Segments
+    river_fine_streams = masked_fine_flwdir.streams()
+
+    # Compute Confluences of Fine Resolution Stream Segments
+    confluences = confluence_indices(masked_fine_flwdir.idxs_ds)
+
+    ### ----- COMPUTE SUBGRID CROSS SECTIONS -----------------------------------------------------------
+
+    # Initialize lists
+    unique_combinations = set()
+    cell_list, pixel_list, inflow_list = [], [], []
+    confluence_distances = {}
+
+    # Process each fine stream except the last one
+    for idx, stream in enumerate(river_fine_streams[:-1]):
+    #for idx, stream in enumerate(river_fine_streams):
+        x_coords, y_coords = np.array(stream['geometry']['coordinates']).T
+        stream_line = LineString(zip(x_coords, y_coords))
+        pixel_idxs = flwdir.index(x_coords, y_coords)
+        outlet_pixel_values = pixel_idxs[np.isin(pixel_idxs, river_cells_outlet_pixels)]
+        
+        # Handle empty segments first
+        if len(outlet_pixel_values) == 0:
+            #print(f"\nEmpty segment at index {idx}")
+            mid_idx = len(pixel_idxs) // 2
+            new_pixel = pixel_idxs[mid_idx]
+            combination = (-1, new_pixel) # no cell index, attribute -1 value
+            if combination not in unique_combinations:
+                unique_combinations.add(combination)
+                cell_list.append(-1)
+                pixel_list.append(new_pixel)
+                inflow_list.append(False)
+            continue 
+        else:
+            for pixel_value in outlet_pixel_values:
+                cell_idx = np.where(idxs_out.ravel() == pixel_value)[0][0]
+                cell_point = Point(ups_flwdir.xy(cell_idx))
+                
+                if pixel_value in confluences:
+                    #print(f"\nConfluence at pixel {pixel_value}")
+                    is_end = pixel_value == pixel_idxs[-1]
+                    
+                    if is_end:
+                        distance = cell_point.distance(stream_line)
+
+                        if len(outlet_pixel_values) > 1:
+                            curr_idx = np.where(pixel_idxs == pixel_value)[0][0]
+                            prev_idx = np.where(pixel_idxs == outlet_pixel_values[np.where(outlet_pixel_values == pixel_value)[0][0] - 1])[0][0]
+                            mid_idx = prev_idx + (curr_idx - prev_idx) // 2
+                            new_pixel = pixel_idxs[mid_idx]
+                        else:
+                            mid_idx = len(pixel_idxs) // 2
+                            new_pixel = pixel_idxs[mid_idx]
+                        
+                        if pixel_value not in confluence_distances:
+                            confluence_distances[pixel_value] = {
+                                'distance': distance,
+                                'segment': idx,
+                                'cell': cell_idx,
+                                'new_pixel': new_pixel,
+                                'list_index': len(cell_list)
+                            }
+                            inflow_value = True
+                        else:
+                            if distance < confluence_distances[pixel_value]['distance']:
+                                inflow_list[confluence_distances[pixel_value]['list_index']] = False
+                                confluence_distances[pixel_value].update({
+                                    'distance': distance,
+                                    'segment': idx,
+                                    'cell': cell_idx,
+                                    'new_pixel': new_pixel,
+                                    'list_index': len(cell_list)
+                                })
+                                inflow_value = True
+                            else:
+                                inflow_value = False
+                    else:
+                        if len(outlet_pixel_values) > 1:
+                            curr_idx = np.where(pixel_idxs == pixel_value)[0][0]
+                            next_idx = np.where(pixel_idxs == outlet_pixel_values[np.where(outlet_pixel_values == pixel_value)[0][0] + 1])[0][0]
+                            mid_idx = curr_idx + (next_idx - curr_idx) // 2
+                            new_pixel = pixel_idxs[mid_idx]
+                        else:
+                            mid_idx = len(pixel_idxs) // 2
+                            new_pixel = pixel_idxs[mid_idx]
+                        inflow_value = False
+                    
+                    combination = (cell_idx, new_pixel)
+                else:
+                    combination = (cell_idx, pixel_value)
+                    inflow_value = True
+                    
+                if combination not in unique_combinations:
+                    unique_combinations.add(combination)
+                    cell_list.append(cell_idx)
+                    pixel_list.append(combination[1])
+                    inflow_list.append(inflow_value)
+
+    
+    # Method 1: Using integer division
+    nrow, ncol = ups_flwdir.shape
+    INVALID_COORDS = (-99, -99)
+    cell_rowcols = [(np.int32(idx // ncol), np.int32(idx % ncol)) if idx != -1 
+                else INVALID_COORDS for idx in cell_list]
+    """# Method 2: Using coordinate transformation
+    x, y = ups_flwdir.xy(np.array(cell_list))[0], ups_flwdir.xy(np.array(cell_list))[1]
+    rows, cols = pyflwdir.gis_utils.rowcol(ups_flwdir.transform, x, y)
+    cell_rowcols = list(zip(np.int32(rows), np.int32(cols)))"""
+
+# generate x, y coords of cross sections (pixels)
+    cs_x_coords, cs_y_coords = masked_fine_flwdir.xy(np.array(pixel_list))[0], masked_fine_flwdir.xy(np.array(pixel_list))[1]
+    cs_coords =  [(int(x), int(y)) for x, y in zip(cs_x_coords, cs_y_coords)]
+
+    # Create DataFrame
+    df_cs = pd.DataFrame({
+        'cell': cell_list,
+        'rowcol': cell_rowcols,
+        'pixel': pixel_list,
+        'cs_coords': cs_coords,
+        'inflow': inflow_list
+    })
+
+    # Compute metrics for each cell-pixel pair
+    upstream_area_list = []
+    curvilinear_abscissa_list = []
+    bathy_list = []
+    level_width_list = []
+    depth_list = []
+    adj_elevtn_list = []
+
+    fine_upstream_area_map = flwdir.upstream_area(unit='km2').ravel()
+
+    # Calculate metrics for each entry in df_cs
+    for pixel_value in df_cs['pixel']:
+        upstream_area = fine_upstream_area_map[pixel_value]
+        """WARNING : use masked_fine_flwdir for curvilinear abcissa calculation instead of fine_flwdir"""
+        curvilinear_abscissa = masked_fine_flwdir.distnc.ravel()[pixel_value]
+        if "adjusted_dem" not in flow_dir_data:
+            bathy = curvilinear_abscissa * 1e-3
+            bathy_list.append(bathy)
+        level_width = width_coef_a * upstream_area**width_coef_b
+        depth = depth_coef_a * upstream_area**depth_coef_b
+        
+        upstream_area_list.append(upstream_area)
+        curvilinear_abscissa_list.append(curvilinear_abscissa)
+        level_width_list.append(level_width)
+        depth_list.append(depth)
+        if "adjusted_dem" in flow_dir_data:
+            adj_elevtn_list.append(flow_dir_data["adjusted_dem"][pixel_value])
+
+
+    # Add computed metrics to DataFrame
+    df_cs['upstream_area'] = upstream_area_list
+    df_cs['curvilinear_abscissa'] = curvilinear_abscissa_list
+    df_cs['level_width'] = level_width_list
+    df_cs['depth'] = depth_list
+    if "adjusted_dem" in flow_dir_data:
+        df_cs['adj_elevtn'] = adj_elevtn_list
+        df_cs['bathy'] = df_cs['adj_elevtn'] - df_cs['depth']
+    else: # bathy is computed from curvilinear abscissa when using directly flow direction raster
+        df_cs['bathy'] = bathy_list
+
+    # Preallocate lists for inflows
+    n_cells = len(df_cs)
+    lateral_inflows_list = [[] for _ in range(n_cells)]
+    lateral_inflows_coords_list = [[] for _ in range(n_cells)]
+    nlat_list = np.zeros(n_cells, dtype=np.int32)
+
+    upstream_inflows_list = [[] for _ in range(n_cells)]
+    upstream_inflows_coords_list = [[] for _ in range(n_cells)]
+    nup_list = np.zeros(n_cells, dtype=np.int32)
+
+    # Process inflows based on inflow boolean
+    for i, (cell_idx, has_inflow) in enumerate(zip(df_cs['cell'], df_cs['inflow'])):
+        if has_inflow:
+            # Get lateral inflows
+            cs_lat_idxs = np.array([inflow for inflow in lat_inflows_idxs if ups_flwdir.idxs_ds[inflow] == cell_idx])
+            nlat_list[i] = len(cs_lat_idxs)
+            #lateral_inflows_list[i] = cs_lat_idxs.tolist()
+            #lateral_inflows_coords_list[i] = list(map(tuple, np.column_stack(np.unravel_index(cs_lat_idxs, ups_flwdir.shape)))) if cs_lat_idxs.size > 0 else np.zeros((0,2), dtype=np.float32)
+            lateral_inflows_coords_list[i] = (
+                np.column_stack(np.unravel_index(cs_lat_idxs, ups_flwdir.shape)).astype(np.int32) 
+                if cs_lat_idxs.size > 0 
+                else np.zeros((0,2), dtype=np.int32)
+            )
+            # Get upstream inflows
+            cs_up_idxs = np.array([inflow for inflow in up_inflows_idxs if ups_flwdir.idxs_ds[inflow] == cell_idx])
+            nup_list[i] = len(cs_up_idxs)
+            #upstream_inflows_list[i] = cs_up_idxs.tolist()
+            #upstream_inflows_coords_list[i] = list(map(tuple, np.column_stack(np.unravel_index(cs_up_idxs, ups_flwdir.shape)))) if cs_up_idxs.size > 0 else np.zeros((0,2), dtype=np.float32)
+            upstream_inflows_coords_list[i] = (
+                np.column_stack(np.unravel_index(cs_up_idxs, ups_flwdir.shape)).astype(np.int32)
+                if cs_up_idxs.size > 0 
+                else np.zeros((0,2), dtype=np.int32)
+            )
+
+    # Assign to DataFrame
+    df_cs['lat_idxs'] = lateral_inflows_list
+    df_cs['nlat'] = nlat_list
+    df_cs['lat_rowcols'] = lateral_inflows_coords_list
+
+    df_cs['up_idxs'] = upstream_inflows_list
+    df_cs['nup'] = nup_list
+    df_cs['up_rowcols'] = upstream_inflows_coords_list
+
+    df_cs['nlevels'] = np.ones(len(df_cs), dtype=np.int32)
+    df_cs['manning'] = np.full(len(df_cs), 1/100, dtype=np.float32)
+    df_cs['level_heights'] = [np.empty(shape=(1,), dtype=np.float32)] * len(df_cs)
+
+    # Convert DataFrame to SMASH format
+    cross_sections = [{
+        'rowcol': cs['rowcol'],
+        'cs_coords': cs['cs_coords'],
+        "x": cs['curvilinear_abscissa'],
+        "bathy": cs['bathy'],
+        "nlevels": cs['nlevels'],
+        "manning": np.full(1, cs['manning'], dtype=np.float32),
+        "level_heights": cs['level_heights'],
+        "level_widths": np.array([cs['level_width']], dtype=np.float32),
+        "nlat": cs['nlat'],
+        "lat_rowcols": (
+            np.array(cs['lat_rowcols'], dtype=np.int32) 
+            if cs['nlat'] > 0 
+            else np.zeros((0,2), dtype=np.int32)
+        ),
+        "nup": cs['nup'],
+        "up_rowcols": (
+            np.array(cs['up_rowcols'], dtype=np.int32) 
+            if cs['nup'] > 0 
+            else np.zeros((0,2), dtype=np.int32)
+        ),
+        **({'elevtn': cs['adj_elevtn']} if 'adj_elevtn' in cs else {})
+    } for _, cs in df_cs.iterrows()]
+
+
+
+    ### ----- COMPUTE SEGMENTS (df_seg) -----------------------------------------------------------
+
+    # Create mapping for quick pixel lookup
+    pixel_to_index = {pixel: idx for idx, pixel in enumerate(df_cs['pixel'])}
+
+    # Initialize segments list
+    segments = []
+
+    # Process each stream to create segments
+    for i, stream in enumerate(river_fine_streams[:-1]):
+    #for i, stream in enumerate(river_fine_streams):
+        x_coords, y_coords = zip(*stream['geometry']['coordinates'])
+        pixel_idxs = flwdir.index(x_coords, y_coords)
+        
+        # Get all cross-section indices for this stream
+        cross_section_indices = [pixel_to_index[pixel] for pixel in pixel_idxs if pixel in pixel_to_index]
+        
+        ds_seg = np.array([
+            j for j, other_stream in enumerate(river_fine_streams[:-1])
+            if other_stream['properties']['idx'] == stream['properties']['idx_ds'] and i != j
+        ])
+        us_seg = np.array([
+            j for j, other_stream in enumerate(river_fine_streams[:-1])
+            if other_stream['properties']['idx_ds'] == stream['properties']['idx'] and i != j
+        ])
+        
+        # Create segment in SMASH format
+        segments.append({
+            'first_cross_section': cross_section_indices[0] if cross_section_indices else None,
+            'last_cross_section': cross_section_indices[-1] if cross_section_indices else None,
+            'nds_seg': len(ds_seg),
+            'ds_segment': ds_seg,
+            'nus_seg': len(us_seg),
+            'us_segment': us_seg,
+        })
+
+    result = {
+        # Subgrid network properties
+        "ncs": len(cross_sections),
+        "cross_sections": cross_sections,
+        "nseg": len(segments),
+        "segments": segments,
+    }
+    if return_analysis_data:
+            # Create visualization dictionary
+            visu = {
+                "df_cs": df_cs,
+                "fine_flwdir": flwdir,
+                "masked_fine_flwdir": masked_fine_flwdir,
+                "ups_flwdir": ups_flwdir,
+                "streams": streams,
+                "river_fine_streams": river_fine_streams,
+                "river_cells_outlet_pixels": river_cells_outlet_pixels,
+                "confluences": confluences
+            }
+            # Add it to result dictionary
+            result["visualization"] = visu
+
+            """# Add data for visualization and analysis
+            result.update({
+                "df_cs": df_cs,
+                "fine_flwdir": flwdir,
+                "masked_fine_flwdir": masked_fine_flwdir,
+                "ups_flwdir": ups_flwdir,
+                "streams": streams,
+                "river_fine_streams": river_fine_streams,
+                "river_cells_outlet_pixels": river_cells_outlet_pixels,
+                "confluences": confluences
+            })"""
+    return result

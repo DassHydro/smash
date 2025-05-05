@@ -126,6 +126,7 @@ contains
         real(sp), dimension(mesh%nac) :: h1, h2, h3, h4
 
         do t = start_time_step, end_time_step
+            !print *, "Debug: Processing checkpoint time step", t, "of", end_time_step
 
             rr_parameters_inc = 0
             rr_states_inc = 0
@@ -844,6 +845,7 @@ contains
                 ! 'non_inertial' module
             case ("non_inertial")
 
+                !print *, "Debug: Calling non-inertial hydraulic operator"
                 call hy1d_non_inertial_time_step( &
                     setup, &
                     mesh, &
@@ -852,6 +854,7 @@ contains
                     checkpoint_variable%ac_qz, &
                     checkpoint_variable%hy1d_h, &
                     checkpoint_variable%hy1d_q)
+                !print *, "Debug: After non-inertial hydraulic operator"
 
             end select
 
@@ -930,6 +933,10 @@ contains
             end_time_step = i*checkpoint_size
 
             if (i .eq. ncheckpoint) end_time_step = setup%ntime_step
+
+            !print *, "Debug: Processing checkpoint", i, "of", ncheckpoint
+            !print *, "Debug: Time steps", start_time_step, "to", end_time_step
+            !print *, "************************************************************"
 
             call simulation_checkpoint(setup, mesh, input_data, parameters, output, options, returns, &
             & checkpoint_variable, start_time_step, end_time_step)

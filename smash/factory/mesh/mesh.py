@@ -21,11 +21,15 @@ from smash.factory.mesh._tools import (
     _get_array,
     _get_catchment_slice_window,
     _get_cross_sections_and_segments,
+    _generate_subgrid_network,
     _get_crs,
     _get_river_line,
     _get_transform,
     _trim_mask_2d,
     _xy_to_rowcol,
+    _compute_flow_direction,
+    _generate_masked_mesh,
+    _compute_subgrid_network
 )
 
 if TYPE_CHECKING:
@@ -33,8 +37,7 @@ if TYPE_CHECKING:
 
     from smash.util._typing import AlphaNumeric, FilePath, ListLike, Numeric
 
-__all__ = ["detect_sink", "generate_mesh"]
-
+__all__ = ["detect_sink", "generate_mesh", "generate_mesh_from_subgrid"]
 
 def detect_sink(flwdir_path: FilePath, output_path: FilePath | None = None) -> np.ndarray:
     """
@@ -182,7 +185,6 @@ def _generate_rr_mesh_from_xy(
 
     for ind in range(x.size):
         row, col = _xy_to_rowcol(x[ind], y[ind], xmin, ymax, xres, yres)
-
         # % Take a window of flow directions. It avoids to fill and clean too large
         # % matrices. The boundaries of the window are obtained by assuming the
         # % worst spatial pattern of draining area (i.e. a rectangular catchment
@@ -413,6 +415,119 @@ def _generate_mesh(
     else:
         rr_mesh.update({"ncs": 0, "nseg": 0})
     return rr_mesh
+
+
+def generate_mesh_from_subgrid(
+    input_raster_path: str,
+    river_vector_path: str,
+    gauge_attributes: dict,
+    is_flwdir_raster: bool = True,
+    outlets: str = 'min',
+    width_coef_a: float = 1.54,
+    width_coef_b: float = 0.44,
+    depth_coef_a: float = 0.05,
+    depth_coef_b: float = 0.5,
+    upscale_factor: int = 40,
+    burning_depth: int = 0,
+    max_depth: int = 1,
+    return_analysis_data: bool = False
+) -> dict:
+    """
+    Generate mesh with subgrid network using gauge stations for basins delineation.
+
+    Parameters
+    ----------
+    input_raster_path : str
+        Path to the input raster file. This can be either a flow direction raster
+        or a DEM raster depending on the value of `is_flwdir_raster`.
+    
+    river_vector_path : str
+        Path to the river network vector shapefile file.
+    
+    gauge_attributes : dict
+        Dictionary containing gauge information
+    
+    is_flwdir_raster : bool, default True
+        If True, the input raster is treated as a flow direction raster (at fine-resolution).
+        If False, the input raster is treated as a DEM and flow directions will be computed.
+    
+    outlets : 
+    str, default 'min'
+        Position for basin outlet(s) at the all valid elevation edge cell ('edge') 
+        or only the minimum elevation edge cell ('min') when computing fine-resolution flow directions from DEM.
+
+    width_coef_a : float, default 1.54 (site-specific fitted parameter)
+        Coefficient 'a' in the river width power law equation: width = a * (upstream_area^b)
+    
+    width_coef_b : float, default 0.44 (site-specific fitted parameter)
+        Exponent 'b' in the river width power law equation: width = a * (upstream_area^b)
+    
+    depth_coef_a : float, default 0.05 (site-specific fitted parameter)
+        Coefficient 'a' in the river depth power law equation: depth = a * (upstream_area^b)
+    
+    depth_coef_b : float, default 0.5 (site-specific fitted parameter)
+        Exponent 'b' in the river depth power law equation: depth = a * (upstream_area^b)
+    
+    upscale_factor : int, default 40
+        Factor by which to upscale the resolution for flow direction upscaling.
+    
+    burning_depth : int, default 0
+        Depth to burn the river network into the DEM before computing fine-resolution flow directions.
+    
+    max_depth : int, default 1
+        Maximum search depth for catchment delineation algorithms.
+        Controls how far to search when delineating catchments.
+    
+    return_analysis_data : bool, default False
+        If True, additional data included in the returned mesh for visual analysis.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the complete mesh with coupling between hydrological grid cells 
+    and vector river network. Key components include:
+    
+    - Grid properties: resolution, extent, coordinate system information...
+    - Flow network: flow direction, accumulation...
+    - Subgrid network representation: cross-sections, river segments, connectivities...
+    - Mapping between grid cells and river network cross-sections
+        
+        If return_analysis_data is True, additional data is generated for visual analysis.
+    """
+
+    # 1. Compute flow direction and get grid properties
+    flow_dir_data = _compute_flow_direction(
+        input_raster_path,
+        river_vector_path,
+        is_flwdir_raster,
+        outlets,
+        upscale_factor,
+        burning_depth
+    )
+    
+    # 2. Generate masked mesh with catchment delineation
+    masked_mesh = _generate_masked_mesh(
+        flow_dir_data,
+        gauge_attributes,
+        max_depth
+    )
+    
+    # 3. Compute subgrid network
+    subgrid_network = _compute_subgrid_network(
+        masked_mesh, 
+        flow_dir_data,
+        river_vector_path,
+        width_coef_a,
+        width_coef_b,
+        depth_coef_a,
+        depth_coef_b,
+        return_analysis_data
+    )
+    
+    # 4. Update masked_mesh with subgrid network data
+    masked_mesh.update(subgrid_network)
+    
+    return masked_mesh
 
 
 def generate_mesh(

@@ -14,6 +14,8 @@ module md_hy1d_operator
     use mwd_segment !% only: SegmentDT
 
     implicit none
+    character(len=256) :: mass_balance_file
+    character(len=256) :: wse_slope_file
 
 contains
 
@@ -218,30 +220,41 @@ contains
         ! Calculate the time step
         if (max_h .gt. 0._sp) then
             dt = min(setup%dt, 0.7_sp*min_dx/sqrt(gravity*max_h))
-            dt = max(dt, setup%dt/1000._sp)
+            !dt = max(dt, setup%dt/1000._sp)
+            dt = max(dt, setup%dt/min_dx)
         else
             dt = setup%dt
         end if
 
     end subroutine hy1d_non_inertial_get_dt
 
-    subroutine hy1d_non_inertial_momemtum(mesh, dt, hy1d_h, hy1d_q)
+    subroutine hy1d_non_inertial_momemtum(mesh, dt, hy1d_h, hy1d_q, time_step, hy1d_step) ! added time_step and hy1d_step
 
         implicit none
 
         type(MeshDT), intent(in) :: mesh
         real(sp), intent(in) :: dt
         real(sp), dimension(mesh%ncs), intent(inout) :: hy1d_h, hy1d_q
+        integer, intent(in) :: time_step, hy1d_step
 
         integer :: i, iseg, ids_seg, ics, ids_cs, ifcs, ilcs
         logical :: is_last_ds_seg, is_first_us_seg, is_ds_bc
         real(sp) :: h_i, h_ip1, b_i, b_ip1, x_i, x_ip1, dx
         real(sp) :: s_ip1d2, h_ip1d2, w_ip1d2, a_ip1d2, p_ip1d2, r_ip1d2
+        real(sp) :: wse_i  ! New variable for water surface elevation
         type(SegmentDT) :: seg, ds_seg
         type(Cross_SectionDT) :: cs, ds_cs
         integer, allocatable, dimension(:) :: ius_seg, ius_cs
         type(SegmentDT), allocatable, dimension(:) :: us_seg
         type(Cross_SectionDT), allocatable, dimension(:) :: us_cs
+        
+        ! Open the WSE and slope file at the first hydrological and hydraulic time step
+        if (time_step == 1 .and. hy1d_step == 1) then
+            wse_slope_file = "/home/adminberkaoui/Bureau/smash_subgrid_tests/" // &
+                            "cance/cance_subgrid_latest/smash_c3_ntx/wse_wss.csv"
+            open(unit=11, file=wse_slope_file, status="replace")
+            write(11, '(A)') "hydro_step,hy1d_step,cs_idx,wse,s_ip1d2"
+        endif
 
         do iseg = 1, mesh%nseg
 
@@ -271,6 +284,11 @@ contains
 
                 dx = x_i - x_ip1
                 s_ip1d2 = ((h_i + b_i) - (h_ip1 + b_ip1))/dx
+                wse_i = h_i + b_i ! Calculate water surface elevation
+                ! Write to the WSE and slope file
+                write(11, '(I5,",",I5,",",I5,",",F30.16,",",F30.16)') &
+                    time_step, hy1d_step, ics, wse_i, s_ip1d2
+
                 h_ip1d2 = max(h_i + b_i, h_ip1 + b_ip1) - max(b_i, b_ip1)
 
                 ! call hy1d_compute_ar(cs, h_ip1d2, a_ip1d2, r_ip1d2)
@@ -293,7 +311,7 @@ contains
 
     end subroutine hy1d_non_inertial_momemtum
 
-    subroutine hy1d_non_inertial_mass(setup, mesh, dt, ac_qtz, ac_qz, hy1d_h, hy1d_q)
+    subroutine hy1d_non_inertial_mass(setup, mesh, dt, ac_qtz, ac_qz, hy1d_h, hy1d_q, time_step, hy1d_step) ! added internal_step as argument
 
         implicit none
 
@@ -303,15 +321,35 @@ contains
         real(sp), dimension(mesh%nac, setup%nqz), intent(in) :: ac_qtz, ac_qz
         real(sp), dimension(mesh%ncs), intent(inout) :: hy1d_h
         real(sp), dimension(mesh%ncs), intent(inout) :: hy1d_q
+        integer, intent(in) :: time_step, hy1d_step  ! Added
 
         integer :: i, k, iseg, ids_seg, ics, ids_cs, ifcs, ilcs
-        logical :: is_last_ds_seg, is_first_us_seg
-        real(sp) :: a_t, a_tp1, q_ip1d2, q_im1d2, q_lat
+        logical :: is_last_ds_seg, is_first_us_seg, is_ds_bc
+        real(sp) :: a_t, a_tp1, q_ip1d2, q_im1d2, q_lat, b_ip1, h_ip1, x_i, x_ip1, dx
         type(SegmentDT) :: seg, ds_seg
         type(Cross_SectionDT) :: cs, ds_cs
         integer, allocatable, dimension(:) :: ius_seg, ius_cs
         type(SegmentDT), allocatable, dimension(:) :: us_seg
         type(Cross_SectionDT), allocatable, dimension(:) :: us_cs
+        
+
+        ! New variables for hydrological connectivity debugging
+        integer :: cs_cell_index ! Index of the cross-section's own cell
+        integer, dimension(:), allocatable :: upstream_cell_indices ! Hydrological upstream cell indices
+        integer, dimension(:), allocatable :: lateral_cell_indices ! Hydrological lateral cell indices
+        integer :: n_up_cells, n_lat_cells
+        character(len=100) :: up_inds_str, lat_inds_str
+
+        ! Open the mass balance file at the first hydrological and hydraulic time step
+        if (time_step == 1 .and. hy1d_step == 1) then
+            mass_balance_file = "/home/adminberkaoui/Bureau/smash_subgrid_tests/" // &
+                            "cance/cance_subgrid_latest/smash_c3_ntx/mb.csv"
+            open(unit=10, file=mass_balance_file, status="replace")
+            write(10, '(A)') "hydro_step,hy1d_step,dt,cs_idx," // &
+            "up_cell_idxs,netrain,q_im1d2,q_lat," // &
+            "a_t,a_tp1,h,q,dx,w"
+        endif       
+
 
         do iseg = 1, mesh%nseg
             seg = mesh%segments(iseg)
@@ -325,39 +363,113 @@ contains
                 cs = mesh%cross_sections(ics)
                 call hy1d_get_downstream_cross_section(mesh, seg, ds_seg, ics, cs, ids_cs, ds_cs)
                 call hy1d_get_upstream_cross_sections(mesh, seg, us_seg, ics, cs, ius_cs, us_cs)
+                is_ds_bc = ics .eq. ilcs .and. is_last_ds_seg
 
                 a_t = cs%level_widths(1)*hy1d_h(ics)
                 q_ip1d2 = hy1d_q(ics)
 
+                ! Initialize hydrological indices
+                cs_cell_index = -99 ! Default value for missing cell index
+                n_up_cells = 0
+                n_lat_cells = 0
+
+                if (allocated(upstream_cell_indices)) deallocate(upstream_cell_indices)
+                if (allocated(lateral_cell_indices)) deallocate(lateral_cell_indices)
+                allocate(upstream_cell_indices(max(1, cs%nup)))
+                allocate(lateral_cell_indices(max(1, cs%nlat)))
+                upstream_cell_indices = -99
+                lateral_cell_indices = -99
+
+
                 ! Upstream boundary condition
                 if (ics .eq. ifcs .and. is_first_us_seg) then
                     q_im1d2 = 0._sp
+                    n_up_cells = cs%nup
                     do i = 1, cs%nup
                         k = mesh%rowcol_to_ind_ac(cs%up_rowcols(i, 1), cs%up_rowcols(i, 2))
+                        upstream_cell_indices(i) = k
                         q_im1d2 = q_im1d2 + ac_qz(k, setup%nqz)
+                        !q_im1d2 = q_im1d2 + max(0._sp, ac_qz(k, setup%nqz)) ! handle negative upstream inflows
                     end do
                 else if (ics .eq. ifcs .and. .not. is_first_us_seg) then
                     q_im1d2 = 0._sp
-                    do i = 1, size(us_cs)
+                    do i = 1, size(us_cs)  
                         q_im1d2 = q_im1d2 + hy1d_q(ius_cs(i))
                     end do
                 else
                     q_im1d2 = hy1d_q(ius_cs(1))
                 end if
 
-                k = mesh%rowcol_to_ind_ac(cs%rowcol(1), cs%rowcol(2))
-                q_lat = ac_qtz(k, setup%nqz)
+                !k = mesh%rowcol_to_ind_ac(cs%rowcol(1), cs%rowcol(2))
+                !q_lat = ac_qtz(k, setup%nqz)
+                !do i = 1, cs%nlat
+                    !k = mesh%rowcol_to_ind_ac(cs%lat_rowcols(i, 1), cs%lat_rowcols(i, 2))
+                    !q_lat = q_lat + ac_qz(k, setup%nqz)
+                !end do
+                q_lat = 0._sp
+                if (cs%rowcol(1) /= -99) then ! no hydrological couplings....
+                    k = mesh%rowcol_to_ind_ac(cs%rowcol(1), cs%rowcol(2))
+                    cs_cell_index = k
+                    q_lat = ac_qtz(k, setup%nqz)
+                    !q_lat = max(0._sp, ac_qtz(k, setup%nqz)) ! handle negative rain
+                end if
+                n_lat_cells = cs%nlat
                 do i = 1, cs%nlat
                     k = mesh%rowcol_to_ind_ac(cs%lat_rowcols(i, 1), cs%lat_rowcols(i, 2))
+                    lateral_cell_indices(i) = k
                     q_lat = q_lat + ac_qz(k, setup%nqz)
+                    !q_lat = q_lat + max(0._sp, ac_qz(k, setup%nqz)) ! handle negative lateral inflows
                 end do
 
-                a_tp1 = a_t + dt*(q_lat + q_im1d2 - q_ip1d2)/1000._sp ! should be dx : pag : add comment vs interp lineaire qui va bien vs sous pas de temps
+                x_i = cs%x
+                b_ip1 = ds_cs%bathy
+                h_ip1 = hy1d_h(ids_cs)
+                if (is_ds_bc) then
+                    call hy1d_get_downstream_boundary_condition_xbh(cs, us_cs, x_ip1, b_ip1, h_ip1)
+                else
+                    x_ip1 = ds_cs%x
+                endif
+                dx = x_i - x_ip1 ! curvilinera abscissa
+                !dx = max(dx, 1.0e-6_sp) ! check dx >0
+
+                !x_ip1 = ds_cs%x
+                !dx = x_i - x_ip1
+                !a_tp1 = a_t + dt*(q_lat + q_im1d2 - q_ip1d2)/1000._sp ! should be dx : pag : add comment vs interp lineaire qui va bien vs sous pas de temps
+                a_tp1 = a_t + dt*(q_lat + q_im1d2 - q_ip1d2)/dx
                 if (a_tp1 .lt. 0._sp) then
                     a_tp1 = 0._sp
-                    hy1d_q(ics) = (q_lat + q_im1d2) + a_t/(dt/1000._sp)
+                    !hy1d_q(ics) = (q_lat + q_im1d2) + a_t/(dt/1000._sp)
+                    hy1d_q(ics) = (q_lat + q_im1d2) + a_t/(dt/dx)
                 end if
                 hy1d_h(ics) = a_tp1/cs%level_widths(1)
+
+                ! Create string representations of indices
+                if (n_up_cells > 0) then
+                    write(up_inds_str, '(100I6)') (upstream_cell_indices(i), i=1,n_up_cells)
+                else
+                    up_inds_str = "-"
+                endif
+                
+                if (n_lat_cells > 0) then
+                    write(lat_inds_str, '(100I6)') (lateral_cell_indices(i), i=1,n_lat_cells)
+                else
+                    lat_inds_str = "-"
+                endif
+                
+                
+                ! Write values to CSV file
+                !write(10, '(I5,",",I5,",",F30.25,",",I5,",",I5,",",A,",",A,",",F30.25,",",F30.25,",",F30.25,",",F30.25,",", &
+                !&F30.25,",",F30.25,",",F30.25,",",F30.25,",",F30.25,",",F30.25,",",F30.25)') &
+                !time_step, hy1d_step, dt, ics, cs_cell_index, trim(adjustl(up_inds_str)), &
+                !trim(adjustl(lat_inds_str)), ac_qtz(cs_cell_index, setup%nqz), q_im1d2, q_lat, q_ip1d2, a_t, a_tp1, &
+                !hy1d_h(ics), hy1d_q(ics), dx, cs%level_widths(1), s_ip1d2
+                write(10, '(I5,",",I5,",",F30.16,",",I5,",",A,",",F30.16,",",F30.16,",",F30.16,",", &
+                &F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16)') &
+                time_step, hy1d_step, dt, ics, trim(adjustl(up_inds_str)), &
+                ac_qtz(cs_cell_index, setup%nqz), q_im1d2, q_lat, a_t, a_tp1, &
+                hy1d_h(ics), hy1d_q(ics), dx, cs%level_widths(1)
+                
+
             end do
         end do
 
@@ -390,9 +502,15 @@ contains
         ! pag
 
         do t = 1, ntime_step
-            call hy1d_non_inertial_momemtum(mesh, dt, hy1d_h, hy1d_q)
-            call hy1d_non_inertial_mass(setup, mesh, dt, ac_qtz, ac_qz, hy1d_h, hy1d_q)
+            call hy1d_non_inertial_momemtum(mesh, dt, hy1d_h, hy1d_q, time_step, t) ! Pass time_step and t
+            call hy1d_non_inertial_mass(setup, mesh, dt, ac_qtz, ac_qz, hy1d_h, hy1d_q,time_step,t) ! Pass t as hy1d_step counter and time_step as hydro_step counter
         end do
+
+        ! Close file after all hydrological time steps are complete
+        if (time_step == setup%ntime_step) then
+            close(10)
+            close(11)  ! Close the WSE and slope file
+        endif
 
     end subroutine hy1d_non_inertial_time_step
 

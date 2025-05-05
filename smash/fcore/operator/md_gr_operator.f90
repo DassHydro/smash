@@ -180,6 +180,8 @@ contains
 
         real(sp) :: pr_imd, ht_imd, nm1, d1pnm1
 
+        logical, save :: first_call = .true. ! for debug file
+
         nm1 = n - 1._sp
         d1pnm1 = 1._sp/nm1
 
@@ -194,9 +196,9 @@ contains
         end if
 
         ht_imd = max(1.e-6_sp, ht + pr_imd/ct)
-
         ht = (((ht_imd*ct)**(-nm1) + ct**(-nm1))**(-d1pnm1))/ct
 
+        ht = min(ht, ht_imd) ! added line: ensure ht <=ht_imd --> q(qr) >=0
         q = (ht_imd - ht)*ct
 
     end subroutine gr_transfer
@@ -391,6 +393,19 @@ contains
         integer :: row, col, k, time_step_returns
         real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
 
+        ! Added for debug
+        character(len=256) :: gr4_output_file
+        logical :: file_exists
+        gr4_output_file = "/home/adminberkaoui/Bureau/smash_subgrid_tests/cance/gr4_output_new.csv"
+        ! File handling
+        inquire(file=gr4_output_file, exist=file_exists)
+        if (time_step == 1 .or. .not. file_exists) then
+            open(unit=20, file=gr4_output_file, status="replace", action="write")
+            write(20, '(A)') "time_step,cell_index,ac_qt,qr,qd,l,prr,prd,ac_prcp"
+            close(20)
+        endif
+        open(unit=20, file=gr4_output_file, status="old", action="write", position="append")
+        
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
 
@@ -442,6 +457,16 @@ contains
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
+                ! Write to file
+#ifdef _OPENMP
+                !$OMP critical
+#endif
+                write(20, '(I10,",",I10,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6)') &
+                    time_step, k, ac_qt(k), qr, qd, l, prr, prd, ac_prcp(k)
+#ifdef _OPENMP
+                !$OMP end critical
+#endif
+
                 !$AD start-exclude
                 !internal fluxes
                 if (returns%internal_fluxes_flag) then
@@ -466,6 +491,8 @@ contains
 #ifdef _OPENMP
         !$OMP end parallel do
 #endif
+        ! Close the file
+        close(20)
     end subroutine gr4_time_step
 
     subroutine gr4_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &
