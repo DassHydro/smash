@@ -21,7 +21,6 @@ from smash.factory.mesh._tools import (
     _get_array,
     _get_catchment_slice_window,
     _get_cross_sections_and_segments,
-    _generate_subgrid_network,
     _get_crs,
     _get_river_line,
     _get_transform,

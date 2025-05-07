@@ -801,17 +801,18 @@ def _compute_subgrid_network(
     if not within_mask.all():
         # some river features fall outside the flow direction mask, clipping...
         cropped_river_gdf = gpd.clip(river_line, mask_geom)
+        cropped_river_gdf = cropped_river_gdf.sort_index() # clipping can change row order.
         river_line = cropped_river_gdf  # overwrite original river network with clipped
 
     ### ----- COMPUTE COARSE RESOLUTION FLOW PATH -----------------------------------------------------------
 
-    selected_path = {}
+    selected_paths = {}
     # Iterate over each line segment in the river GeoDataFrame
-    for rl in river_line["geometry"]:
-        if rl.geom_type == 'LineString':
-            line_coords = list(rl.coords)
+    for rl_idx, rl in river_line.iterrows():
+        if rl["geometry"].geom_type == 'LineString':
+            line_coords = list(rl["geometry"].coords)
         else:
-            line_coords = [coord for linestring in rl.geoms for coord in linestring.coords] # MultiLineString
+            line_coords = [coord for linestring in rl["geometry"].geoms for coord in linestring.coords] # MultiLineString
 
         # Determine the starting point of the current line segment
         start_point = Point(line_coords[0][0], line_coords[0][1])
@@ -842,15 +843,29 @@ def _compute_subgrid_network(
                 for x_max, y_min in [ups_flwdir.transform * (col + 1, row + 1)]
             )
             flwpaths_analysis[fp[0]] = count
+        
+        # Get maximum vertices count
+        max_count = max(flwpaths_analysis.values())
+        # Define threshold (90% of max count)
+        threshold = 0.9 * max_count
+        # Check if start_cell_idx is within threshold of max count
+        if flwpaths_analysis[start_cell_idx] >= threshold:
+            best_cell_idx = start_cell_idx
+        else:
+            # Otherwise, use the cell with the maximum count
+            best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])
+    
+        """# Select the start cell index of the flow path with the highest number of line segment points
+        best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])"""
 
-        # Select the start cell index of the flow path with the highest number of line segment points
-        best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])
+        """# Store the selected path of the best start cell index
+        selected_path[best_cell_idx] = flwpaths[np.where(source_cells == best_cell_idx)[0][0]]"""
 
-        # Store the selected path of the best start cell index
-        selected_path[best_cell_idx] = flwpaths[np.where(source_cells == best_cell_idx)[0][0]]
+        # Store the selected path of the best start cell index with the river segment index
+        selected_paths[(rl_idx, best_cell_idx)] = flwpaths[np.where(source_cells == best_cell_idx)[0][0]]
 
     # Compute the flow path
-    ups_flwpath = np.unique(np.concatenate(list(selected_path.values())))
+    ups_flwpath = np.unique(np.concatenate(list(selected_paths.values())))
     ups_flwpath = ups_flwpath[np.isin(ups_flwpath, ups_flwdir.idxs_seq)]
     ups_flwpath_rowcol = np.unravel_index(ups_flwpath, ups_flwdir.shape)
     ups_flwpath_mask = np.zeros(ups_flwdir.shape, dtype=bool)
@@ -1200,7 +1215,9 @@ def _compute_subgrid_network(
                 "streams": streams,
                 "river_fine_streams": river_fine_streams,
                 "river_cells_outlet_pixels": river_cells_outlet_pixels,
-                "confluences": confluences
+                "confluences": confluences,
+                "selected_paths": selected_paths,
+                "smash_river_line": river_line
             }
             # Add it to result dictionary
             result["visualization"] = visu
