@@ -24,7 +24,7 @@
 - **Source code:** https://github.com/DassHydro/smash
 - **Contributing:** https://smash.recover.inrae.fr/contributor_guide/index.html
 - **Citations and related papers:** https://smash.recover.inrae.fr/citations/index.html
-- **Scientific references from latest version:** https://smash.recover.inrae.fr/bibliography/index.html
+- **Scientific references:** https://smash.recover.inrae.fr/bibliography/index.html
 - **Bug reports:** https://github.com/DassHydro/smash/issues
 
 It offers a range of advanced optimization techniques, including Variational Data Assimilation (VDA), Bayesian estimation, and Artificial Neural Network (ANN) approaches, using an adjoint model generated with the **Tapenade** automatic differentiation tool.
@@ -78,7 +78,7 @@ Please also cite the relevant references corresponding to the algorithms and met
     Water Resources Research, 60, e2024WR037544. 
     `<https://doi.org/10.1029/2024WR037544>`_.
 
-- Signatures, multi-criteria calibration, segmentation algorithm:
+- Signatures, multi-criteria calibration, hydrograph segmentation algorithm:
 
     Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Javelle, P. (2023). 
     Signatures-and-sensitivity-based multi-criteria variational calibration for distributed hydrological modeling applied to Mediterranean floods. 
