@@ -1,19 +1,22 @@
 .. raw:: html
 
-    <div align="center">
-        <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/corporate_logo_dark.svg">
-          <img src="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/corporate_logo.svg" width="300" hspace="30">
-        </picture>
-        <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash_dark.svg">
-          <img src="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash.svg" width="300" hspace="30">
-        </picture>
-    </div>
+   <h1 align="center">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/corporate_logo_dark.svg">
+     <img src="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/corporate_logo.svg" width="300", hspace=30>
+   </picture>
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash_dark.svg">
+     <img src="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash.svg" width="300", hspace=30>
+   </picture>
+   </h1><br>
 
 .. image:: https://badge.fury.io/py/hydro-smash.svg
    :target: https://badge.fury.io/py/hydro-smash
-   :alt: PyPI
+
+.. raw:: html
+
+   <br><br>
 
 **smash** is a Python library that provides a variety of user-friendly routines for hydrological modeling, including data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis—all interfaced with an efficient Fortran computational engine.
 
@@ -31,59 +34,85 @@ It offers a range of advanced optimization techniques, including Variational Dat
 
 Whether you are managing water resources or conducting research on hydrological models, **smash** can provide an easy-to-use yet powerful solution for your work. See the `getting started guide <https://smash.recover.inrae.fr/getting_started/index.html>`_ for installation instructions.
 
-.. Hard copy from CITATIONS.rst: GitHub render rst file does not support process directives.
+.. Hard copy from "How to cite smash" section in CITATIONS.rst.
 How to cite smash
-==================
+=================
 
 For **smash** software use, please cite:
 
-    Colleoni, F., Huynh, N. N. T., Garambois, P.-A., Jay-Allemand, M., Organde, D., Renard, B., De Fournas, T., El Baz, A., Demargne, J., and Javelle, P. (2025). SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework, EGUsphere, 2025, 1–36. `<https://doi.org/10.5194/egusphere-2025-690>`_.
+    Colleoni, F., Huynh, N. N. T., Garambois, P.-A., Jay-Allemand, M., Organde, D., Renard, B., De Fournas, T., El Baz, A., Demargne, J., and Javelle, P. (2025). 
+    SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework. 
+    EGUsphere, 2025, 1–36. 
+    `<https://doi.org/10.5194/egusphere-2025-690>`_.
 
 BibTeX entry:
 
 .. code-block:: bibtex
 
-    @article{colleoni2025,
-      author  = {Colleoni, F. and Huynh, N. N. T. and Garambois, P.-A. and Jay-Allemand, M. and Organde, D. and Renard, B. and De Fournas, T. and El Baz, A. and Demargne, J. and Javelle, P.},
-      title   = {SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework},
-      journal = {EGUsphere},
-      volume  = {2025},
-      year    = {2025},
-      pages   = {1--36},
-      doi     = {10.5194/egusphere-2025-690}
+    @article{Colleoni2025smash,
+        author  = {Colleoni, François and Huynh, Ngo Nghi Truyen and Garambois, Pierre-André and Jay-Allemand, Maxime and Organde, Didier and Renard, Benjamin and De Fournas, Thomas and El Baz, Apolline and Demargne, Julie and Javelle, Pierre},
+        title   = {SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework},
+        journal = {EGUsphere},
+        volume  = {2025},
+        year    = {2025},
+        pages   = {1--36},
+        doi     = {10.5194/egusphere-2025-690}
     }
 
-.. TODO: update citation when being accepted.
+.. TODO: update citation once accepted.
 
 Please also cite the relevant references corresponding to the algorithms and methods used:
 
-- Fully distributed variational calibration:
+- Hybrid process-parameterization for water flux corrections:
 
-    Jay-Allemand, M., Javelle, P., Gejadze, I., Arnaud, P., Malaterre, P.-O., Fine, J.-A., and Organde, D. (2020). On the potential of variational calibration for a fully distributed hydrological model: application on a Mediterranean catchment. Hydrology and Earth System Sciences, 24, 5519–5538. `<https://doi.org/10.5194/hess-24-5519-2020>`_.
-
-- Signatures, multi-criteria calibration, segmentation algorithm:
-
-    Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Javelle, P. (2023). Signatures-and-sensitivity-based multi-criteria variational calibration for distributed hydrological modeling applied to Mediterranean floods. Journal of Hydrology, 625, 129992. `<https://doi.org/10.1016/j.jhydrol.2023.129992>`_.
+    Huynh, N. N. T., Garambois, P.-A., Renard, B., Colleoni, F., Monnier, J., and Roux, H. (2025). 
+    A Distributed Hybrid Physics-AI Framework for Learning Corrections of Internal Hydrological Fluxes and Enhancing High-Resolution Regionalized Flood Modeling. 
+    EGUsphere, 2025, 1–34. 
+    `<https://doi.org/10.5194/egusphere-2024-3665>`_.
 
 - Hybrid regionalization, HDA-PR algorithm:
 
-    Huynh, N. N. T., Garambois, P.-A., Colleoni, F., Renard, B., Roux, H., Demargne, J., Jay-Allemand, M., and Javelle, P. (2024). Learning Regionalization Using Accurate Spatial Cost Gradients Within a Differentiable High-Resolution Hydrological Model: Application to the French Mediterranean Region. Water Resources Research, 60, e2024WR037 544. `<https://doi.org/10.1029/2024WR037544>`_.
+    Huynh, N. N. T., Garambois, P.-A., Colleoni, F., Renard, B., Roux, H., Demargne, J., Jay-Allemand, M., and Javelle, P. (2024). 
+    Learning Regionalization Using Accurate Spatial Cost Gradients Within a Differentiable High-Resolution Hydrological Model: Application to the French Mediterranean Region. 
+    Water Resources Research, 60, e2024WR037544. 
+    `<https://doi.org/10.1029/2024WR037544>`_.
 
-- Hybrid process-parameterization for water flux corrections:
+- Signatures, multi-criteria calibration, segmentation algorithm:
 
-    Huynh, N. N. T., Garambois, P.-A., Renard, B., Colleoni, F., Monnier, J., and Roux, H. (2025). A Distributed Hybrid Physics-AI Framework for Learning Corrections of Internal Hydrological Fluxes and Enhancing High-Resolution Regionalized Flood Modeling. EGUsphere, 2025, 1–34. `<https://doi.org/10.5194/egusphere-2024-3665>`_.
+    Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Javelle, P. (2023). 
+    Signatures-and-sensitivity-based multi-criteria variational calibration for distributed hydrological modeling applied to Mediterranean floods. 
+    Journal of Hydrology, 625, 129992. 
+    `<https://doi.org/10.1016/j.jhydrol.2023.129992>`_.
 
-.. TODO: update ref flux correction and add ref neural ODE. 
+- Fully distributed variational calibration:
 
-Related papers
-==============
+    Jay-Allemand, M., Javelle, P., Gejadze, I., Arnaud, P., Malaterre, P.-O., Fine, J.-A., and Organde, D. (2020). 
+    On the potential of variational calibration for a fully distributed hydrological model: application on a Mediterranean catchment. 
+    Hydrology and Earth System Sciences, 24, 5519–5538. 
+    `<https://doi.org/10.5194/hess-24-5519-2020>`_.
 
-Additional **smash**-related publications:
+.. TODO: update ref flux correction once accepted and add ref neural ODE.
 
-    Huynh, N. N. T., Garambois, P.‐A., Colleoni, F., Renard, B., & Roux, H. (2023). Multi‐gauge hydrological variational data assimilation:Regionalization learning with spatial gradients using multilayer perceptron and Bayesian‐guided multivariate regression. In Colloque SHF 2023 - Prévision des crues et des inondations. `<https://doi.org/10.48550/arXiv.2307.02497>`_.
+.. Hard copy from "Download all smash references" section in CITATIONS.rst.
+Download all smash references
+=============================
 
-    Jay‐Allemand, M., Demargne, J., Garambois, P.‐A., Javelle, P., Gejadze, I., Colleoni, F., Organde, D., Arnaud, P., and Fouchier, C. (2024). Spatially distributed calibration of ahydrological model with variational optimization constrained by physiographic maps for flash flood forecasting in France. In Proceedings of IAHS, 385, 281–290. `<https://doi.org/10.5194/piahs-385-281-2024>`_.
+:download:`smash.bib <javascript:downloadFile('https://raw.githubusercontent.com/DassHydro/smash/main/smash.bib', 'smash.bib')>`
 
-    Ettalbi, M., Garambois, P.A., Huynh, N. N. T., Arnaud, P., Ferreira, E. and Baghdadi, N. (2025). Improving parameter regionalization learning for spatialized differentiable hydrological models by assimilation of satellite-based soil moisture data. Journal of Hydrology, 660, 133300. `<https://doi.org/10.1016/j.jhydrol.2025.133300>`_.
+.. raw:: html
 
-.. TODO: add ref Garambois et al. 235bv.
+   <script>
+   function downloadFile(url, filename) {
+     fetch(url)
+       .then(response => response.blob())
+       .then(blob => {
+         const link = document.createElement('a');
+         link.href = URL.createObjectURL(blob);
+         link.download = filename;
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+       });
+     return false;
+   }
+   </script>
