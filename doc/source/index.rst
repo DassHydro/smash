@@ -8,7 +8,7 @@ smash documentation
 
 **Date**: |today| **Version**: |version|
 
-`smash` is a computational software framework dedicated to **S**\patially distributed **M**\odelling and
+`smash` is a computational software framework dedicated to **S**\patially distributed **M**\odeling and
 **AS**\similation for **H**\ydrology, enabling the tackling of spatially distributed differentiable hydrological
 modeling, with learnable parameterization-regionalization. This platform enables the combination of vertical and
 lateral flow operators, either process-based conceptual or hybrid with neural networks, and performs high-dimensional
@@ -101,4 +101,5 @@ spatially distributed meteorological forcings, physiographic data, and hydrometr
    release/index
    contributor_guide/index
    license/index
+   citations/index
    bibliography/index
