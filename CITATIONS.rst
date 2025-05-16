@@ -40,7 +40,7 @@ Please also cite the relevant references corresponding to the algorithms and met
     Water Resources Research, 60, e2024WR037544. 
     `<https://doi.org/10.1029/2024WR037544>`_.
 
-- Signatures, multi-criteria calibration, segmentation algorithm:
+- Signatures, multi-criteria calibration, hydrograph segmentation algorithm:
 
     Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Javelle, P. (2023). 
     Signatures-and-sensitivity-based multi-criteria variational calibration for distributed hydrological modeling applied to Mediterranean floods. 
@@ -61,6 +61,11 @@ Related papers
 
 Additional **smash**-related publications:
 
+    Garambois, P.A., Colleoni, F., Huynh, N. N. T., Akhtari, A., Nguyen, N. B., El Baz, A., Jay-Allemand, M., and Javelle, P. (2025). 
+    Spatially Distributed Gradient-Based Calibration and Parametric Sensitivity of a Spatialized Hydrological Model Over 235 French Catchments. 
+    HAL preprint, open science. 
+    `<https://hal.science/hal-04989183>`_.
+    
     Ettalbi, M., Garambois, P.A., Huynh, N. N. T., Arnaud, P., Ferreira, E., and Baghdadi, N. (2025). 
     Improving parameter regionalization learning for spatialized differentiable hydrological models by assimilation of satellite-based soil moisture data. 
     Journal of Hydrology, 660, 133300. 
@@ -76,7 +81,7 @@ Additional **smash**-related publications:
     Colloque SHF 2023 - Prévision des crues et des inondations. 
     `<https://doi.org/10.48550/arXiv.2307.02497>`_.
 
-.. TODO: add ref Garambois et al. 235bv.
+.. TODO: update ref Garambois et al. 235bv once accepted.
 
 Download smash references
 =========================
