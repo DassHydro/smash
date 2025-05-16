@@ -23,6 +23,7 @@
 - **Documentation:** https://smash.recover.inrae.fr
 - **Source code:** https://github.com/DassHydro/smash
 - **Contributing:** https://smash.recover.inrae.fr/contributor_guide/index.html
+- **Citations and related papers:** https://smash.recover.inrae.fr/citations/index.html
 - **Scientific references from latest version:** https://smash.recover.inrae.fr/bibliography/index.html
 - **Bug reports:** https://github.com/DassHydro/smash/issues
 
@@ -92,27 +93,3 @@ Please also cite the relevant references corresponding to the algorithms and met
     `<https://doi.org/10.5194/hess-24-5519-2020>`_.
 
 .. TODO: update ref flux correction once accepted and add ref neural ODE.
-
-.. Hard copy from "Download all smash references" section in CITATIONS.rst.
-Download all smash references
-=============================
-
-:download:`smash.bib <javascript:downloadFile('https://raw.githubusercontent.com/DassHydro/smash/main/smash.bib', 'smash.bib')>`
-
-.. raw:: html
-
-   <script>
-   function downloadFile(url, filename) {
-     fetch(url)
-       .then(response => response.blob())
-       .then(blob => {
-         const link = document.createElement('a');
-         link.href = URL.createObjectURL(blob);
-         link.download = filename;
-         document.body.appendChild(link);
-         link.click();
-         document.body.removeChild(link);
-       });
-     return false;
-   }
-   </script>

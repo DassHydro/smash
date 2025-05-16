@@ -78,8 +78,8 @@ Additional **smash**-related publications:
 
 .. TODO: add ref Garambois et al. 235bv.
 
-Download all smash references
-=============================
+Download smash references
+=========================
 
 :download:`smash.bib <javascript:downloadFile('https://raw.githubusercontent.com/DassHydro/smash/main/smash.bib', 'smash.bib')>`
 
