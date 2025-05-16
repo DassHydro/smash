@@ -29,7 +29,7 @@
 
 It offers a range of advanced optimization techniques, including Variational Data Assimilation (VDA), Bayesian estimation, and Artificial Neural Network (ANN) approaches, using an adjoint model generated with the **Tapenade** automatic differentiation tool.
 
-- **Tapenade** website: https://team.inria.fr/ecuador/en/tapenade/
+- **Tapenade** website: https://team.inria.fr/ecuador/en/tapenade
 - **Tapenade** article: https://doi.org/10.1145/2450153.2450158
 - **Tapenade** source code: https://gitlab.inria.fr/tapenade/tapenade.git
 
