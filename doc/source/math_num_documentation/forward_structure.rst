@@ -290,7 +290,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural with 5 parameters (gr5)
     :animate: fade-in-slide-down
 
-    This hydrological operator is derived from the GR5 model :cite:p:`LeMoine_2008`. It consists in a gr4 like model structure (see diagram above)  with a modified exchange flux with two parameters to account for seasonal variaitons.
+    This hydrological operator is derived from the GR5 model :cite:p:`LeMoine_2008`. It consists in a gr4 like model structure (see diagram above)  with a modified exchange flux with two parameters to account for seasonal variations.
 
     .. hint::
 
