@@ -118,7 +118,6 @@ CNN-based regionalization
 In contrast to the MLP, the Convolutional Neural Network (CNN) operates on image-like data.
 In this case, the CNN input is a 3D array with shape ``(height, width, n_descriptors)``, representing spatial maps of physical descriptors over the hydrological mesh.
 The output is a set of spatial parameter maps with shape ``(height, width, n_parameters)``.
-This spatial context allows the CNN to learn spatial corelation patterns.
 
 .. note::
     While CNN can regionalize hydrological parameters at ungauged locations within the mesh, it cannot regionalize easily to locations outside the current mesh since the CNN expects inputs and outputs with fixed spatial dimensions.
