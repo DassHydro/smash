@@ -5,6 +5,10 @@ Advanced Learnable Regionalization with Neural Networks
 =======================================================
 
 This tutorial aims to provide insights into regionalization using neural networks, including customizing network architecture and the training process. 
+Currently, `smash` supports two types of regionalization neural networks: multilayer perceptrons (MLPs) and convolutional neural networks (CNNs).
+While the MLP operates at the pixel level of descriptor maps and can generalize to any location where descriptors are available, the CNN operates on entire descriptor maps. 
+This enables the CNN to learn spatial patterns and correlations across the whole hydrological mesh, but it becomes dependent on the specific shape of input and output maps, which limits its ability to regionalize hydrological parameters beyond the current spatial domain.
+
 Before proceeding with this tutorial, a prerequisite is completing the tutorial on :ref:`user_guide.classical_uses.regionalization_spatial_validation`.  
 
 We begin by opening a Python interface:
@@ -66,14 +70,14 @@ The default values for these parameters can be obtained as shown below:
     You can use :meth:`smash.Model.get_rr_parameters_bounds` and :meth:`smash.Model.get_rr_initial_states_bounds` 
     to get the default bound values of the model parameters and states.
 
-Next, we need to initialize the `Net <smash.factory.Net>` object. Currently, `smash` supports two types of regionalization neural networks: multilayer perceptrons (MLPs) and convolutional neural networks (CNNs).
+Next, we need to initialize the `Net <smash.factory.Net>` object.
 
 MLP-based regionalization
 *************************
 
-The Multilayer Perceptron (MLP) is a fully connected feedforward neural network.
+The MLP is a fully connected feedforward neural network.
 In this regionalization setting, the MLP takes as input a vector of physical descriptors for each pixel independently and outputs the hydrological parameters and states corresponding to that pixel.
-This means the MLP learns a mapping from physical descriptors to model parameters on a per-location basis, enabling regionalization even for ungauged sites that are not present in the current mesh.
+This means the MLP learns a mapping from physical descriptors to model parameters on a per-location basis, enabling regionalization even for ungauged sites outside the current mesh domain.
 
 We define the graph of the network as follows:
 
@@ -115,14 +119,16 @@ To scale the network output to match the boundary conditions, we apply a min-max
 CNN-based regionalization
 *************************
 
-In contrast to the MLP, the Convolutional Neural Network (CNN) operates on image-like data.
+In contrast to MLPs, CNNs operate on image-like data.
 In this case, the CNN input is a 3D array with shape ``(height, width, n_descriptors)``, representing spatial maps of physical descriptors over the hydrological mesh.
 The output is a set of spatial parameter maps with shape ``(height, width, n_parameters)``.
 
 .. note::
-    While CNN can regionalize hydrological parameters at ungauged locations within the mesh, it cannot regionalize easily to locations outside the current mesh since the CNN expects inputs and outputs with fixed spatial dimensions.
+    A CNN uses a kernel—a small matrix of learnable weights—that slides across the input descriptor maps to extract spatial patterns. 
+    In the context of regionalization, the CNN can generalize to ungauged locations within the computational mesh domain, including areas outside the calibration catchments. 
+    However, because CNNs are designed to work with fixed-size input and output maps, they are limited to operating within the current mesh domain and cannot directly generalize to locations outside it.
 
-We define the graph of the network as follows:
+We define the neural network architecture as follows:
 
 .. code-block:: python
 
@@ -216,8 +222,10 @@ Next, we define the optimization options to estimate the hydrological parameters
     ... }  # optimization options for CNN-based regionalization
 
 .. note::
-    To ensure the order of the estimated hydrological parameters and to prevent any potential conflicts, it is recommended that you specify
-    the keys ``parameters`` and ``bounds`` as shown in the code above.
+    To ensure consistency between the outputs of the regionalization neural network and the hydrological parameters being optimized, 
+    it is strongly recommended to explicitly define the ``parameters`` and ``bounds`` keys in the dictionary of optimization options as shown in the code above. 
+    These should exactly match the order and names of the parameters used in the network's final layer and scaling layer. 
+    Mismatches in naming or order can lead to incorrect parameter assignment during optimization.
 
 Now, we can train the neural networks using the :meth:`smash.Model.optimize` method:
 
@@ -264,7 +272,7 @@ Now, we can train the neural networks using the :meth:`smash.Model.optimize` met
 Results visualization
 ---------------------
 
-Each returned `Optimize <smash.Optimize>` object (``opt_mlp`` or ``opt_cnn``) contains a `Net <smash.factory.Net>` object with the trained parameters.
+Each returned `Optimize <smash.Optimize>` object (``opt_mlp`` or ``opt_cnn``) contains a `Net <smash.factory.Net>` object with the trained parameters and training information.
 For example, we can access the bias of the last dense layer of the MLP:
 
 .. code-block:: python
@@ -292,8 +300,8 @@ Or plot the cost function descent during the training:
 .. image:: ../../_static/user_guide.in_depth.advanced_learnable_regionalization.mlp_cnn_J.png
     :align: center
 
-We observe that, despite different network architectures and starting from different random weights, the cost function of both networks behaves similarly and converges to a similar value.
-It is now interesting to compare the estimated conceptual parameters and initial states obtained by the two networks.
+We observe that, despite different network architectures and starting from different random weights, the cost function in these two cases behaves similarly and converges to a similar value.
+It is now interesting to compare the estimated conceptual parameters and initial states estimated by each trained network.
 
 .. code-block:: python
 
@@ -341,6 +349,4 @@ It is now interesting to compare the estimated conceptual parameters and initial
 
 Overall, the CNN produces smoother parameter maps compared to the MLP. 
 This smoothing effect results from the convolution operations applied to physical descriptor maps, 
-which enable the CNN to learn and exploit spatial patterns and correlations across the entire mesh, including non-active cells.  
-However, as mentioned earlier, the CNN requires input in the form of a fixed-shape image, making it less suitable for regionalization at ungauged locations outside the current mesh (though it remains fully applicable for regionalization within the current mesh).
-In contrast, the MLP operates at the pixel level of the descriptor maps, allowing it to generalize to any location where descriptors are available.
+which enable the CNN to learn and exploit spatial patterns and correlations across the entire hydrological mesh, including areas outside the calibration catchments.  
