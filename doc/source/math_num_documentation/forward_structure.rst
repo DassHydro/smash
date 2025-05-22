@@ -102,7 +102,7 @@ Snow operator :math:`\mathcal{M}_{snw}`
 Hydrological operator :math:`\mathcal{M}_{rr}`
 ----------------------------------------------
 
-Hydrological processes can be described at pixel scale in `smash` with one of the availabe hydrological operators adapted from state-of-the-art lumped models.
+Hydrological processes can be described at pixel scale in `smash` with one of the available hydrological operators adapted from state-of-the-art lumped or distributed models.
 
 .. image:: ../_static/hydrological_module.svg
     :align: center
@@ -154,13 +154,13 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    - Compute interception evaporation :math:`e_i`
+    - Compute interception evapotranspiration :math:`e_i`
 
     .. math::
 
         e_i(x, t) = \min(E(x, t), P(x, t) + m_{lt}(x, t) + \tilde{h_i}(x, t - 1)\times c_i(x))
 
-    - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
+    - Compute the neutralized precipitation :math:`p_n` and evapotranspiration :math:`e_n`
 
     .. math::
         :nowrap:
@@ -181,7 +181,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Production**
 
-    - Compute the production infiltrating precipitation :math:`p_s` and evaporation :math:`e_s`
+    - Compute the production infiltrating precipitation :math:`p_s` and evapotranspiration :math:`e_s`
 
     .. math::
         :nowrap:
@@ -290,7 +290,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural with 5 parameters (gr5)
     :animate: fade-in-slide-down
 
-    This hydrological operator is derived from the GR5 model :cite:p:`LeMoine_2008`. It consists in a gr4 like model stucture (see diagram above)  with a modified exchange flux with two parameters to account for seasonal variaitons.
+    This hydrological operator is derived from the GR5 model :cite:p:`LeMoine_2008`. It consists in a gr4 like model structure (see diagram above)  with a modified exchange flux with two parameters to account for seasonal variations.
 
     .. hint::
 
@@ -331,11 +331,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Production**
 
-    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Exchange**
 
@@ -347,7 +347,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
 .. _math_num_documentation.forward_structure.hydrological_module.gr6:
 
@@ -398,15 +398,15 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Production**
 
-    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Exchange**
 
-    Same as ``gr5`` exchange, see :ref:`GR5 Production <math_num_documentation.forward_structure.hydrological_module.gr5>`
+    Same as ``gr5`` exchange, see :ref:`GR5 Exchange <math_num_documentation.forward_structure.hydrological_module.gr5>`.
 
     **Transfer**
 
@@ -497,7 +497,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural C (grc)
     :animate: fade-in-slide-down
 
-    This hydrological operator is derived from the GR models. It consists in a ``gr4`` like model stucture
+    This hydrological operator is derived from the GR models. It consists in a ``gr4`` like model structure
     with a second transfer reservoir.
 
     .. figure:: ../_static/grc_structure.svg
@@ -532,15 +532,15 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Production**
 
-    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Exchange**
 
-    Same as ``gr4`` exchange, see :ref:`GR4 Exchange <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` exchange, see :ref:`GR4 Exchange <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Transfer**
 
@@ -602,7 +602,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural Distribué (grd)
     :animate: fade-in-slide-down
 
-    This hydrological operator is derived from the GR models and is a simplified strucutre used in :cite:p:`jay2019potential`.
+    This hydrological operator is derived from the GR models and is a simplified structure used in :cite:p:`jay2019potential`.
 
     .. figure:: ../_static/grd_structure.svg
         :align: center
@@ -634,13 +634,13 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    - Compute the interception evaporation :math:`e_i`
+    - Compute the interception evapotranspiration :math:`e_i`
 
     .. math::
 
         e_i(x, t) = \min(E(x, t), P(x, t) + m_{lt}(x, t))
 
-    - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
+    - Compute the neutralized precipitation :math:`p_n` and evapotranspiration :math:`e_n`
 
     .. math::
         :nowrap:
@@ -655,7 +655,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Production**
 
-    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     **Transfer**
 
@@ -731,11 +731,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    Same as ``grd`` interception, see :ref:`GRD Interception <math_num_documentation.forward_structure.hydrological_module.grd>`
+    Same as ``grd`` interception, see :ref:`GRD Interception <math_num_documentation.forward_structure.hydrological_module.grd>`.
 
     **Production**
 
-    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+    Same as ``gr4`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
     .. note::
 
@@ -833,7 +833,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Interception**
 
-        Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+        Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
         **Production** 
 
@@ -906,7 +906,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             \end{eqnarray}
 
 
-        We denote :math:`\lambda := \sqrt{1 - \gamma}`, then
+        We denote :math:`\lambda = \sqrt{1 - \gamma}`, then
 
         .. math::
             :nowrap:
@@ -933,11 +933,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. note::
 
-            Note that if :math:`\alpha_1 = 0`, we return to the general writting of the instantaneous production rate.
+            Note that if :math:`\alpha_1 = 0`, we return to the general writing of the instantaneous production rate.
 
         **Exchange**
 
-        Same as ``gr4`` exchange, see :ref:`GR4 Exchange <math_num_documentation.forward_structure.hydrological_module.gr4>`    
+        Same as ``gr4`` exchange, see :ref:`GR4 Exchange <math_num_documentation.forward_structure.hydrological_module.gr4>`.  
             
         **Transfer**
         
@@ -961,7 +961,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. note::
 
-            If :math:`\alpha_2 = 0`, we return to the ``gr-4`` writting of the transfer.
+            If :math:`\alpha_2 = 0`, we return to the ``gr-4`` writing of the transfer.
             If :math:`\alpha_2 = \alpha_1 = 0`, it is equivalent to ``gr-4`` structure.
 
 
@@ -1004,37 +1004,284 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Interception**
 
-        Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`
+        Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
         **Production** 
 
-        Same as ``gr4_ri`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`
+        Same as ``gr4_ri`` production, see :ref:`GR4 Production <math_num_documentation.forward_structure.hydrological_module.gr4>`.
 
         **Exchange**
 
-        Same as ``gr5`` exchange, see :ref:`GR5 Exchange <math_num_documentation.forward_structure.hydrological_module.gr5>`    
+        Same as ``gr5`` exchange, see :ref:`GR5 Exchange <math_num_documentation.forward_structure.hydrological_module.gr5>`. 
             
         **Transfer**
         
-        Same as ``gr4_ri`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`
+        Same as ``gr4_ri`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4>`.
+
+.. _math_num_documentation.forward_structure.hydrological_module.hybrid_flux_correction:
+
+.. dropdown:: Hybrid GR for flux correction (gr4_mlp, gr5_mlp, gr6_mlp, grc_mlp, grd_mlp, loieau_mlp)
+    :animate: fade-in-slide-down
+
+    These hydrological models are GR-like models embedded within a multilayer perceptron (MLP) to correct internal water fluxes. Such a neural network is referred to as a process-parameterization neural network. 
+    This process-parameterization neural network takes as inputs the neutralized precipitation, the neutralized potential evapotranspiration, and the model states from the previous time step, and produces the corrections of internal water fluxes as outputs:
+
+    .. math::
+
+        \boldsymbol{f}_{q}(x,t) = \phi\left(\boldsymbol{I}_n(x,t),\boldsymbol{h}(x,t-1);\boldsymbol{\rho}\right)
+
+    where :math:`\boldsymbol{f}_{q}` is the vector of flux corrections, :math:`\boldsymbol{I}_n` is the neutralized atmospheric forcings, :math:`\boldsymbol{h}` is the vector of model states, and :math:`\boldsymbol{\rho}` is the parameters of the process-parameterization neural network :math:`\phi`.
+
+    .. note::
+        The output layer of this neural network uses a ``TanH`` activation function to map the hydrological flux corrections to the range :math:`]-1, 1[`.
+
+    .. dropdown:: gr4_mlp
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``gr4`` operators, with the integration of a neural network for correcting internal water fluxes as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception, see :ref:`GR4 Interception <math_num_documentation.forward_structure.hydrological_module.gr4>`.
+
+        **Process-parameterization neural network**
+
+        .. math::
+
+            [f_p, f_e, f_c, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}](x,t-1);\boldsymbol{\rho}\right)
+
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_p, f_e, f_c, f_l` are the corrections applied to internal fluxes as follows.
+
+        **Production**
+
+        Similar to ``gr4`` production, but the equations for computing infiltrating precipitation :math:`p_s` and evapotranspiration :math:`e_s` are updated to integrate flux corrections
+    
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+            &p_s(x, t)& & := & &\min\left(p_n(x, t), (1 + f_p) p_s(x, t)\right) \\
+
+            &e_s(x, t)& & := & &\min\left(e_n(x, t), (1 + f_e) e_s(x, t)\right)
+            \end{eqnarray}
+
+        **Exchange**
+
+        Compute the refined exchange flux
+    
+        .. math::
+
+            l_{exc}(x, t) = (1 + f_l) k_{exc}(x) \tilde{h_t}(x, t - 1)^{7/2}
+
+        **Transfer**
+
+        Same as ``gr4`` transfer except the equations of splitting the production runoff
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+                &p_{rr}(x, t)& &=& &(0.9 - 0.9 f_c^2)(p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+                &p_{rd}(x, t)& &=& &(0.1 + 0.9 f_c^2)(p_r(x, t) + p_{erc}(x, t))
+
+            \end{eqnarray}
+
+    .. dropdown:: gr5_mlp
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``gr5`` operators, with the integration of a neural network for correcting internal water fluxes as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception.
+
+        **Process-parameterization neural network**
+
+        Same as ``gr4_mlp`` process-parameterization neural network.
+
+        **Production**
+
+        Same as ``gr4_mlp`` production.
+
+        **Exchange**
+
+        Compute the refined exchange flux
+
+        .. math::
+
+            l_{exc}(x, t) = (1 + f_l) k_{exc}(x) \left(\tilde{h_t}(x, t - 1) - a_{exc}(x)\right)
+
+        **Transfer**
+
+        Same as ``gr4_mlp`` transfer.
+
+    .. dropdown:: gr6_mlp
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``gr6`` operators, with the integration of a neural network for correcting internal water fluxes as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception.
+
+        **Process-parameterization neural network**
+
+        .. math::
+
+            [f_p, f_e, f_{c1}, f_{c2}, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}, \tilde{h_e}](x,t-1);\boldsymbol{\rho}\right)
+
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}, \tilde{h_e}` are the normalized states of the production, transfer, and exponential reservoirs; 
+        :math:`f_p, f_e, f_{c1}, f_{c2}, f_l` are the corrections applied to internal fluxes as follows.
+
+        **Production**
+
+        Same as ``gr4_mlp`` production.
+
+        **Exchange**
+
+        Same as ``gr5_mlp`` exchange.
+
+        **Transfer**
+
+        Same as ``gr6`` transfer except the equations of splitting the production runoff
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+                &p_{rr}(x, t)& &=& &(0.6 - 0.4 f_{c2}) (0.9 - 0.9 f_{c1}^2) (p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+                &p_{re}(x, t)& &=& &(0.4 + 0.4 f_{c2}) (0.9 - 0.9 f_{c1}^2) (p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+                &p_{rd}(x, t)& &=& &(0.1 + 0.9 f_{c1}^2) (p_r(x, t) + p_{erc}(x, t))
+            \end{eqnarray}
+
+    .. dropdown:: grc_mlp
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``grc`` operators, with the integration of a neural network for correcting internal water fluxes as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception.
+
+        **Process-parameterization neural network**
+
+        .. math::
+
+            [f_p, f_e, f_{c1}, f_{c2}, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}, \tilde{h_l}](x,t-1);\boldsymbol{\rho}\right)
+
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}, \tilde{h_l}` are the normalized states of the production, first transfer, and second transfer reservoirs; 
+        :math:`f_p, f_e, f_{c1}, f_{c2}, f_l` are the corrections applied to internal fluxes as follows.
+
+        **Production**
+
+        Same as ``gr4_mlp`` production.
+
+        **Exchange**
+
+        Same as ``gr4_mlp`` exchange.
+
+        **Transfer**
+
+        Same as ``grc`` transfer except the equations of splitting the production runoff
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+                &p_{rr}(x, t)& &=& &(0.6 - 0.4 f_{c2}) (0.9 - 0.9 f_{c1}^2) (p_r(x, t) + p_{erc}(x, t)) + l_{exc}(x, t)\\
+                &p_{rl}(x, t)& &=& &(0.4 + 0.4 f_{c2}) (0.9 - 0.9 f_{c1}^2) (p_r(x, t) + p_{erc}(x, t))\\
+                &p_{rd}(x, t)& &=& &(0.1 + 0.9 f_{c1}^2) (p_r(x, t) + p_{erc}(x, t))
+            \end{eqnarray}
+
+    .. dropdown:: grd_mlp
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``grd`` operators, with the integration of a neural network for correcting internal water fluxes as follows:
+
+        **Interception**
+
+        Same as ``grd`` interception.
+
+        **Process-parameterization neural network**
+
+        .. math::
+
+            [f_p, f_e](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}](x,t-1);\boldsymbol{\rho}\right)
+
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_p, f_e` are the corrections applied to internal fluxes as follows.
+
+        **Production**
+
+        Same as ``gr4_mlp`` production.
+
+        **Transfer**
+
+        Same as ``grd`` transfer.
+
+    .. dropdown:: loieau_mlp
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``loieau`` operators, with the integration of a neural network for correcting internal water fluxes as follows:
+
+        **Interception**
+
+        Same as ``grd`` interception.
+
+        **Process-parameterization neural network**
+
+        .. math::
+
+            [f_p, f_e, f_c](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_a}, \tilde{h_c}](x,t-1);\boldsymbol{\rho}\right)
+
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_a}, \tilde{h_c}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_p, f_e, f_c` are the corrections applied to internal fluxes as follows.
+
+        **Production**
+
+        Same as ``gr4_mlp`` production.
+
+        .. note::
+            The parameter :math:`c_p` is replaced by :math:`c_a` and the state :math:`h_p` by :math:`h_a`
+
+        **Transfer**
+
+        Same as ``loieau`` transfer except the equations of splitting the production runoff
+
+        .. math::
+            :nowrap:
+
+            \begin{eqnarray}
+
+                &p_{rr}(x, t)& &=& &(0.9 - 0.9 f_c^2)(p_r(x, t) + p_{erc}(x, t))\\
+                &p_{rd}(x, t)& &=& &(0.1 + 0.9 f_c^2)(p_r(x, t) + p_{erc}(x, t))
+
+            \end{eqnarray}
 
 .. _math_num_documentation.forward_structure.hydrological_module.imperviousness:
 
 .. dropdown:: Génie Rural with imperviousness 
     :animate: fade-in-slide-down
 
-    This imperviousness feature allows for the calculation of the impervious proportion of a pixel's surface and takes this into account when computing infiltration and evaporation fluxes applied to the GR type production reservoir.
-    The imperviousness coefficients  :math:`imperv(x)` influence the fluxes of the production reservoir of each cell by being applied to the neutralized rainfall :math:`p_n(x,t)` and the evaporation :math:`e_s(x,t)`.
+    This imperviousness feature allows for the calculation of the impervious proportion of a pixel's surface and takes this into account when computing infiltration and evapotranspiration fluxes applied to the GR type production reservoir.
+    The imperviousness coefficients  :math:`imperv(x)` influence the fluxes of the production reservoir of each cell by being applied to the neutralized rainfall :math:`p_n(x,t)` and the evapotranspiration :math:`e_s(x,t)`.
     The imperviousness coefficients must range between 0 and 1 and be specified through an input map that is consistent with the model grid. This map can be obtained, for example, from soil occupation processing.
-    For instance, if the imperviousness coefficient is close to 1, the production part receives less neutralized rainfall :math:`p_n` and there is less evaporation :math:`e_s` from the impermeable soil.
-    This imperviousness accounting for the GR reservoir is applicable to GR model structures in SMASH. This is illustrated here on the GR4 structure.
+    For instance, if the imperviousness coefficient is close to 1, the production part receives less neutralized rainfall :math:`p_n` and there is less evapotranspiration :math:`e_s` from the impermeable soil.
+    This imperviousness accounting for the GR reservoir is applicable to GR model structures in `smash`. This is illustrated here on the GR4 structure.
 
     .. figure:: ../_static/gr4_structure_imperviousness.svg
         :align: center
         :width: 300
         
         Diagram of the ``gr4`` hydrological operator with imperviousness, a simplified ``GR`` like model for spatialized modeling.
-
 
     **Production**
 
@@ -1049,7 +1296,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \end{eqnarray}
     
-    - Compute the production infiltrating precipitation :math:`p_s` and evaporation :math:`e_s`
+    - Compute the production infiltrating precipitation :math:`p_s` and evapotranspiration :math:`e_s`
 
     .. math::
         :nowrap:
@@ -1110,13 +1357,13 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Canopy layer interception**
 
-    - Compute the canopy layer interception evaporation :math:`e_c`
+    - Compute the canopy layer interception evapotranspiration :math:`e_c`
 
     .. math::
 
         e_c(x, t) = \min(E(x, t)\tilde{h_{cl}}(x, t - 1)^{2/3}, P(x, t) + m_{lt}(x, t) + \tilde{h_{cl}}(x, t - 1))
 
-    - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
+    - Compute the neutralized precipitation :math:`p_n` and evapotranspiration :math:`e_n`
 
     .. math::
         :nowrap:
@@ -1134,7 +1381,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \tilde{h_{cl}}(x, t) = \tilde{h_{cl}}(x, t - 1) + P(x, t) - e_c(x, t) - p_n(x, t)
 
-    **Upper soil layer evaporation**
+    **Upper soil layer evapotranspiration**
 
     - Compute the maximum :math:`i_{m}` and the corresponding soil saturation :math:`i_{0}` infiltration
 
@@ -1148,7 +1395,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \end{eqnarray}
 
-    - Compute the upper soil layer evaporation :math:`e_s`
+    - Compute the upper soil layer evapotranspiration :math:`e_s`
 
     .. math::
         :nowrap:
@@ -1165,7 +1412,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \end{eqnarray}
 
-    with :math:`\beta`, the beta function in the ARNO evaporation :cite:p:`todini1996arno` (Appendix A)
+    with :math:`\beta`, the beta function in the ARNO evapotranspiration :cite:p:`todini1996arno` (Appendix A)
 
     .. FIXME Maybe explain what is the beta function, power expansion ...
 
@@ -1333,11 +1580,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 Routing operator :math:`\mathcal{M}_{hy}`
 -----------------------------------------
 
-The following routing operators are grid based and adapted to perform on the same grid than the snow and production operators. 
-They take as input a 8 direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained by terrain elevation processing. 
+The following routing operators are grid-based and adapted to perform on the same grid as the snow and production operators. 
+They take as input an 8-direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained through terrain elevation processing. 
 
 For all the following models, the 2D flow routing problem over the spatial domain :math:`\Omega` reduces to a 1D problem by using the 
-drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)`. The lattest, for a given cell :math:`x\in\Omega` defines 1 to 7 upstream cells which 
+drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)`. The latest, for a given cell :math:`x\in\Omega` defines 1 to 7 upstream cells which 
 surface discharge can inflow the current cell :math:`x` - each cell has a unique downstream cell.
 
 
@@ -1427,7 +1674,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
     **Upstream discharge**
 
-    Same as ``lag0`` upstream discharge, see :ref:`LAG0 Upstream Discharge <math_num_documentation.forward_structure.routing_module.lag0>`
+    Same as ``lag0`` upstream discharge, see :ref:`LAG0 Upstream Discharge <math_num_documentation.forward_structure.routing_module.lag0>`.
 
     **Surface discharge**
 
@@ -1524,7 +1771,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
         - Internal fluxes: :math:`\{q_{t}\}\in\boldsymbol{q}`
         - Parameters: :math:`\{a_{kw}, b_{kw}\}\in\boldsymbol{\theta}`
 
-    For the sake of clarity, the following variables are renamed for this section and the finite difference numerical scheme writting:
+    For the sake of clarity, the following variables are renamed for this section and the finite difference numerical scheme writing:
 
     .. list-table:: Renamed variables
         :widths: 25 25
@@ -1545,7 +1792,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
     **Upstream discharge**
 
-    Same as ``lag0`` upstream discharge, see :ref:`LAG0 Upstream Discharge <math_num_documentation.forward_structure.routing_module.lag0>`
+    Same as ``lag0`` upstream discharge, see :ref:`LAG0 Upstream Discharge <math_num_documentation.forward_structure.routing_module.lag0>`.
 
     .. note::
 
