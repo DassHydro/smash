@@ -120,14 +120,14 @@ efficiency on the most downstream gauge of the domain. The resulting rainfall-ru
 
     >>> f, ax = plt.subplots(2, 2)
     >>> 
-    >>> map_cp = ax[0,0].imshow(model_ml.get_rr_parameters("cp"))
-    >>> f.colorbar(map_cp, ax=ax[0,0], label="cp (mm)")
-    >>> map_ct = ax[0,1].imshow(model_ml.get_rr_parameters("ct"))
-    >>> f.colorbar(map_ct, ax=ax[0,1], label="ct (mm)")
-    >>> map_kexc = ax[1,0].imshow(model_ml.get_rr_parameters("kexc"))
-    >>> f.colorbar(map_kexc, ax=ax[1,0], label="kexc (mm/d)")
-    >>> map_llr = ax[1,1].imshow(model_ml.get_rr_parameters("llr"))
-    >>> f.colorbar(map_llr, ax=ax[1,1], label="llr (min)")
+    >>> map_cp = ax[0, 0].imshow(model_ml.get_rr_parameters("cp"))
+    >>> f.colorbar(map_cp, ax=ax[0, 0], label="cp (mm)")
+    >>> map_ct = ax[0, 1].imshow(model_ml.get_rr_parameters("ct"))
+    >>> f.colorbar(map_ct, ax=ax[0, 1], label="ct (mm)")
+    >>> map_kexc = ax[1, 0].imshow(model_ml.get_rr_parameters("kexc"))
+    >>> f.colorbar(map_kexc, ax=ax[1, 0], label="kexc (mm/d)")
+    >>> map_llr = ax[1, 1].imshow(model_ml.get_rr_parameters("llr"))
+    >>> f.colorbar(map_llr, ax=ax[1, 1], label="llr (min)")
     >>> plt.show()
 
 .. image:: ../../_static/user_guide.classical_uses.regionalization_spatial_validation.ml_theta.png
@@ -270,14 +270,14 @@ The maps of conceptual parameters optimized by the ANN mapping:
 
     >>> f, ax = plt.subplots(2, 2)
     >>> 
-    >>> map_cp = ax[0,0].imshow(model_ann.get_rr_parameters("cp"))
-    >>> f.colorbar(map_cp, ax=ax[0,0], label="cp (mm)")
-    >>> map_ct = ax[0,1].imshow(model_ann.get_rr_parameters("ct"))
-    >>> f.colorbar(map_ct, ax=ax[0,1], label="ct (mm)")
-    >>> map_kexc = ax[1,0].imshow(model_ann.get_rr_parameters("kexc"))
-    >>> f.colorbar(map_kexc, ax=ax[1,0], label="kexc (mm/d)")
-    >>> map_llr = ax[1,1].imshow(model_ann.get_rr_parameters("llr"))
-    >>> f.colorbar(map_llr, ax=ax[1,1], label="llr (min)")
+    >>> map_cp = ax[0, 0].imshow(model_ann.get_rr_parameters("cp"))
+    >>> f.colorbar(map_cp, ax=ax[0, 0], label="cp (mm)")
+    >>> map_ct = ax[0, 1].imshow(model_ann.get_rr_parameters("ct"))
+    >>> f.colorbar(map_ct, ax=ax[0, 1], label="ct (mm)")
+    >>> map_kexc = ax[1, 0].imshow(model_ann.get_rr_parameters("kexc"))
+    >>> f.colorbar(map_kexc, ax=ax[1, 0], label="kexc (mm/d)")
+    >>> map_llr = ax[1, 1].imshow(model_ann.get_rr_parameters("llr"))
+    >>> f.colorbar(map_llr, ax=ax[1, 1], label="llr (min)")
     >>> plt.show()
 
 .. image:: ../../_static/user_guide.classical_uses.regionalization_spatial_validation.ann_theta.png
