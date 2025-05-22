@@ -102,7 +102,7 @@ Snow operator :math:`\mathcal{M}_{snw}`
 Hydrological operator :math:`\mathcal{M}_{rr}`
 ----------------------------------------------
 
-Hydrological processes can be described at pixel scale in `smash` with one of the available hydrological operators adapted from state-of-the-art lumped models.
+Hydrological processes can be described at pixel scale in `smash` with one of the available hydrological operators adapted from state-of-the-art lumped or distributed models.
 
 .. image:: ../_static/hydrological_module.svg
     :align: center
@@ -154,13 +154,13 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    - Compute interception evaporation :math:`e_i`
+    - Compute interception evapotranspiration :math:`e_i`
 
     .. math::
 
         e_i(x, t) = \min(E(x, t), P(x, t) + m_{lt}(x, t) + \tilde{h_i}(x, t - 1)\times c_i(x))
 
-    - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
+    - Compute the neutralized precipitation :math:`p_n` and evapotranspiration :math:`e_n`
 
     .. math::
         :nowrap:
@@ -181,7 +181,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Production**
 
-    - Compute the production infiltrating precipitation :math:`p_s` and evaporation :math:`e_s`
+    - Compute the production infiltrating precipitation :math:`p_s` and evapotranspiration :math:`e_s`
 
     .. math::
         :nowrap:
@@ -634,13 +634,13 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Interception**
 
-    - Compute the interception evaporation :math:`e_i`
+    - Compute the interception evapotranspiration :math:`e_i`
 
     .. math::
 
         e_i(x, t) = \min(E(x, t), P(x, t) + m_{lt}(x, t))
 
-    - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
+    - Compute the neutralized precipitation :math:`p_n` and evapotranspiration :math:`e_n`
 
     .. math::
         :nowrap:
@@ -906,7 +906,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             \end{eqnarray}
 
 
-        We denote :math:`\lambda := \sqrt{1 - \gamma}`, then
+        We denote :math:`\lambda = \sqrt{1 - \gamma}`, then
 
         .. math::
             :nowrap:
@@ -1033,7 +1033,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     where :math:`\boldsymbol{f}_{q}` is the vector of flux corrections, :math:`\boldsymbol{I}_n` is the neutralized atmospheric forcings, :math:`\boldsymbol{h}` is the vector of model states, and :math:`\boldsymbol{\rho}` is the parameters of the process-parameterization neural network :math:`\phi`.
 
     .. note::
-        The output layer of this neural network uses a ``TanH`` activation function to map the corrections to the range :math:`]-1, 1[`.
+        The output layer of this neural network uses a ``TanH`` activation function to map the hydrological flux corrections to the range :math:`]-1, 1[`.
 
     .. dropdown:: gr4_mlp
         :animate: fade-in-slide-down
@@ -1048,28 +1048,30 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. math::
 
-            [f_p, f_e, f_c, f_l](x,t) = \phi\left([p_n, e_n](x,t), [h_p, h_t](x,t-1);\boldsymbol{\rho}\right)
+            [f_p, f_e, f_c, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}](x,t-1);\boldsymbol{\rho}\right)
 
-        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception.
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_p, f_e, f_c, f_l` are the corrections applied to internal fluxes as follows.
 
         **Production**
 
-        Same as ``gr4`` production except the equations of computing infiltrating precipitation :math:`p_s` and evaporation :math:`e_s`
-
+        Similar to ``gr4`` production, but the equations for computing infiltrating precipitation :math:`p_s` and evapotranspiration :math:`e_s` are updated to integrate flux corrections
+    
         .. math::
             :nowrap:
 
             \begin{eqnarray}
 
-            &p_s(x, t)& &=& &\min(p_n(x, t), (1 + f_p) op_s(x, t)) \text{ with } op_s(x, t) = c_p(x) (1 - \tilde{h_p}(x, t - 1)^2) \frac{\tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}{1 + \tilde{h_p}(x, t - 1) \tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}\\
+            &p_s(x, t)& & := & &\min\left(p_n(x, t), (1 + f_p) p_s(x, t)\right) \\
 
-            &e_s(x, t)& &=& &\min(e_n(x, t), (1 + f_e) oe_s(x, t)) \text{ with } oe_s(x, t) =  \tilde{h_p}(x, t - 1) c_p(x) (2 - \tilde{h_p}(x, t - 1)) \frac{\tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)}{1 + (1 - \tilde{h_p}(x, t - 1)) \tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)}
+            &e_s(x, t)& & := & &\min\left(e_n(x, t), (1 + f_e) e_s(x, t)\right)
             \end{eqnarray}
 
         **Exchange**
 
-        Compute the exchange flux :math:`l_{exc}`
-
+        Compute the refined exchange flux
+    
         .. math::
 
             l_{exc}(x, t) = (1 + f_l) k_{exc}(x) \tilde{h_t}(x, t - 1)^{7/2}
@@ -1107,7 +1109,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Exchange**
 
-        Compute the exchange flux :math:`l_{exc}`
+        Compute the refined exchange flux
 
         .. math::
 
@@ -1130,9 +1132,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. math::
 
-            [f_p, f_e, f_{c1}, f_{c2}, f_l](x,t) = \phi\left([p_n, e_n](x,t), [h_p, h_t, h_e](x,t-1);\boldsymbol{\rho}\right)
+            [f_p, f_e, f_{c1}, f_{c2}, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}, \tilde{h_e}](x,t-1);\boldsymbol{\rho}\right)
 
-        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception.
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}, \tilde{h_e}` are the normalized states of the production, transfer, and exponential reservoirs; 
+        :math:`f_p, f_e, f_{c1}, f_{c2}, f_l` are the corrections applied to internal fluxes as follows.
 
         **Production**
 
@@ -1168,9 +1172,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. math::
 
-            [f_p, f_e, f_{c1}, f_{c2}, f_l](x,t) = \phi\left([p_n, e_n](x,t), [h_p, h_t, h_l](x,t-1);\boldsymbol{\rho}\right)
+            [f_p, f_e, f_{c1}, f_{c2}, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}, \tilde{h_l}](x,t-1);\boldsymbol{\rho}\right)
 
-        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception.
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}, \tilde{h_l}` are the normalized states of the production, first transfer, and second transfer reservoirs; 
+        :math:`f_p, f_e, f_{c1}, f_{c2}, f_l` are the corrections applied to internal fluxes as follows.
 
         **Production**
 
@@ -1206,9 +1212,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. math::
 
-            [f_p, f_e](x,t) = \phi\left([p_n, e_n](x,t), [h_p, h_t](x,t-1);\boldsymbol{\rho}\right)
+            [f_p, f_e](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}](x,t-1);\boldsymbol{\rho}\right)
 
-        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception.
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_p, f_e` are the corrections applied to internal fluxes as follows.
 
         **Production**
 
@@ -1231,9 +1239,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. math::
 
-            [f_p, f_e, f_c](x,t) = \phi\left([p_n, e_n](x,t), [h_a, h_c](x,t-1);\boldsymbol{\rho}\right)
+            [f_p, f_e, f_c](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_a}, \tilde{h_c}](x,t-1);\boldsymbol{\rho}\right)
 
-        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception.
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_a}, \tilde{h_c}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_p, f_e, f_c` are the corrections applied to internal fluxes as follows.
 
         **Production**
 
@@ -1261,10 +1271,10 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural with imperviousness 
     :animate: fade-in-slide-down
 
-    This imperviousness feature allows for the calculation of the impervious proportion of a pixel's surface and takes this into account when computing infiltration and evaporation fluxes applied to the GR type production reservoir.
-    The imperviousness coefficients  :math:`imperv(x)` influence the fluxes of the production reservoir of each cell by being applied to the neutralized rainfall :math:`p_n(x,t)` and the evaporation :math:`e_s(x,t)`.
+    This imperviousness feature allows for the calculation of the impervious proportion of a pixel's surface and takes this into account when computing infiltration and evapotranspiration fluxes applied to the GR type production reservoir.
+    The imperviousness coefficients  :math:`imperv(x)` influence the fluxes of the production reservoir of each cell by being applied to the neutralized rainfall :math:`p_n(x,t)` and the evapotranspiration :math:`e_s(x,t)`.
     The imperviousness coefficients must range between 0 and 1 and be specified through an input map that is consistent with the model grid. This map can be obtained, for example, from soil occupation processing.
-    For instance, if the imperviousness coefficient is close to 1, the production part receives less neutralized rainfall :math:`p_n` and there is less evaporation :math:`e_s` from the impermeable soil.
+    For instance, if the imperviousness coefficient is close to 1, the production part receives less neutralized rainfall :math:`p_n` and there is less evapotranspiration :math:`e_s` from the impermeable soil.
     This imperviousness accounting for the GR reservoir is applicable to GR model structures in `smash`. This is illustrated here on the GR4 structure.
 
     .. figure:: ../_static/gr4_structure_imperviousness.svg
@@ -1286,7 +1296,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \end{eqnarray}
     
-    - Compute the production infiltrating precipitation :math:`p_s` and evaporation :math:`e_s`
+    - Compute the production infiltrating precipitation :math:`p_s` and evapotranspiration :math:`e_s`
 
     .. math::
         :nowrap:
@@ -1347,13 +1357,13 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Canopy layer interception**
 
-    - Compute the canopy layer interception evaporation :math:`e_c`
+    - Compute the canopy layer interception evapotranspiration :math:`e_c`
 
     .. math::
 
         e_c(x, t) = \min(E(x, t)\tilde{h_{cl}}(x, t - 1)^{2/3}, P(x, t) + m_{lt}(x, t) + \tilde{h_{cl}}(x, t - 1))
 
-    - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
+    - Compute the neutralized precipitation :math:`p_n` and evapotranspiration :math:`e_n`
 
     .. math::
         :nowrap:
@@ -1371,7 +1381,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \tilde{h_{cl}}(x, t) = \tilde{h_{cl}}(x, t - 1) + P(x, t) - e_c(x, t) - p_n(x, t)
 
-    **Upper soil layer evaporation**
+    **Upper soil layer evapotranspiration**
 
     - Compute the maximum :math:`i_{m}` and the corresponding soil saturation :math:`i_{0}` infiltration
 
@@ -1385,7 +1395,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \end{eqnarray}
 
-    - Compute the upper soil layer evaporation :math:`e_s`
+    - Compute the upper soil layer evapotranspiration :math:`e_s`
 
     .. math::
         :nowrap:
@@ -1402,7 +1412,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \end{eqnarray}
 
-    with :math:`\beta`, the beta function in the ARNO evaporation :cite:p:`todini1996arno` (Appendix A)
+    with :math:`\beta`, the beta function in the ARNO evapotranspiration :cite:p:`todini1996arno` (Appendix A)
 
     .. FIXME Maybe explain what is the beta function, power expansion ...
 
@@ -1570,8 +1580,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 Routing operator :math:`\mathcal{M}_{hy}`
 -----------------------------------------
 
-The following routing operators are grid based and adapted to perform on the same grid than the snow and production operators. 
-They take as input a 8 direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained by terrain elevation processing. 
+The following routing operators are grid-based and adapted to perform on the same grid as the snow and production operators. 
+They take as input an 8-direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained through terrain elevation processing. 
 
 For all the following models, the 2D flow routing problem over the spatial domain :math:`\Omega` reduces to a 1D problem by using the 
 drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)`. The latest, for a given cell :math:`x\in\Omega` defines 1 to 7 upstream cells which 
