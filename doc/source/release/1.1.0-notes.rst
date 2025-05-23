@@ -6,7 +6,7 @@ smash 1.1.0 Release Notes
 
 The smash 1.1.0 release introduces several new solvers and functionalities, while continuing efforts to improve usability, fix bugs, and enrich the documentation. The highlights are:
 
-- ``Hybrid Physics–AI hydrological solvers: spatially distributed neural-augmented algebraic and ODE models``
+- ``Hybrid Physics-AI hydrological solvers: spatially distributed neural-augmented algebraic and ODE models``
     In addition to regionalization neural networks, the process-parameterization neural networks are integrated into `smash` for GR-like model structures to refine internal water fluxes, either within algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs), or within state-space models that numerically solve the ODEs.
 
 - ``Migration of optimization methods to Python``
@@ -16,6 +16,10 @@ The smash 1.1.0 release introduces several new solvers and functionalities, whil
     Convolutional neural networks (CNNs) are now supported for the HDA-PR (Hybrid Data Assimilation-Parameters Regionalization) algorithm. 
     The `smash.factory.Net` sub-package has been updated to accommodate a generic neural network configuration for regionalization.
 
+- ``Variants of GR-like model structures``
+    New variants of the GR-like model structures have been introduced, featuring alternative parameterizations of the conceptual reservoirs. 
+    These updates also include the incorporation of rainfall intensity and imperviousness.
+
 - ``Fix for active and non-active cells``
     Issues related to missing physical descriptors on active cells and incorrect handling of boundary conditions outside the calibration domain have been resolved.
 
@@ -23,7 +27,7 @@ The smash 1.1.0 release introduces several new solvers and functionalities, whil
     The user guide has been significantly expanded, now offering step-by-step tutorials ranging from quick-start examples to advanced usage of `smash`.
 
 - ``Expanded contributor guide``
-    The :ref:`contributor guide <contributor_guide>` has been significantly expanded, now providing more detailed explanations of the `smash` development process.
+    The :ref:`Contributor Guide <contributor_guide>` has been significantly expanded, now providing more detailed explanations of the `smash` development process.
 
 - ``Complete mathematical documentation``
     A more complete mathematical description of all methods used in `smash` is now available in the :ref:`Math / Num Documentation <math_num_documentation>`.
