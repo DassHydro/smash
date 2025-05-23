@@ -4,17 +4,16 @@
 smash 1.1.0 Release Notes
 =========================
 
-The smash 1.1.0 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation.
-The highlights are:
+The smash 1.1.0 release introduces several new solvers and functionalities, while continuing efforts to improve usability, fix bugs, and enrich the documentation. The highlights are:
 
-- ``Hybrid process-parameterization with neural networks``
-    The process-parameterization neural networks are integrated into smash for GR-like model structures to refine internal water fluxes, either within algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs), or within state-space models that numerically solve the ODEs.
+- ``Hybrid Physics–AI hydrological solvers: spatially distributed neural-augmented algebraic and ODE models``
+    In addition to regionalization neural networks, the process-parameterization neural networks are integrated into `smash` for GR-like model structures to refine internal water fluxes, either within algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs), or within state-space models that numerically solve the ODEs.
 
 - ``Migration of optimization methods to Python``
     All optimization methods have been reimplemented in Python, replacing the previous Fortran-based versions. This change enables the use of various adaptive optimizers for all mappings and supports callback signatures for retrieving intermediate results during the calibration process.
 
 - ``Convolutional neural networks for regionalization``
-    Convolutional neural networks (CNNs) are now supported for the HDA-PR algorithm. 
+    Convolutional neural networks (CNNs) are now supported for the HDA-PR (Hybrid Data Assimilation-Parameters Regionalization) algorithm. 
     The `smash.factory.Net` sub-package has been updated to accommodate a generic neural network configuration for regionalization.
 
 - ``Fix for active and non-active cells``
