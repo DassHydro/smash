@@ -1328,7 +1328,10 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     where :math:`\alpha_1=2, \alpha_2=5, \alpha_3=3.5` are classical GR constants (cf. :cite:t:`perrin2003improvement, santos2018continuous`).
 
     .. note::
-        The output layer of this neural network uses a ``TanH`` activation function to map the hydrological flux corrections to the range :math:`]-1, 1[`.
+        The output layer of this neural network uses a ``TanH`` activation function to map the hydrological flux corrections to the range :math:`]-1, 1[`. 
+        The hidden layer(s) use a ``SiLU`` function, which is twice differentiable everywhere and provides smooth gradients. 
+        This is essential because the process-parameterization network must be twice differentiable—once for solving the ODEs and once for the calibration process to ensure numerical consistency during optimization—particularly as we aim to preserve the original structure by producing outputs close to zero at the beginning of optimization.
+
 
     This ODE system is solved using an implicit Euler scheme, where the Newton-Raphson method is used to approximate the sought states with a Jacobian matrix explicitly computed. 
     The Jacobian matrix is computed using the chain rule, where the derivatives of the neural network are computed using the backpropagation algorithm.

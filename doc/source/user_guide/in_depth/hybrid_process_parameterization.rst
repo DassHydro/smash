@@ -4,7 +4,7 @@
 Hybrid Process-Parameterization with Neural Networks
 ====================================================
 
-The process-parameterization neural networks are embedded into `smash`, either within an algebraic GR-like model, which solves the analytical solution of time-integrated ordinary differential equations (ODEs), or within a continuous state-space GR-like model, which solves the ODEs using a numerical scheme. 
+The process-parameterization neural networks are integrated into `smash` for GR-like model structures, either within algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs), or within state-space models that numerically solve the ODEs. 
 These networks are used to refine internal water fluxes in hydrological models using a multilayer perceptron (MLP) based on the original hydrological model. 
 For example, the model structure ``gr4_mlp`` is used to embed an MLP into the original ``gr4`` model, while the structure ``gr4_ode_mlp`` embeds neural ODEs into the original continuous state-space ``gr4_ode`` model. 
 Please refer to the description of :ref:`Hydrological Operators <math_num_documentation.forward_structure.hydrological_module>` for mathematical details on different model structures. 
@@ -48,10 +48,14 @@ The hydrological model structure and the architecture of the process-parameteriz
 
 The MLP architecture is configured via the ``hidden_neuron`` key. 
 To define a single hidden layer, use an integer representing the number of neurons. 
-To define two hidden layers, use a tuple of two integers, where each value specifies the number of neurons in the corresponding layer. A maximum of two hidden layers is supported.
+To define two hidden layers, use a tuple of two integers, where each value specifies the number of neurons in the corresponding layer 
+A maximum of two hidden layers is supported.
 
-.. note::
-    The activation function in the hidden layer(s) is fixed to ``SiLU``, while ``TanH`` is used in the output layer. These activation functions are not user-configurable.
+.. note:: 
+    The activation functions are not user-configurable. 
+    They are fixed to ``SiLU`` in the hidden layer(s) and ``TanH`` in the output layer. 
+    The ``SiLU`` function is twice differentiable everywhere and provides smooth gradients, ensuring numerical consistency during optimization 
+    (see the section on ``gr4_ode_mlp`` in the :ref:`Hydrological Operators <math_num_documentation.forward_structure.hydrological_module>`). 
 
 Now, we create the :class:`smash.Model` object using the ``setup`` and ``mesh`` dictionaries.
 
@@ -86,8 +90,9 @@ By default, the weights and biases of the MLP are initialized to zeros, making t
 Pre-calibration
 ---------------
 
-Before training the process-parameterization network, it is highly recommended to perform a pre-calibration step to estimate only the conceptual parameters and/or initial states. 
-This includes pre-calibrating the hydrological parameters (in the case of a uniform or distributed mapping) and pre-training the parameters of the descriptors-to-parameters mapping in the case of regionalization. 
+Before training the process-parameterization network, it is highly recommended to perform a pre-calibration step to estimate only the conceptual parameters and/or initial states of the original GR-like model. 
+This helps prevent increased identifiability issues that may arise at this stage when using the process-parameterization network. 
+This step includes pre-calibrating the hydrological parameters (in the case of a uniform or distributed mapping) or pre-training the parameters of the descriptors-to-parameters mapping (in the case of regionalization). 
 For simplicity, we will use the uniform mapping in this example.
 
 By default of this model structure, the parameters that will be calibrated include the weights and biases of the MLP, as well as the parameters of the original GR-like model.
@@ -134,9 +139,7 @@ Pre-calibrate the model using the default SBS optimizer with a small number of i
 Weights initialization
 ----------------------
 
-After pre-calibration, the weights of the MLP should be initialized.  
-To preserve behavior close to the original structure, we set relatively small values for the weights to produce only a minimal hybridization effect at this stage.
-
+After pre-calibrating the conceptual model parameters, the MLP weights should be initialized with small values to ensure a limited hybridization effect, preserving model behavior close to the original structure at the beginning of training. 
 The weights and biases of the MLP can be initialized either by manually setting their values or by using an automatic initialization method.  
 Here, we use the latter approach:
 
@@ -173,7 +176,7 @@ In this example, we use the L-BFGS-B optimizer:
 Comparison with the original model
 ----------------------------------
 
-It is now interesting to observe how the hybrid model alters the state dynamics compared to the original model — illustrating the hybridization effect.
+It is now interesting to observe how the hybrid model alters the state dynamics compared to the original model—illustrating the hybridization effect.
 
 We start by creating the original model, and running a forward simulation with returned model states:
 
@@ -205,7 +208,7 @@ Get the production and transfer states from both models at the outlet pixel:
     >>> # Get the transfer state for the hybrid model
     >>> ht_hyb = np.array([i.values[x, y, 2] for i in ret_hyb.rr_states])
 
-Finally, we can plot the normalized production (:math:`h_p`) and transfer (:math:`h_t`) states for both the original and hybrid models:
+Finally, we can plot the normalized (by related reservoir capacities) states of the production (:math:`h_p`) and transfer (:math:`h_t`) reservoirs for both the original and hybrid models:
 
 .. code-block:: python
 
