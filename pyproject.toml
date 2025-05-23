@@ -14,7 +14,7 @@ build-backend = "mesonpy"
 name = "hydro-smash"
 dynamic = ["version"]
 description = "An open source, Python library interfacing the Fortran Spatially distributed Modeling and ASsimilation for Hydrology platform."
-readme = "README.rst"
+readme = "README.md"
 authors = [
     {name = "INRAE RECOVER RHAX Team", email = "pierre-andre.garambois@inrae.fr"},
 ]
