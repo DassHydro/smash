@@ -83,7 +83,7 @@ Simply the standard deviation.
 Scaled moments (d1 and d2)
 **************************
 
-The spatial scaled moments are described in :cite:p:`zocatelli_2011` in the *section 2*:
+The spatial scaled moments are described in :cite:t:`zocatelli_2011` in the *section 2*:
 
     **Spatial moments of catchment rainfall: definitions**
 

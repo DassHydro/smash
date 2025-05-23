@@ -11,7 +11,7 @@ In `smash`, a forward/direct spatially distributed model is obtained by chaining
 - A ``hydrological`` production operator :math:`\mathcal{M}_{rr}` generating an elementary discharge :math:`q_t`, which feeds the routing operator. 
 - A ``routing`` operator :math:`\mathcal{M}_{hy}` simulating the propagation of discharge :math:`Q`.
 
-The operators' chaining principle is presented in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem.chaining>` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`), and the chaining fluxes are explicated in the diagram below. The forward model obtained reads :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)`.
+The operators' chaining principle is presented in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem.chaining>` (cf. Eq. :eq:`math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr`), and the chaining fluxes are explicated in the diagram below. The forward model obtained reads :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)`.
 
 This section describes the various operators available in `smash` with mathematical/numerical expressions, **input data** :math:`\left[\boldsymbol{I},\boldsymbol{D}\right](x,t)`, **tunable conceptual parameters** :math:`\boldsymbol{\theta}(x,t)`, and simulated **state and fluxes** :math:`\boldsymbol{U}(x,t)=\left[Q,\boldsymbol{h},\boldsymbol{q}\right](x,t)`.
 
@@ -22,7 +22,7 @@ These operators are written below for a given pixel :math:`x` of the 2D spatial 
     :width: 800
     
     Diagram of input data, hydrological-hydraulic operators, simulated quantities of a forward model
-    :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`);
+    :math:`\mathcal{M}=\mathcal{M}_{hy}\left(\,.\,,\mathcal{M}_{rr}\left(\,.\,,\mathcal{M}_{snw}\left(.\right)\right)\right)` (cf. Eq. :eq:`math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr`);
     recall the  composition principle is explained in section :ref:`forward and inverse problems statement <math_num_documentation.forward_inverse_problem>`.
     
 
@@ -59,7 +59,7 @@ Snow operator :math:`\mathcal{M}_{snw}`
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes: :math:`\{m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{S, T_e\}\in\boldsymbol{\mathcal{I}}`
@@ -143,7 +143,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -320,7 +320,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -354,7 +354,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural with 6 parameters (gr6)
     :animate: fade-in-slide-down
 
-    This hydrological module is derived from the GR6 model :cite:p:`michel2003` and :cite:p:`pushpalatha`.
+    This hydrological module is derived from the GR6 model :cite:p:`michel2003, pushpalatha`.
 
     .. hint::
 
@@ -386,7 +386,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -521,7 +521,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -602,7 +602,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 .. dropdown:: Génie Rural Distribué (grd)
     :animate: fade-in-slide-down
 
-    This hydrological operator is derived from the GR models and is a simplified structure used in :cite:p:`jay2019potential`.
+    This hydrological operator is derived from the GR models and is a simplified structure used in :cite:t:`jay2019potential`.
 
     .. figure:: ../_static/grd_structure.svg
         :align: center
@@ -623,7 +623,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -720,7 +720,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -799,7 +799,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     .. dropdown:: gr4_ri
         :animate: fade-in-slide-down
 
-        This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
+        This hydrological module is derived from the model introduced in :cite:t:`Astagneau_2022`.
 
         .. figure:: ../_static/gr4-ri_structure.svg
             :align: center
@@ -822,7 +822,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. note::
 
-            Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+            Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
             
             - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
             - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -863,7 +863,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         To improve runoff production by a gr reservoir, 
         even with low production level in dry condition, 
-        in the case of high rainfall intensity, in :cite:p:`Astagneau_2022` they suggest a modification 
+        in the case of high rainfall intensity, in :cite:t:`Astagneau_2022` they suggest a modification 
         of the infiltration rate :math:`p_s` depending on rainfall intensity :math:`p_n`. 
         Indeed, let's consider the rainfall intensity coefficient :math:`\gamma`,
         function of weighted rainfall intensity.
@@ -942,8 +942,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         **Transfer**
         
         In context of high rainfall intensities triggering flash flood responses, it is crucial to account for fast dynamics related to surface/hypodermic runoff 
-        and slower responses due to delayed/deeper flows (e.g. :cite:p:`hess-22-5317-2018`). 
-        Following :cite:p:`Astagneau_2022` for a lumped GR model, we introduce at pixel scale in `smash` a function to modify the partitioning between fast 
+        and slower responses due to delayed/deeper flows (e.g. :cite:t:`Douinot_2018_multihypothesis`). 
+        Following :cite:t:`Astagneau_2022` for a lumped GR model, we introduce at pixel scale in `smash` a function to modify the partitioning between fast 
         and slower transfert branches depending on rainfall intensity of the current time step only (small pixel size):
         
         .. math::
@@ -970,7 +970,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     .. dropdown:: gr5_ri
         :animate: fade-in-slide-down
 
-        This hydrological module is derived from the model introduced in :cite:p:`Astagneau_2022`.
+        This hydrological module is derived from the model introduced in :cite:t:`Astagneau_2022`.
 
         .. figure:: ../_static/gr5-ri_structure.svg
             :align: center
@@ -993,7 +993,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         .. note::
 
-            Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+            Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
             
             - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
             - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -1266,6 +1266,78 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
             \end{eqnarray}
 
+.. _math_num_documentation.forward_structure.hydrological_module.continuous_state_space_gr:
+
+.. dropdown:: Continuous state-space Génie Rural with 4 parameters (gr4_ode)
+    :animate: fade-in-slide-down
+
+    This continuous state-space representation of the GR4 model is adapted from :cite:t:`santos2018continuous` for both lumped and distributed models. 
+    Instead of relying on an algebraic approach based on an analytical solution, this representation involves numerically solving the ordinary differential equations (ODEs) of the GR4 model:
+
+    .. math::
+        \frac{d\boldsymbol{h}}{dt}=\left(\begin{array}{c} 
+        \frac{dh_{p}}{dt}\\
+        \frac{dh_{t}}{dt}
+        \end{array}\right)
+        = \left(
+        \begin{array}{c}
+        \left(1-\tilde{h_p}^{\alpha_1}\right)p_n-\tilde{h_p}(2-\tilde{h_p})e_n \\
+        0.9\tilde{h_p}^{\alpha_1}p_n+k_{exc}\tilde{h_t}^{\alpha_3}- \frac{c_t}{\alpha_2-1}\tilde{h_t}^{\alpha_2}
+        \end{array}
+        \right)
+
+    where :math:`\alpha_1=2, \alpha_2=5, \alpha_3=3.5` are classical GR constants (cf. :cite:t:`perrin2003improvement, santos2018continuous`); 
+    :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+    :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs.
+
+    This ODE system is solved using an implicit Euler scheme, where the Newton-Raphson method is used to approximate the sought states with a Jacobian matrix explicitly computed.
+    
+    Then, hydrological runoff flux (lateral discharge feeding the routing module) produced at the pixel scale is computed by the closure equation of the ODE system as follows:
+
+    .. math::
+        q_{t} = 0.1\tilde{h_p}^{\alpha_1}p_n + k_{exc}\tilde{h_t}^{\alpha_3} + \frac{c_t}{\alpha_2-1}\tilde{h_t}^{\alpha_2}
+
+.. _math_num_documentation.forward_structure.hydrological_module.hybrid_neural_ode:
+
+.. dropdown:: Hybrid GR4 with neural ODEs (gr4_ode_mlp)
+    :animate: fade-in-slide-down
+
+    This hybrid continuous state-space model is embedded within an MLP into the ODEs for process-parameterization.
+    This process-parameterization neural network takes as inputs the neutralized precipitation, the neutralized potential evapotranspiration, and the model states from the previous time step, and produces the corrections of internal water fluxes as outputs:
+    
+    .. math::
+
+        [f_p, f_e, f_t, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}](x,t-1);\boldsymbol{\rho}\right)
+
+    where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+    :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
+    :math:`f_p, f_e, f_t, f_l` are the corrections applied to the ODE system as follows.
+    
+    .. math::
+        \frac{d\boldsymbol{h}}{dt}=\left(\begin{array}{c} 
+        \frac{dh_{p}}{dt}\\
+        \frac{dh_{t}}{dt}
+        \end{array}\right)
+        = \left(
+        \begin{array}{c}
+        \left(1-\tilde{h_p}^{\alpha_1}\right)p_n(1+f_p)-\tilde{h_p}(2-\tilde{h_p})e_n(1+f_e) \\
+        0.9\tilde{h_p}^{\alpha_1}p_n(1+f_p)+k_{exc}\tilde{h_t}^{\alpha_3}(1+f_l)- \frac{c_t}{\alpha_2-1}\tilde{h_t}^{\alpha_2}(1+f_t)
+        \end{array}
+        \right)
+
+    where :math:`\alpha_1=2, \alpha_2=5, \alpha_3=3.5` are classical GR constants (cf. :cite:t:`perrin2003improvement, santos2018continuous`).
+
+    .. note::
+        The output layer of this neural network uses a ``TanH`` activation function to map the hydrological flux corrections to the range :math:`]-1, 1[`.
+
+    This ODE system is solved using an implicit Euler scheme, where the Newton-Raphson method is used to approximate the sought states with a Jacobian matrix explicitly computed. 
+    The Jacobian matrix is computed using the chain rule, where the derivatives of the neural network are computed using the backpropagation algorithm.
+    
+    Then, hydrological runoff flux (lateral discharge feeding the routing module) produced at the pixel scale is computed by the closure equation of the ODE system as follows:
+
+    .. math::
+        q_{t} = 0.1\tilde{h_p}^{\alpha_1}p_n(1+f_p) + k_{exc}\tilde{h_t}^{\alpha_3}(1+f_l) + \frac{c_t}{\alpha_2-1}\tilde{h_t}^{\alpha_2}(1+f_t)
+
 .. _math_num_documentation.forward_structure.hydrological_module.imperviousness:
 
 .. dropdown:: Génie Rural with imperviousness 
@@ -1346,7 +1418,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
@@ -1609,7 +1681,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Surface discharge: :math:`Q`
         - Internal fluxes: :math:`\{q_{t}\}\in\boldsymbol{q}`
@@ -1663,7 +1735,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
         
         - Surface discharge: :math:`Q`
         - Internal fluxes: :math:`\{q_{t}\}\in\boldsymbol{q}`
@@ -1729,7 +1801,8 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
         
         S_0=S_f
         
-    with :math:`S_0` the bottom slope and :math:`S_f` the friction slope - i.e. a locally uniform flow with energy grade line parallel to the channel bottom. This momentum equation can be written as :cite:p:`ChowAppliedhydrology`:
+    with :math:`S_0` the bottom slope and :math:`S_f` the friction slope - i.e. a locally uniform flow with energy grade line parallel to the channel bottom. 
+    This momentum equation can be expressed in the following form, as described by :cite:t:`ChowAppliedhydrology`
 
     .. math::
         :name: math_num_documentation.forward_structure.conceptual_A_of_Q
@@ -1765,8 +1838,8 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
     .. note::
 
-        Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
-        
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
+
         - Surface discharge: :math:`Q`
         - Internal fluxes: :math:`\{q_{t}\}\in\boldsymbol{q}`
         - Parameters: :math:`\{a_{kw}, b_{kw}\}\in\boldsymbol{\theta}`

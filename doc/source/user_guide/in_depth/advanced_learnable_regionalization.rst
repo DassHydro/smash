@@ -40,10 +40,6 @@ Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_datas
     >>> setup, mesh = smash.factory.load_dataset("Lez")
     >>> model = smash.Model(setup, mesh)
 
-.. code-block:: none
-
-    python3
-
 Defining the neural network
 ---------------------------
 
