@@ -45,7 +45,8 @@
 /* add the page icon before the "show source" text */
 .bd-sidebar-secondary a[href*="show-source"]::before,
 .bd-sidebar-secondary a[href*="_sources"]::before {
-    content: "\1f4c4";
+    content: "\1f5ce";
+    margin-right: 4px;
 }
 
 code.literal{
