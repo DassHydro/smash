@@ -46,7 +46,6 @@
 .bd-sidebar-secondary a[href*="show-source"]::before,
 .bd-sidebar-secondary a[href*="_sources"]::before {
     content: "\1f4c4";
-    color: "inherit";
 }
 
 code.literal{
