@@ -10,6 +10,7 @@
 </h1><br>
 
 [![PyPI](https://badge.fury.io/py/hydro-smash.svg)](https://badge.fury.io/py/hydro-smash)
+[![DOI](https://img.shields.io/badge/DOI-10.5194%2Fegusphere--2025--690-blue)](https://doi.org/10.5194/egusphere-2025-690)
 
 **smash** is a Python library that provides a variety of user-friendly routines for hydrological modeling, including data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis—all interfaced with an efficient Fortran computational engine.
 
