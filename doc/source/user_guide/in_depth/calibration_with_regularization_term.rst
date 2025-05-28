@@ -44,7 +44,7 @@ To trigger the regularization function we must change the optimize and cost opti
     ...        "wjreg": 0.0,
     ...        }
 
-The maximum of iteration has been increased so that enough iterations will be performed to reduce the cost (the criteria and the regularisation term). "end_warmup" has been set one month latter than the model start time to avoid "jumps" of the cost computation during the first time-step (the model require a long warmup period, but for this tutoriel only one month is given).
+The maximum of iteration has been increased so that enough iterations will be performed to reduce the cost (the criteria and the regularisation term). "end_warmup" has been set one month later than the model start time to avoid "jumps" of the cost computation during the first time-step (the model require a long warmup period, but for this tutoriel only one month is given).
 
 When triggering the regularisation, the total cost :math:`J` is defined as follow:
 
@@ -60,7 +60,7 @@ where :math:`J0` is the missfit criteria and :math:`Jreg` the regularisation ter
 
 where :math:`wjreg\_cmpt_1, wjreg\_cmpt_2, ...` are some weight coefficients attributed to each penalisation function.
 
-"jreg_cmpt" option selects the penalisation function (choice are elements in ["prior", "smoothing", "hard_smothing"]) used to compute the regularisation term: "prior" denoted :math:`Jprior` compute :math:`|| X - X^b ||` (norm of the distance of the control parameter :math:`X` to the background :math:`X^b`), "smoothing" and "hard_smoothing" are some spatial smoothing function denoted :math:`Jsmoothing` (see :ref:`math_num_documentation.regularization_function` for more details).  
+"jreg_cmpt" option selects the penalisation function (choice are elements in ["prior", "smoothing", "hard_smoothing"]) used to compute the regularisation term: "prior" denoted :math:`Jprior` compute :math:`|| X - X^b ||` (norm of the distance of the control parameter :math:`X` to the background :math:`X^b`), "smoothing" and "hard_smoothing" are some spatial smoothing function denoted :math:`Jsmoothing` (see :ref:`math_num_documentation.regularization_function` for more details).  
 "wjreg" provide the total weight of the regularisation function (here it is set to 0., i.e the regularisation will be inefficient). 
 
 Now we can start the optimization of the model parameters.  
@@ -173,7 +173,7 @@ The simulated and observed discharges and the calibrated parameter map (cp) are 
 
 The simulated discharge does not fit well with the observed discharge but the calibrated parameter map is smoother. Indeed the regularisation adds some constraints for the optimisation and forces the parameters to be correlated with its neighbourgs and close to the background. In our case, the weight for the regularisation term (:math:`wjreg \times Jreg`) is too big compare to the optimisation criteria (:math:`J0`), the convergence is then less efficient. W recommend to estimate the optimal regularisation weight :math:`wjreg` with the l-curve method (P. C. Hansen and D. P. O’Leary, “The use of the L-curve in the regularization of discrete ill-posed problems,” SIAM Journal on Scientific Computing, vol. 14, no. 6, pp. 1487–1503, 1993.).
 
-An automatic method to comute the l-curve is implemented in Smash. The optimal coefficent :math:`wjreg` can be automatically estimated (M. Jay-Allemand, P. Javelle, and P.-A. Garambois, “Assimilation dans SMASH.” 2023.). To do so, just set the "wjreg" cost option to "lcurve". In order to plot the result of the l-curve, you must setup optional returned options. Notice that the lcurve will performe six optimisation cycle (the number of cycle is currently fixed) and thus the computation can take a long time.
+An automatic method to comute the l-curve is implemented in Smash. The optimal coefficient :math:`wjreg` can be automatically estimated (M. Jay-Allemand, P. Javelle, and P.-A. Garambois, “Assimilation dans SMASH.” 2023.). To do so, just set the "wjreg" cost option to "lcurve". In order to plot the result of the l-curve, you must setup optional returned options. Notice that the lcurve will perform six optimisation cycles (the number of cycle is currently fixed) and thus the computation can take a long time.
 
 
 .. code-block:: python
@@ -235,7 +235,7 @@ The l-curve can be plotted (:math:`Jreg` compare to the final cost :math:`J0`). 
 .. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.lcurve.png
     :align: center
 
-The red cross shows the the optimal weight of the regularisation term estimated by the lcurve (2.09e-8). This optimal point is located at the "corner" of the l-curve. The green cross shows an approximation of the optimal weight (4.46e-8) achieved by setting "wjreg" to the value "fast". In that latter case only tow optimisation cycle will be performed.
+The red cross shows the optimal weight of the regularisation term estimated by the lcurve (2.09e-8). This optimal point is located at the "corner" of the l-curve. The green cross shows an approximation of the optimal weight (4.46e-8) achieved by setting "wjreg" to the value "fast". In that latter case only two optimisation cycles will be performed.
 
 We notice that the optimisation is much better (lower final cost), the parameters are spatially correlated and the spatial mean should remain close to the mean background value.
 
@@ -263,7 +263,7 @@ We notice that the optimisation is much better (lower final cost), the parameter
 .. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.calibrated_cp_reg_lcurve.png
     :align: center
 
-A penalisation term with harder smoothing can be used. Just set "jreg_cmpt" option to ["prior", "hard-smoothing"]. More over weightning betwween each penalisation term can be adjusted: let's define a weighning twice larger for the smoothing than for the prior penalisation term:
+A penalisation term with harder smoothing can be used. Just set "jreg_cmpt" option to ["prior", "hard-smoothing"]. Moreover weightning betwween each penalisation term can be adjusted: let's define a weighning twice larger for the smoothing than for the prior penalisation term:
 
 .. code-block:: python
 
