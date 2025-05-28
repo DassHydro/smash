@@ -157,7 +157,7 @@ Artificial neural network (ANN)
 *******************************
 
 We can optimize the rainfall-runoff model using an ANN-based mapping of descriptors to conceptual model parameters.
-This is achieved by setting the ``mapping`` argument to ``'ann'``, which is by default optimized using the :ref:`ADAM algorithm <math_num_documentation.optimization_algorithm>`.
+This is achieved by setting the ``mapping`` argument to ``'ann'``, which is by default optimized using the Adam algorithm (see :ref:`math_num_documentation.optimization_algorithms`).
 We can also specify several parameters for the calibration process with ANN:
 
 - ``optimize_options``
