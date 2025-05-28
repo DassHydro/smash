@@ -12,9 +12,10 @@
 [![PyPI](https://badge.fury.io/py/hydro-smash.svg)](https://badge.fury.io/py/hydro-smash)
 [![DOI](https://img.shields.io/badge/DOI-10.5194%2Fegusphere--2025--690-blue)](https://doi.org/10.5194/egusphere-2025-690)
 
-**smash** (**S**patially distributed **M**odeling and **AS**similation for **H**ydrology) is a Python library, interfaced with an efficient Fortran computational engine, designed for both hydrological research and operational applications. 
-The platform enables flexible combinations of vertical and lateral flow operators through either process-based conceptual models or hybrid physics-AI approaches incorporating Artificial Neural Networks (ANNs). 
-It allows the simulation of discharge hydrographs and hydrological states at any spatial location within a basin and reproduces the hydrological response of contrasting catchments by leveraging spatially distributed meteorological forcings, physiographic data, and hydrometric observations.
+**smash** (**S**patially distributed **M**odeling and **AS**similation for **H**ydrology) is a Python library, interfaced with an efficient Fortran computational engine, that provides user-friendly routines for both hydrological research and operational applications.
+
+The platform enables the combination of vertical and lateral flow operators through either process-based conceptual models or hybrid physics-AI approaches incorporating Artificial Neural Networks (ANNs). 
+It is designed to simulate discharge hydrographs and hydrological states at any spatial location within a basin, and to reproduce the hydrological responses of contrasting catchments by leveraging spatially distributed meteorological forcings, physiographic data, and hydrometric observations.
 
 - **Documentation:** https://smash.recover.inrae.fr
 - **Source code:** https://github.com/DassHydro/smash
@@ -23,7 +24,7 @@ It allows the simulation of discharge hydrographs and hydrological states at any
 - **Scientific references:** https://smash.recover.inrae.fr/bibliography
 - **Bug reports:** https://github.com/DassHydro/smash/issues
 
-**smash** offers a range of advanced optimization techniques, including Variational Data Assimilation (VDA), Bayesian estimation for uncertainty quantification, and machine learning methods, all within a spatialized and differentiable modeling framework. 
+**smash** offers a range of advanced calibration techniques, including Variational Data Assimilation (VDA), Bayesian estimation for uncertainty quantification, and machine learning methods, all within a spatialized and differentiable modeling framework. 
 This is enabled by a numerical adjoint model automatically generated using the **Tapenade** differentiation tool, which provides accurate gradients for high-dimensional, non-linear optimization and efficient model learning.
 
 - **Tapenade** website: https://team.inria.fr/ecuador/en/tapenade
