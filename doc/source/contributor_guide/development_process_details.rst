@@ -370,7 +370,7 @@ There are no constraints on ``<name>`` here are those on the ``<prefix>``:
 - ``mwd``: the file is a module, is wrapped and differentiated (``mwd_setup.f90``)
 
 .. note::
-    We strongly recommand the use of module. Specifically if the file contains sources to be wrapped or differentiated.
+    We strongly recommend the use of module. Specifically if the file contains sources to be wrapped or differentiated.
 
 .. _contributor_guide.development_process_details.fortran_guideline.global_convention.floating_point_convention:
 
