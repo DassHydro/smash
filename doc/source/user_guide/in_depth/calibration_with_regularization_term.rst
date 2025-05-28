@@ -13,29 +13,29 @@ We start by importing the modules needed in this tutorial.
 	
 	>>> import smash
 	>>> import matplotlib.pyplot as plt
-	>>> import numpy as np
 
 Now, we need to create a :class:`smash.Model` object.
 For this case, we use the :ref:`user_guide.data_and_format_description.cance` dataset as an example.
 
-Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset` method and create the :class:`smash.Model` object.
+Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.factory.load_dataset` method and create the :class:`smash.Model` object.
 
 .. code-block:: python
 	
 	>>> setup, mesh = smash.factory.load_dataset("Cance")
 	>>> model = smash.Model(setup, mesh)
 
-Distributed calibration with regularisation
+Distributed calibration with regularization
 -------------------------------------------
 
-The regularization function can be applied with a distributed mapping using the lbfgsb optimizer. That kind of calibration produces smoother parameters map with better correlation with the background.
+The regularization function can be applied with a distributed mapping using gradient-based optimizers (here we use the L-BFGS-B algorithm). 
+That kind of calibration produces smoother parameters map with better correlation with the background.
 
 To trigger the regularization function we must change the optimize and cost options:
 
 .. code-block:: python
 
     >>> optimize_options = {"termination_crit": {"maxiter": 30}}
-
+    >>> 
     >>> cost_options= {
     ...        "end_warmup": '2014-10-15 00:00',
     ...        "jobs_cmpt": "nse",
@@ -44,24 +44,27 @@ To trigger the regularization function we must change the optimize and cost opti
     ...        "wjreg": 0.0,
     ...        }
 
-The maximum of iteration has been increased so that enough iterations will be performed to reduce the cost (the criteria and the regularisation term). "end_warmup" has been set one month later than the model start time to avoid "jumps" of the cost computation during the first time-step (the model require a long warmup period, but for this tutoriel only one month is given).
+The maximum of iteration has been increased so that enough iterations will be performed to reduce the cost (the criteria and the regularization term). 
+The key option ``'end_warmup'`` has been set one month later than the model start time to avoid "jumps" of the cost computation during the first time-step (the model require a long warmup period, but for this tutorial only one month is given).
 
-When triggering the regularisation, the total cost :math:`J` is defined as follow:
-
-.. math::
-    \boxed{
-    J = J0 + wjreg \times Jreg}
-
-where :math:`J0` is the missfit criteria and :math:`Jreg` the regularisation term defined as follow:
+When triggering the regularization, the total cost :math:`J` is defined as follow:
 
 .. math::
     \boxed{
-    Jreg = wjreg\_cmpt_1 \times Jprior + wjreg\_cmpt_2 \times Jsmoothing}
+    J = J_0 + w_{jreg} \times J_{reg}
+    }
 
-where :math:`wjreg\_cmpt_1, wjreg\_cmpt_2, ...` are some weight coefficients attributed to each penalisation function.
+where :math:`J_0` is the missfit criteria and :math:`J_{reg}` the regularization term defined as follow:
 
-"jreg_cmpt" option selects the penalisation function (choice are elements in ["prior", "smoothing", "hard_smoothing"]) used to compute the regularisation term: "prior" denoted :math:`Jprior` compute :math:`|| X - X^b ||` (norm of the distance of the control parameter :math:`X` to the background :math:`X^b`), "smoothing" and "hard_smoothing" are some spatial smoothing function denoted :math:`Jsmoothing` (see :ref:`math_num_documentation.regularization_function` for more details).  
-"wjreg" provide the total weight of the regularisation function (here it is set to 0., i.e the regularisation will be inefficient). 
+.. math::
+    \boxed{
+    J_{reg} = w_{jreg, 1} \times J_{prior} + w_{jreg, 2} \times J_{smoothing}
+    }
+
+where :math:`w_{jreg, 1}` and :math:`w_{jreg, 2}` are the weight coefficients attributed to each penalization function.
+
+The ``'jreg_cmpt'`` option selects the penalization function (choices are elements in [``'prior'``, ``'smoothing'``, ``'hard_smoothing'``]) used to compute the regularization term: ``'prior'``, denoted as :math:`J_{prior}`, computes :math:`|| X - X^b ||` (the norm of the distance of the control parameter :math:`X` to the background :math:`X^b`), while ``'smoothing'`` and ``'hard_smoothing'`` are spatial smoothing functions denoted as :math:`J_{smoothing}` (see :ref:`math_num_documentation.regularization_function` for more details).  
+The ``'wjreg'`` option provides the total weight of the regularization function (here it is set to 0, meaning the regularization will be ineffective).
 
 Now we can start the optimization of the model parameters.  
 
@@ -74,8 +77,6 @@ Now we can start the optimization of the model parameters.
     ...                    cost_options=cost_options,
     ...                    )
 
-That returns:
-
 .. code-block:: output
 	
     </> Optimize
@@ -83,15 +84,15 @@ That returns:
         At iterate     1    nfg =     2    J = 4.98505e-01    |proj g| = 2.28896e-02
         At iterate     2    nfg =     4    J = 2.64331e-01    |proj g| = 3.06342e-02
         ...
-        At iterate    28    nfg =    32    J = 1.48585e-02    |proj g| = 8.08515e-03
-        At iterate    29    nfg =    33    J = 1.46492e-02    |proj g| = 5.14101e-03
-        At iterate    30    nfg =    35    J = 1.45157e-02    |proj g| = 8.50714e-03
+        At iterate    29    nfg =    33    J = 1.47555e-02    |proj g| = 7.52695e-03
+        At iterate    30    nfg =    35    J = 1.46135e-02    |proj g| = 1.18616e-02
         STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
 
 Let's now plot the discharges and the map of the calibrated parameters.
 
 .. code-block:: python
 
+    >>> code = model.mesh.code[0]
     >>> plt.plot(model_noreg.response_data.q[0, :], label="Observed discharge")
     >>> plt.plot(model_noreg.response.q[0, :], label="Simulated discharge")
     >>> plt.xlabel("Time step")
@@ -106,14 +107,15 @@ Let's now plot the discharges and the map of the calibrated parameters.
 
 .. code-block:: python
 
-    >>> plt.imshow(model_noreg.rr_parameters.values[:,:,1]) ;
-    >>> plt.colorbar(label="Production capacity");
-    >>> plt.title("Cance - map of the calibrated production parameter (cp)");
+    >>> plt.imshow(model_noreg.rr_parameters.values[:,:,1])
+    >>> plt.colorbar(label="cp (mm)")
+    >>> plt.title("Cance - map of the calibrated production parameter (cp)")
+    >>> plt.show()
 
 .. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.calibrated_noreg.png
     :align: center
 
-Now change the weight of the regularisation term (set :math:`wjreg > 0`) and observe the effects.
+Now change the weight of the regularization term (set :math:`w_{jreg} > 0`) and observe the effects.
 
 .. code-block:: python
 
@@ -122,9 +124,9 @@ Now change the weight of the regularisation term (set :math:`wjreg > 0`) and obs
     ...        "jobs_cmpt": "nse",
     ...        "wjobs_cmpt": "mean",
     ...        "jreg_cmpt": ["prior", "smoothing"],
-    ...        "wjreg": 0.000001,
+    ...        "wjreg": 1e-6,
     ...        }
-
+    >>> 
     >>> model_reg = smash.optimize(model, 
     ...                    optimizer="lbfgsb",
     ...                    mapping="distributed",
@@ -132,21 +134,18 @@ Now change the weight of the regularisation term (set :math:`wjreg > 0`) and obs
     ...                    cost_options=cost_options,
     ...                    )
 
-That returns:
-
 .. code-block:: output
 	
     </> Optimize
-    At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
-    At iterate     1    nfg =     2    J = 5.26515e-01    |proj g| = 3.61495e-02
-    At iterate     2    nfg =     4    J = 5.19688e-01    |proj g| = 1.09659e-01
-    ...
-    At iterate    28    nfg =    32    J = 3.54707e-01    |proj g| = 1.05339e-02
-    At iterate    29    nfg =    33    J = 3.54489e-01    |proj g| = 9.41573e-03
-    At iterate    30    nfg =    34    J = 3.54246e-01    |proj g| = 8.71998e-03
-    STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 5.26515e-01    |proj g| = 3.61495e-02
+        At iterate     2    nfg =     4    J = 5.19688e-01    |proj g| = 1.09659e-01
+        ...
+        At iterate    29    nfg =    33    J = 3.54491e-01    |proj g| = 9.42803e-03
+        At iterate    30    nfg =    34    J = 3.54248e-01    |proj g| = 8.79138e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
 
-The simulated and observed discharges and the calibrated parameter map (cp) are plotted bellow:
+The simulated and observed discharges and the calibrated parameter map (e.g., for the parameter of production capacity) are shown below:
 
 .. code-block:: python
 
@@ -164,17 +163,23 @@ The simulated and observed discharges and the calibrated parameter map (cp) are 
 
 .. code-block:: python
 
-    >>> plt.imshow(model_reg.rr_parameters.values[:,:,1]) ;
-    >>> plt.colorbar(label="Production capacity");
-    >>> plt.title("Cance - map of the calibrated production parameter (cp)");
+    >>> plt.imshow(model_reg.rr_parameters.values[:,:,1]) 
+    >>> plt.colorbar(label="cp (mm)")
+    >>> plt.title("Cance - map of the calibrated production parameter (cp)")
+    >>> plt.show()
 
 .. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.calibrated_cp_reg.png
     :align: center
 
-The simulated discharge does not fit well with the observed discharge but the calibrated parameter map is smoother. Indeed the regularisation adds some constraints for the optimisation and forces the parameters to be correlated with its neighbourgs and close to the background. In our case, the weight for the regularisation term (:math:`wjreg \times Jreg`) is too big compare to the optimisation criteria (:math:`J0`), the convergence is then less efficient. W recommend to estimate the optimal regularisation weight :math:`wjreg` with the l-curve method (P. C. Hansen and D. P. O’Leary, “The use of the L-curve in the regularization of discrete ill-posed problems,” SIAM Journal on Scientific Computing, vol. 14, no. 6, pp. 1487–1503, 1993.).
+The simulated discharge does not fit well with the observed discharge but the calibrated parameter map is smoother. 
+Indeed the regularization adds some constraints for the optimization and forces the parameters to be correlated with its neighbourgs and close to the background. 
+In this case, the weight for the regularization term (:math:`w_{jreg} \times J_{reg}`) is too large compared to the optimization criteria (:math:`J_0`), the convergence is then less efficient. 
+We recommend to estimate the optimal regularization weight :math:`w_{jreg}` with the L-curve method :cite:p:`hansen1993`.
 
-An automatic method to comute the l-curve is implemented in Smash. The optimal coefficient :math:`wjreg` can be automatically estimated (M. Jay-Allemand, P. Javelle, and P.-A. Garambois, “Assimilation dans SMASH.” 2023.). To do so, just set the "wjreg" cost option to "lcurve". In order to plot the result of the l-curve, you must setup optional returned options. Notice that the lcurve will perform six optimisation cycles (the number of cycle is currently fixed) and thus the computation can take a long time.
-
+An automatic method to compute the L-curve is implemented in `smash`, where the optimal coefficient :math:`w_{jreg}` can be automatically estimated. 
+To do so, simply set the ``'wjreg'`` cost option to ``'lcurve'``. 
+To plot the result of the L-curve, you must configure optional return options. 
+Note that the L-curve will perform six optimization cycles (the number of cycles is currently fixed), and thus the computation may take a significant amount of time.
 
 .. code-block:: python
 
@@ -185,9 +190,8 @@ An automatic method to comute the l-curve is implemented in Smash. The optimal c
     ...        "jreg_cmpt": ["prior", "smoothing"],
     ...        "wjreg": "lcurve",
     ...        }
-
-
-    return_options= {
+    >>> 
+    >>> return_options= {
     ...            "time_step": "all",
     ...            "lcurve_wjreg": True,
     ...            "jreg": True,
@@ -196,7 +200,7 @@ An automatic method to comute the l-curve is implemented in Smash. The optimal c
     ...            "control_vector": True,
     ...            "n_iter": True,
     ...        }
-
+    >>> 
     >>> model_reg_lcurve, return_results = smash.optimize(model, 
     ...                    optimizer="lbfgsb",
     ...                    mapping="distributed",
@@ -205,40 +209,78 @@ An automatic method to comute the l-curve is implemented in Smash. The optimal c
     ...                    return_options=return_options,
     ...                    )
 
-That return:
-
 .. code-block:: output
 	
     </> Optimize
-    L-CURVE WJREG CYCLE 1
-    At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
-    At iterate     1    nfg =     2    J = 4.98505e-01    |proj g| = 2.28896e-02
-    At iterate     2    nfg =     4    J = 2.64331e-01    |proj g| = 3.06342e-02
-    ...
-    At iterate    28    nfg =    32    J = 1.48585e-02    |proj g| = 8.08515e-03
-    At iterate    29    nfg =    33    J = 1.46492e-02    |proj g| = 5.14101e-03
-    At iterate    30    nfg =    35    J = 1.45157e-02    |proj g| = 8.50714e-03
-    STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
-    L-CURVE WJREG CYCLE 2
-    At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
-    At iterate     1    nfg =     2    J = 4.98778e-01    |proj g| = 2.28872e-02
-    At iterate     2    nfg =     5    J = 3.18313e-01    |proj g| = 1.74505e-02
-    ...
-    At iterate    27    nfg =    35    J = 1.47322e-01    |proj g| = 1.16875e-02
-    At iterate    28    nfg =    36    J = 1.46963e-01    |proj g| = 9.66862e-03
-    At iterate    29    nfg =    37    J = 1.46561e-01    |proj g| = 1.85026e-02
-    At iterate    30    nfg =    38    J = 1.46371e-01    |proj g| = 3.53880e-03
-    STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        L-CURVE WJREG CYCLE 1
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 4.98505e-01    |proj g| = 2.28896e-02
+        At iterate     2    nfg =     4    J = 2.64331e-01    |proj g| = 3.06342e-02
+        ...
+        At iterate    29    nfg =    33    J = 1.47555e-02    |proj g| = 7.52695e-03
+        At iterate    30    nfg =    35    J = 1.46135e-02    |proj g| = 1.18616e-02
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        L-CURVE WJREG CYCLE 2
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 4.98778e-01    |proj g| = 2.28872e-02
+        At iterate     2    nfg =     5    J = 3.18264e-01    |proj g| = 1.74465e-02
+        ...
+        At iterate    29    nfg =    37    J = 9.89078e-02    |proj g| = 1.09698e-02
+        At iterate    30    nfg =    38    J = 9.81276e-02    |proj g| = 9.43963e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        L-CURVE WJREG CYCLE 3
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 4.99088e-01    |proj g| = 2.28846e-02
+        At iterate     2    nfg =     5    J = 3.43218e-01    |proj g| = 1.91654e-02
+        ...
+        At iterate    29    nfg =    38    J = 1.47286e-01    |proj g| = 5.78975e-03
+        At iterate    30    nfg =    39    J = 1.46883e-01    |proj g| = 5.82246e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        L-CURVE WJREG CYCLE 4
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 4.99752e-01    |proj g| = 2.28789e-02
+        At iterate     2    nfg =     5    J = 3.48342e-01    |proj g| = 1.93518e-02
+        ...
+        At iterate    29    nfg =    34    J = 2.03694e-01    |proj g| = 1.71777e-02
+        At iterate    30    nfg =    35    J = 2.02995e-01    |proj g| = 8.75243e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        L-CURVE WJREG CYCLE 5
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 5.01172e-01    |proj g| = 2.28668e-02
+        At iterate     2    nfg =     5    J = 3.44131e-01    |proj g| = 3.55282e-02
+        ...
+        At iterate    29    nfg =    34    J = 2.55517e-01    |proj g| = 5.77013e-03
+        At iterate    30    nfg =    35    J = 2.55214e-01    |proj g| = 8.10029e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        L-CURVE WJREG CYCLE 6
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 5.04206e-01    |proj g| = 2.28408e-02
+        At iterate     2    nfg =     4    J = 4.03004e-01    |proj g| = 1.24911e-01
+        ...
+        At iterate    29    nfg =    32    J = 2.96215e-01    |proj g| = 3.94920e-03
+        At iterate    30    nfg =    33    J = 2.96043e-01    |proj g| = 3.54594e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+        L-CURVE WJREG LAST CYCLE. wjreg: 2.08290e-08
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 4.99088e-01    |proj g| = 2.28846e-02
+        At iterate     2    nfg =     5    J = 3.43218e-01    |proj g| = 1.91654e-02
+        ...
+        At iterate    29    nfg =    38    J = 1.47286e-01    |proj g| = 5.78975e-03
+        At iterate    30    nfg =    39    J = 1.46883e-01    |proj g| = 5.82246e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
 
-The l-curve can be plotted (:math:`Jreg` compare to the final cost :math:`J0`). In the figure bellow, :math:`Jreg` and :math:`J0` are normalized between 0 and 1 to better predict the optimal point.
+The L-curve can be plotted (:math:`J_{reg}` compared to the final cost :math:`J_0`). 
+In the figure below, :math:`J_{reg}` and :math:`J_0` are normalized between 0 and 1 to better identify the optimal point.
 
 .. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.lcurve.png
     :align: center
 
-The red cross shows the optimal weight of the regularisation term estimated by the lcurve (2.09e-8). This optimal point is located at the "corner" of the l-curve. The green cross shows an approximation of the optimal weight (4.46e-8) achieved by setting "wjreg" to the value "fast". In that latter case only two optimisation cycles will be performed.
+The red cross indicates the optimal weight of the regularization term estimated by the L-curve (2.09e-8). 
+This optimal point is located at the "corner" of the L-curve. 
+The green cross represents an approximation of the optimal weight (4.46e-8) obtained by setting ``'wjreg'`` to ``'fast'``. 
+In this case, only two optimization cycles are performed.
 
-We notice that the optimisation is much better (lower final cost), the parameters are spatially correlated and the spatial mean should remain close to the mean background value.
-
+We notice that the optimization is much better (lower final cost), the parameters are spatially correlated and the spatial mean should remain close to the mean background value.
 
 .. code-block:: python
 
@@ -251,19 +293,22 @@ We notice that the optimisation is much better (lower final cost), the parameter
     >>> plt.title(f"Observed and simulated discharge at gauge {code}")
     >>> plt.show()
 
-.. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.hydrograph_noreg.png
+.. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.hydrograph_reg_lcurve.png
     :align: center
 
 .. code-block:: python
 
-    >>> plt.imshow(model_reg_lcurve.rr_parameters.values[:,:,1]) ;
-    >>> plt.colorbar(label="Production capacity");
-    >>> plt.title("Cance - map of the calibrated production parameter");
+    >>> plt.imshow(model_reg_lcurve.rr_parameters.values[:,:,1]) 
+    >>> plt.colorbar(label="cp (mm)")
+    >>> plt.title("Cance - map of the calibrated production parameter (cp)")
+    >>> plt.show()
 
 .. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.calibrated_cp_reg_lcurve.png
     :align: center
 
-A penalisation term with harder smoothing can be used. Just set "jreg_cmpt" option to ["prior", "hard-smoothing"]. Moreover weightning betwween each penalisation term can be adjusted: let's define a weighning twice larger for the smoothing than for the prior penalisation term:
+A penalization term with harder smoothing can be used. 
+Simply set the ``'jreg_cmpt'`` option to [``'prior'``, ``'hard-smoothing'``]. 
+Additionally, weighting between each penalization term can be adjusted: for instance, define a weighting twice as large for the smoothing term compared to the prior penalization term:
 
 .. code-block:: python
 
@@ -273,10 +318,10 @@ A penalisation term with harder smoothing can be used. Just set "jreg_cmpt" opti
     ...        "wjobs_cmpt": "mean",
     ...        "jreg_cmpt": ["prior", "hard-smoothing"],
     ...        "wjreg_cmpt": [1., 2.],
-    ...        "wjreg": "2.09e-8",
+    ...        "wjreg": 2.09e-8,
     ...        }
-
-    >>> model_reg_lcurve_hard_smoothing_with_pond = smash.optimize(model, 
+    >>> 
+    >>> model_reg_lcurve_hard_smoothing, return_results = smash.optimize(model, 
     ...                    optimizer="lbfgsb",
     ...                    mapping="distributed",
     ...                    optimize_options=optimize_options,
@@ -284,27 +329,25 @@ A penalisation term with harder smoothing can be used. Just set "jreg_cmpt" opti
     ...                    return_options=return_options,
     ...                    )
 
-That return:
-
 .. code-block:: output
 	
-    At iterate     0    nfg =     1    J = 6.95010e-01    |proj g| = 1.66423e-02
-    At iterate     1    nfg =     2    J = 6.51908e-01    |proj g| = 1.78277e-02
-    At iterate     2    nfg =     4    J = 4.08855e-01    |proj g| = 5.22046e-02
-    ...
-    At iterate    28    nfg =    34    J = 1.94216e-01    |proj g| = 2.09031e-02
-    At iterate    29    nfg =    35    J = 1.93498e-01    |proj g| = 1.87484e-02
-    At iterate    30    nfg =    36    J = 1.92991e-01    |proj g| = 2.03715e-02
-    STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+    </> Optimize
+        At iterate     0    nfg =     1    J = 5.82505e-01    |proj g| = 2.26224e-02
+        At iterate     1    nfg =     2    J = 4.99706e-01    |proj g| = 2.28790e-02
+        At iterate     2    nfg =     5    J = 3.33072e-01    |proj g| = 2.34928e-02
+        ...
+        At iterate    29    nfg =    35    J = 2.01653e-01    |proj g| = 1.52276e-02
+        At iterate    30    nfg =    36    J = 2.01213e-01    |proj g| = 7.89939e-03
+        STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
 
-The parameter map will be even more smooth:
+The parameter map is now even smoother:
 
 .. code-block:: python
 
-    >>> plt.imshow(model_reg_lcurve.rr_parameters.values[:,:,1]) ;
-    >>> plt.colorbar(label="Production capacity");
-    >>> plt.title("Cance - map of the calibrated production parameter");
+    >>> plt.imshow(model_reg_lcurve_hard_smoothing.rr_parameters.values[:,:,1])
+    >>> plt.colorbar(label="cp (mm)")
+    >>> plt.title("Cance - map of the calibrated production parameter (cp)")
+    >>> plt.show()
 
 .. image:: ../../_static/user_guide.in_depth.calibration_with_regularisation_term.calibrated_cp_lcurve_hard_smoothing.png
     :align: center
-
