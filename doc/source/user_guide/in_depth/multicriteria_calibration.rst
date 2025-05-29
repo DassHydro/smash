@@ -31,7 +31,7 @@ Model object creation
 Now, we need to create a :class:`smash.Model` object.
 For this case, we will use the :ref:`user_guide.data_and_format_description.cance` dataset as an example.
 
-Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset` method and create the :class:`smash.Model` object.
+Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.factory.load_dataset` method and create the :class:`smash.Model` object.
 
 .. code-block:: python
 
