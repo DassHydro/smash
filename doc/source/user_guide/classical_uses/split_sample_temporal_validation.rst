@@ -88,7 +88,7 @@ want to optimize the model but still keep this model object to run the validatio
 `smash.Model` object as input and returns a copy of it. This method allows you to optimize a `smash.Model` object and store the results in 
 another object without modifying the initial one.
 
-Here, we perform a simple derivative-free optimization algorithm, for instance SBS (see :ref:`optimization algorithms <math_num_documentation:optimization_algorithms>`), to optimize the spatially uniform hydrological parameters. 
+Here, we perform a simple derivative-free optimization algorithm, for instance SBS (see :ref:`math_num_documentation.optimization_algorithms`), to optimize the spatially uniform hydrological parameters. 
 We use a default cost function equal to one minus the Nash-Sutcliffe efficiency at the most downstream gauge.
 
 .. code-block:: python

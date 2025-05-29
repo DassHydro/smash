@@ -88,7 +88,7 @@ Similar to the forward run, there are two ways to perform an optimization using 
 The hydrological model optimization problem is complex, and there are many strategies that can be employed depending on the modeling goals and data available.
 Here, for this first tutorial on model optimization, we consider a simple method with the default optimization parameters.
 The default cost function ``J`` to be minimized here is one minus the Nash-Sutcliffe efficiency (:math:`1 - \text{NSE}`), 
-using a global Step-By-Step algorithm (see SBS in :ref:`optimization algorithms <math_num_documentation.optimization_algorithms>`).
+using a global Step-By-Step algorithm (see SBS in :ref:`math_num_documentation.optimization_algorithms`).
 By default, the optimized parameters are supposed to be spatially uniform, which are conceptual rainfall-runoff parameters (here we consider a classical structure with the parameters: ``cp``, ``ct``, ``kexc``, and ``llr``).
 
 .. code-block:: python
