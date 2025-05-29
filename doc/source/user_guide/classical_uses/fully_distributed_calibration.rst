@@ -38,7 +38,7 @@ In this tutorial, we will use the :ref:`user_guide.data_and_format_description.c
 Spatially uniform optimization
 ------------------------------
 
-First, spatially uniform parameters are optimized using the simple global search :math:`\mathrm{SBS}` algorithm with a small number of iterations:
+First, spatially uniform parameters are optimized using the simple global search :math:`\mathrm{SBS}` algorithm with a small number of iterations to provide a first guess for the hydrological parameters (see explanation on :ref:`first guess selection <math_num_documentation.mapping.spatially_uniform.first_guess>` for details):
 
 .. code-block:: python
 
@@ -51,6 +51,9 @@ First, spatially uniform parameters are optimized using the simple global search
         At iterate     1    nfg =    30    J = 9.84102e-02    ddx = 0.64
         At iterate     2    nfg =    59    J = 4.54091e-02    ddx = 0.32
         STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+.. hint::
+    You can refer to the :meth:`smash.multiset_estimate` method and the :ref:`Multi-set Parameters Estimate <user_guide.in_depth.multiset_parameters_estimate>` tutorial to learn how to obtain the first guess using a Bayesian-like estimate on multiple sets of solutions.
 
 Once the optimization is complete. We can visualize the simulated discharge:
 
@@ -88,9 +91,6 @@ The spatially uniform calibrated parameters, which will serve as a first guess f
 .. code-block:: output
 
     cp: 76.579 | ct: 263.646 | llr: 34.105 | kexc: -0.325
-
-.. hint::
-    You can refer to the :meth:`smash.multiset_estimate` method and the :ref:`Multi-set Parameters Estimate <user_guide.in_depth.multiset_parameters_estimate>` tutorial to learn how to obtain the first guess using a Bayesian-like estimate on multiple sets of solutions.
 
 ----------------------------------
 Spatially distributed optimization

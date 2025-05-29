@@ -48,14 +48,14 @@ The hydrological model structure and the architecture of the process-parameteriz
 
 The MLP architecture is configured via the ``hidden_neuron`` key. 
 To define a single hidden layer, use an integer representing the number of neurons. 
-To define two hidden layers, use a tuple of two integers, where each value specifies the number of neurons in the corresponding layer 
+To define two hidden layers, use a tuple of two integers, where each value specifies the number of neurons in the corresponding layer. 
 A maximum of two hidden layers is supported.
 
-.. note:: 
+.. note::
     The activation functions are not user-configurable. 
-    They are fixed to ``SiLU`` in the hidden layer(s) and ``TanH`` in the output layer. 
-    The ``SiLU`` function is twice differentiable everywhere and provides smooth gradients, ensuring numerical consistency during optimization 
-    (see the section on ``gr4_ode_mlp`` in the :ref:`Hydrological Operators <math_num_documentation.forward_structure.hydrological_module>`). 
+    They are fixed to ``SiLU`` for the hidden layer(s) and ``TanH`` for the output layer. 
+    The ``SiLU`` function is twice differentiable everywhere and provides smooth gradients, ensuring numerical stability during optimization, 
+    particularly when integrating neural ODEs (refer to the description of the ``gr4_ode_mlp`` structure in :ref:`Hydrological Operators <math_num_documentation.forward_structure.hydrological_module>`).
 
 Now, we create the :class:`smash.Model` object using the ``setup`` and ``mesh`` dictionaries.
 
