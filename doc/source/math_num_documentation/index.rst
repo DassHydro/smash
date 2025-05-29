@@ -36,5 +36,5 @@ This documentation details the conceptual and mathematical basis of the forward 
     hydrological_signature
     regularization_function
     cost_function
-    optimization_algorithm
+    optimization_algorithms
     bayesian_estimation

@@ -98,6 +98,8 @@ MAPPING_OPTIMIZER_BASE_DOC = {
         Name of optimizer. Should be one of
 
         - ``'sbs'`` (only for ``'uniform'`` **mapping**)
+        - ``'nelder-mead'`` (only for ``'uniform'`` **mapping**)
+        - ``'powell'`` (only for ``'uniform'`` **mapping**)
         %(optimizer_lbfgsb)s
         - ``'adam'`` (for all mappings)
         - ``'adagrad'`` (for all mappings)
@@ -112,7 +114,7 @@ MAPPING_OPTIMIZER_BASE_DOC = {
             %(default_optimizer_for_ann_mapping)s
 
         .. hint::
-            See the :ref:`math_num_documentation.optimization_algorithm` section.
+            See the :ref:`math_num_documentation.optimization_algorithms` section.
         """,
     ),
 }
@@ -253,6 +255,10 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         Termination criteria. The elements are:
 
         - ``'maxiter'``: The maximum number of iterations.
+        - ``'xatol'``: Absolute error in solution parameters between iterations that is acceptable for
+          convergence. Only used when **optimizer** is ``'nelder-mead'``.
+        - ``'fatol'``: Absolute error in cost function value between iterations that is acceptable for
+          convergence. Only used when **optimizer** is ``'nelder-mead'``.
         - ``'factr'``: An additional termination criterion based on cost values. Only used when **optimizer**
           is ``'lbfgsb'``.
         - ``'pgtol'``: An additional termination criterion based on the projected gradient of the cost
