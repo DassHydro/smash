@@ -8,18 +8,24 @@ Getting Started
 Installation
 ------------
 
-`smash` can be installed with pip on **Linux**, **macOS**, **Windows** or from source and supports Python
-versions |min_py_version| to |max_py_version|.
+`smash` can be installed via `pip` on **Linux**, **macOS**, or **Windows**, and supports Python versions |min_py_version| to |max_py_version|. 
+It can also be installed directly from its source repository on GitHub.
 
 .. note::
 
     We strongly recommend using `smash` on **Linux** or **macOS**, especially when working with large datasets, as Fortran parallel computation is not supported on **Windows**.
 
-If you already have Python, you can install `smash` with:
+To install the latest released version, run:
 
 .. code-block:: none
 
     pip install hydro-smash
+
+To install the latest development version directly from the current main branch of the GitHub repository, use:
+
+.. code-block:: none
+
+    pip install git+https://github.com/DassHydro/smash.git
 
 .. note::
 
