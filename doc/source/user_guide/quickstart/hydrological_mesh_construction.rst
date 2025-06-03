@@ -13,7 +13,7 @@ The tutorial uses data downloaded from the :ref:`Cance dataset <user_guide.data_
     import os
     os.system("python3 generate_dataset.py -d Cance")
 
-We begin by opening a Python interface and assuming that the example dataset has been downloaded to the following path: ``'./Cance-dataset/'``.
+Let's start by opening a Python interface. For this tutorial, assume that the example dataset has been downloaded and is located at the following path: ``'./Cance-dataset/'``.
 
 .. code-block:: none
 
@@ -22,7 +22,7 @@ We begin by opening a Python interface and assuming that the example dataset has
 Imports
 -------
 
-We will first import the necessary libraries for this tutorial.
+Let's begin by importing the necessary libraries for this tutorial.
 
 .. ipython:: python
 

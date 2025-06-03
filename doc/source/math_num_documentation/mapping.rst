@@ -41,6 +41,8 @@ such that :math:`\forall x\in\Omega`:
 
     \end{eqnarray}
 
+.. _math_num_documentation.mapping.spatially_uniform.first_guess:
+
 First guess
 ***********
 
