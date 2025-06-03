@@ -38,10 +38,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install MinGW-w64
-        if: runner.os == 'Windows'
-        run: choco install mingw -y
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

@@ -33,17 +33,17 @@ endif
 
 cc = meson.get_compiler('c')
 
-# Windows-specific compiler and linker flags to resolve issues of
-# "undefined reference to _setjmpex" linked to f90wrap
-# and f90wrap_abort with FortranDerivedTypeArray
-if host_machine.system() == 'windows'
-    add_project_arguments('-DMS_WIN64', language: 'c')
-    add_project_link_arguments('-lmsvcrt', '-lkernel32', '-lmingwex', language: 'c')
-endif
-
 # Adding at project level causes many spurious -lgfortran flags.
 add_languages('fortran', native: false)
 ff = meson.get_compiler('fortran')
+
+# Windows-specific fixes for _setjmpex issue
+if host_machine.system() == 'windows'
+  if cc.get_id() == 'gcc'  # MinGW
+    add_project_link_arguments(['-lmsvcrt'], language: 'c')
+    add_project_arguments(['-D_WIN32', '-DMS_WIN64'], language: 'c')
+  endif
+endif
 
 # C warning flags
 wno_maybe_uninitialized = cc.get_supported_arguments('-Wno-maybe-uninitialized')
@@ -112,10 +112,16 @@ incdir_f2py = incdir_numpy / '..' / '..' / 'f2py' / 'src'
 inc_f2py = include_directories(incdir_f2py)
 fortranobject_c = incdir_f2py / 'fortranobject.c'
 
-# Share this object across multiple modules.
+# Windows-specific link args
+windows_link_args = []
+if host_machine.system() == 'windows' and cc.get_id() == 'gcc'
+  windows_link_args = ['-lmsvcrt']
+endif
+
 fortranobject_lib = static_library('_fortranobject',
   fortranobject_c,
   c_args: c_ignore_warnings,
+  link_args: windows_link_args,
   dependencies: py_dep,
   include_directories: [inc_np, inc_f2py],
 )
