@@ -33,14 +33,17 @@ endif
 
 cc = meson.get_compiler('c')
 
+# Windows-specific compiler and linker flags to resolve issues of
+# "undefined reference to _setjmpex" linked to f90wrap
+        # and f90wrap_abort with FortranDerivedTypeArray
+if host_machine.system() == 'windows'
+    add_project_arguments('-DMS_WIN64', language: 'c')
+    add_project_link_arguments('-lmsvcrt', '-lkernel32', '-lmingwex', language: 'c')
+endif
+
 # Adding at project level causes many spurious -lgfortran flags.
 add_languages('fortran', native: false)
 ff = meson.get_compiler('fortran')
-
-# Windows-specific linker flags for _setjmpex issue
-if host_machine.system() == 'windows'
-  add_project_link_arguments('-lmsvcrt', '-lkernel32', language: 'c')
-endif
 
 # C warning flags
 wno_maybe_uninitialized = cc.get_supported_arguments('-Wno-maybe-uninitialized')
