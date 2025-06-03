@@ -137,7 +137,7 @@ html_theme_options = {
     "navbar_persistent": [],
     "switcher": {
         "version_match": "dev" if "rc" in release else re.match(r"^(\d+\.\d+)", release).group(),
-        "json_url": "https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/versions.json",
+        "json_url": "https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/versions.json",
     },
     "show_version_warning_banner": True,
 }
