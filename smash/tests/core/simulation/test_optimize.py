@@ -49,7 +49,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                 )
 
             else:
-                # Ignore SBS optimizer if the forward model uses NN
+                # Ignore gradient-free optimizers if the forward model uses NN
                 opt = "lbfgsb" if model.setup.n_layers > 0 else None
 
                 instance, ret = smash.optimize(
