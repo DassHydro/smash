@@ -6,15 +6,5 @@
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     {{ generate_header_nav_html(n_links_before_dropdown=4) }}
-    
-    <!-- Add the version dropdown -->
-    <li class="nav-item dropdown">
-      <button class="dropdown-button">{{ current_version }}</button>
-      <ul class="dropdown-content">
-        {% for version in versions %}
-          <li><a href="{{ version.url }}">{{ version.name }}</a></li>
-        {% endfor %}
-      </ul>
-    </li>
   </ul>
 </nav>
