@@ -38,11 +38,8 @@ add_languages('fortran', native: false)
 ff = meson.get_compiler('fortran')
 
 # Windows-specific fixes for _setjmpex issue
-if host_machine.system() == 'windows'
-  if cc.get_id() == 'gcc'  # MinGW
-    add_project_link_arguments(['-lmsvcrt'], language: 'c')
-    add_project_arguments(['-D_WIN32', '-DMS_WIN64'], language: 'c')
-  endif
+if host_machine.system() == 'windows' and cc.get_id() == 'gcc'
+  add_project_arguments(['-D_setjmpex=setjmp'], language: 'c')
 endif
 
 # C warning flags
@@ -112,16 +109,9 @@ incdir_f2py = incdir_numpy / '..' / '..' / 'f2py' / 'src'
 inc_f2py = include_directories(incdir_f2py)
 fortranobject_c = incdir_f2py / 'fortranobject.c'
 
-# Windows-specific link args
-windows_link_args = []
-if host_machine.system() == 'windows' and cc.get_id() == 'gcc'
-  windows_link_args = ['-lmsvcrt']
-endif
-
 fortranobject_lib = static_library('_fortranobject',
   fortranobject_c,
   c_args: c_ignore_warnings,
-  link_args: windows_link_args,
   dependencies: py_dep,
   include_directories: [inc_np, inc_f2py],
 )
