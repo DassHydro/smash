@@ -76,8 +76,8 @@ Two classical approaches are commonly used for regionalization to map descriptor
 
 - ``multi-polynomial``: a polynomial mapping where the optimizable parameters include both the coefficients and the degree.
 
-In this example, we use the multi-linear mapping. Before optimizing the model, it is recommended to provide a first guess that can be spatially uniform.
-For more details on first guess selection, refer to the :ref:`Math/Num Documentation <math_num_documentation.mapping>` section.
+In this example, we use the multi-linear mapping. Before optimizing the model, it is recommended to provide a first guess for the control vector  
+(see explanation on :ref:`first guess selection <math_num_documentation.mapping.spatially_uniform.first_guess>` for details).
 
 .. code-block:: python
 
@@ -93,6 +93,11 @@ For more details on first guess selection, refer to the :ref:`Math/Num Documenta
         At iterate     1    nfg =    30    J = 3.51670e-01    ddx = 0.64
         At iterate     2    nfg =    58    J = 1.80573e-01    ddx = 0.32
         STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+.. hint::
+    You can refer to the :meth:`smash.multiset_estimate` method and the :ref:`Multi-set Parameters Estimate <user_guide.in_depth.multiset_parameters_estimate>` tutorial to learn how to obtain the first guess using a Bayesian-like estimate on multiple sets of solutions.
+
+Now, we can optimize the model using the multi-linear mapping.
 
 .. code-block:: python
 

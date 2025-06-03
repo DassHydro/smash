@@ -16,6 +16,10 @@ versions |min_py_version| to |max_py_version|.
     We strongly recommend using `smash` on **Linux** or **macOS**, particularly if you are using it on a
     large dataset, as Fortran parallel computation is not supported on **Windows**.
 
+.. warning::
+
+    Windows support is temporarily unavailable starting from `smash` v1.1.1 due to wheel build issues.
+
 If you already have Python, you can install `smash` with:
 
 .. code-block:: none
