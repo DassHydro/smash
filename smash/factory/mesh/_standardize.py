@@ -240,10 +240,10 @@ def _standardize_generate_mesh_args(
 
     if x is None and bbox is None:
         raise ValueError("bbox argument and / or (x, y, area) arguments must be defined")
-    
+
     if bbox is not None:
         bbox = _standardize_generate_mesh_bbox(flwdir_dataset, bbox)
-    
+
     if x is not None and y is not None:
         x, y, area = _standardize_generate_mesh_x_y_area(flwdir_dataset, x, y, area)
 
