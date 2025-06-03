@@ -15,6 +15,10 @@ It can also be installed directly from its source repository on GitHub.
 
     We strongly recommend using `smash` on **Linux** or **macOS**, especially when working with large datasets, as Fortran parallel computation is not supported on **Windows**.
 
+.. warning::
+
+    Windows support is temporarily unavailable starting from `smash` v1.1.1 due to wheel build issues.
+
 To install the latest released version, run:
 
 .. code-block:: none
