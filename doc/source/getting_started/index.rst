@@ -8,34 +8,39 @@ Getting Started
 Installation
 ------------
 
-`smash` can be installed with pip on **Linux**, **macOS**, **Windows** or from source and supports Python
-versions |min_py_version| to |max_py_version|.
+`smash` can be installed via `pip` on **Linux**, **macOS**, or **Windows**, and supports Python versions |min_py_version| to |max_py_version|. 
+It can also be installed directly from its source repository on GitHub.
 
 .. note::
 
-    We strongly recommend using `smash` on **Linux** or **macOS**, particularly if you are using it on a
-    large dataset, as Fortran parallel computation is not supported on **Windows**.
+    We strongly recommend using `smash` on **Linux** or **macOS**, especially when working with large datasets, as Fortran parallel computation is not supported on **Windows**.
 
 .. warning::
 
     Windows support is temporarily unavailable starting from `smash` v1.1.1 due to wheel build issues.
 
-If you already have Python, you can install `smash` with:
+To install the latest released version, run:
 
 .. code-block:: none
 
     pip install hydro-smash
 
+To install the latest development version directly from the current main branch of the GitHub repository, use:
+
+.. code-block:: none
+
+    pip install git+https://github.com/DassHydro/smash.git
+
 .. note::
-    
-    If you have any incompatibility issue with your system, we recommand using a virtual environment such
+
+    If you encounter any compatibility issues with your system, we recommend using a virtual environment such
     as `Anaconda <https://www.anaconda.com/>`__.
 
-    To install `smash` follow the commands:
+    To install `smash` with the highest supported Python version, run the following commands:
 
-    .. code-block:: none
+    .. parsed-literal::
 
-        conda create -n smash python 
+        conda create -n smash python=\ |max_py_version|
         conda activate smash
         pip install hydro-smash
 
@@ -43,24 +48,21 @@ If you already have Python, you can install `smash` with:
 Import
 ------
 
-To access `smash` and its functions import it in your Python code like this:
+To use `smash` in your Python code, import it as follows:
 
 .. code-block:: python
 
     import smash
 
-Because of a name conflict on `PyPI <https://pypi.org/>`__, the distribution name (i.e., the name used in pip
-install, ``hydro-smash``) is not the same as the package name (i.e., the name used to import, ``smash``).
+Note that the package name for importing (``smash``) differs from the distribution name used for installation (``hydro-smash``) due to a naming conflict on `PyPI <https://pypi.org/>`__.
 
 ---------
 Tutorials
 ---------
 
-For a brief user guide to get started with `smash`, you can refer to the ``Quickstart`` section in the :ref:`User Guide <user_guide>`.
-Other classical uses, in-depth functionalities and advanced optimization techniques are also included in this :ref:`User Guide <user_guide>`.
+To quickly get started with `smash`, refer to the ``Quickstart`` section in the :ref:`User Guide <user_guide>`.
+This :ref:`User Guide <user_guide>` also includes examples of classical uses, in-depth functionalities and advanced optimization techniques.
 
-For detailed descriptions of the `smash` API, you can visit the :ref:`API Reference <api_reference>` section.
+For comprehensive details about the `smash` API, visit the :ref:`API Reference <api_reference>` section.
 
-Additionally, if you're interested in the mathematical and numerical documentation of the hydrological model
-operators and the tools for its calibration, including optimization tools, you can refer to the
-:ref:`Math/Num Documentation <math_num_documentation>` section.
+If you're interested in the mathematical and numerical foundations of the hydrological model operators, as well as tools for calibration and optimization, see the :ref:`Math/Num Documentation <math_num_documentation>` section.
