@@ -46,22 +46,6 @@ def get_min_max_python_versions():
     return min_py_version, max_py_version
 
 
-# Get the list of versions from the release directory
-def get_sorted_smash_versions():
-    files = os.listdir("release")
-
-    # Regular expression to match version numbers
-    version_pattern = re.compile(r"(\d+\.\d+\.\d+)-notes\.rst")
-
-    # Extract and filter valid versions
-    versions = [match.group(1) for file in files if (match := version_pattern.match(file))]
-
-    # Sort the versions
-    sorted_versions = sorted(versions, key=lambda v: tuple(map(int, v.split("."))), reverse=True)
-
-    return sorted_versions[1:-6]  # exclude latest version and versions before 0.5.0
-
-
 # -- Project information -----------------------------------------------------
 
 project = "smash"
@@ -153,10 +137,11 @@ html_theme_options = {
 html_context = {
     "default_mode": "light",
     "versions": [
-        {"name": "rc (dev)", "url": "https://smash.recover.inrae.fr/dev"},
+        {"name": "dev", "url": "https://smash.recover.inrae.fr/dev"},
         {"name": "stable", "url": "https://smash.recover.inrae.fr"},
-    ]
-    + [{"name": v, "url": f"https://smash.recover.inrae.fr/{v}"} for v in get_sorted_smash_versions()],
+        {"name": "1.0", "url": "https://smash.recover.inrae.fr/1.0.2"},
+        {"name": "0.5", "url": "https://smash.recover.inrae.fr/0.5.0"},
+    ],
     "current_version": release.split("+")[0],
 }
 
