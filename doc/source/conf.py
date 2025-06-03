@@ -132,22 +132,19 @@ html_theme_options = {
     "footer_start": ["copyright"],
     "footer_center": ["sphinx-version"],
     "footer_end": ["theme-version"],
+    # Add documentation version switcher:
+    "navbar_end": ["search-button", "version-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_persistent": [],
+    "switcher": {
+        "version_match": "dev" if "rc" in release else re.match(r"^(\d+\.\d+)", release).group(),
+        "json_url": "https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/versions.json",
+    },
+    "show_version_warning_banner": True,
 }
 
-html_context = {
-    "default_mode": "light",
-    "versions": [
-        {"name": "dev", "url": "https://smash.recover.inrae.fr/dev"},
-        {"name": "stable", "url": "https://smash.recover.inrae.fr"},
-        {"name": "1.0", "url": "https://smash.recover.inrae.fr/1.0.2"},
-        {"name": "0.5", "url": "https://smash.recover.inrae.fr/0.5.0"},
-    ],
-    "current_version": release.split("+")[0],
-}
+html_context = {"default_mode": "light"}
 
-html_css_files = [
-    "css/smash.css",
-]
+html_css_files = ["css/smash.css"]
 
 html_use_modindex = True
 
