@@ -37,6 +37,11 @@ cc = meson.get_compiler('c')
 add_languages('fortran', native: false)
 ff = meson.get_compiler('fortran')
 
+# Windows-specific linker flags for _setjmpex issue
+if host_machine.system() == 'windows'
+  add_project_link_arguments('-lmsvcrt', '-lkernel32', language: 'c')
+endif
+
 # C warning flags
 wno_maybe_uninitialized = cc.get_supported_arguments('-Wno-maybe-uninitialized')
 wno_discarded_qualifiers = cc.get_supported_arguments('-Wno-discarded-qualifiers')
