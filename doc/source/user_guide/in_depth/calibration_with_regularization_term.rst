@@ -172,7 +172,7 @@ The simulated and observed discharges and the calibrated parameter map (e.g., fo
     :align: center
 
 The simulated discharge does not fit well with the observed discharge but the calibrated parameter map is smoother. 
-Indeed the regularization adds some constraints for the optimization and forces the parameters to be correlated with its neighbourgs and close to the background. 
+Indeed the regularization adds some constraints for the optimization and forces the parameters to be correlated with its neighbours and close to the background. 
 In this case, the weight for the regularization term (:math:`w_{jreg} \times J_{reg}`) is too large compared to the optimization criteria (:math:`J_0`), the convergence is then less efficient. 
 We recommend to estimate the optimal regularization weight :math:`w_{jreg}` with the L-curve method :cite:p:`hansen1993`.
 
