@@ -35,7 +35,7 @@ cc = meson.get_compiler('c')
 
 # Windows-specific compiler and linker flags to resolve issues of
 # "undefined reference to _setjmpex" linked to f90wrap
-        # and f90wrap_abort with FortranDerivedTypeArray
+# and f90wrap_abort with FortranDerivedTypeArray
 if host_machine.system() == 'windows'
     add_project_arguments('-DMS_WIN64', language: 'c')
     add_project_link_arguments('-lmsvcrt', '-lkernel32', '-lmingwex', language: 'c')
