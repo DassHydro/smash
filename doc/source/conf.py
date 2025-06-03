@@ -46,22 +46,6 @@ def get_min_max_python_versions():
     return min_py_version, max_py_version
 
 
-# Get the list of versions from the release directory
-def get_sorted_smash_versions():
-    files = os.listdir("release")
-
-    # Regular expression to match version numbers
-    version_pattern = re.compile(r"(\d+\.\d+\.\d+)-notes\.rst")
-
-    # Extract and filter valid versions
-    versions = [match.group(1) for file in files if (match := version_pattern.match(file))]
-
-    # Sort the versions
-    sorted_versions = sorted(versions, key=lambda v: tuple(map(int, v.split("."))), reverse=True)
-
-    return sorted_versions[1:-6]  # exclude latest version and versions before 0.5.0
-
-
 # -- Project information -----------------------------------------------------
 
 project = "smash"
@@ -148,21 +132,19 @@ html_theme_options = {
     "footer_start": ["copyright"],
     "footer_center": ["sphinx-version"],
     "footer_end": ["theme-version"],
+    # Add documentation version switcher:
+    "navbar_end": ["search-button", "version-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_persistent": [],
+    "switcher": {
+        "version_match": "dev" if "rc" in release else re.match(r"^(\d+\.\d+)", release).group(),
+        "json_url": "https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/versions.json",
+    },
+    "show_version_warning_banner": True,
 }
 
-html_context = {
-    "default_mode": "light",
-    "versions": [
-        {"name": "rc (dev)", "url": "https://smash.recover.inrae.fr/dev"},
-        {"name": "stable", "url": "https://smash.recover.inrae.fr"},
-    ]
-    + [{"name": v, "url": f"https://smash.recover.inrae.fr/{v}"} for v in get_sorted_smash_versions()],
-    "current_version": release.split("+")[0],
-}
+html_context = {"default_mode": "light"}
 
-html_css_files = [
-    "css/smash.css",
-]
+html_css_files = ["css/smash.css"]
 
 html_use_modindex = True
 
