@@ -76,6 +76,11 @@ Additional **smash**-related publications:
     Proceedings of IAHS, 385, 281–290. 
     `<https://doi.org/10.5194/piahs-385-281-2024>`_.
 
+    Evin, G., Le Lay, M., Fouchier, C., Penot, D., Colleoni, F., Mas, A., Garambois, P.-A., Laurantin, O. (2024).
+    Evaluation of hydrological models on small mountainous catchments: impact of the meteorological forcings. 
+    Hydrology and Earth System Sciences, 28, 261–281. 
+    `<https://doi.org/10.5194/hess-28-261-2024>`__.
+
     Huynh, N. N. T., Garambois, P.‐A., Colleoni, F., Renard, B., and Roux, H. (2023). 
     Multi‐gauge hydrological variational data assimilation:Regionalization learning with spatial gradients using multilayer perceptron and Bayesian‐guided multivariate regression. 
     Colloque SHF 2023 - Prévision des crues et des inondations. 
