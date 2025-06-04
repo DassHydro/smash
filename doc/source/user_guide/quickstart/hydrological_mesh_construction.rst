@@ -75,7 +75,7 @@ This function requires a flow direction file ``France_flwdir.tif`` and gauge att
 
     mesh.keys()
 
-By default, the bounding-box, i.e the extend of the domain, is automatically computed to be the smallest as possible surrounding the borders of the hydrological catchments. However, the user may want to define its own bounding-box. The bounding box is defined by a list of four coordinates values `bbox=[xmin, xmax, ymin, ymax]` where `x` stand for latitude and `y` for longitude.
+By default, the bounding box—i.e., the extent of the domain—is automatically computed as the smallest possible rectangle that encloses the boundaries of the hydrological catchments. However, users can specify a custom bounding box if desired. The bounding box is defined as a list of four coordinate values: bbox = [xmin, xmax, ymin, ymax], where x refers to latitude and y to longitude.
 
 .. ipython:: python
 
@@ -90,7 +90,7 @@ By default, the bounding-box, i.e the extend of the domain, is automatically com
 
 .. note::
 
-    If the specified bounding box is smaller than the extend of the hydrological catchments, the corresponding outlets will be removed from the mesh and the function will return some warnings message.
+    f the specified bounding box is smaller than the extent of the hydrological catchments, the corresponding outlets will be excluded from the mesh, and a warning message will be returned.
 
 
 Mesh attributes and visualization
