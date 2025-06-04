@@ -1,0 +1,40 @@
+.. _release.1.1.1-notes:
+
+=========================
+smash 1.1.1 Release Notes
+=========================
+
+The smash 1.1.1 release continues the ongoing work to improve the handling, fix possible bugs, and enhance the documentation.
+The highlights are:
+
+- ``Temporary removal of Windows support``
+    Windows support has been temporarily removed in this version due to a wheel build issue (https://github.com/DassHydro/smash/issues/433).
+
+- ``Gradient-free optimizers``
+    Two new gradient-free optimizers, Nelder-Mead and Powell algorithms, have been added alongside SBS.
+
+- ``Enhanced user guide``
+    New tutorials have been added, including guides on spatially distributed calibration and calibration with regularization terms.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+- Pierre-André Garambois (`<https://github.com/pag13>`__)
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* MAINT/FIX: remove This Page header doc smash (#419) by @nghi-truyen in https://github.com/DassHydro/smash/pull/420
+* Add DOI badge to README (#421) by @nghi-truyen in https://github.com/DassHydro/smash/pull/422
+* DOC: add user guide tutorial on spatially distributed calibration (#418) by @pag13 and @nghi-truyen in https://github.com/DassHydro/smash/pull/427
+* MAINT: Temporarily drop windows support (#434) by @nghi-truyen in https://github.com/DassHydro/smash/pull/435
+* Doc: add tutoriel for distributed calibration with regularisation  (#424) by @maximejay and @nghi-truyen in https://github.com/DassHydro/smash/pull/436
+* ENH: Add gradient-free optimizers (nelder-mead and powell) (#425) by @nghi-truyen in https://github.com/DassHydro/smash/pull/437
+* MAINT: Add dynamic version switcher using external JSON file (#429) by @nghi-truyen in https://github.com/DassHydro/smash/pull/438
+* DOC/ENH: Enhance README + minor corrections to getting started and contributor guide (#426) by @nghi-truyen in https://github.com/DassHydro/smash/pull/439
