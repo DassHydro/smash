@@ -75,6 +75,24 @@ This function requires a flow direction file ``France_flwdir.tif`` and gauge att
 
     mesh.keys()
 
+By default, the bounding box—i.e., the extent of the domain—is automatically computed as the smallest possible rectangle that encloses the boundaries of the hydrological catchments. However, users can specify a custom bounding box if desired. The bounding box is defined as a list of four coordinate values: bbox = [xmin, xmax, ymin, ymax], where x refers to latitude and y to longitude.
+
+.. ipython:: python
+
+    mesh = smash.factory.generate_mesh(
+        flwdir_path="./Cance-dataset/France_flwdir.tif",
+        bbox=[ 800000.,  850000., 6440000., 6490000.],
+        x=list(gauge_attributes["x"]),
+        y=list(gauge_attributes["y"]),
+        area=list(gauge_attributes["area"] * 1e6), # Convert km² to m²
+        code=list(gauge_attributes["code"]),
+    )
+
+.. note::
+
+    f the specified bounding box is smaller than the extent of the hydrological catchments, the corresponding outlets will be excluded from the mesh, and a warning message will be returned.
+
+
 Mesh attributes and visualization
 ---------------------------------
 
