@@ -16,6 +16,7 @@ from smash._constant import (
     STRUCTURE_RR_STATES,
 )
 from smash.core.model._build_model import (
+    _adjust_interception,
     _build_input_data,
     _build_mesh,
     _build_output,
@@ -2714,6 +2715,34 @@ class Model:
         else:
             for i, val in enumerate(value):
                 setattr(self._parameters.nn_parameters, f"bias_{i + 1}", val)
+
+    def adjust_interception(
+        self,
+        active_cell: bool = True,
+    ):
+        """
+        Adjust the interception reservoir capacities.
+
+        Parameters:
+        -----------
+        active_cell: bool, default is True
+            If True, this function adjust the capacities only on the cells
+            mapping the mesh.active_cell matrix.
+            If False, the interception capacities will be adjusted on every cells of the domain.
+
+        Exemple:
+        --------
+        In this example, the capacities of the interception reservoir will be adjusted
+        manually after the model creation and on the entire domain.
+
+        >>> setup, mesh = smash.factory.load_dataset("Cance")
+        >>> setup["adjust_interception"]=False
+        >>> model = smash.Model(setup, mesh)
+        >>> model.adjust_interception(active_cell=False)
+        """
+        _adjust_interception(
+            self.setup, self.mesh, self._input_data, self._parameters, active_cell=active_cell
+        )
 
     @_model_forward_run_doc_substitution
     @_forward_run_doc_appender
