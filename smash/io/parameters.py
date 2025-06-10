@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from smash.util._typing import FilePath
 
 
-def export_parameters(model: Model, path: FilePath, parameters: list=None):
+def export_parameters(model: Model, path: FilePath, parameters: list | None = None):
     """
     Export the smash parameters to tif format in a specified directory.
     Relevant metadata will be embedded within the GeoTIFF files. Additionally,
@@ -22,7 +22,7 @@ def export_parameters(model: Model, path: FilePath, parameters: list=None):
     model : smash.Model
         A SMASH model instance containing setup, mesh, and parameter data.
     path : str
-        Directory path where the GeoTIFF files will be saved. If the directory 
+        Directory path where the GeoTIFF files will be saved. If the directory
         does not exist, it will be created.
     """
     if not os.path.exists(path):
@@ -32,13 +32,15 @@ def export_parameters(model: Model, path: FilePath, parameters: list=None):
         param_keys = model.rr_parameters.keys
     else:
         for p in parameters:
-            if not p in model.rr_parameters.keys:
-                raise ValueError(f"Parameters '{p}' is not a valid parameters name. Choice are: {list(model.rr_parameters.keys)}.")
-        
-        param_keys=np.array(parameters)
+            if p not in model.rr_parameters.keys:
+                raise ValueError(
+                    f"Parameters '{p}' is not a valid parameters name."
+                    "Choice are: {list(model.rr_parameters.keys)}."
+                )
+
+        param_keys = np.array(parameters)
 
     for param in param_keys:
-        
         array = model.rr_parameters.values[:, :, np.argwhere(param_keys == param).item()]
 
         bbox = [
