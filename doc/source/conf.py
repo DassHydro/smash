@@ -13,7 +13,6 @@
 import inspect
 import os
 import pathlib
-import re
 import sys
 import warnings
 from datetime import datetime
@@ -136,7 +135,7 @@ html_theme_options = {
     "navbar_end": ["search-button", "version-switcher", "theme-switcher", "navbar-icon-links"],
     "navbar_persistent": [],
     "switcher": {
-        "version_match": "dev" if "rc" in release else re.match(r"^(\d+\.\d+)", release).group(),
+        "version_match": "dev" if "rc" in release.split("+")[0] else release,
         "json_url": "https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/versions.json",
     },
     "show_version_warning_banner": True,
