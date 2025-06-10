@@ -2726,7 +2726,7 @@ class Model:
         Parameters:
         -----------
         active_cell: bool, default is True
-            If True, this function adjust the capacities only on the cells
+            If True, this function adjusts the capacities only on the cells
             mapping the mesh.active_cell matrix.
             If False, the interception capacities will be adjusted on every cells of the domain.
 
