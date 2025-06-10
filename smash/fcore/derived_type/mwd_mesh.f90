@@ -13,7 +13,7 @@
 !%          ``yres``                 Y cell size derived from flwdir                               [m / degree]
 !%          ``xmin``                 X mininimum value derived from flwdir                         [m / degree]
 !%          ``ymax``                 Y maximum value derived from flwdir                           [m / degree]
-!%          ``epsg``                 Epsg code used to create the mesh
+!%          ``epsg``                 Epsg (coordinate system) code used to create the mesh
 !%          ``nrow``                 Number of rows
 !%          ``ncol``                 Number of columns
 !%          ``dx``                   X cells size (meter approximation)                            [m]
