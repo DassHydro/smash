@@ -239,12 +239,12 @@ def _standardize_generate_mesh_args(
     flwdir_dataset = rasterio.open(flwdir_path)
 
     if x is None and bbox is None:
-        raise ValueError("bbox argument or (x, y, area) arguments must be defined")
+        raise ValueError("bbox argument and / or (x, y, area) arguments must be defined")
 
     if bbox is not None:
         bbox = _standardize_generate_mesh_bbox(flwdir_dataset, bbox)
 
-    else:
+    if x is not None and y is not None:
         x, y, area = _standardize_generate_mesh_x_y_area(flwdir_dataset, x, y, area)
 
         code = _standardize_generate_mesh_code(x, code)
