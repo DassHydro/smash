@@ -40,15 +40,18 @@ def export_parameters(model: Model, path: FilePath, parameters: list | None = No
 
         param_keys = np.array(parameters)
 
+    tags = {
+        "dt": model.setup.dt,
+        "hydrological_module": model.setup.hydrological_module,
+        "snow_module": model.setup.snow_module,
+        "routing_module": model.setup.routing_module,
+        "epsg": model.mesh.epsg,
+        "start_time": model.setup.start_time,
+        "end_time": model.setup.end_time,
+    }
+
     for param in param_keys:
         array = model.rr_parameters.values[:, :, np.argwhere(param_keys == param).item()]
-
-        bbox = [
-            model.mesh.xmin,
-            model.mesh.xmin + array.shape[1] * model.mesh.xres,
-            model.mesh.ymax - array.shape[0] * model.mesh.yres,
-            model.mesh.ymax,
-        ]
 
         _write_array_to_geotiff(
             filename=os.path.join(path, param + ".tif"),
@@ -58,14 +61,7 @@ def export_parameters(model: Model, path: FilePath, parameters: list | None = No
             xres=model.mesh.xres,
             yres=model.mesh.yres,
             epsg=model.mesh.epsg,
-            tags={
-                "dt": model.setup.dt,
-                "hydrological_module": model.setup.hydrological_module,
-                "snow_module": model.setup.snow_module,
-                "routing_module": model.setup.routing_module,
-                "bounding_box": bbox,
-                "epsg": model.mesh.epsg,
-            },
+            tags=tags,
         )
 
     _write_array_to_geotiff(
@@ -76,14 +72,7 @@ def export_parameters(model: Model, path: FilePath, parameters: list | None = No
         xres=model.mesh.xres,
         yres=model.mesh.yres,
         epsg=model.mesh.epsg,
-        tags={
-            "dt": model.setup.dt,
-            "hydrological_module": model.setup.hydrological_module,
-            "snow_module": model.setup.snow_module,
-            "routing_module": model.setup.routing_module,
-            "bounding_box": bbox,
-            "epsg": model.mesh.epsg,
-        },
+        tags=tags,
     )
 
 
