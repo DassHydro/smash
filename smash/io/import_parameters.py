@@ -158,33 +158,33 @@ def _get_bbox_from_smash_mesh(mesh):
     return bbox
 
 
-def _check_bbox_consistency(bbox_model_active_cell, bbox_param):
-    if bbox_model_active_cell["left"] < bbox_param["left"]:
+def _check_bbox_consistency(bbox_model, bbox_param):
+    if bbox_model["left"] < bbox_param["left"]:
         print(
             "Warning: Model domain is larger than the domain of the parameter."
-            f"{bbox_model_active_cell['left']}<{bbox_param['left']} (bbox model left < bbox param left)."
+            f"{bbox_model['left']}<{bbox_param['left']} (bbox model left < bbox param left)."
             "Expect lacuna (-99.) in model parameters"
         )
 
-    if bbox_model_active_cell["right"] > bbox_param["right"]:
+    if bbox_model["right"] > bbox_param["right"]:
         print(
             "Warning: Model domain is larger than the domain of the parameter."
-            f"{bbox_model_active_cell['right']}>{bbox_param['right']} (bbox model left < bbox param left)."
+            f"{bbox_model['right']}>{bbox_param['right']} (bbox model right < bbox param right)."
             "Expect lacuna (-99.) in model parameters"
         )
 
-    if bbox_model_active_cell["bottom"] < bbox_param["bottom"]:
+    if bbox_model["bottom"] < bbox_param["bottom"]:
         print(
             "Warning: Model domain is larger than the domain of the parameter."
-            f"{bbox_model_active_cell['bottom']}<{bbox_param['bottom']}"
-            "(bbox model left < bbox param left)."
+            f"{bbox_model['bottom']}<{bbox_param['bottom']}"
+            "(bbox model bottom < bbox param bottom)."
             "Expect lacuna (-99.) in model parameters"
         )
 
-    if bbox_model_active_cell["top"] < bbox_param["top"]:
+    if bbox_model["top"] > bbox_param["top"]:
         print(
             "Warning: Model domain is larger than the domain of the parameter."
-            f"{bbox_model_active_cell['top']}>{bbox_param['top']} (bbox model left < bbox param left)."
+            f"{bbox_model['top']}>{bbox_param['top']} (bbox model top < bbox param top)."
             "Expect lacuna (-99.) in model parameters"
         )
 
