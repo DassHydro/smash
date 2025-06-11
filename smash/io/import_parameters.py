@@ -12,6 +12,25 @@ if TYPE_CHECKING:
     from smash.util._typing import FilePath
 
 
+
+# You can perform the clip entirely with rasterio package. Just open the larger raster using the bounding box of the smaller one.
+
+# import rasterio
+# from rasterio.windows import from_bounds
+
+# small_img = rasterio.open("small_img.tif")
+
+# # Open the larger raster
+# with rio.open("big_img.tif") as big_src:
+#     # Get a window that corresponds to the smaller raster's bounds
+#     small_window = from_bounds(*small_img.bounds, transform=big_src.transform)
+    
+#     # Read the data from the large raster using the bbox of small raster
+#     output = big_src.read(window=small_window)"
+
+
+
+
 def import_parameters(model: Model, path_to_parameters: FilePath):
 
     list_param=model.rr_parameters.keys
