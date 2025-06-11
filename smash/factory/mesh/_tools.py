@@ -567,6 +567,10 @@ def _compute_flow_direction(
         uparea=uparea,
         method="ihu"
     )
+    # Optional: Assess the quality of the upscaling
+    flwerr = flwdir.upscale_error(ups_flwdir, idxs_out)
+    percentage_error = np.sum(flwerr == 0) / np.sum(flwerr != 255) * 100
+
     ups_flwdir_smash_array = _switch_flwdir_convention(ups_flwdir.to_array(ftype='d8'), "d8-smash")
 
     results = {
@@ -582,6 +586,8 @@ def _compute_flow_direction(
             "ups_flwdir_object": ups_flwdir,
             "ups_flwdir_smash_array": ups_flwdir_smash_array,
             "idxs_out": idxs_out, 
+            "flwerr": flwerr,
+            "percentage_error": percentage_error,
             }
     if not is_flwdir_raster:
         results.update(
@@ -844,19 +850,19 @@ def _compute_subgrid_network(
             )
             flwpaths_analysis[fp[0]] = count
         
-        # Get maximum vertices count
+        """# Get maximum vertices count
         max_count = max(flwpaths_analysis.values())
         # Define threshold (90% of max count)
-        threshold = 0.9 * max_count
+        threshold = 0.95 * max_count
         # Check if start_cell_idx is within threshold of max count
         if flwpaths_analysis[start_cell_idx] >= threshold:
             best_cell_idx = start_cell_idx
         else:
             # Otherwise, use the cell with the maximum count
-            best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])
+            best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])"""
     
-        """# Select the start cell index of the flow path with the highest number of line segment points
-        best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])"""
+        # Select the start cell index of the flow path with the highest number of line segment points
+        best_cell_idx = max(flwpaths_analysis, key=lambda k: flwpaths_analysis[k])
 
         """# Store the selected path of the best start cell index
         selected_path[best_cell_idx] = flwpaths[np.where(source_cells == best_cell_idx)[0][0]]"""
@@ -1077,14 +1083,22 @@ def _compute_subgrid_network(
             adj_elevtn_list.append(flow_dir_data["adjusted_dem"][pixel_value])
 
 
+        # DEBUG: test garonne without dem based bathy
+        #bathy = curvilinear_abscissa * 1e-5
+        #bathy = curvilinear_abscissa *1e-4
+        #bathy_list.append(bathy)
+
+
     # Add computed metrics to DataFrame
     df_cs['upstream_area'] = upstream_area_list
     df_cs['curvilinear_abscissa'] = curvilinear_abscissa_list
     df_cs['level_width'] = level_width_list
     df_cs['depth'] = depth_list
     if "adjusted_dem" in flow_dir_data:
+        #df_cs['bathy'] = bathy_list # DEBUG: test garonne without dem based bathy
         df_cs['adj_elevtn'] = adj_elevtn_list
         df_cs['bathy'] = df_cs['adj_elevtn'] - df_cs['depth']
+
     else: # bathy is computed from curvilinear abscissa when using directly flow direction raster
         df_cs['bathy'] = bathy_list
 
@@ -1216,8 +1230,10 @@ def _compute_subgrid_network(
                 "river_fine_streams": river_fine_streams,
                 "river_cells_outlet_pixels": river_cells_outlet_pixels,
                 "confluences": confluences,
-                "selected_paths": selected_paths,
-                "smash_river_line": river_line
+                "ups_flwpath": ups_flwpath,
+                "smash_river_line": river_line,
+                "flwerr": flow_dir_data["flwerr"],
+                "percentage_error": flow_dir_data["percentage_error"],
             }
             # Add it to result dictionary
             result["visualization"] = visu

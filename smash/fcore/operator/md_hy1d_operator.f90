@@ -200,6 +200,7 @@ contains
         ! Get the minimum distance between cross sections over all segments
         !min_dx = huge(0._sp)
         min_dx = 1.0e30_sp ! pag for tapenade
+        !min_dx = 100._sp
 
         do iseg = 1, mesh%nseg
             seg = mesh%segments(iseg)
@@ -211,6 +212,7 @@ contains
                 cs = mesh%cross_sections(ics)
                 call hy1d_get_downstream_cross_section(mesh, seg, ds_seg, ics, cs, ids_cs, ds_cs)
                 min_dx = min(min_dx, cs%x - ds_cs%x)
+                print *, 'min_dx=', min_dx
             end do
         end do
 
@@ -222,8 +224,10 @@ contains
             dt = min(setup%dt, 0.7_sp*min_dx/sqrt(gravity*max_h))
             !dt = max(dt, setup%dt/1000._sp)
             dt = max(dt, setup%dt/min_dx)
+            print *, 'CFL dt used: max_h=', max_h, 'min_dx=', min_dx, 'dt=', dt
         else
             dt = setup%dt
+            print *, 'max_h == 0, using hydrological dt=', dt
         end if
 
     end subroutine hy1d_non_inertial_get_dt
@@ -242,6 +246,7 @@ contains
         real(sp) :: h_i, h_ip1, b_i, b_ip1, x_i, x_ip1, dx
         real(sp) :: s_ip1d2, h_ip1d2, w_ip1d2, a_ip1d2, p_ip1d2, r_ip1d2
         real(sp) :: wse_i  ! New variable for water surface elevation
+        real(sp) :: u_ip1d2, froude ! New variables for flow limitation
         type(SegmentDT) :: seg, ds_seg
         type(Cross_SectionDT) :: cs, ds_cs
         integer, allocatable, dimension(:) :: ius_seg, ius_cs
@@ -249,12 +254,11 @@ contains
         type(Cross_SectionDT), allocatable, dimension(:) :: us_cs
         
         ! Open the WSE and slope file at the first hydrological and hydraulic time step
-        if (time_step == 1 .and. hy1d_step == 1) then
-            wse_slope_file = "/home/adminberkaoui/Bureau/smash_subgrid_tests/" // &
-                            "cance/cance_subgrid_latest/smash_c3_ntx/wse_wss.csv"
-            open(unit=11, file=wse_slope_file, status="replace")
-            write(11, '(A)') "hydro_step,hy1d_step,cs_idx,wse,s_ip1d2"
-        endif
+        !if (time_step == 1 .and. hy1d_step == 1) then
+            !wse_slope_file = "/home/adminberkaoui/Documents/article_runs/cance/hy1d_sim/wse_wss.csv"
+            !open(unit=11, file=wse_slope_file, status="replace")
+            !write(11, '(A)') "hydro_step,hy1d_step,cs_idx,wse,s_ip1d2"
+        !endif
 
         do iseg = 1, mesh%nseg
 
@@ -286,14 +290,15 @@ contains
                 s_ip1d2 = ((h_i + b_i) - (h_ip1 + b_ip1))/dx
                 wse_i = h_i + b_i ! Calculate water surface elevation
                 ! Write to the WSE and slope file
-                write(11, '(I5,",",I5,",",I5,",",F30.16,",",F30.16)') &
-                    time_step, hy1d_step, ics, wse_i, s_ip1d2
+                !write(11, '(I5,",",I5,",",I5,",",F30.16,",",F30.16)') &
+                    !time_step, hy1d_step, ics, wse_i, s_ip1d2
 
                 h_ip1d2 = max(h_i + b_i, h_ip1 + b_ip1) - max(b_i, b_ip1)
 
                 ! call hy1d_compute_ar(cs, h_ip1d2, a_ip1d2, r_ip1d2)
 
                 w_ip1d2 = min(cs%level_widths(1), ds_cs%level_widths(1))
+                !w_ip1d2 = 200._sp
                 a_ip1d2 = h_ip1d2*w_ip1d2
                 p_ip1d2 = w_ip1d2 + 2._sp*h_ip1d2
                 r_ip1d2 = a_ip1d2/p_ip1d2
@@ -303,6 +308,16 @@ contains
                 else
                     hy1d_q(ics) = (hy1d_q(ics) - gravity*dt*a_ip1d2*-s_ip1d2)/ &
                                   (1._sp + gravity*dt*((cs%manning(1)**2*abs(hy1d_q(ics)))/(a_ip1d2*r_ip1d2**(4._sp/3._sp))))
+                end if
+
+                ! if froude number > 1.0, limit flow
+                ! TODO FROUDE RECTANGULAIRE...
+                if (h_ip1d2 > 0._sp .and. a_ip1d2 > 0._sp) then
+                    u_ip1d2 = hy1d_q(ics) / a_ip1d2
+                    froude = abs(u_ip1d2) / sqrt(gravity * h_ip1d2)
+                    if (froude > 1._sp) then
+                        hy1d_q(ics) = sign(1._sp, hy1d_q(ics)) * a_ip1d2 * sqrt(gravity * h_ip1d2)
+                    end if
                 end if
 
             end do
@@ -342,8 +357,7 @@ contains
 
         ! Open the mass balance file at the first hydrological and hydraulic time step
         if (time_step == 1 .and. hy1d_step == 1) then
-            mass_balance_file = "/home/adminberkaoui/Bureau/smash_subgrid_tests/" // &
-                            "cance/cance_subgrid_latest/smash_c3_ntx/mb.csv"
+            mass_balance_file = "/home/adminberkaoui/Documents/article_runs/garonne/debug_smash_garonne/mass_balance.csv"
             open(unit=10, file=mass_balance_file, status="replace")
             write(10, '(A)') "hydro_step,hy1d_step,dt,cs_idx," // &
             "up_cell_idxs,netrain,q_im1d2,q_lat," // &
@@ -366,6 +380,7 @@ contains
                 is_ds_bc = ics .eq. ilcs .and. is_last_ds_seg
 
                 a_t = cs%level_widths(1)*hy1d_h(ics)
+                !a_t = 200._sp*hy1d_h(ics)
                 q_ip1d2 = hy1d_q(ics)
 
                 ! Initialize hydrological indices
@@ -442,6 +457,7 @@ contains
                     hy1d_q(ics) = (q_lat + q_im1d2) + a_t/(dt/dx)
                 end if
                 hy1d_h(ics) = a_tp1/cs%level_widths(1)
+                !hy1d_h(ics) = a_tp1/200._sp
 
                 ! Create string representations of indices
                 if (n_up_cells > 0) then
@@ -456,13 +472,7 @@ contains
                     lat_inds_str = "-"
                 endif
                 
-                
                 ! Write values to CSV file
-                !write(10, '(I5,",",I5,",",F30.25,",",I5,",",I5,",",A,",",A,",",F30.25,",",F30.25,",",F30.25,",",F30.25,",", &
-                !&F30.25,",",F30.25,",",F30.25,",",F30.25,",",F30.25,",",F30.25,",",F30.25)') &
-                !time_step, hy1d_step, dt, ics, cs_cell_index, trim(adjustl(up_inds_str)), &
-                !trim(adjustl(lat_inds_str)), ac_qtz(cs_cell_index, setup%nqz), q_im1d2, q_lat, q_ip1d2, a_t, a_tp1, &
-                !hy1d_h(ics), hy1d_q(ics), dx, cs%level_widths(1), s_ip1d2
                 write(10, '(I5,",",I5,",",F30.16,",",I5,",",A,",",F30.16,",",F30.16,",",F30.16,",", &
                 &F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16)') &
                 time_step, hy1d_step, dt, ics, trim(adjustl(up_inds_str)), &
