@@ -6,32 +6,17 @@ import numpy as np
 from scipy.ndimage import zoom
 import os
 import rasterio
+from rasterio.windows import from_bounds
+from rasterio.enums import Resampling
+
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.util._typing import FilePath
+    from smash.fcore._mwd_mesh import MeshDT
 
 
-
-# You can perform the clip entirely with rasterio package. Just open the larger raster using the bounding box of the smaller one.
-
-# import rasterio
-# from rasterio.windows import from_bounds
-
-# small_img = rasterio.open("small_img.tif")
-
-# # Open the larger raster
-# with rio.open("big_img.tif") as big_src:
-#     # Get a window that corresponds to the smaller raster's bounds
-#     small_window = from_bounds(*small_img.bounds, transform=big_src.transform)
-    
-#     # Read the data from the large raster using the bbox of small raster
-#     output = big_src.read(window=small_window)"
-
-
-
-
-def import_parameters(model: Model, path_to_parameters: FilePath):
+def import_parameters(model: Model, path_to_parameters: FilePath, method: str = "rasterio"):
 
     list_param=model.rr_parameters.keys
 
@@ -45,25 +30,67 @@ def import_parameters(model: Model, path_to_parameters: FilePath):
 
         if os.path.exists(os.path.join(path_to_parameters,param+".tif")):
 
-            tif_data, bbox_in, res_in =_read_geotiff(os.path.join(path_to_parameters,param+".tif"))
-            _check_bbox_consistency(bbox_out, bbox_in)
+            if method=="rasterio":
+                cropped_param=rasterio_read_param(path= os.path.join(path_to_parameters, param + ".tif"), 
+                                                  mesh=model.mesh)
+            elif method=="scipy-zoom":
+                tif_data, bbox_in, res_in =_read_geotiff(os.path.join(path_to_parameters,param+".tif"))
 
-            # print(f"</> In read_param_from_asciiformat, reading param {param}")
+                _check_bbox_consistency(bbox_out, bbox_in)
 
-            cropped_param = _crop_array(tif_data,
-                                       bbox_in,
-                                       res_in,
-                                       bbox_out,
-                                       res_out,
-                                       order=0,
-                                       cval=-99.,
-                                       grid_mode=True)
+                cropped_param = _crop_array(tif_data,
+                                           bbox_in,
+                                           res_in,
+                                           bbox_out,
+                                           res_out,
+                                           order=0,
+                                           cval=-99.,
+                                           grid_mode=True)
 
             pos=np.argwhere(list_param==param).item()
             model.rr_parameters.values[:,:,pos]=cropped_param
 
         else:
             raise ValueError(f"Error: in load_param_from_tiffformat, missing parameter {param} in {path_to_parameters}")
+
+
+
+def rasterio_read_param(path: FilePath, mesh: MeshDT):
+
+    bounds=_get_bbox_from_smash_mesh(mesh)
+    xres=mesh.xres
+    yres=mesh.yres
+
+    # Open the larger raster
+    with rasterio.open(path) as dataset:
+
+        x_scale_factor=dataset.res[0]/xres
+        y_scale_factor=dataset.res[1]/yres
+
+        data = dataset.read(
+            out_shape=(
+                dataset.count,
+                int(dataset.height * y_scale_factor),
+                int(dataset.width * x_scale_factor)
+            ),
+            resampling=Resampling.nearest,
+        )
+
+        # scale image transform
+        transform = dataset.transform * dataset.transform.scale(
+            (dataset.width / data.shape[-1]),
+            (dataset.height / data.shape[-2])
+        )
+
+        # Get a window that corresponds to the smaller raster's bounds
+        window = from_bounds(**bounds, transform=transform)
+
+        # Read the data from the large raster using the bbox of small raster
+        output_resampled=data[0, int(window.row_off):int(window.row_off+window.height), int(window.col_off):int(window.col_off+window.width)]
+    
+    return output_resampled
+
+
 
 
 def _get_bbox_from_smash_mesh(mesh):
