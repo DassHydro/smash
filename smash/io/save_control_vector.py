@@ -71,6 +71,7 @@ def save_control_vector(
         "control_vector": return_options.control_vector,
         "optimize_options": optimize_options,
         "mapping": mapping,
+        "structure": model.setup.structure,
     }
 
     if not path.endswith(".hdf5"):
@@ -113,7 +114,15 @@ def import_control_vector(model: Model, path: FilePath):
         u_descriptor = h5["u_descriptor"][:]
         control_vector = h5["control_vector"][:]
         mapping = h5.attrs["mapping"]
+        structure = h5.attrs["structure"]
         optimize_options = _load_hdf5_to_dict(h5["optimize_options"])
+
+    if model.setup.structure != structure:
+        raise ValueError(
+            "Cannot import the control vector in this SMASH model."
+            f"The structure of the SMASH model `{model.setup.structure}` "
+            "differ from the one used to generate the control vector `{structure}`"
+        )
 
     model.physio_data.l_descriptor = l_descriptor
     model.physio_data.u_descriptor = u_descriptor
