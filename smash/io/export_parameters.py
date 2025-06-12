@@ -45,6 +45,7 @@ def export_parameters(model: Model, path: FilePath, parameters: list | None = No
         "hydrological_module": model.setup.hydrological_module,
         "snow_module": model.setup.snow_module,
         "routing_module": model.setup.routing_module,
+        "structure": model.setup.structure,
         "epsg": model.mesh.epsg,
         "start_time": model.setup.start_time,
         "end_time": model.setup.end_time,
