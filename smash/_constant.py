@@ -289,7 +289,7 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
                 (4, 4),  # % gr4_mlp
                 (0, 0),  # % gr4_ri
                 (0, 0),  # % gr4_ode
-                (4, 4),  # % gr4_ode_mlp
+                (4, 5),  # % gr4_ode_mlp
                 (0, 0),  # % gr5
                 (4, 4),  # % gr5_mlp
                 (0, 0),  # % gr5_ri
@@ -933,9 +933,9 @@ MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
 
 ADAPTIVE_OPTIMIZER = [opt.lower() for opt in OPTIMIZER_CLASS]
 GRADIENT_BASED_OPTIMIZER = ["lbfgsb"] + ADAPTIVE_OPTIMIZER
-GRADIENT_FREE_OPTIMIZER = ["sbs", "nelder-mead", "powell"]
+HEURISTIC_OPTIMIZER = ["sbs"]
 
-OPTIMIZER = GRADIENT_FREE_OPTIMIZER + GRADIENT_BASED_OPTIMIZER
+OPTIMIZER = HEURISTIC_OPTIMIZER + GRADIENT_BASED_OPTIMIZER
 
 # % Following MAPPING order
 # % The first optimizer for each mapping is used as default optimizer
@@ -967,13 +967,8 @@ GAUGE_ALIAS = ["dws", "all"]
 DEFAULT_TERMINATION_CRIT = dict(
     **dict(
         zip(
-            ["sbs", "nelder-mead", "powell", "lbfgsb"],
-            [
-                {"maxiter": 50},
-                {"maxiter": 200, "xatol": 1e-4, "fatol": 1e-4},
-                {"maxiter": 50},
-                {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12},
-            ],
+            ["sbs", "lbfgsb"],
+            [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
         )
     ),
     **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
@@ -997,18 +992,6 @@ CONTROL_PRIOR_DISTRIBUTION_PARAMETERS = dict(
 
 SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ("uniform", "sbs"): [
-        "parameters",
-        "bounds",
-        "control_tfm",
-        "termination_crit",
-    ],
-    ("uniform", "nelder-mead"): [
-        "parameters",
-        "bounds",
-        "control_tfm",
-        "termination_crit",
-    ],
-    ("uniform", "powell"): [
         "parameters",
         "bounds",
         "control_tfm",
@@ -1094,11 +1077,11 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 OPTIMIZER_CONTROL_TFM = {
     (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
     if optimizer == "sbs"
-    else ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
+    else ["normalize", "keep"]  # in case of ann mapping
     if mapping != "ann"
-    else ["keep"]  # no tfm applied for any optimizer used with ann mapping
+    else ["keep"]  # other cases
     for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
-}  # first element of the list is the default tfm for each tuple key (mapping, optimizer)
+}
 
 DEFAULT_SIMULATION_COST_OPTIONS = {
     "forward_run": {

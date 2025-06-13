@@ -393,15 +393,6 @@ class SoftPlus:
         return 1 / (1 + np.exp(-x))
 
 
-class SiLU:
-    def __call__(self, x):
-        return x / (1 + np.exp(-x))
-
-    def gradient(self, x):
-        s = 1 / (1 + np.exp(-x))
-        return s + x * s * (1 - s)
-
-
 ### SCALING FUNCTION ###
 
 

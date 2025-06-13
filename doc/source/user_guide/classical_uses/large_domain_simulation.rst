@@ -4,11 +4,11 @@
 Large Domain Simulation
 =======================
 
-This tutorial aims to perform a simulation over the whole of metropolitan France with a simple model structure.
+This tutorial aims to perform a simulation over the whole of metropolitan France with a simple model structure using the :ref:`France dataset <user_guide.demo_data.france>`.
 The objective is to create a mesh over a large spatial domain, to perform a forward run and to visualize the simulated discharge over the entire domain.
 We begin by opening a Python interface:
 
-.. code-block:: none
+.. code-block:: shell
 
     python3
 
@@ -16,11 +16,12 @@ We begin by opening a Python interface:
     :suppress:
 
     import os
+    os.system("python3 generate_dataset.py -d France")
 
 Imports
 -------
 
-We will first import the necessary libraries for this tutorial. Both ``LogNorm`` and ``SymLogNorm`` will be used for plotting.
+We will first import everything we need in this tutorial. Both ``LogNorm`` and ``SymLogNorm`` will be used for plotting
 
 .. ipython:: python
 
@@ -32,18 +33,80 @@ We will first import the necessary libraries for this tutorial. Both ``LogNorm``
 Model creation
 --------------
 
-Now, we need to create a :class:`smash.Model` object.
-For this case, we will use the :ref:`user_guide.data_and_format_description.france` dataset as an example.
+Model setup creation
+********************
 
-Load the ``setup`` and ``mesh`` dictionaries using the `smash.factory.load_dataset` function and create the :class:`smash.Model` object.
+The ``setup`` dictionary is pretty similar to the one used for the :ref:`Cance <user_guide.demo_data.cance>` tutorial
+except that we do not read observed discharge and the simulation period is different.
 
 .. ipython:: python
 
-    setup, mesh = smash.factory.load_dataset("France")
+    setup = {
+        "start_time": "2012-01-01 00:00", 
+        "end_time": "2012-01-02 08:00",
+        "dt": 3_600,
+        "hydrological_module": "gr4", 
+        "routing_module": "lr",
+        "read_prcp": True, 
+        "prcp_conversion_factor": 0.1, 
+        "prcp_directory": "./France-dataset/prcp", 
+        "read_pet": True, 
+        "daily_interannual_pet": True, 
+        "pet_directory": "./France-dataset/pet", 
+    }
+
+Model mesh creation
+*******************
+
+For the ``mesh``, we only need the flow direction file and the mainland France bounding box ``bbox`` to pass to the `smash.factory.generate_mesh`
+function. A bouding box in `smash` is a list of 4 values (``xmin``, ``xmax``, ``ymin``, ``ymax``), each of which corresponds respectively to 
+the x minimum value, the x maximum value, the y mimimum value and the y maximum value. The values must be in the same unit and projection as the 
+flow direction.
+
+.. ipython:: python
+
+    bbox = [100_000, 1_250_000, 6_050_000, 7_125_000] # Mainland Fance bbox in Lambert-93
+    mesh = smash.factory.generate_mesh(
+        flwdir_path="./France-dataset/France_flwdir.tif",
+        bbox=bbox,
+    )
+
+.. note::
+
+    Compare to a ``mesh`` generated with gauge attributes, the following variables are missing: ``flwdst``, ``gauge_pos``, ``code``, ``area``
+    and ``area_dln``.
+
+We can visualize the shape of the ``mesh``, the flow direction and the flow accumulation
+
+.. ipython:: python
+
+    mesh["nrow"], mesh["ncol"]
+
+.. ipython:: python
+
+    plt.imshow(mesh["flwdir"]);
+    plt.colorbar(label="Flow direction (D8)");
+    @savefig user_guide.quickstart.large_domain_simulation.flwdir.png
+    plt.title("France - Flow direction");
+
+.. ipython:: python
+
+    plt.imshow(mesh["flwacc"], norm=LogNorm());
+    plt.colorbar(label="Flow accumulation (m²)");
+    @savefig user_guide.quickstart.large_domain_simulation.flwacc.png
+    plt.title("France - Flow accumulation");
+
+Then, we can initialize the `smash.Model` object
+
+.. ipython:: python
+
     model = smash.Model(setup, mesh)
 
-Model simulation with a forward run
------------------------------------
+Model simulation
+----------------
+
+Forward run
+***********
 
 We can now call the `Model.forward_run <smash.Model.forward_run>` method, but by default and for memory reasons, the simulated discharge on the 
 entire spatio-temporal domain is not saved. This means storing an `numpy.ndarray` of shape *(nrow, ncol, ntime_step)*, which may be quite large depending on the 
@@ -90,26 +153,24 @@ We can view the simulated discharge for one time step, for example the last one.
 By default, if the returned time steps are not defined, all the time steps are returned. It is possible to return only certain time steps by
 specifying them in the ``return_options`` argument, for example only the two last ones.
 
-.. ipython:: python
-
-    time_step = ["2012-01-02 07:00", "2012-01-02 08:00"]  # define returned time steps
-
 .. To speed up documentation generation
 .. ipython:: python
     :suppress:
     
     ncpu = min(5, max(1, os.cpu_count() - 1))
+    time_step = ["2012-01-02 07:00", "2012-01-02 08:00"]
     fwd_run = model.forward_run(return_options={"time_step": time_step, "q_domain": True}, common_options={"ncpu": ncpu})
 
 .. ipython:: python
     :verbatim:
 
+    time_step = ["2012-01-02 07:00", "2012-01-02 08:00"]
     fwd_run = model.forward_run(
         return_options={
             "time_step": time_step,
             "q_domain": True
         }
-    )  # forward run and return q_domain at specified time steps
+    )
 
 .. ipython:: python
 

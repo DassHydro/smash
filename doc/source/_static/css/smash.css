@@ -22,33 +22,6 @@
    max-width: 20%;
 }
 
-/* hide the "This Page" header */
-.bd-sidebar-secondary h3 {
-  display: none;
-}
-
-/* reset list styles */
-.bd-sidebar-secondary ul {
-  list-style-type: none;
-  padding-left: 0;
-}
-
-/* style the "Show Source" link */
-.bd-sidebar-secondary a[href*="show-source"],
-.bd-sidebar-secondary a[href*="_sources"] {
-    margin-left: 0;
-    display: flex;
-    align-items: center;
-    padding-left: 0;
-}
-
-/* add the page icon before the "show source" text */
-.bd-sidebar-secondary a[href*="show-source"]::before,
-.bd-sidebar-secondary a[href*="_sources"]::before {
-    content: "\1f5ce";
-    margin-right: 4px;
-}
-
 code.literal{
     background-color: transparent;
     border: 0px;

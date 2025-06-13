@@ -22,6 +22,7 @@ ipython
 pickleshare
 sphinxcontrib-bibtex
 sphinx-design
+sphinx-autosummary-accessors
 matplotlib
 
 # test

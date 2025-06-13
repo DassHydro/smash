@@ -110,7 +110,7 @@ The spatio-temporal fields of model parameters and initial states can be constra
     
 with :math:`\boldsymbol{\rho}` the control vector that can be optimized.
 
-Consequently, replacing in Eq. :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1` the parameters and initial states predicted by :math:`\phi` operator, the forward model writes as: 
+Consequently, replacing in :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>` the parameters and initial states predicted by :math:`\phi` operator, the forward model writes as: 
 
 .. math::
     :name: math_num_documentation.forward_inverse_problem.forward_problem_M_2
@@ -131,7 +131,7 @@ A general description of the cost function, of the optimization problem and proc
     :align: center
     :width: 800
     
-    Schematic view of the optimization process of the parameters of the forward model :math:`\mathcal{M}` (adapted from data assimilation course given by :cite:t:`monnier2021coursevariational`). The parameters control vector :math:`\boldsymbol{\rho}` that is optimized can simply be the hydrological model control :math:`\boldsymbol{\rho}:=\boldsymbol{\theta}` in case where the learnable mapping :math:`\phi` is not used. This parameters control vector :math:`\boldsymbol{\rho}` can also contain initial states :math:`\boldsymbol{h}_0` (for example in short range data assimilation for states correction).
+    Schematic view of the optimization process of the parameters of the forward model :math:`\mathcal{M}` (adapted from data assimilation course of :cite:`monnier2021coursevariational`). The parameters control vector :math:`\boldsymbol{\rho}` that is optimized can simply be the hydrological model control :math:`\boldsymbol{\rho}:=\boldsymbol{\theta}` in case where the learnable mapping :math:`\phi` is not used. This parameters control vector :math:`\boldsymbol{\rho}` can also contain initial states :math:`\boldsymbol{h}_0` (for example in short range data assimilation for states correction).
 
 
 .. _math_num_documentation.forward_inverse_problem.cost_function:

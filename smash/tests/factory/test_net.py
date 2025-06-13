@@ -47,9 +47,9 @@ def generic_net_init(**kwargs):
     for i in range(n_hidden_layers):
         layer = net.layers[3 * i]
 
-        res[f"net_init.weight_layer_{i + 1}"] = layer.weight
+        res[f"net_init.weight_layer_{i+1}"] = layer.weight
 
-        res[f"net_init.bias_layer_{i + 1}"] = layer.bias
+        res[f"net_init.bias_layer_{i+1}"] = layer.bias
 
     return res
 

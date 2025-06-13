@@ -31,7 +31,7 @@ contains
         real(sp), dimension(parameters%control%n) :: dbkg
 
         ! Tapenade needs to know the size somehow
-        dbkg = parameters%control%x - parameters%control%x_raw
+        dbkg = parameters%control%x - parameters%control%x_bkg
 
         res = sum(dbkg*dbkg)
 
@@ -94,9 +94,9 @@ contains
 
         ! This allows to retrieve a parameters structure with background values
         parameters_bkg = parameters
-        parameters_bkg%control%x = parameters%control%x_raw
-        parameters_bkg%control%l = parameters%control%l_raw
-        parameters_bkg%control%u = parameters%control%u_raw
+        parameters_bkg%control%x = parameters%control%x_bkg
+        parameters_bkg%control%l = parameters%control%l_bkg
+        parameters_bkg%control%u = parameters%control%u_bkg
 
         call control_tfm(parameters_bkg, options)
         call control_to_parameters(setup, mesh, input_data, parameters_bkg, options)

@@ -28,6 +28,9 @@
 !%          ``serr_sigma_parameters``         SErr sigma parameters to optimize
 !%          ``l_serr_sigma_parameters``       SErr sigma parameters lower bound
 !%          ``u_serr_sigma_parameters``       SErr sigma parameters upper bound
+!%          ``maxiter``                       Maximum number of iterations
+!%          ``factr``                         LBFGSB cost function criterion
+!%          ``pgtol``                         LBFGSB gradient criterion
 !%          ================================== =======================================
 !%
 !%      Subroutine
@@ -76,7 +79,7 @@ module mwd_optimize_options
         integer :: maxiter = -99
         real(sp) :: factr = -99._sp
         real(sp) :: pgtol = -99._sp
-        
+
     end type Optimize_OptionsDT
 
 contains

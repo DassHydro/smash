@@ -137,7 +137,7 @@ def _get_shp_dataset_sql_clauses(code: np.ndarray) -> Generator[str, None, None]
     else:
         chunk_size = 4000
         for i in range(0, code.size, chunk_size):
-            yield f"code IN {tuple(code[i : i + chunk_size].tolist())}"
+            yield f"code IN {tuple(code[i:i + chunk_size].tolist())}"
 
 
 def _load_shp_dataset(shp_path: str, code: np.ndarray) -> gpd.GeoDataFrame:

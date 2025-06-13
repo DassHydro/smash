@@ -60,7 +60,7 @@ def _get_control_info(
             value = value.copy()
         ret[attr] = value
 
-    for key in ["l", "u", "l_raw", "u_raw"]:
+    for key in ["l", "u", "l_bkg", "u_bkg"]:
         # Handle unbounded and semi-unbounded parameters
         if key.startswith("l"):
             ret[key] = np.where(np.isin(ret["nbd"], [0, 3]), -np.inf, ret[key])
@@ -106,7 +106,7 @@ def _merge_net_control(ret: dict, optimize_options: dict):
 
         ret["nbd"] = np.append(ret["nbd"], np.zeros(x_net_size))
 
-        for key in ["l", "u", "l_raw", "u_raw"]:
+        for key in ["l", "u", "l_bkg", "u_bkg"]:
             if key.startswith("l"):
                 value = -np.inf
             elif key.startswith("u"):
@@ -130,7 +130,7 @@ def _merge_net_control(ret: dict, optimize_options: dict):
 
         ret["x"] = np.append(ret["x"], x)
 
-        ret["x_raw"] = np.append(ret["x_raw"], x)  # no transformation applied to x
+        ret["x_bkg"] = np.append(ret["x_bkg"], x)  # no transformation applied to x
 
 
 def _net2vect(net: Net) -> np.ndarray:

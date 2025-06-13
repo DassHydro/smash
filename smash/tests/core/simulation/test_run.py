@@ -37,7 +37,7 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
         mask = model.mesh.active_cell == 0
 
         qsim = instance.response.q[:].flatten()
-        qsim = qsim[qsim > np.quantile(qsim, 0.95)]  # extract values depassing 0.95-quantile
+        qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"forward_run.{instance.setup.structure}.sim_q"] = qsim
         res[f"forward_run.{instance.setup.structure}.cost"] = np.array(ret.cost, ndmin=1)
@@ -58,12 +58,7 @@ def test_forward_run():
 
     for key, value in res.items():
         # % Check qsim in run
-        if key.split(".")[-1] in ("sim_q", "q_domain"):
-            atol = 1e-02  # sim_q and q_domain with high tolerance
-        else:
-            atol = 1e-06
-
-        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), key
 
 
 def test_sparse_forward_run():
@@ -71,12 +66,7 @@ def test_sparse_forward_run():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        if key.split(".")[-1] in ("sim_q", "q_domain"):
-            atol = 1e-02  # sim_q and q_domain with high tolerance
-        else:
-            atol = 1e-06
-
-        assert np.allclose(value, pytest.baseline[key][:], atol=atol, equal_nan=True), "sparse." + key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), "sparse." + key
 
 
 def test_multiple_forward_run():
@@ -149,6 +139,6 @@ def test_forward_run_mlp():
         assert np.allclose(
             mlp_instance.response.q[:], cls_instance.response.q[:], atol=1e-06, equal_nan=True
         ), f"forward_run_mlp.{mlp_model.setup.structure}.q"
-        assert np.allclose(mlp_ret.cost, cls_ret.cost, atol=1e-06, equal_nan=True), (
-            f"forward_run_mlp.{mlp_model.setup.structure}.cost"
-        )
+        assert np.allclose(
+            mlp_ret.cost, cls_ret.cost, atol=1e-06, equal_nan=True
+        ), f"forward_run_mlp.{mlp_model.setup.structure}.cost"

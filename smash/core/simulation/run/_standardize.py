@@ -113,7 +113,7 @@ def _standardize_multiple_forward_run_samples(
             else:
                 raise ValueError(
                     f"Unknown model rr_parameter or rr_initial_states '{key}'. "
-                    f"Choices: {list(model.rr_parameters.keys) + list(model.rr_initial_states.keys)}"
+                    f"Choices: {list(model.rr_parameters.keys)+list(model.rr_initial_states.keys)}"
                 )
 
     else:

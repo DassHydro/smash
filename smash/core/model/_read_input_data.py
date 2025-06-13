@@ -186,7 +186,7 @@ def _get_reading_warning_message(reading_warning: dict[str, int | list[str]]) ->
 
     if reading_warning.get("miss"):
         msg.append(
-            f"Missing warning: missing {len(reading_warning['miss'])} file(s): {reading_warning['miss']}"
+            f"Missing warning: missing {len(reading_warning['miss'])} file(s): " f"{reading_warning['miss']}"
         )
 
     if reading_warning.get("res"):

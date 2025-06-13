@@ -41,9 +41,9 @@ def test_missing_read_input_data():
     # % Check no data for missing files
     for i, date in enumerate(pd.date_range(setup["start_time"], setup["end_time"], freq="h")[1:]):
         if date > prv_et:
-            assert np.all(model.atmos_data.prcp[..., i] < 0), (
-                f"missing_read_input_data.prcp_partially_no_data_index_{i}"
-            )
+            assert np.all(
+                model.atmos_data.prcp[..., i] < 0
+            ), f"missing_read_input_data.prcp_partially_no_data_index_{i}"
 
     # Case where we will have only missing files
     setup["start_time"] = setup["end_time"]
@@ -78,13 +78,13 @@ def test_resolution_read_input_data():
         smash.Model(setup, mesh_lres)
 
     # % Check mean values eq on higher resolution
-    assert np.isclose(np.mean(model_hres.atmos_data.prcp), np.mean(model.atmos_data.prcp)), (
-        "resolution_read_input_data.mean_prcp_hres_eq"
-    )
+    assert np.isclose(
+        np.mean(model_hres.atmos_data.prcp), np.mean(model.atmos_data.prcp)
+    ), "resolution_read_input_data.mean_prcp_hres_eq"
 
-    assert np.isclose(np.mean(model_hres.atmos_data.pet), np.mean(model.atmos_data.pet)), (
-        "resolution_read_input_data.mean_pet_hres_eq"
-    )
+    assert np.isclose(
+        np.mean(model_hres.atmos_data.pet), np.mean(model.atmos_data.pet)
+    ), "resolution_read_input_data.mean_pet_hres_eq"
 
 
 def test_overlap_read_input_data():
@@ -111,22 +111,22 @@ def test_overlap_read_input_data():
         model_roff = smash.Model(setup, mesh_roff)
 
     # % Check mean values eq with left offset
-    assert np.isclose(np.mean(model_loff.atmos_data.prcp), np.mean(model.atmos_data.prcp)), (
-        "overlap_read_input_data.mean_prcp_loff_eq"
-    )
+    assert np.isclose(
+        np.mean(model_loff.atmos_data.prcp), np.mean(model.atmos_data.prcp)
+    ), "overlap_read_input_data.mean_prcp_loff_eq"
 
-    assert np.isclose(np.mean(model_loff.atmos_data.pet), np.mean(model.atmos_data.pet)), (
-        "overlap_read_input_data.mean_pet_loff_eq"
-    )
+    assert np.isclose(
+        np.mean(model_loff.atmos_data.pet), np.mean(model.atmos_data.pet)
+    ), "overlap_read_input_data.mean_pet_loff_eq"
 
     # % Check mean values neq with right offset
-    assert not np.isclose(np.mean(model_roff.atmos_data.prcp), np.mean(model.atmos_data.prcp)), (
-        "overlap_read_input_data.mean_prcp_roff_neq"
-    )
+    assert not np.isclose(
+        np.mean(model_roff.atmos_data.prcp), np.mean(model.atmos_data.prcp)
+    ), "overlap_read_input_data.mean_prcp_roff_neq"
 
-    assert not np.isclose(np.mean(model_roff.atmos_data.pet), np.mean(model.atmos_data.pet)), (
-        "overlap_read_input_data.mean_pet_roff_neq"
-    )
+    assert not np.isclose(
+        np.mean(model_roff.atmos_data.pet), np.mean(model.atmos_data.pet)
+    ), "overlap_read_input_data.mean_pet_roff_neq"
 
 
 def test_outofbound_read_input_data():

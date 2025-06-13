@@ -62,14 +62,14 @@ control_info : `dict[str, Any]`
         - ``2``: both lower and upper bounds
         - ``3``: only upper bound
 
-    - x_raw : `numpy.ndarray`
-        An array of shape *(n,)* containing the raw (non-transformed) values of the control vector.
+    - x_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background values of the control vector.
 
-    - l_raw : `numpy.ndarray`
-        An array of shape *(n,)* containing the raw (non-transformed) lower bounds of the control vector.
+    - l_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background lower bounds of the control vector.
 
-    - u_raw : `numpy.ndarray`
-        An array of shape *(n,)* containing the raw (non-transformed) upper bounds of the control vector.
+    - u_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background upper bounds of the control vector.
 """
 
 MAPPING_OPTIMIZER_BASE_DOC = {
@@ -98,8 +98,6 @@ MAPPING_OPTIMIZER_BASE_DOC = {
         Name of optimizer. Should be one of
 
         - ``'sbs'`` (only for ``'uniform'`` **mapping**)
-        - ``'nelder-mead'`` (only for ``'uniform'`` **mapping**)
-        - ``'powell'`` (only for ``'uniform'`` **mapping**)
         %(optimizer_lbfgsb)s
         - ``'adam'`` (for all mappings)
         - ``'adagrad'`` (for all mappings)
@@ -114,7 +112,7 @@ MAPPING_OPTIMIZER_BASE_DOC = {
             %(default_optimizer_for_ann_mapping)s
 
         .. hint::
-            See the :ref:`math_num_documentation.optimization_algorithms` section.
+            See the :ref:`math_num_documentation.optimization_algorithm` section.
         """,
     ),
 }
@@ -255,10 +253,6 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         Termination criteria. The elements are:
 
         - ``'maxiter'``: The maximum number of iterations.
-        - ``'xatol'``: Absolute error in solution parameters between iterations that is acceptable for
-          convergence. Only used when **optimizer** is ``'nelder-mead'``.
-        - ``'fatol'``: Absolute error in cost function value between iterations that is acceptable for
-          convergence. Only used when **optimizer** is ``'nelder-mead'``.
         - ``'factr'``: An additional termination criterion based on cost values. Only used when **optimizer**
           is ``'lbfgsb'``.
         - ``'pgtol'``: An additional termination criterion based on the projected gradient of the cost
@@ -1293,21 +1287,21 @@ Default optimize control vector information
 >>> control_info
 {
     'l': array([-13.815511 , -13.815511 ,  -4.6052704, -13.815511 ], dtype=float32),
-    'l_raw': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06], dtype=float32),
+    'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06], dtype=float32),
     'n': 4,
     'name': array(['cp-0', 'ct-0', 'kexc-0', 'llr-0'], dtype='<U128'),
     'nbd': array([2, 2, 2, 2], dtype=int32),
     'nbk': array([4, 0, 0, 0, 0, 0]),
     'u': array([6.9077554, 6.9077554, 4.6052704, 6.9077554], dtype=float32),
-    'u_raw': array([1000., 1000.,   50., 1000.], dtype=float32),
+    'u_bkg': array([1000., 1000.,   50., 1000.], dtype=float32),
     'x': array([5.2983174, 6.214608 , 0.       , 1.609438 ], dtype=float32),
-    'x_raw': array([200., 500.,   0.,   5.], dtype=float32),
+    'x_bkg': array([200., 500.,   0.,   5.], dtype=float32),
 }
 
 This gives a direct indication of what the optimizer takes as input, depending on the optimization
 configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp-0'``, ``'ct-0'``,
 ``'kexc-0'`` and ``'llr-0'``). Each parameter has a lower and upper bound (``2`` in ``nbd``) and a
-transformation was applied to the control (``x`` relative to ``x_raw``).
+transformation was applied to the control (``x`` relative to ``x_bkg``).
 
 With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and optimizing only ``cp``
 and ``kexc`` with different descriptors
@@ -1323,15 +1317,15 @@ and ``kexc`` with different descriptors
 >>> control_info
 {
     'l': array([-inf, -inf, -inf, -inf, -inf], dtype=float32),
-    'l_raw': array([-inf, -inf, -inf, -inf, -inf], dtype=float32),
+    'l_bkg': array([-inf, -inf, -inf, -inf, -inf], dtype=float32),
     'n': 5,
     'name': array(['cp-0', 'cp-slope-a', 'cp-dd-a', 'kexc-0', 'kexc-dd-a'], dtype='<U128'),
     'nbd': array([0, 0, 0, 0, 0], dtype=int32),
     'nbk': array([5, 0, 0, 0, 0, 0]),
     'u': array([inf, inf, inf, inf, inf], dtype=float32),
-    'u_raw': array([inf, inf, inf, inf, inf], dtype=float32),
+    'u_bkg': array([inf, inf, inf, inf, inf], dtype=float32),
     'x': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
-    'x_raw': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
+    'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
 }
 
 5 parameters are optimized which are the intercepts (``'cp-0'`` and  ``'kexc-0'``) and the coefficients
@@ -1410,23 +1404,23 @@ Default optimize control vector information
 {
     'l': array([-1.3815511e+01, -1.3815511e+01, -4.6052704e+00, -1.3815511e+01, 1.0000000e-06, 1.0000000e-06],
          dtype=float32),
-    'l_raw': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06,  1.e-06,  1.e-06], dtype=float32),
+    'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06,  1.e-06,  1.e-06], dtype=float32),
     'n': 6,
     'name': array(['cp-0', 'ct-0', 'kexc-0', 'llr-0', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U128'),
     'nbd': array([2, 2, 2, 2, 2, 2], dtype=int32),
     'nbk': array([4, 0, 0, 2]),
     'u': array([   6.9077554,    6.9077554,    4.6052704,    6.9077554, 1000.       ,   10.       ],
          dtype=float32),
-    'u_raw': array([1000., 1000.,   50., 1000., 1000.,   10.], dtype=float32),
+    'u_bkg': array([1000., 1000.,   50., 1000., 1000.,   10.], dtype=float32),
     'x': array([5.2983174, 6.214608 , 0.       , 1.609438 , 1.       , 0.2      ], dtype=float32),
-    'x_raw': array([2.e+02, 5.e+02, 0.e+00, 5.e+00, 1.e+00, 2.e-01], dtype=float32),
+    'x_bkg': array([2.e+02, 5.e+02, 0.e+00, 5.e+00, 1.e+00, 2.e-01], dtype=float32),
 }
 
 This gives a direct indication of what the optimizer takes as input, depending on the optimization
 configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp-0'``, ``'ct-0'``,
 ``'kexc-0'`` and ``'llr-0'``) and 2 structural error sigma parameters at gauge ``'V3524010'``
 (``'sg0-V3524010'``, ``'sg1-V3524010'``). Each parameter has a lower and upper bound (``2`` in ``nbd``)
-and a transformation was applied to the control (``x`` relative to ``x_raw``).
+and a transformation was applied to the control (``x`` relative to ``x_bkg``).
 
 With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and
 optimizing only 2 rainfall-runoff parameters ``cp``, ``kexc`` with different descriptors and 2 structural
@@ -1443,17 +1437,17 @@ error sigma parameters ``sg0`` and ``sg1``.
 >>> control_info
 {
     'l': array([-inf, -inf, -inf, -inf, -inf,   0.,   0.], dtype=float32),
-    'l_raw': array([  -inf,   -inf,   -inf,   -inf,   -inf, 1.e-06, 1.e-06], dtype=float32),
+    'l_bkg': array([  -inf,   -inf,   -inf,   -inf,   -inf, 1.e-06, 1.e-06], dtype=float32),
     'n': 7,
     'name': array(['cp-0', 'cp-slope-a', 'cp-dd-a', 'kexc-0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'],
             dtype='<U128'),
     'nbd': array([0, 0, 0, 0, 0, 2, 2], dtype=int32),
     'nbk': array([5, 0, 0, 2]),
     'u': array([inf, inf, inf, inf, inf,  1.,  1.], dtype=float32),
-    'u_raw': array([  inf,   inf,   inf,   inf,   inf, 1000.,   10.], dtype=float32),
+    'u_bkg': array([  inf,   inf,   inf,   inf,   inf, 1000.,   10.], dtype=float32),
     'x': array([-1.3862944e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  9.9999900e-04,
          1.9999903e-02], dtype=float32),
-    'x_raw': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       , 1.       ,  0.2      ],
+    'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       , 1.       ,  0.2      ],
              dtype=float32),
 }
 
