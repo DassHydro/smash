@@ -494,6 +494,28 @@ def _standardize_simulation_optimize_options_termination_crit_maxiter(maxiter: N
     return maxiter
 
 
+def _standardize_simulation_optimize_options_termination_crit_xatol(xatol: Numeric, **kwargs) -> float:
+    if isinstance(xatol, (int, float)):
+        xatol = float(xatol)
+        if xatol <= 0:
+            raise ValueError("xatol termination_crit must be greater than 0")
+    else:
+        raise TypeError("xatol termination_crit must be of Numeric type (int, float)")
+
+    return xatol
+
+
+def _standardize_simulation_optimize_options_termination_crit_fatol(fatol: Numeric, **kwargs) -> float:
+    if isinstance(fatol, (int, float)):
+        fatol = float(fatol)
+        if fatol <= 0:
+            raise ValueError("fatol termination_crit must be greater than 0")
+    else:
+        raise TypeError("fatol termination_crit must be of Numeric type (int, float)")
+
+    return fatol
+
+
 def _standardize_simulation_optimize_options_termination_crit_factr(factr: Numeric, **kwargs) -> float:
     if isinstance(factr, (int, float)):
         factr = float(factr)
@@ -1182,7 +1204,11 @@ def _standardize_simulation_optimize_options_finalize(
 
     # % Check if decriptors are not found for regionalization mappings
     if model.setup.nd == 0 and mapping in REGIONAL_MAPPING:
-        raise ValueError(f"Physiographic descriptors are required for optimization with {mapping} mapping")
+        raise ValueError(
+            f"Physiographic descriptors are required for optimization with {mapping} mapping. "
+            f"Please check if read_descriptor, descriptor_name and descriptor_directory "
+            f"are properly defined in the model setup."
+        )
 
     descriptor_present = "descriptor" in optimize_options
 

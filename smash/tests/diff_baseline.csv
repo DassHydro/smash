@@ -1,8 +1,8 @@
-commit 959fc8fdd05d109f11104f13bb7a3f0948748e11
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Mon Dec 16 21:12:03 2024 +0100
+commit 94a8d84d3749902ce67a60509d08d9908ca6c980
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Thu Mar 6 17:24:09 2025 +0100
 
-    MAINT: Upgrade Python version to 3.12 for docker and workflow (#362)
+    FIX: fix the mahal distance calculation in case of distributed parameters
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -460,8 +460,8 @@ forward_run.zero-vic3l-lr.rr_states.husl                       |NON MODIFIED
 forward_run.zero-vic3l-lr.sim_q                                |NON MODIFIED
 generate_samples.normal                                        |NON MODIFIED
 generate_samples.uniform                                       |NON MODIFIED
-hydrograph_segmentation.by_obs                                 |MODIFIED
-hydrograph_segmentation.by_sim                                 |MODIFIED
+hydrograph_segmentation.by_obs                                 |NON MODIFIED
+hydrograph_segmentation.by_sim                                 |NON MODIFIED
 internal_fluxes.zero-gr4-kw.en                                 |NON MODIFIED
 internal_fluxes.zero-gr4-kw.es                                 |NON MODIFIED
 internal_fluxes.zero-gr4-kw.lexc                               |NON MODIFIED
@@ -1142,16 +1142,16 @@ model_io.rr_parameters.values                                  |NON MODIFIED
 model_io.setup.end_time                                        |NON MODIFIED
 model_io.setup.start_time                                      |NON MODIFIED
 model_io.setup.structure                                       |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.alpha                  |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.alpha_opt              |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.cost                   |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.mahal_dist             |NON MODIFIED
-multiset_estimate.set_1.sim_q                                  |NON MODIFIED
-multiset_estimate.set_2.lcurve_multiset.alpha                  |NON MODIFIED
-multiset_estimate.set_2.lcurve_multiset.alpha_opt              |NON MODIFIED
-multiset_estimate.set_2.lcurve_multiset.cost                   |NON MODIFIED
-multiset_estimate.set_2.lcurve_multiset.mahal_dist             |NON MODIFIED
-multiset_estimate.set_2.sim_q                                  |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.alpha                  |MODIFIED
+multiset_estimate.set_1.lcurve_multiset.alpha_opt              |MODIFIED
+multiset_estimate.set_1.lcurve_multiset.cost                   |MODIFIED
+multiset_estimate.set_1.lcurve_multiset.mahal_dist             |MODIFIED
+multiset_estimate.set_1.sim_q                                  |MODIFIED
+multiset_estimate.set_2.lcurve_multiset.alpha                  |MODIFIED
+multiset_estimate.set_2.lcurve_multiset.alpha_opt              |MODIFIED
+multiset_estimate.set_2.lcurve_multiset.cost                   |MODIFIED
+multiset_estimate.set_2.lcurve_multiset.mahal_dist             |MODIFIED
+multiset_estimate.set_2.sim_q                                  |MODIFIED
 net_forward_pass.output                                        |NON MODIFIED
 net_init.bias_layer_1                                          |NON MODIFIED
 net_init.bias_layer_2                                          |NON MODIFIED

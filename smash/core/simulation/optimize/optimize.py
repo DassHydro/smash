@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy.optimize import minimize as scipy_minimize
+import scipy
 
 from smash._constant import (
     ADAPTIVE_OPTIMIZER,
+    GRADIENT_BASED_OPTIMIZER,
     OPTIMIZER_CLASS,
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
     STRUCTURE_RR_INTERNAL_FLUXES,
@@ -39,8 +40,6 @@ from smash.fcore._mwd_returns import ReturnsDT
 if TYPE_CHECKING:
     from typing import Any
 
-    from scipy.optimize import OptimizeResult as scipy_OptimizeResult
-
     from smash.core.model.model import Model
     from smash.factory.net.net import Net
     from smash.fcore._mwd_parameters import ParametersDT
@@ -70,7 +69,7 @@ class Optimize:
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
 
-    internal_fluxes : `dict[str, numpy.ndarray]`
+    internal_fluxes : dict[str, `numpy.ndarray`]
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 
@@ -165,7 +164,7 @@ class BayesianOptimize:
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
 
-    internal_fluxes : `dict[str, numpy.ndarray]`
+    internal_fluxes : dict[str, `numpy.ndarray`]
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 
@@ -246,16 +245,19 @@ class _ScipyOptimizeCallback:
         self.cost = None
 
         self.projg = None
+        self.projg_bak = None
 
         self.callback = callback
 
-    def intermediate(self, intermediate_result: scipy_OptimizeResult):
+    def intermediate(self, intermediate_result: scipy.optimize.OptimizeResult):
         # % intermediate_result is required by callback function in scipy
         if self.verbose:
-            print(
-                f"{' '*4}At iterate {self.iteration:>5}    nfg = {self.nfg:>5}    "
-                f"J = {self.cost:>.5e}    |proj g| = {self.projg:>.5e}"
-            )
+            msg = f"{' ' * 4}At iterate {self.iteration:>5}    nfg = {self.nfg:>5}    J = {self.cost:>.5e}"
+
+            if self.projg is not None:
+                msg += f"{' ' * 4}|proj g| = {self.projg:>.5e}"
+
+            print(msg)
 
         self.iteration += 1
 
@@ -277,20 +279,23 @@ class _ScipyOptimizeCallback:
                 )
             )
 
-    def terminate(self, final_result: scipy_OptimizeResult):
+    def terminate(self, final_result: scipy.optimize.OptimizeResult):
         if self.verbose:
-            print(
-                f"{' '*4}At iterate {self.iteration:>5}    nfg = {self.nfg:>5}    "
-                f"J = {self.cost:>.5e}    |proj g| = {self.projg:>.5e}"
-            )
-            print(f"{' '*4}{final_result.message}")
+            msg = f"{' ' * 4}At iterate {self.iteration:>5}    nfg = {self.nfg:>5}    J = {self.cost:>.5e}"
+
+            if self.projg is not None:
+                msg += f"{' ' * 4}|proj g| = {self.projg:>.5e}"
+
+            print(msg)
+
+            print(f"{' ' * 4}{final_result.message}")
 
 
 def _optimize_fast_wjreg(
     model: Model, options: OptionsDT, returns: ReturnsDT, optimize_options: dict, return_options: dict
 ) -> float:
     if options.comm.verbose:
-        print(f"{' '*4}FAST WJREG CYCLE 1")
+        print(f"{' ' * 4}FAST WJREG CYCLE 1")
 
     # % Activate returns flags
     for flag in ["cost", "jobs", "jreg"]:
@@ -323,7 +328,7 @@ def _optimize_lcurve_wjreg(
     model: Model, options: OptionsDT, returns: ReturnsDT, optimize_options: dict, return_options: dict
 ) -> tuple[float, dict]:
     if options.comm.verbose:
-        print(f"{' '*4}L-CURVE WJREG CYCLE 1")
+        print(f"{' ' * 4}L-CURVE WJREG CYCLE 1")
 
     # % Activate returns flags
     for flag in ["cost", "jobs", "jreg"]:
@@ -369,7 +374,7 @@ def _optimize_lcurve_wjreg(
         options.cost.wjreg = wj
 
         if options.comm.verbose:
-            print(f"{' '*4}L-CURVE WJREG CYCLE {i + 2}")
+            print(f"{' ' * 4}L-CURVE WJREG CYCLE {i + 2}")
 
         wparameters = model._parameters.copy()
         _apply_optimizer(
@@ -471,13 +476,13 @@ def _optimize(
             model, wrap_options, wrap_returns, optimize_options, return_options
         )
         if wrap_options.comm.verbose:
-            print(f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.5e}'.format(wrap_options.cost.wjreg)}")
+            print(f"{' ' * 4}FAST WJREG LAST CYCLE. wjreg: {'{:.5e}'.format(wrap_options.cost.wjreg)}")
     elif auto_wjreg == "lcurve":
         wrap_options.cost.wjreg, lcurve_wjreg = _optimize_lcurve_wjreg(
             model, wrap_options, wrap_returns, optimize_options, return_options
         )
         if wrap_options.comm.verbose:
-            print(f"{' '*4}L-CURVE WJREG LAST CYCLE. wjreg: {'{:.5e}'.format(wrap_options.cost.wjreg)}")
+            print(f"{' ' * 4}L-CURVE WJREG LAST CYCLE. wjreg: {'{:.5e}'.format(wrap_options.cost.wjreg)}")
     else:
         pass
 
@@ -628,10 +633,14 @@ def _apply_optimizer(
     callback: callable | None,
 ) -> dict:
     if wrap_options.optimize.optimizer == "sbs":
-        ret = _sbs_optimize(model, parameters, wrap_options, wrap_returns, return_options, callback)
+        ret = _sbs_optimize(
+            model, parameters, wrap_options, wrap_returns, optimize_options, return_options, callback
+        )
 
-    elif wrap_options.optimize.optimizer == "lbfgsb":
-        ret = _lbfgsb_optimize(model, parameters, wrap_options, wrap_returns, return_options, callback)
+    elif wrap_options.optimize.optimizer in ["lbfgsb", "nelder-mead", "powell"]:  # scipy optimizers
+        ret = _scipy_optimize(
+            model, parameters, wrap_options, wrap_returns, optimize_options, return_options, callback
+        )
 
     elif wrap_options.optimize.optimizer in ADAPTIVE_OPTIMIZER:
         if "net" in optimize_options:
@@ -692,7 +701,7 @@ def _adaptive_optimize(
 
     if wrap_options.comm.verbose:
         print(
-            f"{' '*4}At iterate {0:>5}    nfg = {1:>5}    "
+            f"{' ' * 4}At iterate {0:>5}    nfg = {1:>5}    "
             f"J = {model._output.cost:>.5e}    |proj g| = {projg:>.5e}"
         )
 
@@ -726,8 +735,7 @@ def _adaptive_optimize(
                 # iterations
                 if wrap_options.comm.verbose:
                     print(
-                        f"{' '*4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE "
-                        f"ITERATIONS"
+                        f"{' ' * 4}EARLY STOPPING: NO IMPROVEMENT for {early_stopping} CONSECUTIVE ITERATIONS"
                     )
                 break
 
@@ -740,18 +748,18 @@ def _adaptive_optimize(
 
         if wrap_options.comm.verbose:
             print(
-                f"{' '*4}At iterate {ite:>5}    nfg = {ite+1:>5}    "
+                f"{' ' * 4}At iterate {ite:>5}    nfg = {ite + 1:>5}    "
                 f"J = {model._output.cost:>.5e}    |proj g| = {projg:>.5e}"
             )
 
             if ite == maxiter:
-                print(f"{' '*4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
+                print(f"{' ' * 4}STOP: TOTAL NO. of ITERATIONS REACHED LIMIT")
 
     if early_stopping:
         if opt_info["ite"] < maxiter:
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}Revert to iteration {opt_info['ite']} with "
+                    f"{' ' * 4}Revert to iteration {opt_info['ite']} with "
                     f"J = {opt_info['cost']:.5e} due to early stopping"
                 )
 
@@ -870,11 +878,12 @@ def _ann_adaptive_optimize(
     return ret
 
 
-def _lbfgsb_optimize(
+def _scipy_optimize(
     model: Model,
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
+    optimize_options: dict,
     return_options: dict,
     callback: callable | None,
 ) -> dict:
@@ -888,28 +897,56 @@ def _lbfgsb_optimize(
 
     x0 = parameters.control.x.copy()
 
-    # % Set None values for unbounded/semi-unbounded controls to pass to scipy l-bfgs-b
+    # % Set None values for unbounded/semi-unbounded controls to pass to scipy optimize functions
     # which requires None to identify unbounded values
     l_control = np.where(np.isin(parameters.control.nbd, [0, 3]), None, parameters.control.l)
     u_control = np.where(np.isin(parameters.control.nbd, [0, 1]), None, parameters.control.u)
 
     scipy_callback = _ScipyOptimizeCallback(callback, wrap_options.comm.verbose)
 
-    res_optimize = scipy_minimize(
-        _gradient_based_optimize_problem,
-        x0,
-        args=(model, parameters, wrap_options, wrap_returns, scipy_callback),
-        method="l-bfgs-b",
-        jac=True,
-        bounds=tuple(zip(l_control, u_control)),
-        callback=scipy_callback.intermediate,
-        options={
-            "maxiter": wrap_options.optimize.maxiter,
-            "ftol": 2.22e-16 * wrap_options.optimize.factr,
-            "gtol": wrap_options.optimize.pgtol,
-            "iprint": -1,  # TODO: change this with logger for multiple display levels
-        },
-    )
+    if wrap_options.optimize.optimizer == "lbfgsb":
+        res_optimize = scipy.optimize.minimize(
+            _gradient_based_optimize_problem,
+            x0,
+            args=(model, parameters, wrap_options, wrap_returns, scipy_callback),
+            method="L-BFGS-B",
+            jac=True,
+            bounds=tuple(zip(l_control, u_control)),
+            callback=scipy_callback.intermediate,
+            options={
+                "maxiter": optimize_options["termination_crit"]["maxiter"],
+                "ftol": 2.22e-16 * optimize_options["termination_crit"]["factr"],
+                "gtol": optimize_options["termination_crit"]["pgtol"],
+            },
+        )
+
+    elif wrap_options.optimize.optimizer == "nelder-mead":
+        res_optimize = scipy.optimize.minimize(
+            _gradient_free_optimize_problem,
+            x0,
+            args=(model, parameters, wrap_options, wrap_returns, scipy_callback),
+            method="Nelder-Mead",
+            bounds=tuple(zip(l_control, u_control)),
+            callback=scipy_callback.intermediate,
+            options={
+                "maxiter": optimize_options["termination_crit"]["maxiter"],
+                "xatol": optimize_options["termination_crit"]["xatol"],
+                "fatol": optimize_options["termination_crit"]["fatol"],
+            },
+        )
+
+    elif wrap_options.optimize.optimizer == "powell":
+        res_optimize = scipy.optimize.minimize(
+            _gradient_free_optimize_problem,
+            x0,
+            args=(model, parameters, wrap_options, wrap_returns, scipy_callback),
+            method="Powell",
+            bounds=tuple(zip(l_control, u_control)),
+            callback=scipy_callback.intermediate,
+            options={
+                "maxiter": optimize_options["termination_crit"]["maxiter"],
+            },
+        )
 
     scipy_callback.terminate(res_optimize)
 
@@ -934,7 +971,7 @@ def _lbfgsb_optimize(
     if "n_iter" in return_options["keys"]:
         ret["n_iter"] = res_optimize.nit
 
-    if "projg" in return_options["keys"]:
+    if (wrap_options.optimize.optimizer in GRADIENT_BASED_OPTIMIZER) and ("projg" in return_options["keys"]):
         ret["projg"] = scipy_callback.projg
 
     if "serr_mu" in return_options["keys"]:
@@ -951,6 +988,7 @@ def _sbs_optimize(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
+    optimize_options: dict,
     return_options: dict,
     callback: callable | None,
 ) -> dict:
@@ -997,9 +1035,9 @@ def _sbs_optimize(
     message = "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT"
 
     if wrap_options.comm.verbose:
-        print(f"{' '*4}At iterate {0:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    ddx = {ddx:>4.2f}")
+        print(f"{' ' * 4}At iterate {0:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    ddx = {ddx:>4.2f}")
 
-    for iter in range(1, wrap_options.optimize.maxiter * n + 1):
+    for iter in range(1, optimize_options["termination_crit"]["maxiter"] * n + 1):
         dxn = min(dxn, ddx)
         if ddx > 2:
             ddx = dxn
@@ -1098,7 +1136,7 @@ def _sbs_optimize(
 
             if wrap_options.comm.verbose:
                 print(
-                    f"{' '*4}At iterate {iteration:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    "
+                    f"{' ' * 4}At iterate {iteration:>5}    nfg = {nfg:>5}    J = {gx:>.5e}    "
                     f"ddx = {ddx:>4.2f}"
                 )
 
@@ -1131,7 +1169,7 @@ def _sbs_optimize(
         ret["serr_sigma"] = model.get_serr_sigma().copy()
 
     if wrap_options.comm.verbose:
-        print(f"{' '*4}{message}")
+        print(f"{' ' * 4}{message}")
 
     return ret
 
@@ -1164,3 +1202,34 @@ def _gradient_based_optimize_problem(
         scipy_callback.projg_bak = _inf_norm(grad)
 
     return (model._output.cost, grad)
+
+
+def _gradient_free_optimize_problem(
+    x: np.ndarray,
+    model: Model,
+    parameters: ParametersDT,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+    scipy_callback: _ScipyOptimizeCallback,
+) -> float:
+    # % Set control values
+    setattr(parameters.control, "x", x)
+
+    # % Forward run to get cost
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
+
+    # % Callback
+    scipy_callback.count_nfg += 1
+
+    if scipy_callback.cost is None:
+        scipy_callback.cost = model._output.cost
+
+    return model._output.cost

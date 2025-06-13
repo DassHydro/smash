@@ -125,8 +125,8 @@ def precipitation_indices(
     5 precipitation indices are calculated for each gauge and each time step:
 
     - ``'std'`` : the precipitation spatial standard deviation
-    - ``'d1'`` : the first scaled moment, :cite:p:`zocatelli_2011`
-    - ``'d2'`` : the second scaled moment, :cite:p:`zocatelli_2011`
+    - ``'d1'`` : the first scaled moment :cite:p:`zocatelli_2011`
+    - ``'d2'`` : the second scaled moment :cite:p:`zocatelli_2011`
     - ``'vg'`` : the vertical gap :cite:p:`emmanuel_2015`
     - ``'hg'`` : the horizontal gap :cite:p:`emmanuel_2015`
 

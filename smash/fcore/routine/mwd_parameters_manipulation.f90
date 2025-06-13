@@ -494,23 +494,23 @@ contains
 
             if (.not. nbd_mask(i)) cycle
 
-            if (parameters%control%l_bkg(i) .lt. 0._sp) then
+            if (parameters%control%l_raw(i) .lt. 0._sp) then
 
                 parameters%control%x(i) = asinh(parameters%control%x(i))
-                parameters%control%l(i) = asinh(parameters%control%l_bkg(i))
-                parameters%control%u(i) = asinh(parameters%control%u_bkg(i))
+                parameters%control%l(i) = asinh(parameters%control%l_raw(i))
+                parameters%control%u(i) = asinh(parameters%control%u_raw(i))
 
-            else if (parameters%control%l_bkg(i) .ge. 0._sp .and. parameters%control%u_bkg(i) .le. 1._sp) then
+            else if (parameters%control%l_raw(i) .ge. 0._sp .and. parameters%control%u_raw(i) .le. 1._sp) then
 
                 parameters%control%x(i) = log(parameters%control%x(i)/(1._sp - parameters%control%x(i)))
-                parameters%control%l(i) = log(parameters%control%l_bkg(i)/(1._sp - parameters%control%l_bkg(i)))
-                parameters%control%u(i) = log(parameters%control%u_bkg(i)/(1._sp - parameters%control%u_bkg(i)))
+                parameters%control%l(i) = log(parameters%control%l_raw(i)/(1._sp - parameters%control%l_raw(i)))
+                parameters%control%u(i) = log(parameters%control%u_raw(i)/(1._sp - parameters%control%u_raw(i)))
 
             else
 
                 parameters%control%x(i) = log(parameters%control%x(i))
-                parameters%control%l(i) = log(parameters%control%l_bkg(i))
-                parameters%control%u(i) = log(parameters%control%u_bkg(i))
+                parameters%control%l(i) = log(parameters%control%l_raw(i))
+                parameters%control%u(i) = log(parameters%control%u_raw(i))
 
             end if
 
@@ -535,11 +535,11 @@ contains
 
             if (.not. nbd_mask(i)) cycle
 
-            if (parameters%control%l_bkg(i) .lt. 0._sp) then
+            if (parameters%control%l_raw(i) .lt. 0._sp) then
 
                 parameters%control%x(i) = sinh(parameters%control%x(i))
 
-            else if (parameters%control%l_bkg(i) .ge. 0._sp .and. parameters%control%u_bkg(i) .le. 1._sp) then
+            else if (parameters%control%l_raw(i) .ge. 0._sp .and. parameters%control%u_raw(i) .le. 1._sp) then
 
                 parameters%control%x(i) = exp(parameters%control%x(i))/(1._sp + exp(parameters%control%x(i)))
 
@@ -551,8 +551,8 @@ contains
 
         end do
 
-        parameters%control%l = parameters%control%l_bkg
-        parameters%control%u = parameters%control%u_bkg
+        parameters%control%l = parameters%control%l_raw
+        parameters%control%u = parameters%control%u_raw
 
     end subroutine sbs_inv_control_tfm
 
@@ -569,8 +569,8 @@ contains
 
         where (nbd_mask)
 
-            parameters%control%x = (parameters%control%x - parameters%control%l_bkg)/ &
-                                   (parameters%control%u_bkg - parameters%control%l_bkg)
+            parameters%control%x = (parameters%control%x - parameters%control%l_raw)/ &
+                                   (parameters%control%u_raw - parameters%control%l_raw)
             parameters%control%l = 0._sp
             parameters%control%u = 1._sp
 
@@ -592,9 +592,9 @@ contains
         where (nbd_mask)
 
             parameters%control%x = parameters%control%x* &
-            & (parameters%control%u_bkg - parameters%control%l_bkg) + parameters%control%l_bkg
-            parameters%control%l = parameters%control%l_bkg
-            parameters%control%u = parameters%control%u_bkg
+            & (parameters%control%u_raw - parameters%control%l_raw) + parameters%control%l_raw
+            parameters%control%l = parameters%control%l_raw
+            parameters%control%u = parameters%control%u_raw
 
         end where
 
@@ -1482,10 +1482,10 @@ contains
 
         call nn_parameters_fill_control(setup, options, parameters)
 
-        ! Store background
-        parameters%control%x_bkg = parameters%control%x
-        parameters%control%l_bkg = parameters%control%l
-        parameters%control%u_bkg = parameters%control%u
+        ! Store raw control values
+        parameters%control%x_raw = parameters%control%x
+        parameters%control%l_raw = parameters%control%l
+        parameters%control%u_raw = parameters%control%u
 
     end subroutine fill_control
 
