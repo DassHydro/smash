@@ -834,7 +834,7 @@ PROBLEM_KEYS = ["num_vars", "names", "bounds"]
 ### SIMULATION ###
 ##################
 
-REGIONAL_MAPPING = ["multi-linear", "multi-polynomial", "ann"]
+REGIONAL_MAPPING = ["multi-linear", "multi-power", "ann"]
 
 MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
 
@@ -853,7 +853,7 @@ MAPPING_OPTIMIZER = dict(
             OPTIMIZER,  # for uniform mapping (all optimizers are possible, default is sbs)
             *(
                 [GRADIENT_BASED_OPTIMIZER] * 3
-            ),  # for distributed, multi-linear, multi-polynomial mappings (default is lbfgsb)
+            ),  # for distributed, multi-linear, multi-power mappings (default is lbfgsb)
             ADAPTIVE_OPTIMIZER,  # for ann mapping (default is adam)
         ],
     )
@@ -956,7 +956,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
         "descriptor",
         "termination_crit",
     ],
-    ("multi-polynomial", "lbfgsb"): [
+    ("multi-power", "lbfgsb"): [
         "parameters",
         "bounds",
         "control_tfm",
@@ -965,7 +965,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ],
     **dict(
         zip(
-            itertools.product(["multi-linear", "multi-polynomial"], ADAPTIVE_OPTIMIZER),
+            itertools.product(["multi-linear", "multi-power"], ADAPTIVE_OPTIMIZER),
             2
             * len(ADAPTIVE_OPTIMIZER)
             * [
@@ -979,7 +979,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),  # product between 2 mappings (multi-linear, multi-polynomial) and all adaptive optimizers
+    ),  # product between 2 mappings (multi-linear, multi-power) and all adaptive optimizers
     **dict(
         zip(
             [("ann", optimizer) for optimizer in ADAPTIVE_OPTIMIZER],

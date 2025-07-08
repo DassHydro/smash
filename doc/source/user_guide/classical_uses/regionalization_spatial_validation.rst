@@ -67,14 +67,14 @@ The values of these descriptors can be obtained in the ``physio_data`` derived t
 Model simulation
 ----------------
 
-Multiple linear/polynomial mapping
-**********************************
+Multiple linear/power mapping
+*****************************
 
 Two classical approaches are commonly used for regionalization to map descriptors to parameters:
 
-- ``multi-linear``: a linear mapping where the optimizable parameters are the coefficients.
+- ``multi-linear``: a multiple linear mapping where the optimizable parameters are the coefficients.
 
-- ``multi-polynomial``: a polynomial mapping where the optimizable parameters include both the coefficients and the degree.
+- ``multi-power``: a multiple power mapping where the optimizable parameters include both the coefficients and the exponents.
 
 In this example, we use the multi-linear mapping. Before optimizing the model, it is recommended to provide a first guess for the control vector  
 (see explanation on :ref:`first guess selection <math_num_documentation.mapping.spatially_uniform.first_guess>` for details).
