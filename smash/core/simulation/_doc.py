@@ -83,7 +83,7 @@ MAPPING_OPTIMIZER_BASE_DOC = {
         - ``'uniform'``
         - ``'distributed'``
         - ``'multi-linear'``
-        - ``'multi-polynomial'``
+        - ``'multi-power'``
         %(mapping_ann)s
 
         .. hint::
@@ -110,7 +110,7 @@ MAPPING_OPTIMIZER_BASE_DOC = {
             If not given, a default optimizer will be set as follows:
 
             - ``'sbs'`` for **mapping** = ``'uniform'``
-            - ``'lbfgsb'`` for **mapping** = ``'distributed'``, ``'multi-linear'``, ``'multi-polynomial'``
+            - ``'lbfgsb'`` for **mapping** = ``'distributed'``, ``'multi-linear'``, ``'multi-power'``
             %(default_optimizer_for_ann_mapping)s
 
         .. hint::
@@ -205,7 +205,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         .. note::
             If not given, all descriptors will be used for each parameter.
-            This option is only be used when **mapping** is ``'multi-linear'`` or ``'multi-polynomial'``.
+            This option is only be used when **mapping** is ``'multi-linear'`` or ``'multi-power'``.
             In case of ``'ann'``, all descriptors will be used.
         """,
     ),
@@ -1263,12 +1263,12 @@ optimize_options : `dict[str, Any]` or None, default None
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
-        - ``<key>-0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
+        - ``<key>-0``: Spatially uniform parameter or multi-linear/power intercept where ``<key>`` is the
           name of any rainfall-runoff parameters or initial_states (``'cp-0'``, ``'llr-0'``, ``'ht-0'``, etc).
         - ``<key>-<row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
           rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in
           the spatial domain (``'cp-1-1'``, ``'llr-20-2'``, ``'ht-3-12'``, etc). It's one based indexing.
-        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the
+        - ``<key>-<desc>-<kind>``: Multi-linear/power descriptor linked parameter where ``<key>`` is the
           name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor
           and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``,
           ``'llr-slope-b'``, ``'ht-dd-a'``).
@@ -1380,12 +1380,12 @@ cost_options : `dict[str, Any]` or None, default None
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
-        - ``<key>-0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
+        - ``<key>-0``: Spatially uniform parameter or multi-linear/power intercept where ``<key>`` is the
           name of any rainfall-runoff parameters or initial_states (``'cp-0'``, ``'llr-0'``, ``'ht-0'``, etc).
         - ``<key>-<row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
           rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in
           the spatial domain (``'cp-1-1'``, ``'llr-20-2'``, ``'ht-3-12'``, etc). It's one based indexing.
-        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the
+        - ``<key>-<desc>-<kind>``: Multi-linear/power descriptor linked parameter where ``<key>`` is the
           name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor
           and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``,
           ``'llr-slope-b'``, ``'ht-dd-a'``).
