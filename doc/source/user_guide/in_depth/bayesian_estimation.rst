@@ -129,7 +129,7 @@ Bayesian estimation works in a very similar way, with two notable differences:
 
 For simplicity, we will use the default optimization options as above for the rest of the tutorial, so there is no need to define ``optimize_options`` in `smash.bayesian_optimize`.
 Additionally, we will use the simplest mapping, which is uniform mapping.
-However, this Bayesian approach can also be applied to more complex mappings such as distributed mapping or multiple polynomial mappings.
+However, this Bayesian approach can also be applied to more complex mappings such as distributed mapping or multiple linear/power mappings.
 
 .. warning::
 	The Bayesian estimation approach is currently not supported for neural network-based mappings (``mapping='ann'``).

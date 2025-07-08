@@ -5443,8 +5443,8 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - distributed_rr_initial_states_get_control_size
 !%      - multi_linear_rr_parameters_get_control_size
 !%      - multi_linear_rr_initial_states_get_control_size
-!%      - multi_polynomial_rr_parameters_get_control_size
-!%      - multi_polynomial_rr_initial_states_get_control_size
+!%      - multi_power_rr_parameters_get_control_size
+!%      - multi_power_rr_initial_states_get_control_size
 !%      - serr_mu_parameters_get_control_size
 !%      - nn_parameters_get_control_size
 !%      - get_control_sizes
@@ -5454,8 +5454,8 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - distributed_rr_initial_states_fill_control
 !%      - multi_linear_rr_parameters_fill_control
 !%      - multi_linear_rr_initial_states_fill_control
-!%      - multi_polynomial_rr_parameters_fill_control
-!%      - multi_polynomial_rr_initial_states_fill_control
+!%      - multi_power_rr_parameters_fill_control
+!%      - multi_power_rr_initial_states_fill_control
 !%      - serr_mu_parameters_fill_control
 !%      - serr_sigma_parameters_fill_control
 !%      - nn_parameters_fill_control
@@ -5466,8 +5466,8 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - distributed_rr_initial_states_fill_parameters
 !%      - multi_linear_rr_parameters_fill_parameters
 !%      - multi_linear_rr_initial_states_fill_parameters
-!%      - multi_polynomial_rr_parameters_fill_parameters
-!%      - multi_polynomial_rr_initial_states_fill_parameters
+!%      - multi_power_rr_parameters_fill_parameters
+!%      - multi_power_rr_initial_states_fill_parameters
 !%      - serr_mu_parameters_fill_parameters
 !%      - serr_sigma_parameters_fill_parameters
 !%      - nn_parameters_fill_parameters
@@ -6326,8 +6326,8 @@ CONTAINS
     END DO
   END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_GET_CONTROL_SIZE
 
-  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_GET_CONTROL_SIZE(setup, &
-&   options, n)
+  SUBROUTINE MULTI_POWER_RR_PARAMETERS_GET_CONTROL_SIZE(setup, options, &
+&   n)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -6339,9 +6339,9 @@ CONTAINS
       IF (options%optimize%rr_parameters(i) .NE. 0) n = n + 1 + 2*SUM(&
 &         options%optimize%rr_parameters_descriptor(:, i))
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_GET_CONTROL_SIZE
+  END SUBROUTINE MULTI_POWER_RR_PARAMETERS_GET_CONTROL_SIZE
 
-  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+  SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
 &   options, n)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6354,7 +6354,7 @@ CONTAINS
       IF (options%optimize%rr_initial_states(i) .NE. 0) n = n + 1 + 2*&
 &         SUM(options%optimize%rr_initial_states_descriptor(:, i))
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE
+  END SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_GET_CONTROL_SIZE
 
   SUBROUTINE SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, n)
     IMPLICIT NONE
@@ -6408,12 +6408,11 @@ CONTAINS
 &                                                nbk(1))
       CALL MULTI_LINEAR_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
 &                                                    options, nbk(2))
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_GET_CONTROL_SIZE(setup, &
-&                                                    options, nbk(1))
-      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
-&                                                        options, nbk(2)&
-&                                                       )
+    CASE ('multi-power') 
+      CALL MULTI_POWER_RR_PARAMETERS_GET_CONTROL_SIZE(setup, options, &
+&                                               nbk(1))
+      CALL MULTI_POWER_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, options&
+&                                                   , nbk(2))
     CASE ('ann') 
       nbk(1) = 0
       nbk(2) = 0
@@ -6633,7 +6632,7 @@ CONTAINS
     END DO
   END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_CONTROL
 
-  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+  SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6677,10 +6676,10 @@ CONTAINS
         END DO
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_CONTROL
+  END SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_CONTROL
 
-  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh&
-&   , parameters, options)
+  SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -6725,7 +6724,7 @@ CONTAINS
         END DO
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_CONTROL
+  END SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_CONTROL
 
   SUBROUTINE SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
 &   options)
@@ -6889,12 +6888,11 @@ CONTAINS
 &                                            parameters, options)
       CALL MULTI_LINEAR_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
 &                                                parameters, options)
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&                                                parameters, options)
-      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&                                                    parameters, options&
-&                                                   )
+    CASE ('multi-power') 
+      CALL MULTI_POWER_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&                                           parameters, options)
+      CALL MULTI_POWER_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                               parameters, options)
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
@@ -7652,13 +7650,13 @@ CONTAINS
     END DO
   END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS
 
-!  Differentiation of multi_polynomial_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
-! context OpenMP):
+!  Differentiation of multi_power_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE cont
+!ext OpenMP):
 !   variations   of useful results: *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_D(setup, &
-&   mesh, input_data, parameters, parameters_d, options)
+  SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&   input_data, parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -7706,15 +7704,15 @@ CONTAINS
 &                          rr_parameters%values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_D
+  END SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of multi_polynomial_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
-! context OpenMP):
+!  Differentiation of multi_power_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE cont
+!ext OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_B(setup, &
-&   mesh, input_data, parameters, parameters_b, options)
+  SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&   input_data, parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -7798,10 +7796,10 @@ CONTAINS
         CALL POPINTEGER4(j)
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_B
+  END SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS_B
 
-  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh&
-&   , input_data, parameters, options)
+  SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&   input_data, parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -7835,15 +7833,15 @@ CONTAINS
 &                        values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS
+  END SUBROUTINE MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of multi_polynomial_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noI
-!SIZE context OpenMP):
+!  Differentiation of multi_power_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE 
+!context OpenMP):
 !   variations   of useful results: *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup&
-&   , mesh, input_data, parameters, parameters_d, options)
+  SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
+&   , input_data, parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -7892,15 +7890,15 @@ CONTAINS
 &                          ))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_D
+  END SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
-!  Differentiation of multi_polynomial_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noI
-!SIZE context OpenMP):
+!  Differentiation of multi_power_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE 
+!context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup&
-&   , mesh, input_data, parameters, parameters_b, options)
+  SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
+&   , input_data, parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -7985,10 +7983,10 @@ CONTAINS
         CALL POPINTEGER4(j)
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_B
+  END SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS_B
 
-  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&   mesh, input_data, parameters, options)
+  SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&   input_data, parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -8022,7 +8020,7 @@ CONTAINS
 &                        values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS
+  END SUBROUTINE MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS
 
 !  Differentiation of serr_mu_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context Ope
 !nMP):
@@ -8577,18 +8575,16 @@ CONTAINS
 &                                                     parameters, &
 &                                                     parameters_d, &
 &                                                     options)
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh&
-&                                                     , input_data, &
-&                                                     parameters, &
-&                                                     parameters_d, &
-&                                                     options)
-      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
-&                                                         mesh, &
-&                                                         input_data, &
-&                                                         parameters, &
-&                                                         parameters_d, &
-&                                                         options)
+    CASE ('multi-power') 
+      CALL MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&                                                input_data, parameters&
+&                                                , parameters_d, options&
+&                                               )
+      CALL MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
+&                                                    input_data, &
+&                                                    parameters, &
+&                                                    parameters_d, &
+&                                                    options)
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters, &
@@ -8669,22 +8665,21 @@ CONTAINS
 &                                                   input_data, &
 &                                                   parameters, options)
       CALL PUSHCONTROL3B(3)
-    CASE ('multi-polynomial') 
+    CASE ('multi-power') 
       CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
 &                   parameters%rr_parameters%values, 1)*SIZE(parameters%&
 &                   rr_parameters%values, 2)*SIZE(parameters%&
 &                   rr_parameters%values, 3))
-      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                   input_data, &
-&                                                   parameters, options)
+      CALL MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                              input_data, parameters, &
+&                                              options)
       CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
 &                   parameters%rr_initial_states%values, 1)*SIZE(&
 &                   parameters%rr_initial_states%values, 2)*SIZE(&
 &                   parameters%rr_initial_states%values, 3))
-      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&                                                       mesh, input_data&
-&                                                       , parameters, &
-&                                                       options)
+      CALL MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                  input_data, &
+&                                                  parameters, options)
       CALL PUSHCONTROL3B(4)
     CASE DEFAULT
       CALL PUSHCONTROL3B(0)
@@ -8789,21 +8784,19 @@ CONTAINS
 &                  parameters%rr_initial_states%values, 1)*SIZE(&
 &                  parameters%rr_initial_states%values, 2)*SIZE(&
 &                  parameters%rr_initial_states%values, 3))
-      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
-&                                                         mesh, &
-&                                                         input_data, &
-&                                                         parameters, &
-&                                                         parameters_b, &
-&                                                         options)
+      CALL MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
+&                                                    input_data, &
+&                                                    parameters, &
+&                                                    parameters_b, &
+&                                                    options)
       CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
 &                  parameters%rr_parameters%values, 1)*SIZE(parameters%&
 &                  rr_parameters%values, 2)*SIZE(parameters%&
 &                  rr_parameters%values, 3))
-      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh&
-&                                                     , input_data, &
-&                                                     parameters, &
-&                                                     parameters_b, &
-&                                                     options)
+      CALL MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&                                                input_data, parameters&
+&                                                , parameters_b, options&
+&                                               )
     END IF
   END SUBROUTINE FILL_PARAMETERS_B
 
@@ -8833,14 +8826,13 @@ CONTAINS
       CALL MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
 &                                                   input_data, &
 &                                                   parameters, options)
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                   input_data, &
-&                                                   parameters, options)
-      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&                                                       mesh, input_data&
-&                                                       , parameters, &
-&                                                       options)
+    CASE ('multi-power') 
+      CALL MULTI_POWER_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                              input_data, parameters, &
+&                                              options)
+      CALL MULTI_POWER_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                  input_data, &
+&                                                  parameters, options)
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &

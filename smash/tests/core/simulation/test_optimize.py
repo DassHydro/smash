@@ -150,7 +150,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
             },
         },
         {
-            "mapping": "multi-polynomial",
+            "mapping": "multi-power",
             "optimizer": "lbfgsb",
             "optimize_options": {
                 "parameters": ["cp", "kexc"],
