@@ -2718,30 +2718,60 @@ class Model:
 
     def adjust_interception(
         self,
-        active_cell: bool = True,
+        active_cell_only: bool = True,
     ):
         """
-        Adjust the interception reservoir capacities.
+        Adjust the interception reservoir capacity.
 
-        Parameters:
-        -----------
-        active_cell: bool, default is True
-            If True, this function adjusts the capacities only on the cells
-            mapping the mesh.active_cell matrix.
-            If False, the interception capacities will be adjusted on every cells of the domain.
+        Parameters
+        ----------
+        active_cell_only : bool, default True
+            If True, adjusts the interception capacity only for the active cells of the 2D spatial domain.
+            If False, adjusts the interception capacity for all cells in the domain.
 
-        Exemple:
+        Examples
         --------
-        In this example, the capacities of the interception reservoir will be adjusted
-        manually after the model creation and on the entire domain.
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
 
-        >>> setup, mesh = smash.factory.load_dataset("Cance")
-        >>> setup["adjust_interception"]=False
+        By default, the interception capacity is automatically adjusted when the model is created.
+        Now we set it to False and then manually adjust the interception capacity after model creation.
+
+        >>> setup["adjust_interception"] = False
         >>> model = smash.Model(setup, mesh)
-        >>> model.adjust_interception(active_cell=False)
+
+        >>> model.get_rr_parameters("ci")
+        array([[1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06,
+                1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06,
+                1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06,
+                1.e-06, 1.e-06, 1.e-06, 1.e-06],
+               ...
+               [1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06,
+                   1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06,
+                   1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06, 1.e-06,
+                   1.e-06, 1.e-06, 1.e-06, 1.e-06]], dtype=float32)
+
+        Adjust the interception capacity for all cells in the spatial domain
+
+        >>> model.adjust_interception(active_cell_only=False)
+
+        >>> model.get_rr_parameters("ci")
+        array([[1.        , 1.        , 1.        , 1.        , 1.        ,
+                1.        , 1.        , 1.1       , 1.1       , 1.1       ,
+                1.1       , 1.1       , 1.1       , 1.2       , 1.2       ,
+                1.3000001 , 1.4       , 1.4       , 1.4       , 1.7       ,
+                1.7       , 1.6       , 1.6       , 1.5       , 1.6       ,
+                1.6       , 1.5       , 1.5       ],
+               ...
+               [1.        , 1.1       , 1.1       , 1.1       , 1.1       ,
+                1.1       , 1.        , 1.1       , 1.1       , 1.1       ,
+                1.2       , 1.1       , 1.1       , 1.1       , 1.1       ,
+                1.2       , 1.2       , 1.2       , 1.3000001 , 1.3000001 ,
+                1.3000001 , 1.3000001 , 1.3000001 , 1.3000001 , 1.3000001 ,
+                1.4       , 1.4       , 1.5       ]], dtype=float32)
         """
         _adjust_interception(
-            self.setup, self.mesh, self._input_data, self._parameters, active_cell=active_cell
+            self.setup, self.mesh, self._input_data, self._parameters, active_cell_only=active_cell_only
         )
 
     @_model_forward_run_doc_substitution
