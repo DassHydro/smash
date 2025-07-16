@@ -1,0 +1,30 @@
+.. _release.1.1.2-notes:
+
+=========================
+smash 1.1.2 Release Notes
+=========================
+
+The smash 1.1.2 release fixes a few compatibility and naming issues, including:
+
+- ``Fixed Windows support``
+    Windows support has been restored in this version after resolving the wheel build issue.
+
+- ``Deprecation of multi-polynomial mapping name``
+    The mapping name ``'multi-polynomial'`` has been deprecated and replaced with ``'multi-power'``.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* MAINT: Windows wheel by @inoelloc (#445) by @nghi-truyen in https://github.com/DassHydro/smash/pull/446
+* MAINT: fix import-outside-top-level for latest ruff version (#452) by @nghi-truyen in https://github.com/DassHydro/smash/pull/453
+* MAINT: changing mapping name multi-polynomial to multi-power (#451) by @nghi-truyen in https://github.com/DassHydro/smash/pull/451
