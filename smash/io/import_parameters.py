@@ -114,7 +114,7 @@ def _rasterio_read_param(path: FilePath, mesh: MeshDT, default_value: float = 0.
         output_bbox.left < input_bbox.left
         or output_bbox.right > input_bbox.right
         or output_bbox.bottom < input_bbox.bottom
-        or output_bbox.top < input_bbox.top
+        or output_bbox.top > input_bbox.top
     ):
         print("</> The boundaries of the Smash domain exceed the boundaries of the parameters domain.")
 
