@@ -765,6 +765,7 @@ def _compute_subgrid_network(
     width_coef_b: float,
     depth_coef_a: float,
     depth_coef_b: float,
+    use_subgrid_area: bool = False,
     return_analysis_data: bool = False
 ) -> dict: 
 
@@ -834,7 +835,12 @@ def _compute_subgrid_network(
         neighbors_cells_idxs = neighbors_cells_idxs[np.isin(neighbors_cells_idxs, ups_flwdir.idxs_seq)]
 
         # Define flow path source cells as the start cell and its eight neighbors
-        source_cells = np.concatenate(([start_cell_idx], neighbors_cells_idxs)).astype(np.int32)
+        # Only add start_cell_idx if it's in valid cells
+        if start_cell_idx in ups_flwdir.idxs_seq:
+            source_cells = np.concatenate(([start_cell_idx], neighbors_cells_idxs)).astype(np.int32)
+        else:
+            source_cells = neighbors_cells_idxs.astype(np.int32)
+        #source_cells = np.concatenate(([start_cell_idx], neighbors_cells_idxs)).astype(np.int32)
 
         # Compute flow paths starting from the source cells
         flwpaths, _ = ups_flwdir.path(idxs=source_cells)
@@ -1085,9 +1091,8 @@ def _compute_subgrid_network(
 
         # DEBUG: test garonne without dem based bathy
         #bathy = curvilinear_abscissa * 1e-5
-        #bathy = curvilinear_abscissa *1e-4
+        #bathy = curvilinear_abscissa *1e-3
         #bathy_list.append(bathy)
-
 
     # Add computed metrics to DataFrame
     df_cs['upstream_area'] = upstream_area_list
@@ -1146,7 +1151,7 @@ def _compute_subgrid_network(
     df_cs['up_rowcols'] = upstream_inflows_coords_list
 
     df_cs['nlevels'] = np.ones(len(df_cs), dtype=np.int32)
-    df_cs['manning'] = np.full(len(df_cs), 1/100, dtype=np.float32)
+    df_cs['manning'] = np.full(len(df_cs), 1/30, dtype=np.float32) # K = 30 m^(1/3)/s (Larnier et al., 2025 --> first param: an arbitrary ”mild” value  352 for large rivers)
     df_cs['level_heights'] = [np.empty(shape=(1,), dtype=np.float32)] * len(df_cs)
 
     # Convert DataFrame to SMASH format
@@ -1212,13 +1217,53 @@ def _compute_subgrid_network(
             'us_segment': us_seg,
         })
 
+    ### ----- COMPUTE UNIT CATCHMENT AREAS -----------------------------------------------------------
+    
+    # coords of the upscaled flow direction cells at full extent
+    xs_full, ys_full = flow_dir_data["ups_flwdir_object"].xy(flow_dir_data["ups_flwdir_object"].idxs_seq)
+
+    # coords of the upscaled flow direction cells masked from smash
+    xs_masked, ys_masked = ups_flwdir.xy(ups_flwdir.idxs_seq)
+
+    # Stack as (N, 2) arrays
+    coords_full = np.column_stack((xs_full, ys_full))
+    coords_masked = np.column_stack((xs_masked, ys_masked))
+
+    # Build lookup dictionary
+    coord_to_full_idx = {tuple(coord): idx for idx, coord in enumerate(coords_full)}
+
+    # Find indices of masked cells in full extent
+    masked_in_full_indices = np.array([coord_to_full_idx.get(tuple(coord), -1) for coord in coords_masked])
+
+    # unit catchment areas for the full extent upscaled flow direction
+    _, ucat_are_full = flwdir.ucat_area(flow_dir_data["idxs_out"], unit='m2')
+
+    # Flatten full catchment area array
+    ucat_are_full_flat = ucat_are_full.ravel()
+
+    # Get linear indices in the full grid for the masked cells
+    full_linear_indices_for_masked = flow_dir_data["ups_flwdir_object"].idxs_seq[masked_in_full_indices]
+
+    # Get masked catchment areas
+    masked_ucat_are = ucat_are_full_flat[full_linear_indices_for_masked]
+
+    # reshape the masked grid shape
+    masked_ucat_are_2d = np.full(ups_flwdir.shape, np.nan)
+    masked_ucat_are_2d.flat[ups_flwdir.idxs_seq] = masked_ucat_are
+
+
     result = {
         # Subgrid network properties
         "ncs": len(cross_sections),
         "cross_sections": cross_sections,
         "nseg": len(segments),
         "segments": segments,
+        "use_subgrid_area": use_subgrid_area,
     }
+
+    if use_subgrid_area:
+        result["ucat_area"] = masked_ucat_are_2d
+
     if return_analysis_data:
             # Create visualization dictionary
             visu = {
@@ -1226,15 +1271,22 @@ def _compute_subgrid_network(
                 "fine_flwdir": flwdir,
                 "masked_fine_flwdir": masked_fine_flwdir,
                 "ups_flwdir": ups_flwdir,
+                "ups_flwdir_full_extent": flow_dir_data["ups_flwdir_object"],
+                "idxs_out_full_extent": flow_dir_data["idxs_out"],
                 "streams": streams,
                 "river_fine_streams": river_fine_streams,
                 "river_cells_outlet_pixels": river_cells_outlet_pixels,
+                "idxs_out": idxs_out,
                 "confluences": confluences,
                 "ups_flwpath": ups_flwpath,
                 "smash_river_line": river_line,
                 "flwerr": flow_dir_data["flwerr"],
-                "percentage_error": flow_dir_data["percentage_error"],
+                "percentage_error": flow_dir_data["percentage_error"]
             }
+
+            if use_subgrid_area:
+                visu["ucat_area"] = masked_ucat_are_2d
+
             # Add it to result dictionary
             result["visualization"] = visu
 

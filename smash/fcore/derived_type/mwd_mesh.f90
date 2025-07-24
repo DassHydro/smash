@@ -39,6 +39,7 @@
 !%          ``cs``                   Cross-sections
 !%          ``nseg``                 Number of segments
 !%          ``seg``                  Segments
+!%          ``ucat_area``            Subgrid unit catchment area                                    [m2]
 !%
 !%      Subroutine
 !%      ----------
@@ -74,6 +75,9 @@ module mwd_mesh
         integer, dimension(:, :), allocatable :: flwdir
         real(sp), dimension(:, :), allocatable :: flwacc
         real(sp), dimension(:, :), allocatable :: flwdst
+        real(sp), dimension(:, :), allocatable :: ucat_area
+
+        logical :: use_subgrid_area
 
         integer :: npar
         integer, dimension(:), allocatable :: ncpar
@@ -131,6 +135,8 @@ contains
 
         this%epsg = -99
 
+        this%use_subgrid_area = .false.
+
         allocate (this%dx(this%nrow, this%ncol))
         this%dx = -99._sp
 
@@ -142,6 +148,9 @@ contains
 
         allocate (this%flwacc(this%nrow, this%ncol))
         this%flwacc = -99._sp
+
+        allocate (this%ucat_area(this%nrow, this%ncol))
+        this%ucat_area = -99._sp
 
         allocate (this%flwdst(this%nrow, this%ncol))
         this%flwdst = -99._sp

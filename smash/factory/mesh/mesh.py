@@ -429,6 +429,7 @@ def generate_mesh_from_subgrid(
     upscale_factor: int = 40,
     burning_depth: int = 0,
     max_depth: int = 1,
+    use_subgrid_area: bool = False,
     return_analysis_data: bool = False
 ) -> dict:
     """
@@ -477,6 +478,9 @@ def generate_mesh_from_subgrid(
         Maximum search depth for catchment delineation algorithms.
         Controls how far to search when delineating catchments.
     
+    use_subgrid_area : bool, default False
+        TODO
+    
     return_analysis_data : bool, default False
         If True, additional data included in the returned mesh for visual analysis.
     
@@ -520,6 +524,7 @@ def generate_mesh_from_subgrid(
         width_coef_b,
         depth_coef_a,
         depth_coef_b,
+        use_subgrid_area,
         return_analysis_data
     )
     

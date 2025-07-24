@@ -191,16 +191,13 @@ contains
         type(MeshDT), intent(in) :: mesh
         real(sp), dimension(mesh%ncs), intent(in) :: hy1d_h
         real(sp), intent(out) :: dt
-
         integer :: iseg, ids_seg, ics, ids_cs, ifcs, ilcs
-        real(sp) :: min_dx, max_h
+        real(sp) :: dt_min, dx, h_cs, alpha
         type(SegmentDT) :: seg, ds_seg
         type(Cross_SectionDT) :: cs, ds_cs
 
-        ! Get the minimum distance between cross sections over all segments
-        !min_dx = huge(0._sp)
-        min_dx = 1.0e30_sp ! pag for tapenade
-        !min_dx = 100._sp
+        dt_min = setup%dt ! initialize dt_min with hydrological dt
+        alpha = 0.9_sp ! parameter to control the CFL condition
 
         do iseg = 1, mesh%nseg
             seg = mesh%segments(iseg)
@@ -211,24 +208,15 @@ contains
             do ics = ifcs, ilcs
                 cs = mesh%cross_sections(ics)
                 call hy1d_get_downstream_cross_section(mesh, seg, ds_seg, ics, cs, ids_cs, ds_cs)
-                min_dx = min(min_dx, cs%x - ds_cs%x)
-                print *, 'min_dx=', min_dx
+                dx = cs%x - ds_cs%x
+                h_cs = hy1d_h(ics)
+                if (h_cs <= 0.01_sp) cycle
+                dt_min = min(dt_min, alpha * dx / sqrt(gravity * h_cs))
             end do
         end do
 
-        ! Get the maximum water depth over all cross sections
-        max_h = maxval(hy1d_h)
-
-        ! Calculate the time step
-        if (max_h .gt. 0._sp) then
-            dt = min(setup%dt, 0.7_sp*min_dx/sqrt(gravity*max_h))
-            !dt = max(dt, setup%dt/1000._sp)
-            dt = max(dt, setup%dt/min_dx)
-            print *, 'CFL dt used: max_h=', max_h, 'min_dx=', min_dx, 'dt=', dt
-        else
-            dt = setup%dt
-            print *, 'max_h == 0, using hydrological dt=', dt
-        end if
+        dt = dt_min
+        !dt = max(dt_min, 60._sp)
 
     end subroutine hy1d_non_inertial_get_dt
 
@@ -260,6 +248,11 @@ contains
             !write(11, '(A)') "hydro_step,hy1d_step,cs_idx,wse,s_ip1d2"
         !endif
 
+        ! Initialize water depth at the first hydrological time step
+        !if (time_step == 1 .and. hy1d_step == 1) then
+            !hy1d_h(:) = 1.0_sp
+        !end if
+
         do iseg = 1, mesh%nseg
 
             seg = mesh%segments(iseg)
@@ -287,6 +280,8 @@ contains
                 if (is_ds_bc) call hy1d_get_downstream_boundary_condition_xbh(cs, us_cs, x_ip1, b_ip1, h_ip1)
 
                 dx = x_i - x_ip1
+                !dx = 300._sp ! FOR DEBUGGING ~ quantile 1%
+                !dx = 1000._sp ! FOR DEBUGGING
                 s_ip1d2 = ((h_i + b_i) - (h_ip1 + b_ip1))/dx
                 wse_i = h_i + b_i ! Calculate water surface elevation
                 ! Write to the WSE and slope file
@@ -298,7 +293,7 @@ contains
                 ! call hy1d_compute_ar(cs, h_ip1d2, a_ip1d2, r_ip1d2)
 
                 w_ip1d2 = min(cs%level_widths(1), ds_cs%level_widths(1))
-                !w_ip1d2 = 200._sp
+                !w_ip1d2 = 100._sp
                 a_ip1d2 = h_ip1d2*w_ip1d2
                 p_ip1d2 = w_ip1d2 + 2._sp*h_ip1d2
                 r_ip1d2 = a_ip1d2/p_ip1d2
@@ -356,13 +351,13 @@ contains
         character(len=100) :: up_inds_str, lat_inds_str
 
         ! Open the mass balance file at the first hydrological and hydraulic time step
-        if (time_step == 1 .and. hy1d_step == 1) then
-            mass_balance_file = "/home/adminberkaoui/Documents/article_runs/garonne/debug_smash_garonne/mass_balance.csv"
-            open(unit=10, file=mass_balance_file, status="replace")
-            write(10, '(A)') "hydro_step,hy1d_step,dt,cs_idx," // &
-            "up_cell_idxs,netrain,q_im1d2,q_lat," // &
-            "a_t,a_tp1,h,q,dx,w"
-        endif       
+        !if (time_step == 1 .and. hy1d_step == 1) then
+            !mass_balance_file = "/home/adminberkaoui/Documents/article_runs/garonne/debug_carthage_hy1d/debug.csv"
+            !open(unit=10, file=mass_balance_file, status="replace")
+            !write(10, '(A)') "hydro_step,hy1d_step,dt,cs_idx," // &
+                !"up_cell_idxs,netrain,q_im1d2,q_lat," // &
+                !"a_t,a_tp1,h,q,dx,w"
+        !endif       
 
 
         do iseg = 1, mesh%nseg
@@ -380,7 +375,7 @@ contains
                 is_ds_bc = ics .eq. ilcs .and. is_last_ds_seg
 
                 a_t = cs%level_widths(1)*hy1d_h(ics)
-                !a_t = 200._sp*hy1d_h(ics)
+                !a_t = 100._sp*hy1d_h(ics)
                 q_ip1d2 = hy1d_q(ics)
 
                 ! Initialize hydrological indices
@@ -445,7 +440,9 @@ contains
                     x_ip1 = ds_cs%x
                 endif
                 dx = x_i - x_ip1 ! curvilinera abscissa
-                !dx = max(dx, 1.0e-6_sp) ! check dx >0
+                !dx = max(dx, 300._sp) ! FOR DEBUGGING ~ quantile 1%
+                !dx = max(dx, 100._sp)
+                !dx = 1000._sp ! DEBUGGING
 
                 !x_ip1 = ds_cs%x
                 !dx = x_i - x_ip1
@@ -457,27 +454,34 @@ contains
                     hy1d_q(ics) = (q_lat + q_im1d2) + a_t/(dt/dx)
                 end if
                 hy1d_h(ics) = a_tp1/cs%level_widths(1)
-                !hy1d_h(ics) = a_tp1/200._sp
+                !hy1d_h(ics) = a_tp1/100._sp
+
+                ! ADDED FOR DEBUG: threshold for small depths
+                !if (hy1d_h(ics) < 1.0e-3_sp) then
+                    !hy1d_h(ics) = 0._sp
+                    !a_tp1 = 0._sp
+                    !hy1d_q(ics) = 0._sp
+                !end if
 
                 ! Create string representations of indices
-                if (n_up_cells > 0) then
-                    write(up_inds_str, '(100I6)') (upstream_cell_indices(i), i=1,n_up_cells)
-                else
-                    up_inds_str = "-"
-                endif
+                !if (n_up_cells > 0) then
+                    !write(up_inds_str, '(100I6)') (upstream_cell_indices(i), i=1,n_up_cells)
+                !else
+                    !up_inds_str = "-"
+                !endif
                 
-                if (n_lat_cells > 0) then
-                    write(lat_inds_str, '(100I6)') (lateral_cell_indices(i), i=1,n_lat_cells)
-                else
-                    lat_inds_str = "-"
-                endif
+                !if (n_lat_cells > 0) then
+                    !write(lat_inds_str, '(100I6)') (lateral_cell_indices(i), i=1,n_lat_cells)
+                !else
+                    !lat_inds_str = "-"
+                !endif
                 
                 ! Write values to CSV file
-                write(10, '(I5,",",I5,",",F30.16,",",I5,",",A,",",F30.16,",",F30.16,",",F30.16,",", &
-                &F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16)') &
-                time_step, hy1d_step, dt, ics, trim(adjustl(up_inds_str)), &
-                ac_qtz(cs_cell_index, setup%nqz), q_im1d2, q_lat, a_t, a_tp1, &
-                hy1d_h(ics), hy1d_q(ics), dx, cs%level_widths(1)
+                !write(10, '(I5,",",I5,",",F30.16,",",I5,",",A,",",F30.16,",",F30.16,",",F30.16,",", &
+                !&F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16,",",F30.16)') &
+                !time_step, hy1d_step, dt, ics, trim(adjustl(up_inds_str)), &
+                !ac_qtz(cs_cell_index, setup%nqz), q_im1d2, q_lat, a_t, a_tp1, &
+                !hy1d_h(ics), hy1d_q(ics), dx, cs%level_widths(1)
                 
 
             end do
@@ -498,6 +502,7 @@ contains
         real(sp) :: dt
         integer :: ntime_step, t, ceil
 
+        !hy1d_h(:) = 1.0_sp
         call hy1d_non_inertial_get_dt(setup, mesh, hy1d_h, dt) ! pag: à chaque dt hydraulique en ppe ; cpdt premiere implem commode vs dt_hydrologie ; ok vs variations smooth ?
 
         !ntime_step = ceiling(setup%dt/dt)
@@ -515,12 +520,12 @@ contains
             call hy1d_non_inertial_momemtum(mesh, dt, hy1d_h, hy1d_q, time_step, t) ! Pass time_step and t
             call hy1d_non_inertial_mass(setup, mesh, dt, ac_qtz, ac_qz, hy1d_h, hy1d_q,time_step,t) ! Pass t as hy1d_step counter and time_step as hydro_step counter
         end do
-
+        
         ! Close file after all hydrological time steps are complete
-        if (time_step == setup%ntime_step) then
-            close(10)
-            close(11)  ! Close the WSE and slope file
-        endif
+        !if (time_step == setup%ntime_step) then
+            !close(10)
+            !close(11)  ! Close the WSE and slope file
+        !endif
 
     end subroutine hy1d_non_inertial_time_step
 

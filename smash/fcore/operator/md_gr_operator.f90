@@ -455,7 +455,12 @@ contains
                 ac_qt(k) = qr + qd
 
                 ! Transform from mm/dt to m3/s
-                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                if (mesh%use_subgrid_area) then
+                    ac_qt(k) = ac_qt(k) * 1e-3_sp * mesh%ucat_area(row, col) / setup%dt
+                else
+                    ac_qt(k) = ac_qt(k) * 1e-3_sp * mesh%dx(row, col) * mesh%dy(row, col) / setup%dt
+                end if
+
 
                 ! Write to file
 #ifdef _OPENMP
