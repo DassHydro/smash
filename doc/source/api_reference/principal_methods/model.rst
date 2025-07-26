@@ -69,3 +69,4 @@ Parameters/States/Control
    Model.get_nn_parameters_bias
    Model.set_nn_parameters_weight
    Model.set_nn_parameters_bias
+   Model.adjust_interception
