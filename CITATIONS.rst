@@ -22,39 +22,40 @@ BibTeX entry:
         doi     = {10.5194/egusphere-2025-690}
     }
 
-.. TODO: update citation once accepted.
-
 Please also cite the relevant references corresponding to the algorithms and methods used:
 
-- Hybrid process-parameterization for water flux corrections:
+- Hybrid physics-AI framework for learning regionalization and refining internal water fluxes of algebraic or ordinary differential equations (ODEs)-based solvers:
 
     Huynh, N. N. T., Garambois, P.-A., Renard, B., Colleoni, F., Monnier, J., and Roux, H. (2025). 
-    A Distributed Hybrid Physics-AI Framework for Learning Corrections of Internal Hydrological Fluxes and Enhancing High-Resolution Regionalized Flood Modeling. 
-    EGUsphere, 2025, 1–34. 
-    `<https://doi.org/10.5194/egusphere-2024-3665>`_.
+    A distributed hybrid physics–AI framework for learning corrections of internal hydrological fluxes and enhancing high-resolution regionalized flood modeling. 
+    Hydrol. Earth Syst. Sci., 29, 3589–3613. 
+    `<https://doi.org/10.5194/hess-29-3589-2025>`_.
 
-- Hybrid regionalization, HDA-PR algorithm:
+    Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Monnier, J. (2025). 
+    Hybrid Physics-AI and Neural ODE Approaches for Spatially Distributed Hydrological Modeling. 
+    EGUsphere, 2025, 1–24. 
+    `<https://doi.org/10.5194/egusphere-2025-2797>`_.
+
+- Hybrid Data Assimilation and Parameter Regionalization (HDA-PR) approach:
 
     Huynh, N. N. T., Garambois, P.-A., Colleoni, F., Renard, B., Roux, H., Demargne, J., Jay-Allemand, M., and Javelle, P. (2024). 
     Learning Regionalization Using Accurate Spatial Cost Gradients Within a Differentiable High-Resolution Hydrological Model: Application to the French Mediterranean Region. 
-    Water Resources Research, 60, e2024WR037544. 
+    Water Resour. Res., 60, e2024WR037544. 
     `<https://doi.org/10.1029/2024WR037544>`_.
 
 - Signatures, multi-criteria calibration, hydrograph segmentation algorithm:
 
     Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Javelle, P. (2023). 
     Signatures-and-sensitivity-based multi-criteria variational calibration for distributed hydrological modeling applied to Mediterranean floods. 
-    Journal of Hydrology, 625, 129992. 
+    J. Hydrol., 625, 129992. 
     `<https://doi.org/10.1016/j.jhydrol.2023.129992>`_.
 
 - Fully distributed variational calibration:
 
     Jay-Allemand, M., Javelle, P., Gejadze, I., Arnaud, P., Malaterre, P.-O., Fine, J.-A., and Organde, D. (2020). 
     On the potential of variational calibration for a fully distributed hydrological model: application on a Mediterranean catchment. 
-    Hydrology and Earth System Sciences, 24, 5519–5538. 
+    Hydrol. Earth Syst. Sci., 24, 5519–5538. 
     `<https://doi.org/10.5194/hess-24-5519-2020>`_.
-
-.. TODO: update ref flux correction once accepted and add ref neural ODE.
 
 Related papers
 ==============
@@ -62,13 +63,13 @@ Related papers
 Additional **smash**-related publications:
 
     Garambois, P.A., Colleoni, F., Huynh, N. N. T., Akhtari, A., Nguyen, N. B., El Baz, A., Jay-Allemand, M., and Javelle, P. (2025). 
-    Spatially Distributed Gradient-Based Calibration and Parametric Sensitivity of a Spatialized Hydrological Model Over 235 French Catchments. 
-    HAL preprint, open science. 
-    `<https://hal.science/hal-04989183>`_.
+    Spatially distributed gradient-based calibration and parametric sensitivity of a spatialized hydrological model over 235 French catchments. 
+    J. Hydrol. : Reg. Stud., 60, 102485. 
+    `<https://doi.org/10.1016/j.ejrh.2025.102485>`_.
     
     Ettalbi, M., Garambois, P.A., Huynh, N. N. T., Arnaud, P., Ferreira, E., and Baghdadi, N. (2025). 
     Improving parameter regionalization learning for spatialized differentiable hydrological models by assimilation of satellite-based soil moisture data. 
-    Journal of Hydrology, 660, 133300. 
+    J. Hydrol., 660, 133300. 
     `<https://doi.org/10.1016/j.jhydrol.2025.133300>`_.
 
     Jay‐Allemand, M., Demargne, J., Garambois, P.‐A., Javelle, P., Gejadze, I., Colleoni, F., Organde, D., Arnaud, P., and Fouchier, C. (2024). 
@@ -78,15 +79,13 @@ Additional **smash**-related publications:
 
     Evin, G., Le Lay, M., Fouchier, C., Penot, D., Colleoni, F., Mas, A., Garambois, P.-A., Laurantin, O. (2024).
     Evaluation of hydrological models on small mountainous catchments: impact of the meteorological forcings. 
-    Hydrology and Earth System Sciences, 28, 261–281. 
+    Hydrol. Earth Syst. Sci., 28, 261–281. 
     `<https://doi.org/10.5194/hess-28-261-2024>`__.
 
     Huynh, N. N. T., Garambois, P.‐A., Colleoni, F., Renard, B., and Roux, H. (2023). 
     Multi‐gauge hydrological variational data assimilation:Regionalization learning with spatial gradients using multilayer perceptron and Bayesian‐guided multivariate regression. 
     Colloque SHF 2023 - Prévision des crues et des inondations. 
     `<https://doi.org/10.48550/arXiv.2307.02497>`_.
-
-.. TODO: update ref Garambois et al. 235bv once accepted.
 
 Download smash references
 =========================
