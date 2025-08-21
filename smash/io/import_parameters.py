@@ -7,7 +7,7 @@ import numpy as np
 import rasterio
 from rasterio.enums import Resampling
 
-from smash._constant import DEFAULT_RR_PARAMETERS
+from smash._constant import DEFAULT_RR_PARAMETERS, FEASIBLE_RR_PARAMETERS
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
@@ -43,6 +43,16 @@ def import_parameters(model: Model, path_to_parameters: FilePath):
                 default_value=DEFAULT_RR_PARAMETERS[param],
             )
 
+            # depending how parameters has been written and which no_data value hav been
+            # chosen, Smash will raise an error if the parameter are not included in the
+            # FEASIBLE_RR_PARAMETERS domain.
+            # We just set its value to the default one.
+            mask = np.where(cropped_param < FEASIBLE_RR_PARAMETERS[param][0])
+            cropped_param[mask] = DEFAULT_RR_PARAMETERS[param]
+
+            mask = np.where(cropped_param > FEASIBLE_RR_PARAMETERS[param][0])
+            cropped_param[mask] = DEFAULT_RR_PARAMETERS[param]
+            
             pos = np.argwhere(list_param == param).item()
             model.rr_parameters.values[:, :, pos] = cropped_param
 
