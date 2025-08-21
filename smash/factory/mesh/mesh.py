@@ -222,7 +222,7 @@ def generate_mesh(
         defined in the flow directions file. It is not necessary to provide the value of
         the ``EPSG``. On the other hand, if the projection is not well defined in the flow directions file
         (i.e. in ``ASCII`` file), the **epsg** argument must be filled in.
-    
+
     area_error_th: float or None, default None
         The threshold of the relative error between the modeled area and the observed area beyond which the
         outlets and the catchment will be excluded of the final mesh. The relative error is computed as folow:
@@ -230,7 +230,6 @@ def generate_mesh(
         Exemple: `area_error_th=0.2` means that all outlets where the surface error are higher than 0.2 (20%)
         will be excluded. If `area_error_th` is set to None (default), the compuation of the error on the
         area is ignored and all outlets are included in the mesh.
-        
 
     Returns
     -------
@@ -380,7 +379,9 @@ def generate_mesh(
     (1000.0, 906044, 0)
     """
 
-    args = _standardize_generate_mesh_args(flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg, area_error_th)
+    args = _standardize_generate_mesh_args(
+        flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg, area_error_th
+        )
 
     return _generate_mesh(*args)
 
@@ -630,4 +631,6 @@ def _generate_mesh(
     if bbox is not None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
-        return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th)
+        return _generate_mesh_from_xy(
+            flwdir_dataset, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th
+        )
