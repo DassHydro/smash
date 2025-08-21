@@ -223,6 +223,23 @@ def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int | None:
     return epsg
 
 
+def _standardize_generate_mesh_area_error_th(
+    area_error_th: Numeric | None,
+) -> float | None:
+    if area_error_th is None:
+        pass
+
+    else:
+        if not isinstance(area_error_th, float):
+            raise TypeError(
+                "area_error_th argument must be of AlphaNumeric type (float)"
+            )
+
+        area_error_th = float(area_error_th)
+
+    return area_error_th
+
+
 def _standardize_generate_mesh_args(
     flwdir_path: FilePath,
     bbox: ListLike | None,
@@ -233,6 +250,7 @@ def _standardize_generate_mesh_args(
     shp_path: FilePath | None,
     max_depth: Numeric,
     epsg: AlphaNumeric | None,
+    area_error_th: Numeric | None,
 ) -> AnyTuple:
     flwdir_path = _standardize_generate_mesh_flwdir_path(flwdir_path)
 
@@ -257,4 +275,8 @@ def _standardize_generate_mesh_args(
 
     epsg = _standardize_generate_mesh_epsg(epsg)
 
-    return flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg
+    area_error_th = _standardize_generate_mesh_area_error_th(
+        area_error_th
+    )
+
+    return flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th

@@ -153,6 +153,7 @@ def generate_mesh(
     shp_path: FilePath | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
+    area_error_th: float | None = None,
 ) -> dict[str, Any]:
     # % TODO FC: Add advanced user guide
     """
@@ -221,6 +222,15 @@ def generate_mesh(
         defined in the flow directions file. It is not necessary to provide the value of
         the ``EPSG``. On the other hand, if the projection is not well defined in the flow directions file
         (i.e. in ``ASCII`` file), the **epsg** argument must be filled in.
+    
+    area_error_th: float or None, default None
+        The threshold of the relative error between the modeled area and the observed area beyond which the
+        outlets and the catchment will be excluded of the final mesh. The relative error is computed as folow:
+        :math:`error=(area_dln - area)/area`.
+        Exemple: `area_error_th=0.2` means that all outlets where the surface error are higher than 0.2 (20%)
+        will be excluded. If `area_error_th` is set to None (default), the compuation of the error on the
+        area is ignored and all outlets are included in the mesh.
+        
 
     Returns
     -------
@@ -384,6 +394,7 @@ def _generate_mesh_from_xy(
     shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int,
+    area_error_th: None | float = None,
 ) -> dict:
     (xmin, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
@@ -407,6 +418,8 @@ def _generate_mesh_from_xy(
     area_dln = np.zeros(shape=x.shape, dtype=np.float32)
     sink_dln = np.zeros(shape=x.shape, dtype=np.bool)
     mask_dln = np.zeros(shape=flwdir.shape, dtype=np.int32)
+
+    deleted_catchment = []
 
     for ind in range(x.size):
         row, col = _xy_to_rowcol(x[ind], y[ind], xmin, ymax, xres, yres)
@@ -447,7 +460,25 @@ def _generate_mesh_from_xy(
 
         area_dln[ind] = np.sum(mask_dln_win * dx_win * dy_win)
 
+        if area_error_th is not None:
+            if abs((area_dln[ind] - area[ind]) / area[ind]) > area_error_th:
+                warnings.warn(
+                    f"The error of the modeled area for catchment {code[ind]} exceed the"
+                    " threshold {area_error_th}. This catchment is removed",
+                    stacklevel=2,
+                )
+                mask_dln_win = 0
+                deleted_catchment.append(ind)
+
         mask_dln[slice_win] = np.where(mask_dln_win == 1, 1, mask_dln[slice_win])
+
+    row_dln = np.delete(row_dln, deleted_catchment)
+    col_dln = np.delete(col_dln, deleted_catchment)
+    area_dln = np.delete(area_dln, deleted_catchment)
+    area = np.delete(area, deleted_catchment)
+    x = np.delete(x, deleted_catchment)
+    y = np.delete(y, deleted_catchment)
+    code = np.delete(code, deleted_catchment)
 
     if np.any(sink_dln):
         warnings.warn(
@@ -594,8 +625,9 @@ def _generate_mesh(
     shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int | None,
+    area_error_th: float | None,
 ) -> dict:
     if bbox is not None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
-        return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, shp_dataset, max_depth, epsg)
+        return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th)
