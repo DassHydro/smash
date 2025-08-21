@@ -200,7 +200,7 @@ Finally, we can continue the calibration using the starting point defined by the
 As observed, the optimization process resumes from the previously interrupted point, with the initial cost value being the same as the one at iteration 5 from the previous calibration.
 
 .. warning::
-    Due to technical limitations, the continuous calibration process currently does not work with ``mapping='multi-linear'`` or ``mapping='multi-polynomial'``.
+    Due to technical limitations, the continuous calibration process currently does not work with ``mapping='multi-linear'`` or ``mapping='multi-power'``.
     However, you can still set the control values to the model to retrieve the model parameters and then perform a forward run to update the hydrological responses and final states.
 
     .. code-block:: python
@@ -225,7 +225,7 @@ As observed, the optimization process resumes from the previously interrupted po
         </> Forward Run
             Cost value (1-NSE) = 0.30294644832611084
 
-    Continuous calibration currently does not work with multiple polynomial mappings.
+    Continuous calibration currently does not work with multiple linear and multiple power mappings.
     However, for multiple linear mapping, an alternative solution to continue the calibration process from an obtained control vector is to create a neural network without hidden layers (equivalent to multiple linear regression) and set the obtained control vector as the initial weights of the neural network. 
     You can then continue to calibrate the model with ``mapping='ann'``.
 
