@@ -380,7 +380,7 @@ def generate_mesh(
     (1000.0, 906044, 0)
     """
 
-    args = _standardize_generate_mesh_args(flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg)
+    args = _standardize_generate_mesh_args(flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg, area_error_th)
 
     return _generate_mesh(*args)
 
