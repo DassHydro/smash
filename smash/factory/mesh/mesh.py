@@ -470,8 +470,8 @@ def _generate_mesh_from_xy(
             ):
                 warnings.warn(
                     f"The extend of catchment {code[ind]} with bbox {bbox_ind} exceed"
-                    f"the input bounding box {bbox}."
-                    f"This catchment is removed from the mesh.",
+                    f" the input bounding box {bbox}."
+                    f" This catchment is removed from the mesh.",
                     stacklevel=2,
                 )
 
@@ -483,8 +483,10 @@ def _generate_mesh_from_xy(
     row_dln = np.delete(row_dln, deleted_catchment)
     col_dln = np.delete(col_dln, deleted_catchment)
     area_dln = np.delete(area_dln, deleted_catchment)
+    area = np.delete(area, deleted_catchment)
     x = np.delete(x, deleted_catchment)
     y = np.delete(y, deleted_catchment)
+    code = np.delete(code, deleted_catchment)
 
     if np.any(sink_dln):
         warnings.warn(
