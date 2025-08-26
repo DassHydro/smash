@@ -50,7 +50,7 @@ def import_parameters(model: Model, path_to_parameters: FilePath):
             mask = np.where(cropped_param < FEASIBLE_RR_PARAMETERS[param][0])
             cropped_param[mask] = DEFAULT_RR_PARAMETERS[param]
 
-            mask = np.where(cropped_param > FEASIBLE_RR_PARAMETERS[param][0])
+            mask = np.where(cropped_param > FEASIBLE_RR_PARAMETERS[param][1])
             cropped_param[mask] = DEFAULT_RR_PARAMETERS[param]
 
             pos = np.argwhere(list_param == param).item()
