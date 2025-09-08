@@ -81,7 +81,7 @@ By default, the bounding box—i.e., the extent of the domain—is automatically
 
     mesh = smash.factory.generate_mesh(
         flwdir_path="./Cance-dataset/France_flwdir.tif",
-        bbox=[ 800000.,  850000., 6440000., 6490000.],
+        bbox=[800000.,  850000., 6440000., 6490000.],
         x=list(gauge_attributes["x"]),
         y=list(gauge_attributes["y"]),
         area=list(gauge_attributes["area"] * 1e6), # Convert km² to m²
@@ -90,8 +90,7 @@ By default, the bounding box—i.e., the extent of the domain—is automatically
 
 .. note::
 
-    f the specified bounding box is smaller than the extent of the hydrological catchments, the corresponding outlets will be excluded from the mesh, and a warning message will be returned.
-
+    If the specified bounding box is smaller than the extent of the hydrological catchments, the corresponding outlets will be excluded from the mesh, and a warning message will be returned.
 
 Mesh attributes and visualization
 ---------------------------------

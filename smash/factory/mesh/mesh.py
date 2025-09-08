@@ -513,10 +513,6 @@ def _generate_mesh_from_xy(
 
         flwdir = np.ma.masked_array(flwdir[slice_win], mask=(1 - mask_dln[slice_win]))
 
-    # print(mask_dln[slice_win])
-    # print(flwdir)
-    # print(flwdir.mask)
-
     dx = dx[slice_win]
     dy = dy[slice_win]
 
