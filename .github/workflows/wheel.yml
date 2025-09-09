@@ -34,22 +34,22 @@ jobs:
         python-version: ['cp39', 'cp310', 'cp311', 'cp312']
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@latest
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@latest
         with:
           python-version: '3.12'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@latest
         env:
           CIBW_BUILD: ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}*
           CIBW_ARCHS: ${{ matrix.buildplat[2] }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@latest
         with:
           path: ./wheelhouse/*.whl
           name: ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
