@@ -94,7 +94,7 @@ repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
 before-build = "brew reinstall gfortran libomp && brew unlink gfortran && brew link gfortran"
-environment = { MACOSX_DEPLOYMENT_TARGET="14.0" }
+environment = { MACOSX_DEPLOYMENT_TARGET="13.0" }
 
 [tool.ruff]
 line-length = 110
