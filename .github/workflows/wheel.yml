@@ -44,13 +44,15 @@ jobs:
         with:
           python-version: '3.12'
       
-      - name: Set macOS deployment target (13)
-        if: ${{ matrix.buildplat[0] == 'macos-13' }}
-        run: echo "CIBW_ENVIRONMENT_MACOS=MACOSX_DEPLOYMENT_TARGET=13.0" >> $GITHUB_ENV
+      - name: Set macOS deployment target
+        if: startsWith(matrix.buildplat[0], 'macos-')
+        run: |
+          if [[ "${{ matrix.buildplat[0] }}" == "macos-13" ]]; then
+            echo "CIBW_ENVIRONMENT_MACOS=MACOSX_DEPLOYMENT_TARGET=13.0" >> $GITHUB_ENV
+          elif [[ "${{ matrix.buildplat[0] }}" == "macos-14" ]]; then
+            echo "CIBW_ENVIRONMENT_MACOS=MACOSX_DEPLOYMENT_TARGET=14.0" >> $GITHUB_ENV
+          fi
 
-      - name: Set macOS deployment target (14)
-        if: ${{ matrix.buildplat[0] == 'macos-14' }}
-        run: echo "CIBW_ENVIRONMENT_MACOS=MACOSX_DEPLOYMENT_TARGET=14.0" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.4
