@@ -84,7 +84,7 @@ tag_prefix = "v"
 parentdir_prefix = "smash-"
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* cp38-* cp313-* pp* *_i686 *_ppc64le *_s390x"
+skip = "cp38-* cp313-* *_i686 *_ppc64le *_s390x"
 test-command = 'python -c "import smash; print(smash.__version__)"'
 build-verbosity = 3
 
@@ -94,6 +94,7 @@ repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
 before-build = "brew reinstall gfortran libomp && brew unlink gfortran && brew link gfortran"
+environment = { MACOSX_DEPLOYMENT_TARGET="14.0" }
 
 [tool.ruff]
 line-length = 110
