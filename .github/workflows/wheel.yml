@@ -53,7 +53,6 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=MACOSX_DEPLOYMENT_TARGET=14.0" >> $GITHUB_ENV
           fi
 
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.4
         env:
