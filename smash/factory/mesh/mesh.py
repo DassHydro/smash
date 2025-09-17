@@ -389,6 +389,7 @@ def _generate_mesh_from_xy(
     (xmin, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
     crs = _get_crs(flwdir_dataset, epsg)
+    epsg = crs.to_epsg()
 
     flwdir = _get_array(flwdir_dataset)
 
@@ -548,6 +549,7 @@ def _generate_mesh_from_xy(
         "yres": yres,
         "xmin": xmin_shifted,
         "ymax": ymax_shifted,
+        "epsg": epsg,
         "nrow": flwdir.shape[0],
         "ncol": flwdir.shape[1],
         "dx": dx,
@@ -576,6 +578,7 @@ def _generate_mesh_from_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: np.nd
     (_, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
     crs = _get_crs(flwdir_dataset, epsg)
+    epsg = crs.to_epsg()
 
     flwdir = _get_array(flwdir_dataset, bbox)
 
@@ -620,6 +623,7 @@ def _generate_mesh_from_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: np.nd
         "yres": yres,
         "xmin": bbox[0],
         "ymax": bbox[3],
+        "epsg": epsg,
         "nrow": flwdir.shape[0],
         "ncol": flwdir.shape[1],
         "dx": dx,
