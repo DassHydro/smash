@@ -7,7 +7,7 @@ import smash
 
 
 def generic_setup_io(**kwargs) -> dict:
-    setup, mesh = smash.factory.load_dataset("Cance")
+    setup, _ = smash.factory.load_dataset("Cance")
 
     smash.io.save_setup(setup, "tmp_setup.yaml")
 

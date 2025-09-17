@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import rasterio
-
 from f90wrap.runtime import FortranDerivedType
+
 from smash._constant import (
     DEFAULT_RR_INITIAL_STATES,
     DEFAULT_RR_PARAMETERS,
