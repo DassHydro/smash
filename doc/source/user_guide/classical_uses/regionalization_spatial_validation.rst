@@ -201,7 +201,7 @@ We can also specify several parameters for the calibration process with ANN:
             +---------------------------------------------------------+
             Total parameters: 1089
             Trainable parameters: 1089, 
-        'learning_rate': 0.001, 'random_state': None, 
+        'learning_rate': 0.003, 'random_state': None, 
         'termination_crit': {'maxiter': 200, 'early_stopping': 0}
     }
 
