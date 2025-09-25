@@ -13,6 +13,7 @@
 !%          ``yres``                 Y cell size derived from flwdir                               [m / degree]
 !%          ``xmin``                 X mininimum value derived from flwdir                         [m / degree]
 !%          ``ymax``                 Y maximum value derived from flwdir                           [m / degree]
+!%          ``epsg``                 Epsg (coordinate system) code used to create the mesh
 !%          ``nrow``                 Number of rows
 !%          ``ncol``                 Number of columns
 !%          ``dx``                   X cells size (meter approximation)                            [m]
@@ -55,6 +56,8 @@ module mwd_mesh
 
         real(sp) :: xmin
         real(sp) :: ymax
+
+        integer :: epsg
 
         integer :: nrow
         integer :: ncol
@@ -106,6 +109,8 @@ contains
 
         this%xmin = -99._sp
         this%ymax = -99._sp
+
+        this%epsg = -99
 
         allocate (this%dx(this%nrow, this%ncol))
         this%dx = -99._sp
