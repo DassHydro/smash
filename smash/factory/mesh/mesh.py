@@ -388,6 +388,7 @@ def generate_mesh(
 
 def _generate_mesh_from_xy(
     flwdir_dataset: rasterio.DatasetReader,
+    bbox: np.ndarray,
     x: np.ndarray,
     y: np.ndarray,
     area: np.ndarray,
@@ -419,6 +420,8 @@ def _generate_mesh_from_xy(
     area_dln = np.zeros(shape=x.shape, dtype=np.float32)
     sink_dln = np.zeros(shape=x.shape, dtype=np.bool)
     mask_dln = np.zeros(shape=flwdir.shape, dtype=np.int32)
+
+    deleted_catchment = []
 
     deleted_catchment = []
 
@@ -461,6 +464,34 @@ def _generate_mesh_from_xy(
 
         area_dln[ind] = np.sum(mask_dln_win * dx_win * dy_win)
 
+        if bbox is not None:
+            flwdir_win_ind = np.ma.masked_array(flwdir_win, mask=(1 - mask_dln_win))
+            flwdir_win_ind, slice_win_ind = _trim_mask_2d(flwdir_win_ind, slice_win=True)
+
+            ymax_ind = ymax - (slice_win_ind[0].start + slice_win[0].start) * yres
+            ymin_ind = ymax_ind - (slice_win_ind[0].stop - slice_win_ind[0].start) * yres
+
+            xmin_ind = xmin + (slice_win_ind[1].start + slice_win[1].start) * xres
+            xmax_ind = xmin_ind + (slice_win_ind[1].stop - slice_win_ind[1].start) * xres
+
+            bbox_ind = np.array([xmin_ind, xmax_ind, ymin_ind, ymax_ind])
+
+            if (
+                bbox_ind[0] < bbox[0]
+                or bbox_ind[1] > bbox[1]
+                or bbox_ind[2] < bbox[2]
+                or bbox_ind[3] > bbox[3]
+            ):
+                warnings.warn(
+                    f"The extend of catchment {code[ind]} with bbox {bbox_ind} exceed"
+                    f" the input bounding box {bbox}."
+                    f" This catchment is removed from the mesh.",
+                    stacklevel=2,
+                )
+
+                mask_dln_win = 0
+                deleted_catchment.append(ind)
+
         if area_error_th is not None:
             if abs((area_dln[ind] - area[ind]) / area[ind]) > area_error_th:
                 warnings.warn(
@@ -491,8 +522,21 @@ def _generate_mesh_from_xy(
             stacklevel=2,
         )
 
-    flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
-    flwdir, slice_win = _trim_mask_2d(flwdir, slice_win=True)
+    if bbox is None:
+        flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
+        # slice flwdir according the border of the active domain
+        flwdir, slice_win = _trim_mask_2d(flwdir, slice_win=True)
+
+    else:
+        col_off = int((bbox[0] - xmin) / xres)
+        row_off = int((ymax - bbox[3]) / yres)
+        ncol = int((bbox[1] - bbox[0]) / xres)
+        nrow = int((bbox[3] - bbox[2]) / yres)
+
+        slice_win = (slice(row_off, row_off + nrow), slice(col_off, col_off + ncol))
+
+        flwdir = np.ma.masked_array(flwdir[slice_win], mask=(1 - mask_dln[slice_win]))
+
     dx = dx[slice_win]
     dy = dy[slice_win]
 
@@ -504,7 +548,10 @@ def _generate_mesh_from_xy(
 
     flwacc, flwpar = mw_mesh.flow_accumulation_partition(flwdir, dx, dy)
 
-    flwdst = mw_mesh.flow_distance(flwdir, dx, dy, row_dln, col_dln, area_dln)
+    if x.size > 0:
+        flwdst = mw_mesh.flow_distance(flwdir, dx, dy, row_dln, col_dln, area_dln)
+    else:
+        flwdst = np.zeros(shape=flwdir.shape)
 
     flwdst = np.ma.masked_array(flwdst, mask=flwdir.mask)
 
@@ -628,9 +675,9 @@ def _generate_mesh(
     epsg: int | None,
     area_error_th: float | None,
 ) -> dict:
-    if bbox is not None:
+    if bbox is not None and x is None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
         return _generate_mesh_from_xy(
-            flwdir_dataset, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th
+            flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th
         )

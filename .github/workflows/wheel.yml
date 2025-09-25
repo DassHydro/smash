@@ -24,6 +24,7 @@ jobs:
     name: Build wheel ${{ matrix.python-version }}-${{ matrix.buildplat[1] }} ${{ matrix.buildplat[2] }}
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
+      fail-fast: false
       matrix:
         buildplat:
         - [ubuntu-latest, manylinux, x86_64]
@@ -34,17 +35,26 @@ jobs:
         python-version: ['cp39', 'cp310', 'cp311', 'cp312']
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      
+      - name: Set macOS deployment target
+        if: startsWith(matrix.buildplat[0], 'macos-')
+        run: |
+          if [[ "${{ matrix.buildplat[0] }}" == "macos-13" ]]; then
+            echo "CIBW_ENVIRONMENT_MACOS=MACOSX_DEPLOYMENT_TARGET=13.0" >> $GITHUB_ENV
+          elif [[ "${{ matrix.buildplat[0] }}" == "macos-14" ]]; then
+            echo "CIBW_ENVIRONMENT_MACOS=MACOSX_DEPLOYMENT_TARGET=14.0" >> $GITHUB_ENV
+          fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v3.1.4
         env:
           CIBW_BUILD: ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}*
           CIBW_ARCHS: ${{ matrix.buildplat[2] }}

@@ -9,14 +9,14 @@ class SGD:
 
     Options
     -------
-    learning_rate : float, default 0.01
+    learning_rate : float, default 0.02
         The learning rate used to update the weights during training.
 
     momentum : float, default 0
         The momentum used to smooth the gradient updates.
     """
 
-    def __init__(self, learning_rate: float = 0.01, momentum: float = 0):
+    def __init__(self, learning_rate: float = 0.02, momentum: float = 0):
         self.learning_rate = learning_rate
 
         self.momentum = momentum
@@ -37,7 +37,7 @@ class Adam:
 
     Options
     -------
-    learning_rate : float, default 0.001
+    learning_rate : float, default 0.003
         The learning rate used to update the weights during training.
 
     b1 : float, default 0.9
@@ -49,7 +49,7 @@ class Adam:
 
     def __init__(
         self,
-        learning_rate: float = 0.001,
+        learning_rate: float = 0.003,
         b1: float = 0.9,
         b2: float = 0.999,
         eps=1e-8,
@@ -86,12 +86,12 @@ class Adagrad:
 
     Options
     -------
-    learning_rate : float, default 0.01
+    learning_rate : float, default 0.02
         The learning rate used to update the weights during training.
 
     """
 
-    def __init__(self, learning_rate: float = 0.01, eps=1e-8):
+    def __init__(self, learning_rate: float = 0.02, eps=1e-8):
         self.learning_rate = learning_rate
 
         self.g = None  # Sum of squares of the gradients
@@ -116,7 +116,7 @@ class RMSprop:
 
     Options
     -------
-    learning_rate : float, default 0.001
+    learning_rate : float, default 0.003
         The learning rate used to update the weights during training.
 
     rho : float, default 0.9
@@ -125,7 +125,7 @@ class RMSprop:
 
     def __init__(
         self,
-        learning_rate: float = 0.001,
+        learning_rate: float = 0.003,
         rho: float = 0.9,
         eps=1e-8,
     ):
