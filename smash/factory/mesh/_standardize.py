@@ -231,9 +231,7 @@ def _standardize_generate_mesh_area_error_th(
 
     else:
         if not isinstance(area_error_th, float):
-            raise TypeError(
-                "area_error_th argument must be of AlphaNumeric type (float)"
-            )
+            raise TypeError("area_error_th argument must be of AlphaNumeric type (float)")
 
         area_error_th = float(area_error_th)
 
@@ -275,8 +273,6 @@ def _standardize_generate_mesh_args(
 
     epsg = _standardize_generate_mesh_epsg(epsg)
 
-    area_error_th = _standardize_generate_mesh_area_error_th(
-        area_error_th
-    )
+    area_error_th = _standardize_generate_mesh_area_error_th(area_error_th)
 
     return flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th
