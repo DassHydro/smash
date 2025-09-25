@@ -153,7 +153,7 @@ def generate_mesh(
     shp_path: FilePath | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
-    area_error_th: float | None = None,
+    area_error_th: Numeric | None = None,
 ) -> dict[str, Any]:
     # % TODO FC: Add advanced user guide
     """
@@ -223,7 +223,7 @@ def generate_mesh(
         the ``EPSG``. On the other hand, if the projection is not well defined in the flow directions file
         (i.e. in ``ASCII`` file), the **epsg** argument must be provided.
 
-    area_error_th: float or None, default None
+    area_error_th: `float` or None, default None
         The threshold of the relative error between the modeled area and the observed area beyond which the
         outlets and the catchment will be excluded from the final mesh. The relative error is computed as
         follows: :math:`error=(area_dln - area)/area`.

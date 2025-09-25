@@ -231,7 +231,7 @@ def _standardize_generate_mesh_area_error_th(
 
     else:
         if not isinstance(area_error_th, float):
-            raise TypeError("area_error_th argument must be of AlphaNumeric type (float)")
+            raise TypeError("area_error_th argument must be of Numeric type (float)")
 
         area_error_th = float(area_error_th)
 
