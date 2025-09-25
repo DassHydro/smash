@@ -190,14 +190,13 @@ contains
         real(sp), dimension(mesh%ncs), intent(in) :: hy1d_h
         real(sp), intent(out) :: dt
 
-        integer :: iseg, ids_seg, ics, ids_cs, ifcs, ilcs
+        integer :: iseg, ids_seg, ics, ids_cs, ifcs, ilcs, i
         real(sp) :: min_dx, max_h
         type(SegmentDT) :: seg, ds_seg
         type(Cross_SectionDT) :: cs, ds_cs
 
         ! Get the minimum distance between cross sections over all segments
-        !min_dx = huge(0._sp)
-        min_dx = 1.0e30_sp ! pag for tapenade
+        min_dx = -1._sp  ! -1 as a flag for not initialized
 
         do iseg = 1, mesh%nseg
             seg = mesh%segments(iseg)
@@ -208,12 +207,21 @@ contains
             do ics = ifcs, ilcs
                 cs = mesh%cross_sections(ics)
                 call hy1d_get_downstream_cross_section(mesh, seg, ds_seg, ics, cs, ids_cs, ds_cs)
-                min_dx = min(min_dx, cs%x - ds_cs%x)
+                if (min_dx .lt. 0._sp) then
+                    min_dx = cs%x - ds_cs%x
+                else
+                    min_dx = min(min_dx, cs%x - ds_cs%x)
+                end if
             end do
         end do
 
         ! Get the maximum water depth over all cross sections
-        max_h = maxval(hy1d_h)
+        ! Alternative maxval for tapenade
+        max_h = -99._sp
+        do i = 1, mesh%ncs
+            if (hy1d_h(i) .le. max_h) cycle
+            max_h = hy1d_h(i)
+        end do
 
         ! Calculate the time step
         if (max_h .gt. 0._sp) then
@@ -373,21 +381,15 @@ contains
         real(sp), dimension(mesh%nac, setup%nqz), intent(in) :: ac_qtz, ac_qz
         real(sp), dimension(mesh%ncs), intent(inout) :: hy1d_h, hy1d_q
 
-        real(sp) :: dt
-        integer :: ntime_step, t, ceil
+        real(sp) :: dt, ceil
+        integer :: ntime_step, t
 
         call hy1d_non_inertial_get_dt(setup, mesh, hy1d_h, dt) ! pag: à chaque dt hydraulique en ppe ; cpdt premiere implem commode vs dt_hydrologie ; ok vs variations smooth ?
-
-        !ntime_step = ceiling(setup%dt/dt)
-
-        ! pag : replaced ceiling for tapenade
+        
         ceil = setup%dt/dt
-        if (ceil == int(ceil)) then
-            ntime_step = int(ceil)
-        else
-            ntime_step = int(ceil) + 1
-        end if
-        ! pag
+
+        ! Alternative ceiling function for tapenade
+        ntime_step = int(ceil) + merge(1, 0, ceil > real(int(ceil), sp))
 
         do t = 1, ntime_step
             call hy1d_non_inertial_momemtum(mesh, dt, hy1d_h, hy1d_q)
