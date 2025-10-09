@@ -119,8 +119,30 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox
         bbox[3] = ymax
 
     # % Pad the bounding box so that the origins overlap
-    bbox[0:2] = xmin + np.rint((bbox[0:2] - xmin) / xres) * xres
-    bbox[2:4] = ymax - np.rint((ymax - bbox[2:4]) / yres) * yres
+    # pb wit np.rint(): For values exactly halfway between rounded decimal values,
+    #NumPy rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round to 0.0, etc.
+    # This choice cause an issue with the mesh because for a given bounding box,
+    #the extend may vary randomly of about 1 pixel in any direction depending the value of xmin and ymax.
+
+    # bbox[0:2] = xmin + np.rint((bbox[0:2] - xmin) / xres) * xres
+    # bbox[2:4] = ymax - np.rint((ymax - bbox[2:4]) / yres) * yres
+
+    # One solution is to force to round as usual : 2.4->2 ; 2.5 -> 3 ; 2.6 -> 3
+    for i in range(2):
+        if (bbox[i] - int(bbox[i])) < 0.5:
+            dleft = np.floor((bbox[i] - xmin) / xres)
+        else:
+            dleft = np.ceil((bbox[i] - xmin) / xres)
+
+        bbox[i] = xmin + dleft * xres
+
+    for i in range(2, 4):
+        if (bbox[i] - int(bbox[i])) < 0.5:
+            dtop = np.floor((ymax - bbox[i]) / yres)
+        else:
+            dtop = np.ceil((ymax - bbox[i]) / yres)
+
+        bbox[i] = ymax - dtop * yres
 
     return bbox
 
