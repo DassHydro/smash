@@ -64,15 +64,15 @@ Snow operator :math:`\mathcal{M}_{snw}`
         - Internal fluxes: :math:`\{m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{S, T_e\}\in\boldsymbol{\mathcal{I}}`
         - Parameters: :math:`\{k_{mlt}\}\in\boldsymbol{\theta}`
-        - Normalized states: :math:`\{\tilde{h_s}\}`, where :math:`\tilde{h_s}=\frac{h_s}{k_{mlt}}`, with states :math:`\{h_s\}\in\boldsymbol{h}`
+        - States: :math:`\{h_s\}\in\boldsymbol{h}`
 
     The function :math:`f` is resolved numerically as follows:
 
-    - Update the normalized snow reservoir state :math:`\tilde{h_s}` for :math:`t^* \in \left] t-1 , t\right[`
+    - Update the snow reservoir state :math:`h_s` for :math:`t^* \in \left] t-1 , t\right[`
 
     .. math::
 
-        \tilde{h_s}(x, t^*) = \tilde{h_s}(x, t-1) + S(x, t)
+        h_s(x, t^*) = h_s(x, t-1) + S(x, t)
 
     - Compute the melt flux :math:`m_{lt}`
 
@@ -85,17 +85,17 @@ Snow operator :math:`\mathcal{M}_{snw}`
             \begin{cases}
 
                 0 &\text{if} \; T_e(x, t) \leq 0 \\
-                \min\left(\tilde{h_s}(x, t^*), k_{mlt}(x)\times T_e(x, t)\right) &\text{otherwise}
+                \min\left(h_s(x, t^*), k_{mlt}(x)\times T_e(x, t)\right) &\text{otherwise}
 
             \end{cases}
 
         \end{eqnarray}
 
-    - Update the normalized snow reservoir state :math:`\tilde{h_s}`
+    - Update the snow reservoir state :math:`h_s`
 
     .. math::
 
-        \tilde{h_s}(x, t) = \tilde{h_s}(x, t^*) - m_{lt}(x, t)
+        h_s(x, t) = h_s(x, t^*) - m_{lt}(x, t)
 
 .. _math_num_documentation.forward_structure.hydrological_module:
 
@@ -210,7 +210,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             \begin{cases}
 
                 0 &\text{if} \; p_n(x, t) \leq 0 \\
-                p_n(x, t) - (\tilde{h_p}(x, t^*) - \tilde{h_p}(x, t - 1))c_p(x) &\text{otherwise}
+                p_n(x, t) - p_s(x, t) &\text{otherwise}
 
             \end{cases}
 
@@ -238,7 +238,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -391,7 +391,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
         - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
         - Parameters: :math:`\{c_i, c_p, c_t, b_e, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
-        - Normalized states: :math:`\{\tilde{h_i}, \tilde{h_p}, \tilde{h_t}, \tilde{h_e}\}`, where :math:`\tilde{h_i} = \frac{h_i}{c_i}`, :math:`\tilde{h_p} = \frac{h_p}{c_p}`, :math:`\tilde{h_t} = \frac{h_t}{c_t}`, and :math:`\tilde{h_e} = \frac{h_e}{b_e}`, with states :math:`\{h_i, h_p, h_t, h_e\} \in \boldsymbol{h}`
+        - States: :math:`\{h_e\}\in\boldsymbol{h}`
+        - Normalized states: :math:`\{\tilde{h_i}, \tilde{h_p}, \tilde{h_t}\}`, where :math:`\tilde{h_i} = \frac{h_i}{c_i}`, :math:`\tilde{h_p} = \frac{h_p}{c_p}`, and :math:`\tilde{h_t} = \frac{h_t}{c_t}`, with states :math:`\{h_i, h_p, h_t\} \in \boldsymbol{h}`
 
     The function :math:`f` is resolved numerically as follows:
 
@@ -410,7 +411,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into three branches (transfer, exponential and direct), :math:`p_{rr}`, :math:`p_{re}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into three branches (transfer, exponential and direct), :math:`p_{rr}`, :math:`p_{re}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -447,11 +448,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         \tilde{h_t}(x, t) = \tilde{h_t}(x, t^*) - \frac{q_r(x, t)}{c_t(x)}
 
 
-    - Update the normalized exponential state :math:`\tilde{h_e}`
+    - Update the exponential state :math:`h_e`
 
     .. math::
         
-        \tilde{h_e}(x, t^*) = \tilde{h_e}(x, t - 1) + p_{re}
+        h_e(x, t^*) = h_e(x, t - 1) + p_{re}
 
     - Compute the exponential branch elemental discharge :math:`q_{e}`
 
@@ -463,21 +464,21 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             q_{e}(x, t) =
             \begin{cases}
                 
-                b_e(x) \ln \left( 1 + \exp \left( \frac{\tilde{h_e}(x, t^*)}{b_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{\tilde{h_e}(x, t^*)}{b_e(x)} \lt 7 \\
+                b_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{b_e(x)} \lt 7 \\
 
-                b_e(x) * \exp \left( \frac{\tilde{h_e}(x, t^*)}{b_e(x)} \right) &\text{if} \; \frac{\tilde{h_e}(x, t^*)}{b_e(x)} \lt -7 \\
+                b_e(x) * \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{b_e(x)} \lt -7 \\
 
-                \tilde{h_e}(x, t^*) + \frac{ b_e(x) }{ \exp \left( \frac{\tilde{h_e}(x, t^*)}{b_e(x)} \right) } \; &\text{otherwise}.
+                h_e(x, t^*) + \frac{ b_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{b_e(x)} \right) } \; &\text{otherwise}.
 
             \end{cases}
 
         \end{eqnarray}
 
-    - Update the normalized exponential reservoir state :math:`\tilde{h_e}`
+    - Update the exponential reservoir state :math:`h_e`
 
     .. math::
 
-        \tilde{h_e}(x, t) = \tilde{h_e}(x, t^*) - q_{e}
+        h_e(x, t) = h_e(x, t^*) - q_{e}
 
 
     - Compute the direct branch elemental discharge :math:`q_d`
@@ -544,7 +545,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into three branches (first transfer, second transfer and direct), :math:`p_{rr}`, :math:`p_{rl}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into three branches (first transfer, second transfer and direct), :math:`p_{rr}`, :math:`p_{rl}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -743,7 +744,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -827,7 +828,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
             - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
             - Parameters: :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}\}\in\boldsymbol{\theta}`
-            - States: :math:`\{h_i, h_p, h_t\} \in \boldsymbol{h}`
+            - Normalized states: :math:`\{\tilde{h_i}, \tilde{h_p}, \tilde{h_t}\}`, where :math:`\tilde{h_i} = \frac{h_i}{c_i}`, :math:`\tilde{h_p} = \frac{h_p}{c_p}`, and :math:`\tilde{h_t} = \frac{h_t}{c_t}`, with states :math:`\{h_i, h_p, h_t\} \in \boldsymbol{h}`
         
         The function :math:`f` is resolved numerically as follows:
 
@@ -837,8 +838,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Production** 
 
-        In the classical gr production reservoir formulation, the instantaneous production rate is the ratio between the state and the capacity of the reservoir,
-        :math:`\eta = \left( \frac{h_p}{c_p} \right)^2`. 
+        In the classical GR production reservoir formulation, the instantaneous production rate is the ratio between the state and the capacity of the reservoir,
+        :math:`\eta = \tilde{h_p}^2`.
         The infiltration flux :math:`p_s` is obtained by temporal integration as follows:
 
         .. math::
@@ -857,16 +858,14 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             
             \begin{eqnarray}
 
-                &p_s = & c_p \tanh\left(\frac{p_n}{c_p}\right) \frac{1 - \left( \frac{h_p}{c_p} \right)^2}{1 + \frac{h_p}{c_p} \tanh\left( \frac{p_n}{c_p} \right)} \\
+                &p_s = & c_p \tanh\left(\frac{p_n}{c_p}\right) \frac{1 - \tilde{h_p}^2}{1 + \tilde{h_p} \tanh\left( \frac{p_n}{c_p} \right)} \\
                 
             \end{eqnarray}
 
-        To improve runoff production by a gr reservoir, 
-        even with low production level in dry condition, 
+        To improve runoff production by a GR reservoir, even with low production level in dry condition,
         in the case of high rainfall intensity, in :cite:t:`Astagneau_2022` they suggest a modification 
         of the infiltration rate :math:`p_s` depending on rainfall intensity :math:`p_n`. 
-        Indeed, let's consider the rainfall intensity coefficient :math:`\gamma`,
-        function of weighted rainfall intensity.
+        Indeed, let's consider the rainfall intensity coefficient :math:`\gamma`, function of weighted rainfall intensity.
 
         .. math::
             :nowrap:
@@ -886,7 +885,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
             \begin{eqnarray}
 
-                & \eta = & \left( 1 - \gamma \right) \left( \frac{h_p}{c_p} \right)^2 + \gamma \\
+                & \eta = & \left( 1 - \gamma \right) \tilde{h_p}^2 + \gamma \\
             
             \end{eqnarray}
 
@@ -899,9 +898,9 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
             &p_s& &=& &\int_{t-\Delta t}^{t} (1 - \eta) dt\\
 
-            && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \left(\frac{h_p}{c_p} \right)^2 \right) dt - \int_{t-\Delta t}^{t} \gamma dt\\
+            && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \tilde{h_p}^2 \right) dt - \int_{t-\Delta t}^{t} \gamma dt\\
             
-            && &=& &\left[ \frac{ c_p }{ \sqrt{1-\gamma} } \tanh \left( \frac{\sqrt{1-\gamma} \  h_p}{c_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
+            && &=& &\left[ \frac{ c_p }{ \sqrt{1-\gamma} } \tanh \left( \frac{\sqrt{1-\gamma}}{c_p} \tilde{h_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
             
             \end{eqnarray}
 
@@ -913,11 +912,11 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             
             \begin{eqnarray}
 
-            \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) - \tanh\left( \lambda \frac{h_p}{c_p} \right) &=& 
-            \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
-            &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \lambda \frac{h_p}{c_p} \right) + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \lambda \frac{h_p}{c_p} \right) \tanh \left( \lambda \frac{p_n}{c_p} \right) } \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
-            &\sim& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \lambda \frac{h_p}{c_p} + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right) }  \lambda \frac{h_p}{c_p} \right) \\
-            &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)}
+            \tanh \left( \lambda \tilde{h_p} + \frac{p_n}{c_p} \right) - \tanh\left( \lambda \tilde{h_p} \right) &=&
+            \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \lambda \tilde{h_p} + \frac{p_n}{c_p} \right) \tanh \left( \lambda \tilde{h_p} \right) \right) \\
+            &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \lambda \tilde{h_p} \right) + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \lambda \tilde{h_p} \right) \tanh \left( \lambda \frac{p_n}{c_p} \right) } \tanh \left( \lambda \tilde{h_p} \right) \right) \\
+            &\sim& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \lambda \tilde{h_p} + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \lambda \tilde{h_p} \tanh \left( \lambda \frac{p_n}{c_p} \right) }  \lambda \tilde{h_p} \right) \\
+            &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \tilde{h_p} \right)^2}{1 + \lambda \tilde{h_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)}
             \end{eqnarray}
             
         Thus
@@ -927,7 +926,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             
             \begin{eqnarray}
 
-            p_s &=& \frac{c_p}{\lambda} \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)} - \gamma \Delta t
+            p_s &=& \frac{c_p}{\lambda} \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \tilde{h_p} \right)^2}{1 + \lambda \tilde{h_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)} - \gamma \Delta t
             \end{eqnarray}
 
 
@@ -998,8 +997,8 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
             - Atmospheric forcings: :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
             - Parameters: :math:`\{c_i, c_p, c_t, \alpha_1, \alpha_2, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
-            - States: :math:`\{h_i, h_p, h_t\} \in \boldsymbol{h}`
-        
+            - Normalized states: :math:`\{\tilde{h_i}, \tilde{h_p}, \tilde{h_t}\}`, where :math:`\tilde{h_i} = \frac{h_i}{c_i}`, :math:`\tilde{h_p} = \frac{h_p}{c_p}`, and :math:`\tilde{h_t} = \frac{h_t}{c_t}`, with states :math:`\{h_i, h_p, h_t\} \in \boldsymbol{h}`
+
         The function :math:`f` is resolved numerically as follows:
 
         **Interception**
@@ -1078,7 +1077,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``gr4`` transfer except the equations of splitting the production runoff
+        Same as ``gr4`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
@@ -1135,7 +1134,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             [f_p, f_e, f_{c1}, f_{c2}, f_l](x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}, \tilde{h_e}](x,t-1);\boldsymbol{\rho}\right)
 
         where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
-        :math:`\tilde{h_p}, \tilde{h_t}, \tilde{h_e}` are the normalized states of the production, transfer, and exponential reservoirs; 
+        :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; :math:`h_e` is the state of the exponential reservoir;
         :math:`f_p, f_e, f_{c1}, f_{c2}, f_l` are the corrections applied to internal fluxes as follows.
 
         **Production**
@@ -1148,7 +1147,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``gr6`` transfer except the equations of splitting the production runoff
+        Same as ``gr6`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
@@ -1188,7 +1187,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``grc`` transfer except the equations of splitting the production runoff
+        Same as ``grc`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
@@ -1254,7 +1253,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``loieau`` transfer except the equations of splitting the production runoff
+        Same as ``loieau`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
@@ -1378,9 +1377,9 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         \begin{eqnarray}
 
-        &p_s(x, t)& &=& &c_p(x) (1 - h_p(x, t - 1)^2) \frac{\tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}{1 + h_p(x, t - 1) \tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}\\
+        &p_s(x, t)& &=& &c_p(x) (1 - \tilde{h_p}(x, t - 1)^2) \frac{\tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}{1 + \tilde{h_p}(x, t - 1) \tanh\left(\frac{p_n(x, t)}{c_p(x)}\right)}\\
 
-        &e_s(x, t)& &=& &(1 - imperv(x)) \left(h_p(x, t - 1) c_p(x) (2 - h_p(x, t - 1)) \frac{\tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)}{1 + (1 - h_p(x, t - 1)) \tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)} \right)
+        &e_s(x, t)& &=& &(1 - imperv(x)) \left(\tilde{h_p}(x, t - 1) c_p(x) (2 - \tilde{h_p}(x, t - 1)) \frac{\tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)}{1 + (1 - \tilde{h_p}(x, t - 1)) \tanh\left(\frac{e_n(x, t)}{c_p(x)}\right)} \right)
         \end{eqnarray}
 
 .. _math_num_documentation.forward_structure.hydrological_module.vic3l:
@@ -1743,7 +1742,7 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
         - Surface discharge: :math:`Q`
         - Internal fluxes: :math:`\{q_{t}\}\in\boldsymbol{q}`
         - Parameters: :math:`\{l_{lr}\}\in\boldsymbol{\theta}`
-        - Normalized states: :math:`\{\tilde{h_{lr}}\}`, where :math:`\tilde{h_{lr}} = \frac{h_{lr}}{l_{lr}}`, with states :math:`\{h_{lr}\} \in \boldsymbol{h}`
+        - States: :math:`\{h_{lr}\}\in\boldsymbol{h}`
 
     The function :math:`f` is resolved numerically as follows:
 
@@ -1753,11 +1752,11 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
     **Surface discharge**
 
-    - Update the normalized routing reservoir state :math:`\tilde{h_{lr}}`
+    - Update the routing reservoir state :math:`h_{lr}`
 
     .. math::
 
-        \tilde{h_{lr}}(x, t^*) = \tilde{h_{lr}}(x, t) + \frac{1}{\beta(x)} q_{up}(x, t)
+        h_{lr}(x, t^*) = h_{lr}(x, t) + \frac{1}{\beta(x)} q_{up}(x, t)
 
     with :math:`\beta` a conversion factor from :math:`mm.\Delta t^{-1}` to :math:`m^3.s^{-1}` for the whole upstream domain :math:`\Omega_x`.
 
@@ -1765,13 +1764,13 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 
     .. math::
 
-        q_{rt}(x, t) = \tilde{h_{lr}}(x, t^*) \left(1 - \exp\left(\frac{-\Delta t}{60\times l_{lr}}\right)\right)
+        q_{rt}(x, t) = h_{lr}(x, t^*) \left(1 - \exp\left(\frac{-\Delta t}{60\times l_{lr}}\right)\right)
 
-    - Update the normalized routing reservoir state :math:`\tilde{h_{lr}}`
+    - Update the routing reservoir state :math:`h_{lr}`
 
     .. math::
 
-        \tilde{h_{lr}}(x, t) = \tilde{h_{lr}}(x, t^*) - q_{rt}(x, t)
+        h_{lr}(x, t) = h_{lr}(x, t^*) - q_{rt}(x, t)
 
     - Compute the surface discharge :math:`Q`
 
