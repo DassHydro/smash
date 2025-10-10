@@ -10,7 +10,7 @@
 </h1><br>
 
 [![PyPI](https://badge.fury.io/py/hydro-smash.svg)](https://badge.fury.io/py/hydro-smash)
-[![DOI](https://img.shields.io/badge/DOI-10.5194%2Fegusphere--2025--690-blue)](https://doi.org/10.5194/egusphere-2025-690)
+[![DOI](https://img.shields.io/badge/DOI-10.5194%2Fgmd--18--7003--2025-blue)](https://doi.org/10.5194/gmd-18-7003-2025)
 
 **smash** (**S**patially distributed **M**odeling and **AS**similation for **H**ydrology) is a Python library, interfaced with an efficient Fortran computational engine, that provides user-friendly routines for both hydrological research and operational applications.
 
@@ -40,20 +40,21 @@ For **smash** software use, please cite:
 
 > Colleoni, F., Huynh, N. N. T., Garambois, P.-A., Jay-Allemand, M., Organde, D., Renard, B., De Fournas, T., El Baz, A., Demargne, J., and Javelle, P. (2025). 
 > SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework. 
-> EGUsphere, 2025, 1–36. 
-> https://doi.org/10.5194/egusphere-2025-690.
+> Geosci. Model Dev., 18, 2025, 7003–7034. 
+> https://doi.org/10.5194/gmd-18-7003-2025.
 
 BibTeX entry:
 
 ```bibtex
 @article{Colleoni2025smash,
     author  = {Colleoni, François and Huynh, Ngo Nghi Truyen and Garambois, Pierre-André and Jay-Allemand, Maxime and Organde, Didier and Renard, Benjamin and De Fournas, Thomas and El Baz, Apolline and Demargne, Julie and Javelle, Pierre},
-    title   = {SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework},
-    journal = {EGUsphere},
-    volume  = {2025},
+    title   = {SMASH v1.0: a differentiable and regionalizable high-resolution hydrological modeling and data assimilation framework},
+    journal = {Geoscientific Model Development},
+    volume  = {18},
     year    = {2025},
-    pages   = {1--36},
-    doi     = {10.5194/egusphere-2025-690}
+    number  = {19},
+    pages   = {7003--7034},
+    doi     = {10.5194/gmd-18-7003-2025}
 }
 ```
 

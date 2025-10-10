@@ -5,8 +5,8 @@ For **smash** software use, please cite:
 
     Colleoni, F., Huynh, N. N. T., Garambois, P.-A., Jay-Allemand, M., Organde, D., Renard, B., De Fournas, T., El Baz, A., Demargne, J., and Javelle, P. (2025). 
     SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework. 
-    EGUsphere, 2025, 1–36. 
-    `<https://doi.org/10.5194/egusphere-2025-690>`_.
+    Geosci. Model Dev., 18, 2025, 7003–7034. 
+    `<https://doi.org/10.5194/gmd-18-7003-2025>`_.
 
 BibTeX entry:
 
@@ -14,12 +14,13 @@ BibTeX entry:
 
     @article{Colleoni2025smash,
         author  = {Colleoni, François and Huynh, Ngo Nghi Truyen and Garambois, Pierre-André and Jay-Allemand, Maxime and Organde, Didier and Renard, Benjamin and De Fournas, Thomas and El Baz, Apolline and Demargne, Julie and Javelle, Pierre},
-        title   = {SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework},
-        journal = {EGUsphere},
-        volume  = {2025},
+        title   = {SMASH v1.0: a differentiable and regionalizable high-resolution hydrological modeling and data assimilation framework},
+        journal = {Geoscientific Model Development},
+        volume  = {18},
         year    = {2025},
-        pages   = {1--36},
-        doi     = {10.5194/egusphere-2025-690}
+        number  = {19},
+        pages   = {7003--7034},
+        doi     = {10.5194/gmd-18-7003-2025}
     }
 
 Please also cite the relevant references corresponding to the algorithms and methods used:
