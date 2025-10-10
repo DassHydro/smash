@@ -210,7 +210,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
             \begin{cases}
 
                 0 &\text{if} \; p_n(x, t) \leq 0 \\
-                p_n(x, t) - (\tilde{h_p}(x, t^*) - \tilde{h_p}(x, t - 1))c_p(x) &\text{otherwise}
+                p_n(x, t) - p_s(x, t) &\text{otherwise}
 
             \end{cases}
 
@@ -238,7 +238,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -410,7 +410,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into three branches (transfer, exponential and direct), :math:`p_{rr}`, :math:`p_{re}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into three branches (transfer, exponential and direct), :math:`p_{rr}`, :math:`p_{re}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -544,7 +544,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into three branches (first transfer, second transfer and direct), :math:`p_{rr}`, :math:`p_{rl}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into three branches (first transfer, second transfer and direct), :math:`p_{rr}`, :math:`p_{rl}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -743,7 +743,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     **Transfer**
 
-    - Split the production runoff :math:`p_r` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
+    - Split the production runoff and percolation :math:`p_r+p_{erc}` into two branches (transfer and direct), :math:`p_{rr}` and :math:`p_{rd}`
 
     .. math::
         :nowrap:
@@ -1078,7 +1078,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``gr4`` transfer except the equations of splitting the production runoff
+        Same as ``gr4`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
@@ -1148,7 +1148,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``gr6`` transfer except the equations of splitting the production runoff
+        Same as ``gr6`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
@@ -1188,7 +1188,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``grc`` transfer except the equations of splitting the production runoff
+        Same as ``grc`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
@@ -1254,7 +1254,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         **Transfer**
 
-        Same as ``loieau`` transfer except the equations of splitting the production runoff
+        Same as ``loieau`` transfer except the equations of splitting the production runoff and percolation :math:`p_r+p_{erc}`
 
         .. math::
             :nowrap:
