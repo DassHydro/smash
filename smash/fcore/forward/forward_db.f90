@@ -12976,11 +12976,13 @@ CONTAINS
 ! SiLU
       CALL PUSHREAL4ARRAY(inter_layer_2, SIZE(bias_2))
       inter_layer_2 = inter_layer_2*(1._sp/(1._sp+EXP(-inter_layer_2)))
+      CALL PUSHREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2, output_layer)
 ! TanH
       temp_b = (1.0-TANH(output_layer+bias_3)**2)*output_layer_b
       output_layer_b = temp_b
       bias_3_b = bias_3_b + temp_b
+      CALL POPREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D_B(weight_3, weight_3_b, inter_layer_2, &
 &                        inter_layer_2_b, output_layer, output_layer_b)
       CALL POPREAL4ARRAY(inter_layer_2, SIZE(bias_2))
@@ -12993,11 +12995,13 @@ CONTAINS
 &                       )
     ELSE
 ! Case with 2 layers
+      CALL PUSHREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, output_layer)
 ! TanH
       temp_b0 = (1.0-TANH(output_layer+bias_2)**2)*output_layer_b
       output_layer_b = temp_b0
       bias_2_b = bias_2_b + temp_b0
+      CALL POPREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1, &
 &                        inter_layer_1_b, output_layer, output_layer_b)
     END IF
@@ -13715,7 +13719,7 @@ CONTAINS
   END SUBROUTINE GR_INTERCEPTION
 
 !  Differentiation of gr_production in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: hp pn perc pr
+!   variations   of useful results: hp perc pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_D(fq_ps, fq_ps_d, fq_es, fq_es_d, pn, pn_d, &
 &   en, en_d, imperviousness, cp, cp_d, beta, hp, hp_d, pr, pr_d, perc, &
@@ -13800,8 +13804,7 @@ CONTAINS
   END SUBROUTINE GR_PRODUCTION_D
 
 !  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: fq_ps hp en fq_es cp pn perc
-!                pr
+!   gradient     of useful results: fq_ps hp fq_es cp perc pr
 !   with respect to varying inputs: fq_ps hp en fq_es cp pn
   SUBROUTINE GR_PRODUCTION_B(fq_ps, fq_ps_b, fq_es, fq_es_b, pn, pn_b, &
 &   en, en_b, imperviousness, cp, cp_b, beta, hp, hp_b, pr, pr_b, perc, &
@@ -13884,9 +13887,10 @@ CONTAINS
 &     4
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      pn_b = pn_b + pr_b
+      pn_b = pr_b
       ps_b = -pr_b
     ELSE
+      pn_b = 0.0_4
       ps_b = 0.0_4
     END IF
     hp_b = hp_imd_b
@@ -13899,8 +13903,9 @@ CONTAINS
       CALL POPREAL4(es)
       fq_es_b = fq_es_b + es*es_b
       es_b = (fq_es+1._sp)*es_b
+      en_b = 0.0_4
     ELSE
-      en_b = en_b + es_b
+      en_b = es_b
       es_b = 0.0_4
     END IF
     temp4 = TANH(en*inv_cp)
@@ -15862,8 +15867,6 @@ CONTAINS
 &             col)
             CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
-            pn_b = 0.0_4
-            en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
 &                          ), ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr&
@@ -15992,16 +15995,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_d
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
-&   , qd
-    REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
+    REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16012,85 +16014,56 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    en_d = 0.0_4
-    pn_d = 0.0_4
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
-&                            , pn(k), pn_d(k), en(k), en_d(k))
-          ELSE
-            pn_d(k) = 0.0_4
-            pn(k) = 0._sp
-            en_d(k) = 0.0_4
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-    output_layer_d = 0.0_4
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d(k), en_d(k&
-&             )/)
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+&                            , pn, pn_d, en, en_d)
+! Forward MLP
+            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d, en_d/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
             CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
 &                        weight_2, weight_2_d, bias_2, bias_2_d, &
 &                        weight_3, weight_3_d, bias_3, bias_3_d, &
-&                        input_layer, input_layer_d, output_layer(:, k)&
-&                        , output_layer_d(:, k))
+&                        input_layer, input_layer_d, output_layer, &
+&                        output_layer_d)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION_D(output_layer(1), output_layer_d(1), &
+&                          output_layer(2), output_layer_d(2), pn, pn_d&
+&                          , en, en_d, imperviousness, ac_cp(k), ac_cp_d&
+&                          (k), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
+! Exchange
+            CALL GR_EXCHANGE_D(output_layer(4), output_layer_d(4), &
+&                        ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k)&
+&                        , l, l_d)
           ELSE
-            output_layer_d(:, k) = 0.0_4
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
-&                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), &
-&                          imperviousness, ac_cp(k), ac_cp_d(k), beta, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
-&                          , ps, es)
-            CALL GR_EXCHANGE_D(output_layer(4, k), output_layer_d(4, k)&
-&                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
-&                        ), l, l_d)
-          ELSE
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
             l_d = 0.0_4
+            output_layer_d = 0.0_4
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
-          temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
-          prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
-&           , k)*output_layer_d(3, k)) + l_d
-          prr = 0.9_sp*(temp*(pr+perc)) + l
+          prr_d = 0.9_sp*((1._sp-output_layer(3)**2)*(pr_d+perc_d)-(pr+&
+&           perc)*2*output_layer(3)*output_layer_d(3)) + l_d
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc) + l
 ! Range of correction c0.1: (1, 10)
-          temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
-          prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
-&           , k) + temp*(pr_d+perc_d)
+          temp = 0.9_sp*(output_layer(3)*output_layer(3)) + 0.1_sp
+          prd_d = (pr+perc)*0.9_sp*2*output_layer(3)*output_layer_d(3) +&
+&           temp*(pr_d+perc_d)
           prd = temp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
@@ -16163,16 +16136,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_b
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
-&   , qd
-    REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
+    REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
     INTEGER :: branch
@@ -16183,72 +16155,44 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4(ac_hi(k))
-            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
-            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            output_layer(:, k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
+            CALL PUSHREAL4(en)
+            CALL PUSHREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn, en)
+! Forward MLP
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL PUSHREAL4(pn(k))
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
-            CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
-&                     )
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), beta, ac_hp(k), pr&
+&                        , perc, ps, es)
+! Exchange
+            CALL GR_EXCHANGE(output_layer(4), ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            output_layer = 0._sp
             CALL PUSHREAL4(pr)
             pr = 0._sp
             CALL PUSHREAL4(perc)
@@ -16256,11 +16200,12 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
-          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc) + l
 ! Range of correction c0.1: (1, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -16273,13 +16218,12 @@ CONTAINS
         END IF
       END DO
     END DO
-    output_layer_b = 0.0_4
-    en_b = 0.0_4
-    pn_b = 0.0_4
+    ac_prcp_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
           qr_b = ac_qt_b(k)
@@ -16296,14 +16240,15 @@ CONTAINS
           CALL POPREAL4(ac_ht(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
 &                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
-          output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
-&           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(pr+perc)&
-&           *0.9_sp*prr_b
-          temp_b = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
+          output_layer_b = 0.0_4
+          output_layer_b(3) = output_layer_b(3) + 2*output_layer(3)*&
+&           0.9_sp*(pr+perc)*prd_b - 2*output_layer(3)*(pr+perc)*0.9_sp*&
+&           prr_b
+          temp_b = (0.9_sp*output_layer(3)**2+0.1_sp)*prd_b
           pr_b = temp_b
           perc_b = temp_b
           CALL POPREAL4(prr)
-          temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
+          temp_b = (1._sp-output_layer(3)**2)*0.9_sp*prr_b
           l_b = l_b + prr_b
           pr_b = pr_b + temp_b
           perc_b = perc_b + temp_b
@@ -16311,68 +16256,40 @@ CONTAINS
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(perc)
             CALL POPREAL4(pr)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
           ELSE
-            CALL GR_EXCHANGE_B(output_layer(4, k), output_layer_b(4, k)&
-&                        , ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k&
-&                        ), l, l_b)
+            CALL GR_EXCHANGE_B(output_layer(4), output_layer_b(4), &
+&                        ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k)&
+&                        , l, l_b)
             imperviousness = input_data%physio_data%imperviousness(row, &
 &             col)
-            CALL POPREAL4(pn(k))
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
-&                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), &
-&                          imperviousness, ac_cp(k), ac_cp_b(k), beta, &
-&                          ac_hp(k), ac_hp_b(k), pr, pr_b, perc, perc_b&
-&                          , ps, es)
-          END IF
-          CALL POPINTEGER4(k)
-        END IF
-      END DO
-    END DO
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            output_layer_b(:, k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL GR_PRODUCTION_B(output_layer(1), output_layer_b(1), &
+&                          output_layer(2), output_layer_b(2), pn, pn_b&
+&                          , en, en_b, imperviousness, ac_cp(k), ac_cp_b&
+&                          (k), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+&                          perc, perc_b, ps, es)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
             CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
 &                        weight_2, weight_2_b, bias_2, bias_2_b, &
 &                        weight_3, weight_3_b, bias_3, bias_3_b, &
-&                        input_layer, input_layer_b, output_layer(:, k)&
-&                        , output_layer_b(:, k))
-            output_layer_b(:, k) = 0.0_4
+&                        input_layer, input_layer_b, output_layer, &
+&                        output_layer_b)
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
             ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
-            pn_b(k) = pn_b(k) + input_layer_b(3)
-            en_b(k) = en_b(k) + input_layer_b(4)
-          END IF
-        END IF
-      END DO
-    END DO
-    ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            en_b(k) = 0.0_4
-            pn_b(k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            pn_b = pn_b + input_layer_b(3)
+            en_b = en_b + input_layer_b(4)
             CALL POPREAL4(ac_hi(k))
+            CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
-&                            , pn(k), pn_b(k), en(k), en_b(k))
-            pn_b(k) = 0.0_4
-            en_b(k) = 0.0_4
+&                            , pn, pn_b, en, en_b)
           END IF
         END IF
       END DO
@@ -16405,12 +16322,11 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
-&   , qd
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16419,62 +16335,41 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+&                          k), pn, en)
+! Forward MLP
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
             CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), beta, ac_hp(k), pr&
+&                        , perc, ps, es)
+! Exchange
+            CALL GR_EXCHANGE(output_layer(4), ac_kexc(k), ac_ht(k), l)
           ELSE
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
-            CALL GR_EXCHANGE(output_layer(4, k), ac_kexc(k), ac_ht(k), l&
-&                     )
-          ELSE
+            pn = 0._sp
+            en = 0._sp
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
-          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc) + l
 ! Range of correction c0.1: (1, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           IF (0._sp .LT. prd + l) THEN
@@ -16887,12 +16782,18 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
-          CALL GR_PRODUCTION_TRANSFER_ODE_D(pn(k), pn_d(k), en(k), en_d(&
-&                                     k), imperviousness, ac_cp(k), &
-&                                     ac_cp_d(k), ac_ct(k), ac_ct_d(k), &
-&                                     ac_kexc(k), ac_kexc_d(k), ac_hp(k)&
-&                                     , ac_hp_d(k), ac_ht(k), ac_ht_d(k)&
-&                                     , ac_qt(k), ac_qt_d(k), l)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION_TRANSFER_ODE_D(pn(k), pn_d(k), en(k), &
+&                                       en_d(k), imperviousness, ac_cp(k&
+&                                       ), ac_cp_d(k), ac_ct(k), ac_ct_d&
+&                                       (k), ac_kexc(k), ac_kexc_d(k), &
+&                                       ac_hp(k), ac_hp_d(k), ac_ht(k), &
+&                                       ac_ht_d(k), ac_qt(k), ac_qt_d(k)&
+&                                       , l)
+          ELSE
+            ac_qt_d(k) = 0.0_4
+            ac_qt(k) = 0._sp
+          END IF
 ! Transform from mm/dt to m3/s
           temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
           ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
@@ -16970,14 +16871,18 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
-          CALL PUSHREAL4(ac_qt(k))
-          CALL PUSHREAL4(ac_ht(k))
-          CALL PUSHREAL4(ac_hp(k))
-          CALL PUSHREAL4(pn(k))
-          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), imperviousness, &
-&                                   ac_cp(k), ac_ct(k), ac_kexc(k), &
-&                                   ac_hp(k), ac_ht(k), ac_qt(k), l)
-! Transform from mm/dt to m3/s
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4(ac_qt(k))
+            CALL PUSHREAL4(ac_ht(k))
+            CALL PUSHREAL4(ac_hp(k))
+            CALL PUSHREAL4(pn(k))
+            CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), imperviousness&
+&                                     , ac_cp(k), ac_ct(k), ac_kexc(k), &
+&                                     ac_hp(k), ac_ht(k), ac_qt(k), l)
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
@@ -16991,19 +16896,25 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          CALL POPREAL4(pn(k))
-          CALL POPREAL4(ac_hp(k))
-          CALL POPREAL4(ac_ht(k))
-          CALL POPREAL4(ac_qt(k))
-          CALL GR_PRODUCTION_TRANSFER_ODE_B(pn(k), pn_b(k), en(k), en_b(&
-&                                     k), imperviousness, ac_cp(k), &
-&                                     ac_cp_b(k), ac_ct(k), ac_ct_b(k), &
-&                                     ac_kexc(k), ac_kexc_b(k), ac_hp(k)&
-&                                     , ac_hp_b(k), ac_ht(k), ac_ht_b(k)&
-&                                     , ac_qt(k), ac_qt_b(k), l)
-          ac_qt_b(k) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
+            CALL POPREAL4(ac_hp(k))
+            CALL POPREAL4(ac_ht(k))
+            CALL POPREAL4(ac_qt(k))
+            CALL GR_PRODUCTION_TRANSFER_ODE_B(pn(k), pn_b(k), en(k), &
+&                                       en_b(k), imperviousness, ac_cp(k&
+&                                       ), ac_cp_b(k), ac_ct(k), ac_ct_b&
+&                                       (k), ac_kexc(k), ac_kexc_b(k), &
+&                                       ac_hp(k), ac_hp_b(k), ac_ht(k), &
+&                                       ac_ht_b(k), ac_qt(k), ac_qt_b(k)&
+&                                       , l)
+            ac_qt_b(k) = 0.0_4
+          ELSE
+            ac_qt_b(k) = 0.0_4
+          END IF
         END IF
       END DO
     END DO
@@ -17078,9 +16989,14 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
-          CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), imperviousness, &
-&                                   ac_cp(k), ac_ct(k), ac_kexc(k), &
-&                                   ac_hp(k), ac_ht(k), ac_qt(k), l)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION_TRANSFER_ODE(pn(k), en(k), imperviousness&
+&                                     , ac_cp(k), ac_ct(k), ac_kexc(k), &
+&                                     ac_hp(k), ac_ht(k), ac_qt(k), l)
+          ELSE
+            ac_qt(k) = 0._sp
+            l = 0._sp
+          END IF
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt
@@ -17224,19 +17140,25 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
-          CALL GR_PRODUCTION_TRANSFER_ODE_MLP_D(output_layer(:, k), &
-&                                         output_layer_d(:, k), &
-&                                         output_jacobian_1(:, k), &
-&                                         output_jacobian_1_d(:, k), &
-&                                         output_jacobian_2(:, k), &
-&                                         output_jacobian_2_d(:, k), pn(&
-&                                         k), pn_d(k), en(k), en_d(k), &
-&                                         imperviousness, ac_cp(k), &
-&                                         ac_cp_d(k), ac_ct(k), ac_ct_d(&
-&                                         k), ac_kexc(k), ac_kexc_d(k), &
-&                                         ac_hp(k), ac_hp_d(k), ac_ht(k)&
-&                                         , ac_ht_d(k), ac_qt(k), &
-&                                         ac_qt_d(k), l)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION_TRANSFER_ODE_MLP_D(output_layer(:, k), &
+&                                           output_layer_d(:, k), &
+&                                           output_jacobian_1(:, k), &
+&                                           output_jacobian_1_d(:, k), &
+&                                           output_jacobian_2(:, k), &
+&                                           output_jacobian_2_d(:, k), &
+&                                           pn(k), pn_d(k), en(k), en_d(&
+&                                           k), imperviousness, ac_cp(k)&
+&                                           , ac_cp_d(k), ac_ct(k), &
+&                                           ac_ct_d(k), ac_kexc(k), &
+&                                           ac_kexc_d(k), ac_hp(k), &
+&                                           ac_hp_d(k), ac_ht(k), &
+&                                           ac_ht_d(k), ac_qt(k), &
+&                                           ac_qt_d(k), l)
+          ELSE
+            ac_qt_d(k) = 0.0_4
+            ac_qt(k) = 0._sp
+          END IF
 ! Transform from mm/dt to m3/s
           temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
           ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
@@ -17376,17 +17298,22 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
-          CALL PUSHREAL4(ac_qt(k))
-          CALL PUSHREAL4(ac_ht(k))
-          CALL PUSHREAL4(ac_hp(k))
-          CALL PUSHREAL4(pn(k))
-          CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
-&                                       output_jacobian_1(:, k), &
-&                                       output_jacobian_2(:, k), pn(k), &
-&                                       en(k), imperviousness, ac_cp(k)&
-&                                       , ac_ct(k), ac_kexc(k), ac_hp(k)&
-&                                       , ac_ht(k), ac_qt(k), l)
-! Transform from mm/dt to m3/s
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL PUSHREAL4(ac_qt(k))
+            CALL PUSHREAL4(ac_ht(k))
+            CALL PUSHREAL4(ac_hp(k))
+            CALL PUSHREAL4(pn(k))
+            CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
+&                                         output_jacobian_1(:, k), &
+&                                         output_jacobian_2(:, k), pn(k)&
+&                                         , en(k), imperviousness, ac_cp&
+&                                         (k), ac_ct(k), ac_kexc(k), &
+&                                         ac_hp(k), ac_ht(k), ac_qt(k), &
+&                                         l)
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
@@ -17403,26 +17330,32 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          CALL POPREAL4(pn(k))
-          CALL POPREAL4(ac_hp(k))
-          CALL POPREAL4(ac_ht(k))
-          CALL POPREAL4(ac_qt(k))
-          CALL GR_PRODUCTION_TRANSFER_ODE_MLP_B(output_layer(:, k), &
-&                                         output_layer_b(:, k), &
-&                                         output_jacobian_1(:, k), &
-&                                         output_jacobian_1_b(:, k), &
-&                                         output_jacobian_2(:, k), &
-&                                         output_jacobian_2_b(:, k), pn(&
-&                                         k), pn_b(k), en(k), en_b(k), &
-&                                         imperviousness, ac_cp(k), &
-&                                         ac_cp_b(k), ac_ct(k), ac_ct_b(&
-&                                         k), ac_kexc(k), ac_kexc_b(k), &
-&                                         ac_hp(k), ac_hp_b(k), ac_ht(k)&
-&                                         , ac_ht_b(k), ac_qt(k), &
-&                                         ac_qt_b(k), l)
-          ac_qt_b(k) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL POPREAL4(pn(k))
+            CALL POPREAL4(ac_hp(k))
+            CALL POPREAL4(ac_ht(k))
+            CALL POPREAL4(ac_qt(k))
+            CALL GR_PRODUCTION_TRANSFER_ODE_MLP_B(output_layer(:, k), &
+&                                           output_layer_b(:, k), &
+&                                           output_jacobian_1(:, k), &
+&                                           output_jacobian_1_b(:, k), &
+&                                           output_jacobian_2(:, k), &
+&                                           output_jacobian_2_b(:, k), &
+&                                           pn(k), pn_b(k), en(k), en_b(&
+&                                           k), imperviousness, ac_cp(k)&
+&                                           , ac_cp_b(k), ac_ct(k), &
+&                                           ac_ct_b(k), ac_kexc(k), &
+&                                           ac_kexc_b(k), ac_hp(k), &
+&                                           ac_hp_b(k), ac_ht(k), &
+&                                           ac_ht_b(k), ac_qt(k), &
+&                                           ac_qt_b(k), l)
+            ac_qt_b(k) = 0.0_4
+          ELSE
+            ac_qt_b(k) = 0.0_4
+          END IF
         END IF
       END DO
     END DO
@@ -17568,12 +17501,18 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           imperviousness = input_data%physio_data%imperviousness(row, &
 &           col)
-          CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
-&                                       output_jacobian_1(:, k), &
-&                                       output_jacobian_2(:, k), pn(k), &
-&                                       en(k), imperviousness, ac_cp(k)&
-&                                       , ac_ct(k), ac_kexc(k), ac_hp(k)&
-&                                       , ac_ht(k), ac_qt(k), l)
+          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            CALL GR_PRODUCTION_TRANSFER_ODE_MLP(output_layer(:, k), &
+&                                         output_jacobian_1(:, k), &
+&                                         output_jacobian_2(:, k), pn(k)&
+&                                         , en(k), imperviousness, ac_cp&
+&                                         (k), ac_ct(k), ac_kexc(k), &
+&                                         ac_hp(k), ac_ht(k), ac_qt(k), &
+&                                         l)
+          ELSE
+            ac_qt(k) = 0._sp
+            l = 0._sp
+          END IF
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt
@@ -17796,8 +17735,6 @@ CONTAINS
 &             col)
             CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
-            pn_b = 0.0_4
-            en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
 &                          ), ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr&
@@ -17927,16 +17864,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_d
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
-&   , qd
-    REAL(sp) :: pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
+    REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -17947,86 +17883,57 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    en_d = 0.0_4
-    pn_d = 0.0_4
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
-&                            , pn(k), pn_d(k), en(k), en_d(k))
-          ELSE
-            pn_d(k) = 0.0_4
-            pn(k) = 0._sp
-            en_d(k) = 0.0_4
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-    output_layer_d = 0.0_4
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d(k), en_d(k&
-&             )/)
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+&                            , pn, pn_d, en, en_d)
+! Forward MLP
+            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d, en_d/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
             CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
 &                        weight_2, weight_2_d, bias_2, bias_2_d, &
 &                        weight_3, weight_3_d, bias_3, bias_3_d, &
-&                        input_layer, input_layer_d, output_layer(:, k)&
-&                        , output_layer_d(:, k))
+&                        input_layer, input_layer_d, output_layer, &
+&                        output_layer_d)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION_D(output_layer(1), output_layer_d(1), &
+&                          output_layer(2), output_layer_d(2), pn, pn_d&
+&                          , en, en_d, imperviousness, ac_cp(k), ac_cp_d&
+&                          (k), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
+! Exchange
+            CALL GR_THRESHOLD_EXCHANGE_D(output_layer(4), output_layer_d&
+&                                  (4), ac_kexc(k), ac_kexc_d(k), &
+&                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
+&                                  ac_ht_d(k), l, l_d)
           ELSE
-            output_layer_d(:, k) = 0.0_4
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
-&                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), &
-&                          imperviousness, ac_cp(k), ac_cp_d(k), beta, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
-&                          , ps, es)
-            CALL GR_THRESHOLD_EXCHANGE_D(output_layer(4, k), &
-&                                  output_layer_d(4, k), ac_kexc(k), &
-&                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
-&                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
-          ELSE
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
             l_d = 0.0_4
+            output_layer_d = 0.0_4
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
-          temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
-          prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
-&           , k)*output_layer_d(3, k)) + l_d
-          prr = 0.9_sp*(temp*(pr+perc)) + l
+          prr_d = 0.9_sp*((1._sp-output_layer(3)**2)*(pr_d+perc_d)-(pr+&
+&           perc)*2*output_layer(3)*output_layer_d(3)) + l_d
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc) + l
 ! Range of correction c0.1: (1, 10)
-          temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
-          prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
-&           , k) + temp*(pr_d+perc_d)
+          temp = 0.9_sp*(output_layer(3)*output_layer(3)) + 0.1_sp
+          prd_d = (pr+perc)*0.9_sp*2*output_layer(3)*output_layer_d(3) +&
+&           temp*(pr_d+perc_d)
           prd = temp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
@@ -18099,16 +18006,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_b
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
-&   , qd
-    REAL(sp) :: pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
+    REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
     INTEGER :: branch
@@ -18119,72 +18025,45 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4(ac_hi(k))
-            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
-            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            output_layer(:, k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
+            CALL PUSHREAL4(en)
+            CALL PUSHREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn, en)
+! Forward MLP
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL PUSHREAL4(pn(k))
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
-            CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), beta, ac_hp(k), pr&
+&                        , perc, ps, es)
+! Exchange
+            CALL GR_THRESHOLD_EXCHANGE(output_layer(4), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            output_layer = 0._sp
             CALL PUSHREAL4(pr)
             pr = 0._sp
             CALL PUSHREAL4(perc)
@@ -18192,11 +18071,12 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
-          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc) + l
 ! Range of correction c0.1: (1, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -18209,13 +18089,12 @@ CONTAINS
         END IF
       END DO
     END DO
-    output_layer_b = 0.0_4
-    en_b = 0.0_4
-    pn_b = 0.0_4
+    ac_prcp_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
           qr_b = ac_qt_b(k)
@@ -18232,14 +18111,15 @@ CONTAINS
           CALL POPREAL4(ac_ht(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
 &                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
-          output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
-&           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(pr+perc)&
-&           *0.9_sp*prr_b
-          temp_b = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
+          output_layer_b = 0.0_4
+          output_layer_b(3) = output_layer_b(3) + 2*output_layer(3)*&
+&           0.9_sp*(pr+perc)*prd_b - 2*output_layer(3)*(pr+perc)*0.9_sp*&
+&           prr_b
+          temp_b = (0.9_sp*output_layer(3)**2+0.1_sp)*prd_b
           pr_b = temp_b
           perc_b = temp_b
           CALL POPREAL4(prr)
-          temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
+          temp_b = (1._sp-output_layer(3)**2)*0.9_sp*prr_b
           l_b = l_b + prr_b
           pr_b = pr_b + temp_b
           perc_b = perc_b + temp_b
@@ -18247,69 +18127,41 @@ CONTAINS
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(perc)
             CALL POPREAL4(pr)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
           ELSE
-            CALL GR_THRESHOLD_EXCHANGE_B(output_layer(4, k), &
-&                                  output_layer_b(4, k), ac_kexc(k), &
-&                                  ac_kexc_b(k), ac_aexc(k), ac_aexc_b(k&
-&                                  ), ac_ht(k), ac_ht_b(k), l, l_b)
+            CALL GR_THRESHOLD_EXCHANGE_B(output_layer(4), output_layer_b&
+&                                  (4), ac_kexc(k), ac_kexc_b(k), &
+&                                  ac_aexc(k), ac_aexc_b(k), ac_ht(k), &
+&                                  ac_ht_b(k), l, l_b)
             imperviousness = input_data%physio_data%imperviousness(row, &
 &             col)
-            CALL POPREAL4(pn(k))
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
-&                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), &
-&                          imperviousness, ac_cp(k), ac_cp_b(k), beta, &
-&                          ac_hp(k), ac_hp_b(k), pr, pr_b, perc, perc_b&
-&                          , ps, es)
-          END IF
-          CALL POPINTEGER4(k)
-        END IF
-      END DO
-    END DO
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            output_layer_b(:, k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL GR_PRODUCTION_B(output_layer(1), output_layer_b(1), &
+&                          output_layer(2), output_layer_b(2), pn, pn_b&
+&                          , en, en_b, imperviousness, ac_cp(k), ac_cp_b&
+&                          (k), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+&                          perc, perc_b, ps, es)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
             CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
 &                        weight_2, weight_2_b, bias_2, bias_2_b, &
 &                        weight_3, weight_3_b, bias_3, bias_3_b, &
-&                        input_layer, input_layer_b, output_layer(:, k)&
-&                        , output_layer_b(:, k))
-            output_layer_b(:, k) = 0.0_4
+&                        input_layer, input_layer_b, output_layer, &
+&                        output_layer_b)
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
             ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
-            pn_b(k) = pn_b(k) + input_layer_b(3)
-            en_b(k) = en_b(k) + input_layer_b(4)
-          END IF
-        END IF
-      END DO
-    END DO
-    ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            en_b(k) = 0.0_4
-            pn_b(k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            pn_b = pn_b + input_layer_b(3)
+            en_b = en_b + input_layer_b(4)
             CALL POPREAL4(ac_hi(k))
+            CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
-&                            , pn(k), pn_b(k), en(k), en_b(k))
-            pn_b(k) = 0.0_4
-            en_b(k) = 0.0_4
+&                            , pn, pn_b, en, en_b)
           END IF
         END IF
       END DO
@@ -18343,12 +18195,11 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr&
-&   , qd
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -18357,62 +18208,42 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+&                          k), pn, en)
+! Forward MLP
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
             CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-          ELSE
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
-            CALL GR_THRESHOLD_EXCHANGE(output_layer(4, k), ac_kexc(k), &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), beta, ac_hp(k), pr&
+&                        , perc, ps, es)
+! Exchange
+            CALL GR_THRESHOLD_EXCHANGE(output_layer(4), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
+            pn = 0._sp
+            en = 0._sp
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
-          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc) + l
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc) + l
 ! Range of correction c0.1: (1, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           IF (0._sp .LT. prd + l) THEN
@@ -19001,8 +18832,6 @@ CONTAINS
 &             col)
             CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
-            pn_b = 0.0_4
-            en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
 &                          ), ac_cp_b(k), beta, ac_hp(k), ac_hp_b(k), pr&
@@ -19137,19 +18966,18 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_d
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
-&   , qr, qd, qe
-    REAL(sp) :: pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d, qd_d, qe_d
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
+    REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, pre_d, prd_d, qr_d&
+&   , qd_d, qe_d
     INTRINSIC MAX
     REAL(sp) :: temp
-    REAL(sp) :: temp0
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -19158,100 +18986,72 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    en_d = 0.0_4
-    pn_d = 0.0_4
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
-&                            , pn(k), pn_d(k), en(k), en_d(k))
-          ELSE
-            pn_d(k) = 0.0_4
-            pn(k) = 0._sp
-            en_d(k) = 0.0_4
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-    output_layer_d = 0.0_4
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+&                            , pn, pn_d, en, en_d)
+! Forward MLP
             input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), ac_he_d(k), &
-&             pn_d(k), en_d(k)/)
-            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn(k), en(k&
-&             )/)
+&             pn_d, en_d/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn, en/)
             CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
 &                        weight_2, weight_2_d, bias_2, bias_2_d, &
 &                        weight_3, weight_3_d, bias_3, bias_3_d, &
-&                        input_layer, input_layer_d, output_layer(:, k)&
-&                        , output_layer_d(:, k))
+&                        input_layer, input_layer_d, output_layer, &
+&                        output_layer_d)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION_D(output_layer(1), output_layer_d(1), &
+&                          output_layer(2), output_layer_d(2), pn, pn_d&
+&                          , en, en_d, imperviousness, ac_cp(k), ac_cp_d&
+&                          (k), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
+! Exchange
+            CALL GR_THRESHOLD_EXCHANGE_D(output_layer(5), output_layer_d&
+&                                  (5), ac_kexc(k), ac_kexc_d(k), &
+&                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
+&                                  ac_ht_d(k), l, l_d)
           ELSE
-            output_layer_d(:, k) = 0.0_4
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
-&                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), &
-&                          imperviousness, ac_cp(k), ac_cp_d(k), beta, &
-&                          ac_hp(k), ac_hp_d(k), pr, pr_d, perc, perc_d&
-&                          , ps, es)
-            CALL GR_THRESHOLD_EXCHANGE_D(output_layer(5, k), &
-&                                  output_layer_d(5, k), ac_kexc(k), &
-&                                  ac_kexc_d(k), ac_aexc(k), ac_aexc_d(k&
-&                                  ), ac_ht(k), ac_ht_d(k), l, l_d)
-          ELSE
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
             l_d = 0.0_4
+            output_layer_d = 0.0_4
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Transfer
 ! Range of correction c0.6: (5/3, 1/3)
 ! Range of correction c0.9: (1, 0)
-          temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
-          temp0 = -(0.4_sp*output_layer(4, k)) + 0.6_sp
-          prr_d = 0.9_sp*(temp*(temp0*(pr_d+perc_d)-(pr+perc)*0.4_sp*&
-&           output_layer_d(4, k))-temp0*(pr+perc)*2*output_layer(3, k)*&
-&           output_layer_d(3, k)) + l_d
-          prr = 0.9_sp*(temp0*(pr+perc)*temp) + l
+          temp = (-(0.4_sp*output_layer(4))+0.6_sp)*(pr+perc)
+          prr_d = 0.9_sp*((1._sp-output_layer(3)**2)*((0.6_sp-0.4_sp*&
+&           output_layer(4))*(pr_d+perc_d)-(pr+perc)*0.4_sp*&
+&           output_layer_d(4))-temp*2*output_layer(3)*output_layer_d(3))&
+&           + l_d
+          prr = 0.9_sp*(temp*(1._sp-output_layer(3)*output_layer(3))) + &
+&           l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
-          temp0 = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
-          temp = (output_layer(4, k)+1._sp)*(pr+perc)
-          pre_d = 0.9_sp*0.4_sp*(temp0*((pr+perc)*output_layer_d(4, k)+(&
-&           output_layer(4, k)+1._sp)*(pr_d+perc_d))-temp*2*output_layer&
-&           (3, k)*output_layer_d(3, k)) + l_d
-          pre = 0.9_sp*0.4_sp*(temp*temp0) + l
+          temp = (output_layer(4)+1._sp)*(pr+perc)
+          pre_d = 0.9_sp*0.4_sp*((1._sp-output_layer(3)**2)*((pr+perc)*&
+&           output_layer_d(4)+(output_layer(4)+1._sp)*(pr_d+perc_d))-&
+&           temp*2*output_layer(3)*output_layer_d(3)) + l_d
+          pre = 0.9_sp*0.4_sp*((1._sp-output_layer(3)*output_layer(3))*&
+&           temp) + l
 ! Range of correction c0.1: (0, 10)
-          temp0 = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + &
-&           0.1_sp
-          prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
-&           , k) + temp0*(pr_d+perc_d)
-          prd = temp0*(pr+perc)
+          temp = 0.9_sp*(output_layer(3)*output_layer(3)) + 0.1_sp
+          prd_d = (pr+perc)*0.9_sp*2*output_layer(3)*output_layer_d(3) +&
+&           temp*(pr_d+perc_d)
+          prd = temp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
           CALL GR_EXPONENTIAL_TRANSFER_D(pre, pre_d, ac_be(k), ac_be_d(k&
@@ -19266,9 +19066,9 @@ CONTAINS
           ac_qt_d(k) = qr_d + qd_d + qe_d
           ac_qt(k) = qr + qd + qe
 ! Transform from mm/dt to m3/s
-          temp0 = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
-          ac_qt_d(k) = temp0*ac_qt_d(k)/setup%dt
-          ac_qt(k) = temp0*(ac_qt(k)/setup%dt)
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
+          ac_qt(k) = temp*(ac_qt(k)/setup%dt)
         END IF
       END DO
     END DO
@@ -19327,21 +19127,20 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_b
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
-&   , qr, qd, qe
-    REAL(sp) :: pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b, qd_b, qe_b
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
+    REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, pre_b, prd_b, qr_b&
+&   , qd_b, qe_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
     REAL(sp) :: temp
     REAL(sp) :: temp_b0
-    REAL(sp) :: temp_b1
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19350,73 +19149,45 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4(ac_hi(k))
-            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
-            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn(k), en(k&
-&             )/)
-            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            output_layer(:, k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
+            CALL PUSHREAL4(en)
+            CALL PUSHREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn, en)
+! Forward MLP
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn, en/)
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL PUSHREAL4(pn(k))
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
-            CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), beta, ac_hp(k), pr&
+&                        , perc, ps, es)
+! Exchange
+            CALL GR_THRESHOLD_EXCHANGE(output_layer(5), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            output_layer = 0._sp
             CALL PUSHREAL4(pr)
             pr = 0._sp
             CALL PUSHREAL4(perc)
@@ -19424,18 +19195,19 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Transfer
 ! Range of correction c0.6: (5/3, 1/3)
 ! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
-          prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+          prr = (0.6_sp-0.4_sp*output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc) + l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(pre)
-          pre = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+          pre = 0.4_sp*(1._sp+output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc) + l
 ! Range of correction c0.1: (0, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -19450,13 +19222,12 @@ CONTAINS
         END IF
       END DO
     END DO
-    output_layer_b = 0.0_4
-    en_b = 0.0_4
-    pn_b = 0.0_4
+    ac_prcp_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
           qr_b = ac_qt_b(k)
@@ -19471,100 +19242,74 @@ CONTAINS
             l_b = 0.0_4
             prd_b = 0.0_4
           END IF
-          temp = -(0.4_sp*output_layer(4, k)) + 0.6_sp
+          temp = -(0.4_sp*output_layer(4)) + 0.6_sp
           CALL POPREAL4(ac_he(k))
           CALL GR_EXPONENTIAL_TRANSFER_B(pre, pre_b, ac_be(k), ac_be_b(k&
 &                                  ), ac_he(k), ac_he_b(k), qe, qe_b)
           CALL POPREAL4(ac_ht(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
 &                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
-          temp_b1 = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
-          pr_b = temp_b1
-          perc_b = temp_b1
+          output_layer_b = 0.0_4
+          temp_b0 = (0.9_sp*output_layer(3)**2+0.1_sp)*prd_b
+          pr_b = temp_b0
+          perc_b = temp_b0
           CALL POPREAL4(pre)
           temp_b0 = 0.9_sp*0.4_sp*pre_b
-          output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
-&           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(&
-&           output_layer(4, k)+1._sp)*(pr+perc)*temp_b0 - 2*output_layer&
-&           (3, k)*temp*(pr+perc)*0.9_sp*prr_b
+          output_layer_b(3) = output_layer_b(3) + 2*output_layer(3)*&
+&           0.9_sp*(pr+perc)*prd_b - 2*output_layer(3)*(output_layer(4)+&
+&           1._sp)*(pr+perc)*temp_b0 - 2*output_layer(3)*temp*(pr+perc)*&
+&           0.9_sp*prr_b
           l_b = l_b + pre_b + prr_b
-          temp_b = (1._sp-output_layer(3, k)**2)*temp_b0
-          output_layer_b(4, k) = output_layer_b(4, k) + (pr+perc)*temp_b
-          temp_b1 = (output_layer(4, k)+1._sp)*temp_b
+          temp_b = (1._sp-output_layer(3)**2)*temp_b0
+          output_layer_b(4) = output_layer_b(4) + (pr+perc)*temp_b
+          pr_b = pr_b + (output_layer(4)+1._sp)*temp_b
+          perc_b = perc_b + (output_layer(4)+1._sp)*temp_b
           CALL POPREAL4(prr)
-          temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
-          pr_b = pr_b + temp_b1 + temp*temp_b
-          perc_b = perc_b + temp_b1 + temp*temp_b
-          output_layer_b(4, k) = output_layer_b(4, k) - 0.4_sp*(pr+perc)&
-&           *temp_b
+          temp_b = (1._sp-output_layer(3)**2)*0.9_sp*prr_b
+          output_layer_b(4) = output_layer_b(4) - 0.4_sp*(pr+perc)*&
+&           temp_b
+          pr_b = pr_b + temp*temp_b
+          perc_b = perc_b + temp*temp_b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(perc)
             CALL POPREAL4(pr)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
           ELSE
-            CALL GR_THRESHOLD_EXCHANGE_B(output_layer(5, k), &
-&                                  output_layer_b(5, k), ac_kexc(k), &
-&                                  ac_kexc_b(k), ac_aexc(k), ac_aexc_b(k&
-&                                  ), ac_ht(k), ac_ht_b(k), l, l_b)
+            CALL GR_THRESHOLD_EXCHANGE_B(output_layer(5), output_layer_b&
+&                                  (5), ac_kexc(k), ac_kexc_b(k), &
+&                                  ac_aexc(k), ac_aexc_b(k), ac_ht(k), &
+&                                  ac_ht_b(k), l, l_b)
             imperviousness = input_data%physio_data%imperviousness(row, &
 &             col)
-            CALL POPREAL4(pn(k))
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
-&                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), &
-&                          imperviousness, ac_cp(k), ac_cp_b(k), beta, &
-&                          ac_hp(k), ac_hp_b(k), pr, pr_b, perc, perc_b&
-&                          , ps, es)
-          END IF
-          CALL POPINTEGER4(k)
-        END IF
-      END DO
-    END DO
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            output_layer_b(:, k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL GR_PRODUCTION_B(output_layer(1), output_layer_b(1), &
+&                          output_layer(2), output_layer_b(2), pn, pn_b&
+&                          , en, en_b, imperviousness, ac_cp(k), ac_cp_b&
+&                          (k), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+&                          perc, perc_b, ps, es)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
             CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
 &                        weight_2, weight_2_b, bias_2, bias_2_b, &
 &                        weight_3, weight_3_b, bias_3, bias_3_b, &
-&                        input_layer, input_layer_b, output_layer(:, k)&
-&                        , output_layer_b(:, k))
-            output_layer_b(:, k) = 0.0_4
+&                        input_layer, input_layer_b, output_layer, &
+&                        output_layer_b)
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
             ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
             ac_he_b(k) = ac_he_b(k) + input_layer_b(3)
-            pn_b(k) = pn_b(k) + input_layer_b(4)
-            en_b(k) = en_b(k) + input_layer_b(5)
-          END IF
-        END IF
-      END DO
-    END DO
-    ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            en_b(k) = 0.0_4
-            pn_b(k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            pn_b = pn_b + input_layer_b(4)
+            en_b = en_b + input_layer_b(5)
             CALL POPREAL4(ac_hi(k))
+            CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
-&                            , pn(k), pn_b(k), en(k), en_b(k))
-            pn_b(k) = 0.0_4
-            en_b(k) = 0.0_4
+&                            , pn, pn_b, en, en_b)
           END IF
         END IF
       END DO
@@ -19599,12 +19344,11 @@ CONTAINS
 &   , ac_he
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd&
-&   , qr, qd, qe
+    REAL(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, &
+&   pre, prd, qr, qd, qe
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -19613,69 +19357,48 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn(k), en(k&
-&             )/)
+&                          k), pn, en)
+! Forward MLP
+            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn, en/)
             CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-          ELSE
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), beta, &
-&                        ac_hp(k), pr, perc, ps, es)
-            CALL GR_THRESHOLD_EXCHANGE(output_layer(5, k), ac_kexc(k), &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), beta, ac_hp(k), pr&
+&                        , perc, ps, es)
+! Exchange
+            CALL GR_THRESHOLD_EXCHANGE(output_layer(5), ac_kexc(k), &
 &                                ac_aexc(k), ac_ht(k), l)
           ELSE
+            pn = 0._sp
+            en = 0._sp
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
           END IF
+! Transfer
 ! Range of correction c0.6: (5/3, 1/3)
 ! Range of correction c0.9: (1, 0)
-          prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+          prr = (0.6_sp-0.4_sp*output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc) + l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
-          pre = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+          pre = 0.4_sp*(1._sp+output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc) + l
 ! Range of correction c0.1: (0, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           CALL GR_EXPONENTIAL_TRANSFER(pre, ac_be(k), ac_he(k), qe)
@@ -19923,8 +19646,6 @@ CONTAINS
 &             col)
             CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
-            pn_b = 0.0_4
-            en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
 &                          ), ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k)&
@@ -20056,118 +19777,89 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_d
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, pn_d, en_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
-&   ql, qd
-    REAL(sp) :: pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d
+    REAL(sp) :: imperviousness, pn, en, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
+    REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d&
+&   , ql_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
-    REAL(sp) :: temp0
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
-    en_d = 0.0_4
-    pn_d = 0.0_4
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION_D(ac_prcp(k), ac_prcp_d(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
-&                            , pn(k), pn_d(k), en(k), en_d(k))
-          ELSE
-            pn_d(k) = 0.0_4
-            pn(k) = 0._sp
-            en_d(k) = 0.0_4
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-    output_layer_d = 0.0_4
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+&                            , pn, pn_d, en, en_d)
+! Forward MLP
             input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), ac_hl_d(k), &
-&             pn_d(k), en_d(k)/)
-            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn(k), en(k&
-&             )/)
+&             pn_d, en_d/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn, en/)
             CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
 &                        weight_2, weight_2_d, bias_2, bias_2_d, &
 &                        weight_3, weight_3_d, bias_3, bias_3_d, &
-&                        input_layer, input_layer_d, output_layer(:, k)&
-&                        , output_layer_d(:, k))
+&                        input_layer, input_layer_d, output_layer, &
+&                        output_layer_d)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION_D(output_layer(1), output_layer_d(1), &
+&                          output_layer(2), output_layer_d(2), pn, pn_d&
+&                          , en, en_d, imperviousness, ac_cp(k), ac_cp_d&
+&                          (k), 1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d&
+&                          , perc, perc_d, ps, es)
+! Exchange
+            CALL GR_EXCHANGE_D(output_layer(5), output_layer_d(5), &
+&                        ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k)&
+&                        , l, l_d)
           ELSE
-            output_layer_d(:, k) = 0.0_4
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
-&                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), &
-&                          imperviousness, ac_cp(k), ac_cp_d(k), &
-&                          1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
-&                          perc, perc_d, ps, es)
-            CALL GR_EXCHANGE_D(output_layer(5, k), output_layer_d(5, k)&
-&                        , ac_kexc(k), ac_kexc_d(k), ac_ht(k), ac_ht_d(k&
-&                        ), l, l_d)
-          ELSE
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
             l_d = 0.0_4
+            output_layer_d = 0.0_4
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Transfer
 ! Range of correction c0.6: (5/3, 1/3)
 ! Range of correction c0.9: (1, 0)
-          temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
-          temp0 = -(0.4_sp*output_layer(4, k)) + 0.6_sp
-          prr_d = 0.9_sp*(temp*(temp0*(pr_d+perc_d)-(pr+perc)*0.4_sp*&
-&           output_layer_d(4, k))-temp0*(pr+perc)*2*output_layer(3, k)*&
-&           output_layer_d(3, k)) + l_d
-          prr = 0.9_sp*(temp0*(pr+perc)*temp) + l
+          temp = (-(0.4_sp*output_layer(4))+0.6_sp)*(pr+perc)
+          prr_d = 0.9_sp*((1._sp-output_layer(3)**2)*((0.6_sp-0.4_sp*&
+&           output_layer(4))*(pr_d+perc_d)-(pr+perc)*0.4_sp*&
+&           output_layer_d(4))-temp*2*output_layer(3)*output_layer_d(3))&
+&           + l_d
+          prr = 0.9_sp*(temp*(1._sp-output_layer(3)*output_layer(3))) + &
+&           l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
-          temp0 = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
-          temp = (output_layer(4, k)+1._sp)*(pr+perc)
-          prl_d = 0.9_sp*0.4_sp*(temp0*((pr+perc)*output_layer_d(4, k)+(&
-&           output_layer(4, k)+1._sp)*(pr_d+perc_d))-temp*2*output_layer&
-&           (3, k)*output_layer_d(3, k))
-          prl = 0.9_sp*0.4_sp*(temp*temp0)
+          temp = (output_layer(4)+1._sp)*(pr+perc)
+          prl_d = 0.9_sp*0.4_sp*((1._sp-output_layer(3)**2)*((pr+perc)*&
+&           output_layer_d(4)+(output_layer(4)+1._sp)*(pr_d+perc_d))-&
+&           temp*2*output_layer(3)*output_layer_d(3))
+          prl = 0.9_sp*0.4_sp*((1._sp-output_layer(3)*output_layer(3))*&
+&           temp)
 ! Range of correction c0.1: (0, 10)
-          temp0 = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + &
-&           0.1_sp
-          prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
-&           , k) + temp0*(pr_d+perc_d)
-          prd = temp0*(pr+perc)
+          temp = 0.9_sp*(output_layer(3)*output_layer(3)) + 0.1_sp
+          prd_d = (pr+perc)*0.9_sp*2*output_layer(3)*output_layer_d(3) +&
+&           temp*(pr_d+perc_d)
+          prd = temp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prl, prl_d, ac_cl(k), &
@@ -20182,9 +19874,9 @@ CONTAINS
           ac_qt_d(k) = qr_d + ql_d + qd_d
           ac_qt(k) = qr + ql + qd
 ! Transform from mm/dt to m3/s
-          temp0 = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
-          ac_qt_d(k) = temp0*ac_qt_d(k)/setup%dt
-          ac_qt(k) = temp0*(ac_qt(k)/setup%dt)
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
+          ac_qt(k) = temp*(ac_qt(k)/setup%dt)
         END IF
       END DO
     END DO
@@ -20242,94 +19934,64 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_b
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, pn_b, en_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
-&   ql, qd
-    REAL(sp) :: pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b
+    REAL(sp) :: imperviousness, pn, en, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
+    REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b&
+&   , ql_b, qd_b
     INTRINSIC MAX
     REAL(sp) :: temp_b
     REAL(sp) :: temp
     REAL(sp) :: temp_b0
-    REAL(sp) :: temp_b1
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-! Interception with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4(ac_hi(k))
-            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
-            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn(k), en(k&
-&             )/)
-            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            output_layer(:, k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
+            CALL PUSHREAL4(en)
+            CALL PUSHREAL4(ac_hi(k))
+            CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
+&                          k), pn, en)
+! Forward MLP
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn, en/)
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_hp(k))
-            CALL PUSHREAL4(pn(k))
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), &
-&                        1000._sp, ac_hp(k), pr, perc, ps, es)
-            CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
-&                     )
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), 1000._sp, ac_hp(k)&
+&                        , pr, perc, ps, es)
+! Exchange
+            CALL GR_EXCHANGE(output_layer(5), ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            output_layer = 0._sp
             CALL PUSHREAL4(pr)
             pr = 0._sp
             CALL PUSHREAL4(perc)
@@ -20337,17 +19999,18 @@ CONTAINS
             l = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Transfer
 ! Range of correction c0.6: (5/3, 1/3)
 ! Range of correction c0.9: (1, 0)
           CALL PUSHREAL4(prr)
-          prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+          prr = (0.6_sp-0.4_sp*output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc) + l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
-          prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc)
+          prl = 0.4_sp*(1._sp+output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc)
 ! Range of correction c0.1: (0, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -20363,13 +20026,12 @@ CONTAINS
         END IF
       END DO
     END DO
-    output_layer_b = 0.0_4
-    en_b = 0.0_4
-    pn_b = 0.0_4
+    ac_prcp_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
           qr_b = ac_qt_b(k)
@@ -20384,100 +20046,74 @@ CONTAINS
             l_b = 0.0_4
             prd_b = 0.0_4
           END IF
-          temp = -(0.4_sp*output_layer(4, k)) + 0.6_sp
-          prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc)
+          temp = -(0.4_sp*output_layer(4)) + 0.6_sp
+          prl = 0.4_sp*(1._sp+output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc)
           CALL POPREAL4(ac_hl(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prl, prl_b, ac_cl(k), &
 &                      ac_cl_b(k), ac_hl(k), ac_hl_b(k), ql, ql_b)
           CALL POPREAL4(ac_ht(k))
           CALL GR_TRANSFER_B(5._sp, ac_prcp(k), prr, prr_b, ac_ct(k), &
 &                      ac_ct_b(k), ac_ht(k), ac_ht_b(k), qr, qr_b)
-          temp_b1 = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
-          pr_b = temp_b1
-          perc_b = temp_b1
+          output_layer_b = 0.0_4
+          temp_b0 = (0.9_sp*output_layer(3)**2+0.1_sp)*prd_b
+          pr_b = temp_b0
+          perc_b = temp_b0
           temp_b0 = 0.9_sp*0.4_sp*prl_b
-          output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
-&           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(&
-&           output_layer(4, k)+1._sp)*(pr+perc)*temp_b0 - 2*output_layer&
-&           (3, k)*temp*(pr+perc)*0.9_sp*prr_b
-          temp_b = (1._sp-output_layer(3, k)**2)*temp_b0
-          output_layer_b(4, k) = output_layer_b(4, k) + (pr+perc)*temp_b
-          temp_b1 = (output_layer(4, k)+1._sp)*temp_b
+          output_layer_b(3) = output_layer_b(3) + 2*output_layer(3)*&
+&           0.9_sp*(pr+perc)*prd_b - 2*output_layer(3)*(output_layer(4)+&
+&           1._sp)*(pr+perc)*temp_b0 - 2*output_layer(3)*temp*(pr+perc)*&
+&           0.9_sp*prr_b
+          temp_b = (1._sp-output_layer(3)**2)*temp_b0
+          output_layer_b(4) = output_layer_b(4) + (pr+perc)*temp_b
+          pr_b = pr_b + (output_layer(4)+1._sp)*temp_b
+          perc_b = perc_b + (output_layer(4)+1._sp)*temp_b
           CALL POPREAL4(prr)
-          temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
-          pr_b = pr_b + temp_b1 + temp*temp_b
-          perc_b = perc_b + temp_b1 + temp*temp_b
+          temp_b = (1._sp-output_layer(3)**2)*0.9_sp*prr_b
           l_b = l_b + prr_b
-          output_layer_b(4, k) = output_layer_b(4, k) - 0.4_sp*(pr+perc)&
-&           *temp_b
+          output_layer_b(4) = output_layer_b(4) - 0.4_sp*(pr+perc)*&
+&           temp_b
+          pr_b = pr_b + temp*temp_b
+          perc_b = perc_b + temp*temp_b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(perc)
             CALL POPREAL4(pr)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
           ELSE
-            CALL GR_EXCHANGE_B(output_layer(5, k), output_layer_b(5, k)&
-&                        , ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k&
-&                        ), l, l_b)
+            CALL GR_EXCHANGE_B(output_layer(5), output_layer_b(5), &
+&                        ac_kexc(k), ac_kexc_b(k), ac_ht(k), ac_ht_b(k)&
+&                        , l, l_b)
             imperviousness = input_data%physio_data%imperviousness(row, &
 &             col)
-            CALL POPREAL4(pn(k))
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
-&                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), &
-&                          imperviousness, ac_cp(k), ac_cp_b(k), &
-&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b, ps, es)
-          END IF
-          CALL POPINTEGER4(k)
-        END IF
-      END DO
-    END DO
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            output_layer_b(:, k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL GR_PRODUCTION_B(output_layer(1), output_layer_b(1), &
+&                          output_layer(2), output_layer_b(2), pn, pn_b&
+&                          , en, en_b, imperviousness, ac_cp(k), ac_cp_b&
+&                          (k), 1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b&
+&                          , perc, perc_b, ps, es)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
             CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
 &                        weight_2, weight_2_b, bias_2, bias_2_b, &
 &                        weight_3, weight_3_b, bias_3, bias_3_b, &
-&                        input_layer, input_layer_b, output_layer(:, k)&
-&                        , output_layer_b(:, k))
-            output_layer_b(:, k) = 0.0_4
+&                        input_layer, input_layer_b, output_layer, &
+&                        output_layer_b)
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
             ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
             ac_hl_b(k) = ac_hl_b(k) + input_layer_b(3)
-            pn_b(k) = pn_b(k) + input_layer_b(4)
-            en_b(k) = en_b(k) + input_layer_b(5)
-          END IF
-        END IF
-      END DO
-    END DO
-    ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            en_b(k) = 0.0_4
-            pn_b(k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            pn_b = pn_b + input_layer_b(4)
+            en_b = en_b + input_layer_b(5)
             CALL POPREAL4(ac_hi(k))
+            CALL POPREAL4(en)
             CALL GR_INTERCEPTION_B(ac_prcp(k), ac_prcp_b(k), ac_pet(k), &
 &                            ac_ci(k), ac_ci_b(k), ac_hi(k), ac_hi_b(k)&
-&                            , pn(k), pn_b(k), en(k), en_b(k))
-            pn_b(k) = 0.0_4
-            en_b(k) = 0.0_4
+&                            , pn, pn_b, en, en_b)
           END IF
         END IF
       END DO
@@ -20512,81 +20148,58 @@ CONTAINS
 &   , ac_hl
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, pn, en
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, &
-&   ql, qd
+    REAL(sp) :: imperviousness, pn, en, pr, perc, ps, es, l, prr, prl, &
+&   prd, qr, ql, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+! Interception
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
-&                          k), pn(k), en(k))
-          ELSE
-            pn(k) = 0._sp
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn(k), en(k&
-&             )/)
+&                          k), pn, en)
+! Forward MLP
+            input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn, en/)
             CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), 1000._sp, ac_hp(k)&
+&                        , pr, perc, ps, es)
+! Exchange
+            CALL GR_EXCHANGE(output_layer(5), ac_kexc(k), ac_ht(k), l)
           ELSE
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), &
-&                        1000._sp, ac_hp(k), pr, perc, ps, es)
-            CALL GR_EXCHANGE(output_layer(5, k), ac_kexc(k), ac_ht(k), l&
-&                     )
-          ELSE
+            pn = 0._sp
+            en = 0._sp
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
             l = 0._sp
           END IF
+! Transfer
 ! Range of correction c0.6: (5/3, 1/3)
 ! Range of correction c0.9: (1, 0)
-          prr = (0.6_sp-0.4_sp*output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc) + l
+          prr = (0.6_sp-0.4_sp*output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc) + l
 ! Range of correction c0.4: (0, 2)
 ! Range of correction c0.9: (1, 0)
-          prl = 0.4_sp*(1._sp+output_layer(4, k))*(0.9_sp*(1._sp-&
-&           output_layer(3, k)**2))*(pr+perc)
+          prl = 0.4_sp*(1._sp+output_layer(4))*(0.9_sp*(1._sp-&
+&           output_layer(3)**2))*(pr+perc)
 ! Range of correction c0.1: (0, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prl, ac_cl(k), ac_hl(k), &
@@ -20796,8 +20409,6 @@ CONTAINS
 &             col)
             CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
-            pn_b = 0.0_4
-            en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, imperviousness, ac_cp(k&
 &                          ), ac_cp_b(k), 1000._sp, ac_hp(k), ac_hp_b(k)&
@@ -20922,15 +20533,14 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_d
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
-    REAL(sp) :: pr_d, perc_d, prr_d, qr_d
+    REAL(sp) :: imperviousness, ei, pn, en, pr, perc, ps, es, prr, qr
+    REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -20940,10 +20550,7 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
-    ei_d = 0.0_4
-    en_d = 0.0_4
-    pn_d = 0.0_4
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -20951,76 +20558,44 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
-              ei_d(k) = ac_prcp_d(k)
-              ei(k) = ac_prcp(k)
+              ei_d = ac_prcp_d(k)
+              ei = ac_prcp(k)
             ELSE
-              ei_d(k) = 0.0_4
-              ei(k) = ac_pet(k)
+              ei = ac_pet(k)
+              ei_d = 0.0_4
             END IF
-            IF (0._sp .LT. ac_prcp(k) - ei(k)) THEN
-              pn_d(k) = ac_prcp_d(k) - ei_d(k)
-              pn(k) = ac_prcp(k) - ei(k)
+            IF (0._sp .LT. ac_prcp(k) - ei) THEN
+              pn_d = ac_prcp_d(k) - ei_d
+              pn = ac_prcp(k) - ei
             ELSE
-              pn_d(k) = 0.0_4
-              pn(k) = 0._sp
+              pn = 0._sp
+              pn_d = 0.0_4
             END IF
-            en_d(k) = -ei_d(k)
-            en(k) = ac_pet(k) - ei(k)
-          ELSE
-            ei_d(k) = 0.0_4
-            ei(k) = 0._sp
-            pn_d(k) = 0.0_4
-            pn(k) = 0._sp
-            en_d(k) = 0.0_4
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-    output_layer_d = 0.0_4
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d(k), en_d(k&
-&             )/)
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            en_d = -ei_d
+            en = ac_pet(k) - ei
+! Forward MLP
+            input_layer_d(:) = (/ac_hp_d(k), ac_ht_d(k), pn_d, en_d/)
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
             CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
 &                        weight_2, weight_2_d, bias_2, bias_2_d, &
 &                        weight_3, weight_3_d, bias_3, bias_3_d, &
-&                        input_layer, input_layer_d, output_layer(:, k)&
-&                        , output_layer_d(:, k))
-          ELSE
-            output_layer_d(:, k) = 0.0_4
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
-&                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), &
-&                          imperviousness, ac_cp(k), ac_cp_d(k), &
-&                          1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
-&                          perc, perc_d, ps, es)
+&                        input_layer, input_layer_d, output_layer, &
+&                        output_layer_d)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION_D(output_layer(1), output_layer_d(1), &
+&                          output_layer(2), output_layer_d(2), pn, pn_d&
+&                          , en, en_d, imperviousness, ac_cp(k), ac_cp_d&
+&                          (k), 1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d&
+&                          , perc, perc_d, ps, es)
           ELSE
             pr = 0._sp
             perc = 0._sp
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Transfer
           prr_d = pr_d + perc_d
           prr = pr + perc
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
@@ -21081,15 +20656,14 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_b
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
-    REAL(sp) :: pr_b, perc_b, prr_b, qr_b
+    REAL(sp) :: imperviousness, ei, pn, en, pr, perc, ps, es, prr, qr
+    REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
@@ -21098,63 +20672,7 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-! Interception with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            IF (ac_pet(k) .GT. ac_prcp(k)) THEN
-              ei(k) = ac_prcp(k)
-              CALL PUSHCONTROL1B(0)
-            ELSE
-              ei(k) = ac_pet(k)
-              CALL PUSHCONTROL1B(1)
-            END IF
-            IF (0._sp .LT. ac_prcp(k) - ei(k)) THEN
-              pn(k) = ac_prcp(k) - ei(k)
-              CALL PUSHCONTROL1B(0)
-            ELSE
-              pn(k) = 0._sp
-              CALL PUSHCONTROL1B(1)
-            END IF
-            en(k) = ac_pet(k) - ei(k)
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            ei(k) = 0._sp
-            pn(k) = 0._sp
-            en(k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
-            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            output_layer(:, k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -21162,20 +20680,45 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         ELSE
           k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            IF (ac_pet(k) .GT. ac_prcp(k)) THEN
+              ei = ac_prcp(k)
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+              ei = ac_pet(k)
+            END IF
+            IF (0._sp .LT. ac_prcp(k) - ei) THEN
+              pn = ac_prcp(k) - ei
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+              pn = 0._sp
+            END IF
+            CALL PUSHREAL4(en)
+            en = ac_pet(k) - ei
+! Forward MLP
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL PUSHREAL4(ac_hp(k))
-            CALL PUSHREAL4(pn(k))
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), &
-&                        1000._sp, ac_hp(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), 1000._sp, ac_hp(k)&
+&                        , pr, perc, ps, es)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
             pr = 0._sp
             perc = 0._sp
           END IF
+! Transfer
           CALL PUSHREAL4(prr)
           prr = pr + perc
           CALL PUSHREAL4(ac_ht(k))
@@ -21186,9 +20729,7 @@ CONTAINS
         END IF
       END DO
     END DO
-    output_layer_b = 0.0_4
-    en_b = 0.0_4
-    pn_b = 0.0_4
+    ac_prcp_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
@@ -21208,72 +20749,35 @@ CONTAINS
           IF (branch .EQ. 0) THEN
             imperviousness = input_data%physio_data%imperviousness(row, &
 &             col)
-            CALL POPREAL4(pn(k))
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_hp(k))
-            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
-&                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), &
-&                          imperviousness, ac_cp(k), ac_cp_b(k), &
-&                          1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
-&                          perc, perc_b, ps, es)
-          END IF
-        END IF
-      END DO
-    END DO
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            output_layer_b(:, k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            output_layer_b = 0.0_4
+            CALL GR_PRODUCTION_B(output_layer(1), output_layer_b(1), &
+&                          output_layer(2), output_layer_b(2), pn, pn_b&
+&                          , en, en_b, imperviousness, ac_cp(k), ac_cp_b&
+&                          (k), 1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b&
+&                          , perc, perc_b, ps, es)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
             CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
 &                        weight_2, weight_2_b, bias_2, bias_2_b, &
 &                        weight_3, weight_3_b, bias_3, bias_3_b, &
-&                        input_layer, input_layer_b, output_layer(:, k)&
-&                        , output_layer_b(:, k))
-            output_layer_b(:, k) = 0.0_4
+&                        input_layer, input_layer_b, output_layer, &
+&                        output_layer_b)
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_hp_b(k) = ac_hp_b(k) + input_layer_b(1)
             ac_ht_b(k) = ac_ht_b(k) + input_layer_b(2)
-            pn_b(k) = pn_b(k) + input_layer_b(3)
-            en_b(k) = en_b(k) + input_layer_b(4)
-          END IF
-        END IF
-      END DO
-    END DO
-    ac_prcp_b = 0.0_4
-    ei_b = 0.0_4
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            en_b(k) = 0.0_4
-            pn_b(k) = 0.0_4
-            ei_b(k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
-            ei_b(k) = ei_b(k) - en_b(k)
-            en_b(k) = 0.0_4
+            pn_b = pn_b + input_layer_b(3)
+            en_b = en_b + input_layer_b(4)
+            CALL POPREAL4(en)
+            ei_b = -en_b
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              ac_prcp_b(k) = ac_prcp_b(k) + pn_b(k)
-              ei_b(k) = ei_b(k) - pn_b(k)
-              pn_b(k) = 0.0_4
-            ELSE
-              pn_b(k) = 0.0_4
+              ac_prcp_b(k) = ac_prcp_b(k) + pn_b
+              ei_b = ei_b - pn_b
             END IF
             CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              ac_prcp_b(k) = ac_prcp_b(k) + ei_b(k)
-              ei_b(k) = 0.0_4
-            ELSE
-              ei_b(k) = 0.0_4
-            END IF
+            IF (branch .EQ. 0) ac_prcp_b(k) = ac_prcp_b(k) + ei_b
           END IF
         END IF
       END DO
@@ -21305,11 +20809,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hp, ac_ht
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: imperviousness, pr, perc, ps, es, prr, qr
+    REAL(sp) :: imperviousness, ei, pn, en, pr, perc, ps, es, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -21317,7 +20820,7 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -21325,57 +20828,35 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
-              ei(k) = ac_prcp(k)
+              ei = ac_prcp(k)
             ELSE
-              ei(k) = ac_pet(k)
+              ei = ac_pet(k)
             END IF
-            IF (0._sp .LT. ac_prcp(k) - ei(k)) THEN
-              pn(k) = ac_prcp(k) - ei(k)
+            IF (0._sp .LT. ac_prcp(k) - ei) THEN
+              pn = ac_prcp(k) - ei
             ELSE
-              pn(k) = 0._sp
+              pn = 0._sp
             END IF
-            en(k) = ac_pet(k) - ei(k)
-          ELSE
-            ei(k) = 0._sp
-            pn(k) = 0._sp
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+            en = ac_pet(k) - ei
+! Forward MLP
+            input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
             CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_cp(k), 1000._sp, ac_hp(k)&
+&                        , pr, perc, ps, es)
           ELSE
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_cp(k), &
-&                        1000._sp, ac_hp(k), pr, perc, ps, es)
-          ELSE
+            ei = 0._sp
+            pn = 0._sp
+            en = 0._sp
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
           END IF
+! Transfer
           prr = pr + perc
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -21616,8 +21097,6 @@ CONTAINS
 &             col)
             CALL POPREAL4(pn)
             CALL POPREAL4(ac_ha(k))
-            pn_b = 0.0_4
-            en_b = 0.0_4
             CALL GR_PRODUCTION_B(0._sp, dummydiff_b, 0._sp, dummydiff_b0&
 &                          , pn, pn_b, en, en_b, imperviousness, ac_ca(k&
 &                          ), ac_ca_b(k), beta, ac_ha(k), ac_ha_b(k), pr&
@@ -21753,15 +21232,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_d
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_d
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ei_d, pn_d, en_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, prr, prd, qr, qd
-    REAL(sp) :: pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
+    REAL(sp) :: beta, imperviousness, ei, pn, en, pr, perc, ps, es, prr&
+&   , prd, qr, qd
+    REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -21773,10 +21252,7 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    ei_d = 0.0_4
-    en_d = 0.0_4
-    pn_d = 0.0_4
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -21784,85 +21260,54 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
-              ei_d(k) = ac_prcp_d(k)
-              ei(k) = ac_prcp(k)
+              ei_d = ac_prcp_d(k)
+              ei = ac_prcp(k)
             ELSE
-              ei_d(k) = 0.0_4
-              ei(k) = ac_pet(k)
+              ei = ac_pet(k)
+              ei_d = 0.0_4
             END IF
-            IF (0._sp .LT. ac_prcp(k) - ei(k)) THEN
-              pn_d(k) = ac_prcp_d(k) - ei_d(k)
-              pn(k) = ac_prcp(k) - ei(k)
+            IF (0._sp .LT. ac_prcp(k) - ei) THEN
+              pn_d = ac_prcp_d(k) - ei_d
+              pn = ac_prcp(k) - ei
             ELSE
-              pn_d(k) = 0.0_4
-              pn(k) = 0._sp
+              pn = 0._sp
+              pn_d = 0.0_4
             END IF
-            en_d(k) = -ei_d(k)
-            en(k) = ac_pet(k) - ei(k)
-          ELSE
-            ei_d(k) = 0.0_4
-            ei(k) = 0._sp
-            pn_d(k) = 0.0_4
-            pn(k) = 0._sp
-            en_d(k) = 0.0_4
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-    output_layer_d = 0.0_4
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer_d(:) = (/ac_ha_d(k), ac_hc_d(k), pn_d(k), en_d(k&
-&             )/)
-            input_layer(:) = (/ac_ha(k), ac_hc(k), pn(k), en(k)/)
+            en_d = -ei_d
+            en = ac_pet(k) - ei
+! Forward MLP
+            input_layer_d(:) = (/ac_ha_d(k), ac_hc_d(k), pn_d, en_d/)
+            input_layer(:) = (/ac_ha(k), ac_hc(k), pn, en/)
             CALL FORWARD_MLP_D(weight_1, weight_1_d, bias_1, bias_1_d, &
 &                        weight_2, weight_2_d, bias_2, bias_2_d, &
 &                        weight_3, weight_3_d, bias_3, bias_3_d, &
-&                        input_layer, input_layer_d, output_layer(:, k)&
-&                        , output_layer_d(:, k))
+&                        input_layer, input_layer_d, output_layer, &
+&                        output_layer_d)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION_D(output_layer(1), output_layer_d(1), &
+&                          output_layer(2), output_layer_d(2), pn, pn_d&
+&                          , en, en_d, imperviousness, ac_ca(k), ac_ca_d&
+&                          (k), beta, ac_ha(k), ac_ha_d(k), pr, pr_d, &
+&                          perc, perc_d, ps, es)
           ELSE
-            output_layer_d(:, k) = 0.0_4
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION_D(output_layer(1, k), output_layer_d(1, k&
-&                          ), output_layer(2, k), output_layer_d(2, k), &
-&                          pn(k), pn_d(k), en(k), en_d(k), &
-&                          imperviousness, ac_ca(k), ac_ca_d(k), beta, &
-&                          ac_ha(k), ac_ha_d(k), pr, pr_d, perc, perc_d&
-&                          , ps, es)
-          ELSE
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
+            output_layer_d = 0.0_4
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
-          temp = -(output_layer(3, k)*output_layer(3, k)) + 1._sp
-          prr_d = 0.9_sp*(temp*(pr_d+perc_d)-(pr+perc)*2*output_layer(3&
-&           , k)*output_layer_d(3, k))
-          prr = 0.9_sp*(temp*(pr+perc))
+          prr_d = 0.9_sp*((1._sp-output_layer(3)**2)*(pr_d+perc_d)-(pr+&
+&           perc)*2*output_layer(3)*output_layer_d(3))
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc)
 ! Range of correction c0.1: (0, 10)
-          temp = 0.9_sp*(output_layer(3, k)*output_layer(3, k)) + 0.1_sp
-          prd_d = (pr+perc)*0.9_sp*2*output_layer(3, k)*output_layer_d(3&
-&           , k) + temp*(pr_d+perc_d)
+          temp = 0.9_sp*(output_layer(3)*output_layer(3)) + 0.1_sp
+          prd_d = (pr+perc)*0.9_sp*2*output_layer(3)*output_layer_d(3) +&
+&           temp*(pr_d+perc_d)
           prd = temp*(pr+perc)
           CALL GR_TRANSFER_D(4._sp, ac_prcp(k), prr, prr_d, ac_cc(k), &
 &                      ac_cc_d(k), ac_hc(k), ac_hc_d(k), qr, qr_d)
@@ -21931,15 +21376,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer_b
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: &
 &   output_layer_b
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ei_b, pn_b, en_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, prr, prd, qr, qd
-    REAL(sp) :: pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
+    REAL(sp) :: beta, imperviousness, ei, pn, en, pr, perc, ps, es, prr&
+&   , prd, qr, qd
+    REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(sp) :: temp_b
@@ -21951,93 +21396,64 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            IF (ac_pet(k) .GT. ac_prcp(k)) THEN
-              ei(k) = ac_prcp(k)
-              CALL PUSHCONTROL1B(0)
-            ELSE
-              ei(k) = ac_pet(k)
-              CALL PUSHCONTROL1B(1)
-            END IF
-            IF (0._sp .LT. ac_prcp(k) - ei(k)) THEN
-              pn(k) = ac_prcp(k) - ei(k)
-              CALL PUSHCONTROL1B(0)
-            ELSE
-              pn(k) = 0._sp
-              CALL PUSHCONTROL1B(1)
-            END IF
-            en(k) = ac_pet(k) - ei(k)
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            ei(k) = 0._sp
-            pn(k) = 0._sp
-            en(k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0) THEN
-          CALL PUSHCONTROL2B(0)
-        ELSE
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
-            input_layer(:) = (/ac_ha(k), ac_hc(k), pn(k), en(k)/)
-            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            output_layer(:, k) = 0._sp
-            CALL PUSHCONTROL2B(1)
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHINTEGER4(k)
           k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
+            IF (ac_pet(k) .GT. ac_prcp(k)) THEN
+              ei = ac_prcp(k)
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+              ei = ac_pet(k)
+            END IF
+            IF (0._sp .LT. ac_prcp(k) - ei) THEN
+              pn = ac_prcp(k) - ei
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+              pn = 0._sp
+            END IF
+            CALL PUSHREAL4(en)
+            en = ac_pet(k) - ei
+! Forward MLP
+            CALL PUSHREAL4ARRAY(input_layer, setup%neurons(1))
+            input_layer(:) = (/ac_ha(k), ac_hc(k), pn, en/)
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
             CALL PUSHREAL4(perc)
             CALL PUSHREAL4(pr)
             CALL PUSHREAL4(ac_ha(k))
-            CALL PUSHREAL4(pn(k))
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc, ps, es)
+            CALL PUSHREAL4(pn)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_ca(k), beta, ac_ha(k), pr&
+&                        , perc, ps, es)
             CALL PUSHCONTROL1B(1)
           ELSE
+            CALL PUSHREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                         n_layers+1))
+            output_layer = 0._sp
             CALL PUSHREAL4(pr)
             pr = 0._sp
             CALL PUSHREAL4(perc)
             perc = 0._sp
             CALL PUSHCONTROL1B(0)
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
-          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc)
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc)
 ! Range of correction c0.1: (0, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL PUSHREAL4(qr)
           CALL PUSHREAL4(ac_hc(k))
           CALL GR_TRANSFER(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), &
@@ -22055,13 +21471,12 @@ CONTAINS
         END IF
       END DO
     END DO
-    output_layer_b = 0.0_4
-    en_b = 0.0_4
-    pn_b = 0.0_4
+    ac_prcp_b = 0.0_4
     DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
           ac_kb_b(k) = ac_kb_b(k) + (qr+qd)*ac_qt_b(k)
@@ -22076,96 +21491,60 @@ CONTAINS
             CALL POPREAL4(qd)
             prd_b = 0.0_4
           END IF
-          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc)
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc)
           CALL POPREAL4(ac_hc(k))
           CALL POPREAL4(qr)
           CALL GR_TRANSFER_B(4._sp, ac_prcp(k), prr, prr_b, ac_cc(k), &
 &                      ac_cc_b(k), ac_hc(k), ac_hc_b(k), qr, qr_b)
-          output_layer_b(3, k) = output_layer_b(3, k) + 2*output_layer(3&
-&           , k)*0.9_sp*(pr+perc)*prd_b - 2*output_layer(3, k)*(pr+perc)&
-&           *0.9_sp*prr_b
-          temp_b = (0.9_sp*output_layer(3, k)**2+0.1_sp)*prd_b
+          output_layer_b = 0.0_4
+          output_layer_b(3) = output_layer_b(3) + 2*output_layer(3)*&
+&           0.9_sp*(pr+perc)*prd_b - 2*output_layer(3)*(pr+perc)*0.9_sp*&
+&           prr_b
+          temp_b = (0.9_sp*output_layer(3)**2+0.1_sp)*prd_b
           pr_b = temp_b
           perc_b = temp_b
-          temp_b = (1._sp-output_layer(3, k)**2)*0.9_sp*prr_b
+          temp_b = (1._sp-output_layer(3)**2)*0.9_sp*prr_b
           pr_b = pr_b + temp_b
           perc_b = perc_b + temp_b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(perc)
             CALL POPREAL4(pr)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
           ELSE
             imperviousness = input_data%physio_data%imperviousness(row, &
 &             col)
-            CALL POPREAL4(pn(k))
+            CALL POPREAL4(pn)
             CALL POPREAL4(ac_ha(k))
             CALL POPREAL4(pr)
             CALL POPREAL4(perc)
-            CALL GR_PRODUCTION_B(output_layer(1, k), output_layer_b(1, k&
-&                          ), output_layer(2, k), output_layer_b(2, k), &
-&                          pn(k), pn_b(k), en(k), en_b(k), &
-&                          imperviousness, ac_ca(k), ac_ca_b(k), beta, &
-&                          ac_ha(k), ac_ha_b(k), pr, pr_b, perc, perc_b&
-&                          , ps, es)
-          END IF
-          CALL POPINTEGER4(k)
-        END IF
-      END DO
-    END DO
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            output_layer_b(:, k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
+            CALL GR_PRODUCTION_B(output_layer(1), output_layer_b(1), &
+&                          output_layer(2), output_layer_b(2), pn, pn_b&
+&                          , en, en_b, imperviousness, ac_ca(k), ac_ca_b&
+&                          (k), beta, ac_ha(k), ac_ha_b(k), pr, pr_b, &
+&                          perc, perc_b, ps, es)
+            CALL POPREAL4ARRAY(output_layer, setup%neurons(setup%&
+&                        n_layers+1))
             CALL FORWARD_MLP_B(weight_1, weight_1_b, bias_1, bias_1_b, &
 &                        weight_2, weight_2_b, bias_2, bias_2_b, &
 &                        weight_3, weight_3_b, bias_3, bias_3_b, &
-&                        input_layer, input_layer_b, output_layer(:, k)&
-&                        , output_layer_b(:, k))
-            output_layer_b(:, k) = 0.0_4
+&                        input_layer, input_layer_b, output_layer, &
+&                        output_layer_b)
             CALL POPREAL4ARRAY(input_layer, setup%neurons(1))
             ac_ha_b(k) = ac_ha_b(k) + input_layer_b(1)
             ac_hc_b(k) = ac_hc_b(k) + input_layer_b(2)
-            pn_b(k) = pn_b(k) + input_layer_b(3)
-            en_b(k) = en_b(k) + input_layer_b(4)
-          END IF
-        END IF
-      END DO
-    END DO
-    ac_prcp_b = 0.0_4
-    ei_b = 0.0_4
-    DO col=mesh%ncol,1,-1
-      DO row=mesh%nrow,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            k = mesh%rowcol_to_ind_ac(row, col)
-            en_b(k) = 0.0_4
-            pn_b(k) = 0.0_4
-            ei_b(k) = 0.0_4
-          ELSE
-            k = mesh%rowcol_to_ind_ac(row, col)
-            ei_b(k) = ei_b(k) - en_b(k)
-            en_b(k) = 0.0_4
+            pn_b = pn_b + input_layer_b(3)
+            en_b = en_b + input_layer_b(4)
+            CALL POPREAL4(en)
+            ei_b = -en_b
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              ac_prcp_b(k) = ac_prcp_b(k) + pn_b(k)
-              ei_b(k) = ei_b(k) - pn_b(k)
-              pn_b(k) = 0.0_4
-            ELSE
-              pn_b(k) = 0.0_4
+              ac_prcp_b(k) = ac_prcp_b(k) + pn_b
+              ei_b = ei_b - pn_b
             END IF
             CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              ac_prcp_b(k) = ac_prcp_b(k) + ei_b(k)
-              ei_b(k) = 0.0_4
-            ELSE
-              ei_b(k) = 0.0_4
-            END IF
+            IF (branch .EQ. 0) ac_prcp_b(k) = ac_prcp_b(k) + ei_b
           END IF
         END IF
       END DO
@@ -22197,11 +21576,11 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_ha, ac_hc
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(setup%neurons(1)) :: input_layer
-    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1), mesh%nac) :: &
-&   output_layer
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
+    REAL(sp), DIMENSION(setup%neurons(setup%n_layers+1)) :: output_layer
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k, time_step_returns
-    REAL(sp) :: beta, imperviousness, pr, perc, ps, es, prr, prd, qr, qd
+    REAL(sp) :: beta, imperviousness, ei, pn, en, pr, perc, ps, es, prr&
+&   , prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -22211,7 +21590,7 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-! Interception with OPENMP
+! Hydrological module
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -22219,61 +21598,39 @@ CONTAINS
           k = mesh%rowcol_to_ind_ac(row, col)
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             IF (ac_pet(k) .GT. ac_prcp(k)) THEN
-              ei(k) = ac_prcp(k)
+              ei = ac_prcp(k)
             ELSE
-              ei(k) = ac_pet(k)
+              ei = ac_pet(k)
             END IF
-            IF (0._sp .LT. ac_prcp(k) - ei(k)) THEN
-              pn(k) = ac_prcp(k) - ei(k)
+            IF (0._sp .LT. ac_prcp(k) - ei) THEN
+              pn = ac_prcp(k) - ei
             ELSE
-              pn(k) = 0._sp
+              pn = 0._sp
             END IF
-            en(k) = ac_pet(k) - ei(k)
-          ELSE
-            ei(k) = 0._sp
-            pn(k) = 0._sp
-            en(k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Forward MLP without OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            input_layer(:) = (/ac_ha(k), ac_hc(k), pn(k), en(k)/)
+            en = ac_pet(k) - ei
+! Forward MLP
+            input_layer(:) = (/ac_ha(k), ac_hc(k), pn, en/)
             CALL FORWARD_MLP(weight_1, bias_1, weight_2, bias_2, &
-&                      weight_3, bias_3, input_layer, output_layer(:, k)&
-&                     )
+&                      weight_3, bias_3, input_layer, output_layer)
+! Production
+            imperviousness = input_data%physio_data%imperviousness(row, &
+&             col)
+            CALL GR_PRODUCTION(output_layer(1), output_layer(2), pn, en&
+&                        , imperviousness, ac_ca(k), beta, ac_ha(k), pr&
+&                        , perc, ps, es)
           ELSE
-            output_layer(:, k) = 0._sp
-          END IF
-        END IF
-      END DO
-    END DO
-! Production and transfer with OPENMP
-    DO col=1,mesh%ncol
-      DO row=1,mesh%nrow
-        IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&           local_active_cell(row, col) .EQ. 0)) THEN
-          k = mesh%rowcol_to_ind_ac(row, col)
-          imperviousness = input_data%physio_data%imperviousness(row, &
-&           col)
-          IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
-            CALL GR_PRODUCTION(output_layer(1, k), output_layer(2, k), &
-&                        pn(k), en(k), imperviousness, ac_ca(k), beta, &
-&                        ac_ha(k), pr, perc, ps, es)
-          ELSE
+            ei = 0._sp
+            pn = 0._sp
+            en = 0._sp
+            output_layer = 0._sp
             pr = 0._sp
             perc = 0._sp
           END IF
+! Transfer
 ! Range of correction c0.9: (1, 0)
-          prr = 0.9_sp*(1._sp-output_layer(3, k)**2)*(pr+perc)
+          prr = 0.9_sp*(1._sp-output_layer(3)**2)*(pr+perc)
 ! Range of correction c0.1: (0, 10)
-          prd = (0.1_sp+0.9_sp*output_layer(3, k)**2)*(pr+perc)
+          prd = (0.1_sp+0.9_sp*output_layer(3)**2)*(pr+perc)
           CALL GR_TRANSFER(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), &
 &                    qr)
           IF (0._sp .LT. prd) THEN
