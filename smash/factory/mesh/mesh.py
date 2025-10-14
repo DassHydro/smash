@@ -153,6 +153,7 @@ def generate_mesh(
     shp_path: FilePath | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
+    area_error_th: Numeric | None = None,
 ) -> dict[str, Any]:
     # % TODO FC: Add advanced user guide
     """
@@ -173,7 +174,7 @@ def generate_mesh(
         box does not overlap the flow direction, the bounding box is padded to the nearest overlapping cell.
 
         .. note::
-            If not given, **x**, **y** and **area** must be filled in.
+            If not given, **x**, **y** and **area** must be provided.
 
     x : `float`, `list[float, ...]` or None, default None
         The x-coordinate(s) of the catchment outlet(s) to mesh.
@@ -218,9 +219,20 @@ def generate_mesh(
 
     epsg : `str`, `int` or None, default None
         The ``EPSG`` value of the flow directions file. By default, if the projection is well
-        defined in the flow directions file. It is not necessary to provide the value of
+        defined in the flow directions file, it is not necessary to provide the value of
         the ``EPSG``. On the other hand, if the projection is not well defined in the flow directions file
-        (i.e. in ``ASCII`` file), the **epsg** argument must be filled in.
+        (i.e. in ``ASCII`` file), the **epsg** argument must be provided.
+
+    area_error_th: `float` or None, default None
+        The threshold of the relative error between the modeled area and the observed area beyond which the
+        outlets and the catchment will be excluded from the final mesh. The relative error is computed as
+        follows: :math:`error=(area_dln - area)/area`.
+        For example, `area_error_th=0.2` means that all outlets where the surface error is higher than 20%
+        will be excluded.
+
+        .. note::
+            If not given, the computation of the error on the area is ignored and all outlets are included
+            in the mesh.
 
     Returns
     -------
@@ -247,27 +259,26 @@ def generate_mesh(
 
         dx : `numpy.ndarray`
             An array of shape *(nrow, ncol)* containing X cell size.
-            If the projection unit is in degree, the value of ``dx`` is approximated in meter.
+            If the projection unit is in degrees, the value of ``dx`` is approximated in meters.
 
         dy : `numpy.ndarray`
             An array of shape *(nrow, ncol)* containing Y cell size.
-            If the projection unit is in degree, the value of ``dy`` is approximated in meter.
+            If the projection unit is in degrees, the value of ``dy`` is approximated in meters.
 
         flwdir : `numpy.ndarray`
             An array of shape *(nrow, ncol)* containing flow direction.
 
         flwdst : `numpy.ndarray`
             An array of shape *(nrow, ncol)* containing flow distance.
-            It corresponds to the distance in meter from each cell to the most downstream gauge.
-            If there are multiple non-nested downstream gauges, the flow distance are computed for each
-            gauge.
+            It corresponds to the distance in meters from each cell to the most downstream gauge.
+            If there are multiple non-nested downstream gauges, the flow distance are computed for each gauge.
 
         flwacc : `numpy.ndarray`
             An array of shape *(nrow, ncol)* containing flow accumulation. The unit is the square meter.
 
         npar : `int`
-            Number of partition. A partition delimits a set of independent cells on the drainage network. The
-            first partition represents all the most upstream cells and the last partition the gauge(s).
+            Number of partition. A partition delimits a set of independent cells on the drainage network.
+            The first partition represents all the most upstream cells and the last partition the gauge(s).
             It is possible to loop in parallel over all the cells in the same partition.
 
         ncpar : `numpy.ndarray`
@@ -370,13 +381,16 @@ def generate_mesh(
     (1000.0, 906044, 0)
     """
 
-    args = _standardize_generate_mesh_args(flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg)
+    args = _standardize_generate_mesh_args(
+        flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg, area_error_th
+    )
 
     return _generate_mesh(*args)
 
 
 def _generate_mesh_from_xy(
     flwdir_dataset: rasterio.DatasetReader,
+    bbox: np.ndarray,
     x: np.ndarray,
     y: np.ndarray,
     area: np.ndarray,
@@ -384,6 +398,7 @@ def _generate_mesh_from_xy(
     shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int,
+    area_error_th: float | None,
 ) -> dict:
     (xmin, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
@@ -407,6 +422,8 @@ def _generate_mesh_from_xy(
     area_dln = np.zeros(shape=x.shape, dtype=np.float32)
     sink_dln = np.zeros(shape=x.shape, dtype=np.bool)
     mask_dln = np.zeros(shape=flwdir.shape, dtype=np.int32)
+
+    deleted_catchment = []
 
     for ind in range(x.size):
         row, col = _xy_to_rowcol(x[ind], y[ind], xmin, ymax, xres, yres)
@@ -447,7 +464,53 @@ def _generate_mesh_from_xy(
 
         area_dln[ind] = np.sum(mask_dln_win * dx_win * dy_win)
 
+        if bbox is not None:
+            flwdir_win_ind = np.ma.masked_array(flwdir_win, mask=(1 - mask_dln_win))
+            flwdir_win_ind, slice_win_ind = _trim_mask_2d(flwdir_win_ind, slice_win=True)
+
+            ymax_ind = ymax - (slice_win_ind[0].start + slice_win[0].start) * yres
+            ymin_ind = ymax_ind - (slice_win_ind[0].stop - slice_win_ind[0].start) * yres
+
+            xmin_ind = xmin + (slice_win_ind[1].start + slice_win[1].start) * xres
+            xmax_ind = xmin_ind + (slice_win_ind[1].stop - slice_win_ind[1].start) * xres
+
+            bbox_ind = np.array([xmin_ind, xmax_ind, ymin_ind, ymax_ind])
+
+            if (
+                bbox_ind[0] < bbox[0]
+                or bbox_ind[1] > bbox[1]
+                or bbox_ind[2] < bbox[2]
+                or bbox_ind[3] > bbox[3]
+            ):
+                warnings.warn(
+                    f"The extend of catchment {code[ind]} with bbox {bbox_ind} exceed"
+                    f" the input bounding box {bbox}."
+                    f" This catchment is removed from the mesh.",
+                    stacklevel=2,
+                )
+
+                mask_dln_win = 0
+                deleted_catchment.append(ind)
+
+        if area_error_th is not None:
+            if abs((area_dln[ind] - area[ind]) / area[ind]) > area_error_th:
+                warnings.warn(
+                    f"The error of the modeled area for catchment {code[ind]} exceed the"
+                    " threshold {area_error_th}. This catchment is removed",
+                    stacklevel=2,
+                )
+                mask_dln_win = 0
+                deleted_catchment.append(ind)
+
         mask_dln[slice_win] = np.where(mask_dln_win == 1, 1, mask_dln[slice_win])
+
+    row_dln = np.delete(row_dln, deleted_catchment)
+    col_dln = np.delete(col_dln, deleted_catchment)
+    area_dln = np.delete(area_dln, deleted_catchment)
+    area = np.delete(area, deleted_catchment)
+    x = np.delete(x, deleted_catchment)
+    y = np.delete(y, deleted_catchment)
+    code = np.delete(code, deleted_catchment)
 
     if np.any(sink_dln):
         warnings.warn(
@@ -459,8 +522,21 @@ def _generate_mesh_from_xy(
             stacklevel=2,
         )
 
-    flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
-    flwdir, slice_win = _trim_mask_2d(flwdir, slice_win=True)
+    if bbox is None:
+        flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
+        # slice flwdir according the border of the active domain
+        flwdir, slice_win = _trim_mask_2d(flwdir, slice_win=True)
+
+    else:
+        col_off = int((bbox[0] - xmin) / xres)
+        row_off = int((ymax - bbox[3]) / yres)
+        ncol = int((bbox[1] - bbox[0]) / xres)
+        nrow = int((bbox[3] - bbox[2]) / yres)
+
+        slice_win = (slice(row_off, row_off + nrow), slice(col_off, col_off + ncol))
+
+        flwdir = np.ma.masked_array(flwdir[slice_win], mask=(1 - mask_dln[slice_win]))
+
     dx = dx[slice_win]
     dy = dy[slice_win]
 
@@ -472,7 +548,10 @@ def _generate_mesh_from_xy(
 
     flwacc, flwpar = mw_mesh.flow_accumulation_partition(flwdir, dx, dy)
 
-    flwdst = mw_mesh.flow_distance(flwdir, dx, dy, row_dln, col_dln, area_dln)
+    if x.size > 0:
+        flwdst = mw_mesh.flow_distance(flwdir, dx, dy, row_dln, col_dln, area_dln)
+    else:
+        flwdst = np.zeros(shape=flwdir.shape)
 
     flwdst = np.ma.masked_array(flwdst, mask=flwdir.mask)
 
@@ -594,8 +673,11 @@ def _generate_mesh(
     shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int | None,
+    area_error_th: float | None,
 ) -> dict:
-    if bbox is not None:
+    if bbox is not None and x is None:
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
-        return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, shp_dataset, max_depth, epsg)
+        return _generate_mesh_from_xy(
+            flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th
+        )

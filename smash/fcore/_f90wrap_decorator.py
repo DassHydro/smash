@@ -49,7 +49,7 @@ def f90wrap_setter_char_array(func):
 
         getter = getattr(_libfcore, f"f90wrap_{class_name}__array__{func_name}")
 
-        array_ndim, array_type, array_shape, array_handle = getter(self._handle)
+        array_ndim, _, array_shape, array_handle = getter(self._handle)
 
         shape = tuple(s for i, s in enumerate(array_shape) if i < array_ndim)
 
@@ -134,7 +134,7 @@ def f90wrap_setter_index_array(func):
 
         getter = getattr(_libfcore, f"f90wrap_{class_name}__array__{func_name}")
 
-        array_ndim, array_type, array_shape, array_handle = getter(self._handle)
+        _, _, _, array_handle = getter(self._handle)
 
         arr = np.add(value, 1)
 
