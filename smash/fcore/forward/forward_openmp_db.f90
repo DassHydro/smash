@@ -12888,45 +12888,64 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_d
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_d
+    INTEGER :: i
     INTRINSIC EXP
     INTRINSIC TANH
-    REAL(sp), DIMENSION(SIZE(bias_1)) :: temp
-    REAL(sp), DIMENSION(SIZE(bias_2)) :: temp0
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
     CALL DOT_PRODUCT_2D_1D_D(weight_1, weight_1_d, input_layer, &
 &                      input_layer_d, inter_layer_1, inter_layer_1_d)
-    inter_layer_1_d = inter_layer_1_d + bias_1_d
-    inter_layer_1 = inter_layer_1 + bias_1
+! Loop to work with ATOMIC update OpenMP
+    DO i=1,SIZE(bias_1)
+      inter_layer_1_d(i) = inter_layer_1_d(i) + bias_1_d(i)
+      inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
 ! SiLU
-    temp = EXP(-inter_layer_1) + 1._sp
-    inter_layer_1_d = (inter_layer_1*EXP(-inter_layer_1)/temp+1.0)*&
-&     inter_layer_1_d/temp
-    inter_layer_1 = inter_layer_1/temp
+      temp = EXP(-inter_layer_1(i)) + 1._sp
+      temp0 = inter_layer_1(i)/temp
+      inter_layer_1_d(i) = (temp0*EXP(-inter_layer_1(i))+1.0)*&
+&       inter_layer_1_d(i)/temp
+      inter_layer_1(i) = temp0
+    END DO
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D_D(weight_2, weight_2_d, inter_layer_1, &
 &                        inter_layer_1_d, inter_layer_2, inter_layer_2_d&
 &                       )
-      inter_layer_2_d = inter_layer_2_d + bias_2_d
-      inter_layer_2 = inter_layer_2 + bias_2
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_2)
+        inter_layer_2_d(i) = inter_layer_2_d(i) + bias_2_d(i)
+        inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
 ! SiLU
-      temp0 = EXP(-inter_layer_2) + 1._sp
-      inter_layer_2_d = (inter_layer_2*EXP(-inter_layer_2)/temp0+1.0)*&
-&       inter_layer_2_d/temp0
-      inter_layer_2 = inter_layer_2/temp0
+        temp0 = EXP(-inter_layer_2(i)) + 1._sp
+        temp = inter_layer_2(i)/temp0
+        inter_layer_2_d(i) = (temp*EXP(-inter_layer_2(i))+1.0)*&
+&         inter_layer_2_d(i)/temp0
+        inter_layer_2(i) = temp
+      END DO
       CALL DOT_PRODUCT_2D_1D_D(weight_3, weight_3_d, inter_layer_2, &
 &                        inter_layer_2_d, output_layer, output_layer_d)
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_3)
+        output_layer_d(i) = output_layer_d(i) + bias_3_d(i)
+        output_layer(i) = output_layer(i) + bias_3(i)
 ! TanH
-      output_layer_d = (1.0-TANH(output_layer+bias_3)**2)*(&
-&       output_layer_d+bias_3_d)
-      output_layer = TANH(output_layer + bias_3)
+        output_layer_d(i) = (1.0-TANH(output_layer(i))**2)*&
+&         output_layer_d(i)
+        output_layer(i) = TANH(output_layer(i))
+      END DO
     ELSE
 ! Case with 2 layers
       CALL DOT_PRODUCT_2D_1D_D(weight_2, weight_2_d, inter_layer_1, &
 &                        inter_layer_1_d, output_layer, output_layer_d)
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_2)
+        output_layer_d(i) = output_layer_d(i) + bias_2_d(i)
+        output_layer(i) = output_layer(i) + bias_2(i)
 ! TanH
-      output_layer_d = (1.0-TANH(output_layer+bias_2)**2)*(&
-&       output_layer_d+bias_2_d)
-      output_layer = TANH(output_layer + bias_2)
+        output_layer_d(i) = (1.0-TANH(output_layer(i))**2)*&
+&         output_layer_d(i)
+        output_layer(i) = TANH(output_layer(i))
+      END DO
     END IF
   END SUBROUTINE FORWARD_MLP_D
 
@@ -12961,42 +12980,62 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1_b
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2_b
+    INTEGER :: i
     INTRINSIC EXP
     INTRINSIC TANH
-    REAL(sp), DIMENSION(SIZE(bias_1)) :: temp
-    REAL(sp), DIMENSION(SIZE(bias_2)) :: temp0
-    REAL(sp), DIMENSION(SIZE(bias_3, 1)) :: temp_b
-    REAL(sp), DIMENSION(SIZE(bias_2, 1)) :: temp_b0
+    REAL(sp) :: temp
+    INTEGER :: ad_to
+    INTEGER :: ad_to0
+    INTEGER :: ad_to1
+    INTEGER :: ad_to2
     CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
-    inter_layer_1 = inter_layer_1 + bias_1
+! Loop to work with ATOMIC update OpenMP
+    DO i=1,SIZE(bias_1)
+      inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
 ! SiLU
-    CALL PUSHREAL4ARRAY(inter_layer_1, SIZE(bias_1))
-    inter_layer_1 = inter_layer_1*(1._sp/(1._sp+EXP(-inter_layer_1)))
+      CALL PUSHREAL4(inter_layer_1(i))
+      inter_layer_1(i) = inter_layer_1(i)*(1._sp/(1._sp+EXP(-&
+&       inter_layer_1(i))))
+    END DO
+    CALL PUSHINTEGER4(i - 1)
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, inter_layer_2)
-      inter_layer_2 = inter_layer_2 + bias_2
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_2)
+        inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
 ! SiLU
-      CALL PUSHREAL4ARRAY(inter_layer_2, SIZE(bias_2))
-      inter_layer_2 = inter_layer_2*(1._sp/(1._sp+EXP(-inter_layer_2)))
+        CALL PUSHREAL4(inter_layer_2(i))
+        inter_layer_2(i) = inter_layer_2(i)*(1._sp/(1._sp+EXP(-&
+&         inter_layer_2(i))))
+      END DO
+      CALL PUSHINTEGER4(i - 1)
       CALL PUSHREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2, output_layer)
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_3)
+        output_layer(i) = output_layer(i) + bias_3(i)
 ! TanH
-      temp_b = (1.0-TANH(output_layer+bias_3)**2)*output_layer_b
-      output_layer_b = temp_b
-!$OMP CRITICAL
-      bias_3_b = bias_3_b + temp_b
-!$OMP END CRITICAL
+      END DO
+      ad_to1 = i - 1
+      DO i=ad_to1,1,-1
+        output_layer_b(i) = (1.0-TANH(output_layer(i))**2)*&
+&         output_layer_b(i)
+!$OMP   ATOMIC update
+        bias_3_b(i) = bias_3_b(i) + output_layer_b(i)
+      END DO
       CALL POPREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D_B(weight_3, weight_3_b, inter_layer_2, &
 &                        inter_layer_2_b, output_layer, output_layer_b)
-      CALL POPREAL4ARRAY(inter_layer_2, SIZE(bias_2))
-      temp0 = EXP(-inter_layer_2) + 1._sp
-      inter_layer_2_b = (1.0/temp0+EXP(-inter_layer_2)*inter_layer_2/&
-&       temp0**2)*inter_layer_2_b
-!$OMP CRITICAL
-      bias_2_b = bias_2_b + inter_layer_2_b
-!$OMP END CRITICAL
+      CALL POPINTEGER4(ad_to0)
+      DO i=ad_to0,1,-1
+        CALL POPREAL4(inter_layer_2(i))
+        temp = EXP(-inter_layer_2(i)) + 1._sp
+        inter_layer_2_b(i) = (1.0/temp+EXP(-inter_layer_2(i))*&
+&         inter_layer_2(i)/temp**2)*inter_layer_2_b(i)
+!$OMP   ATOMIC update
+        bias_2_b(i) = bias_2_b(i) + inter_layer_2_b(i)
+      END DO
       CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1, &
 &                        inter_layer_1_b, inter_layer_2, inter_layer_2_b&
 &                       )
@@ -13004,23 +13043,31 @@ CONTAINS
 ! Case with 2 layers
       CALL PUSHREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, output_layer)
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_2)
+        output_layer(i) = output_layer(i) + bias_2(i)
 ! TanH
-      temp_b0 = (1.0-TANH(output_layer+bias_2)**2)*output_layer_b
-      output_layer_b = temp_b0
-!$OMP CRITICAL
-      bias_2_b = bias_2_b + temp_b0
-!$OMP END CRITICAL
+      END DO
+      ad_to2 = i - 1
+      DO i=ad_to2,1,-1
+        output_layer_b(i) = (1.0-TANH(output_layer(i))**2)*&
+&         output_layer_b(i)
+!$OMP   ATOMIC update
+        bias_2_b(i) = bias_2_b(i) + output_layer_b(i)
+      END DO
       CALL POPREAL4ARRAY(output_layer, SIZE(output_layer, 1))
       CALL DOT_PRODUCT_2D_1D_B(weight_2, weight_2_b, inter_layer_1, &
 &                        inter_layer_1_b, output_layer, output_layer_b)
     END IF
-    CALL POPREAL4ARRAY(inter_layer_1, SIZE(bias_1))
-    temp = EXP(-inter_layer_1) + 1._sp
-    inter_layer_1_b = (1.0/temp+EXP(-inter_layer_1)*inter_layer_1/temp**&
-&     2)*inter_layer_1_b
-!$OMP CRITICAL
-      bias_1_b = bias_1_b + inter_layer_1_b
-!$OMP END CRITICAL
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPREAL4(inter_layer_1(i))
+      temp = EXP(-inter_layer_1(i)) + 1._sp
+      inter_layer_1_b(i) = (1.0/temp+EXP(-inter_layer_1(i))*&
+&       inter_layer_1(i)/temp**2)*inter_layer_1_b(i)
+!$OMP ATOMIC update
+      bias_1_b(i) = bias_1_b(i) + inter_layer_1_b(i)
+    END DO
     CALL DOT_PRODUCT_2D_1D_B(weight_1, weight_1_b, input_layer, &
 &                      input_layer_b, inter_layer_1, inter_layer_1_b)
   END SUBROUTINE FORWARD_MLP_B
@@ -13039,26 +13086,43 @@ CONTAINS
     INTRINSIC SIZE
     REAL(sp), DIMENSION(SIZE(bias_1)) :: inter_layer_1
     REAL(sp), DIMENSION(SIZE(bias_2)) :: inter_layer_2
+    INTEGER :: i
     INTRINSIC EXP
     INTRINSIC TANH
     CALL DOT_PRODUCT_2D_1D(weight_1, input_layer, inter_layer_1)
-    inter_layer_1 = inter_layer_1 + bias_1
+! Loop to work with ATOMIC update OpenMP
+    DO i=1,SIZE(bias_1)
+      inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
 ! SiLU
-    inter_layer_1 = inter_layer_1*(1._sp/(1._sp+EXP(-inter_layer_1)))
+      inter_layer_1(i) = inter_layer_1(i)*(1._sp/(1._sp+EXP(-&
+&       inter_layer_1(i))))
+    END DO
     IF (SIZE(bias_3) .GT. 0) THEN
 ! Case with 3 layers
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, inter_layer_2)
-      inter_layer_2 = inter_layer_2 + bias_2
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_2)
+        inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
 ! SiLU
-      inter_layer_2 = inter_layer_2*(1._sp/(1._sp+EXP(-inter_layer_2)))
+        inter_layer_2(i) = inter_layer_2(i)*(1._sp/(1._sp+EXP(-&
+&         inter_layer_2(i))))
+      END DO
       CALL DOT_PRODUCT_2D_1D(weight_3, inter_layer_2, output_layer)
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_3)
+        output_layer(i) = output_layer(i) + bias_3(i)
 ! TanH
-      output_layer = TANH(output_layer + bias_3)
+        output_layer(i) = TANH(output_layer(i))
+      END DO
     ELSE
 ! Case with 2 layers
       CALL DOT_PRODUCT_2D_1D(weight_2, inter_layer_1, output_layer)
+! Loop to work with ATOMIC update OpenMP
+      DO i=1,SIZE(bias_2)
+        output_layer(i) = output_layer(i) + bias_2(i)
 ! TanH
-      output_layer = TANH(output_layer + bias_2)
+        output_layer(i) = TANH(output_layer(i))
+      END DO
     END IF
   END SUBROUTINE FORWARD_MLP
 

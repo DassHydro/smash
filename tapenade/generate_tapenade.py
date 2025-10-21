@@ -87,7 +87,7 @@ def generate_tapenade_file(fortran_files: list[str], module: str, openmp: bool) 
     subprocess.run(cmd_args, check=True)
 
 
-def patch_tapenade_file(module: str, openmp: bool) -> None:
+def patch_tapenade_file(module: str) -> None:
     repl_rules = ReplaceRules(
         [
             r"TYPE\(PARAMETERSDT_DIFF\)",
@@ -102,17 +102,6 @@ def patch_tapenade_file(module: str, openmp: bool) -> None:
             "TYPE(OUTPUTDT)",
         ],
     )
-
-    # Fix OpenMP ATOMIC issues with NN bias arrays (replace with OMP CRITICAL)
-    if openmp:
-        repl_rules += ReplaceRules(
-            [
-                r"(!\$OMP ATOMIC update\s*\n\s*)(bias_\d+_b\s*=\s*bias_\d+_b\s*\+[^\n]+)",
-            ],
-            [
-                r"!$OMP CRITICAL\n      \2\n!$OMP END CRITICAL",
-            ],
-        )
 
     tapenade_file = module + "_db.f90"
     re_replace(tapenade_file, repl_rules)
@@ -169,7 +158,7 @@ def main() -> None:
 
     patch_fortran_files(args.fortran_files, args.openmp)
     generate_tapenade_file(args.fortran_files, args.module, args.openmp)
-    patch_tapenade_file(args.module, args.openmp)
+    patch_tapenade_file(args.module)
     move_tapenade_file(args.module, args.build_dir)
 
 

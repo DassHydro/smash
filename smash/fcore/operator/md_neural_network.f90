@@ -35,23 +35,39 @@ contains
         real(sp), dimension(size(bias_1)) :: inter_layer_1
         real(sp), dimension(size(bias_2)) :: inter_layer_2
 
+        integer :: i
+
         call dot_product_2d_1d(weight_1, input_layer, inter_layer_1)
-        inter_layer_1 = inter_layer_1 + bias_1
-        inter_layer_1 = inter_layer_1*(1._sp/(1._sp + exp(-inter_layer_1))) ! SiLU
+        ! Loop to work with ATOMIC update OpenMP
+        do i = 1, size(bias_1)
+            inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
+            inter_layer_1(i) = inter_layer_1(i)*(1._sp/(1._sp + exp(-inter_layer_1(i)))) ! SiLU
+        end do
 
         if (size(bias_3) .gt. 0) then  ! Case with 3 layers
 
             call dot_product_2d_1d(weight_2, inter_layer_1, inter_layer_2)
-            inter_layer_2 = inter_layer_2 + bias_2
-            inter_layer_2 = inter_layer_2*(1._sp/(1._sp + exp(-inter_layer_2))) ! SiLU
+            ! Loop to work with ATOMIC update OpenMP
+            do i = 1, size(bias_2)
+                inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
+                inter_layer_2(i) = inter_layer_2(i)*(1._sp/(1._sp + exp(-inter_layer_2(i)))) ! SiLU
+            end do
 
             call dot_product_2d_1d(weight_3, inter_layer_2, output_layer)
-            output_layer = tanh(output_layer + bias_3) ! TanH
+            ! Loop to work with ATOMIC update OpenMP
+            do i = 1, size(bias_3)
+                output_layer(i) = output_layer(i) + bias_3(i)
+                output_layer(i) = tanh(output_layer(i)) ! TanH
+            end do
 
         else  ! Case with 2 layers
 
             call dot_product_2d_1d(weight_2, inter_layer_1, output_layer)
-            output_layer = tanh(output_layer + bias_2) ! TanH
+            ! Loop to work with ATOMIC update OpenMP
+            do i = 1, size(bias_2)
+                output_layer(i) = output_layer(i) + bias_2(i)
+                output_layer(i) = tanh(output_layer(i)) ! TanH
+            end do
 
         end if
 
