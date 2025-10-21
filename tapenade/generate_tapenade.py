@@ -102,7 +102,6 @@ def patch_tapenade_file(module: str) -> None:
             "TYPE(OUTPUTDT)",
         ],
     )
-
     tapenade_file = module + "_db.f90"
     re_replace(tapenade_file, repl_rules)
 
