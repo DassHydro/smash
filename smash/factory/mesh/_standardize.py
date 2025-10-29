@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 
 def _standardize_flwdir_path(flwdir_path: FilePath) -> str:
     if not isinstance(flwdir_path, (str, os.PathLike)):
-        raise TypeError("flwdir_path argument must be of FilePath type (str, PathLike[str])")
+        raise TypeError(
+            "flwdir_path argument must be of FilePath type (str, PathLike[str])"
+        )
 
     flwdir_path = str(flwdir_path)
 
@@ -31,12 +33,16 @@ def _standardize_output_path(output_path: FilePath | None) -> str | None:
         return
 
     if not isinstance(output_path, (str, os.PathLike)):
-        raise TypeError("output_path argument must be of FilePath type (str, PathLike[str])")
+        raise TypeError(
+            "output_path argument must be of FilePath type (str, PathLike[str])"
+        )
 
     output_path = str(output_path)
 
     if not os.path.exists(os.path.dirname(output_path)):
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), os.path.dirname(output_path))
+        raise FileNotFoundError(
+            errno.ENOENT, os.strerror(errno.ENOENT), os.path.dirname(output_path)
+        )
 
     return output_path
 
@@ -49,7 +55,9 @@ def _standardize_detect_sink_output_path(output_path: FilePath | None) -> str | 
     return _standardize_output_path(output_path)
 
 
-def _standardize_detect_sink_args(flwdir_path: FilePath, output_path: FilePath | None) -> AnyTuple:
+def _standardize_detect_sink_args(
+    flwdir_path: FilePath, output_path: FilePath | None
+) -> AnyTuple:
     flwdir_path = _standardize_detect_sink_flwdir_path(flwdir_path)
 
     flwdir_dataset = rasterio.open(flwdir_path)
@@ -63,11 +71,15 @@ def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
     return _standardize_flwdir_path(flwdir_path)
 
 
-def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: ListLike) -> np.ndarray:
+def _standardize_generate_mesh_bbox(
+    flwdir_dataset: rasterio.DatasetReader, bbox: ListLike
+) -> np.ndarray:
     # % Bounding Box (xmin, xmax, ymin, ymax)
 
     if not isinstance(bbox, (list, tuple, np.ndarray)):
-        raise TypeError("bbox argument must be of ListLike type (List, Tuple, np.ndarray)")
+        raise TypeError(
+            "bbox argument must be of ListLike type (List, Tuple, np.ndarray)"
+        )
 
     bbox = np.array(bbox)
 
@@ -120,27 +132,31 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox
 
     # % Pad the bounding box so that the origins overlap
     # pb wit np.rint(): For values exactly halfway between rounded decimal values,
-    #NumPy rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round to 0.0, etc.
+    # NumPy rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round to 0.0, etc.
     # This choice cause an issue with the mesh because for a given bounding box,
-    #the extend may vary randomly of about 1 pixel in any direction depending the value of xmin and ymax.
+    # the extend may vary randomly of about 1 pixel in any direction depending the value of xmin and ymax.
 
     # bbox[0:2] = xmin + np.rint((bbox[0:2] - xmin) / xres) * xres
     # bbox[2:4] = ymax - np.rint((ymax - bbox[2:4]) / yres) * yres
 
     # One solution is to force to round as usual : 2.4->2 ; 2.5 -> 3 ; 2.6 -> 3
     for i in range(2):
-        if ((bbox[i] - int(bbox[i])) / xres) < 0.5:
-            dleft = np.floor((bbox[i] - xmin) / xres)
+        if ((bbox[i] / xres - int(bbox[i] / xres))) < 0.5:
+            bnd = np.floor(bbox[i] / xres) * xres
+            dleft = np.floor((bnd - xmin) / xres)
         else:
-            dleft = np.ceil((bbox[i] - xmin) / xres)
+            bnd = np.ceil(bbox[i] / xres) * xres
+            dleft = np.ceil((bnd - xmin) / xres)
 
         bbox[i] = xmin + dleft * xres
 
     for i in range(2, 4):
-        if ((bbox[i] - int(bbox[i])) / yres) < 0.5:
-            dtop = np.floor((ymax - bbox[i]) / yres)
+        if ((bbox[i] / yres - int(bbox[i] / yres))) < 0.5:
+            bnd = np.floor(bbox[i] / yres) * yres
+            dtop = np.ceil((ymax - bnd) / yres)
         else:
-            dtop = np.ceil((ymax - bbox[i]) / yres)
+            bnd = np.ceil(bbox[i] / yres) * yres
+            dtop = np.floor((ymax - bnd) / yres)
 
         bbox[i] = ymax - dtop * yres
 
@@ -173,7 +189,9 @@ def _standardize_generate_mesh_x_y_area(
     area = np.array(area, dtype=np.float32, ndmin=1)
 
     if (x.size != y.size) or (y.size != area.size):
-        raise ValueError(f"Inconsistent sizes between x ({x.size}), y ({y.size}) and area ({area.size})")
+        raise ValueError(
+            f"Inconsistent sizes between x ({x.size}), y ({y.size}) and area ({area.size})"
+        )
 
     xmin, xmax, _, ymin, ymax, _ = _get_transform(flwdir_dataset)
 
@@ -189,19 +207,25 @@ def _standardize_generate_mesh_x_y_area(
     return x, y, area
 
 
-def _standardize_generate_mesh_code(x: np.ndarray, code: str | ListLike | None) -> np.ndarray:
+def _standardize_generate_mesh_code(
+    x: np.ndarray, code: str | ListLike | None
+) -> np.ndarray:
     if code is None:
         code = np.array([f"_c{i}" for i in range(x.size)])
 
     else:
         if not isinstance(code, (str, list, tuple, np.ndarray)):
-            raise TypeError("code argument must be a str or ListLike type (List, Tuple, np.ndarray)")
+            raise TypeError(
+                "code argument must be a str or ListLike type (List, Tuple, np.ndarray)"
+            )
 
         code = np.array(code, ndmin=1)
 
         # % Only check x (y and area already check)
         if code.size != x.size:
-            raise ValueError(f"Inconsistent size between code ({code.size}) and x ({x.size})")
+            raise ValueError(
+                f"Inconsistent size between code ({code.size}) and x ({x.size})"
+            )
     return code
 
 
@@ -238,7 +262,9 @@ def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int | None:
 
     else:
         if not isinstance(epsg, (str, int, float)):
-            raise TypeError("epsg argument must be of AlphaNumeric type (str, int, float)")
+            raise TypeError(
+                "epsg argument must be of AlphaNumeric type (str, int, float)"
+            )
 
         epsg = int(epsg)
 
@@ -297,4 +323,15 @@ def _standardize_generate_mesh_args(
 
     area_error_th = _standardize_generate_mesh_area_error_th(area_error_th)
 
-    return flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th
+    return (
+        flwdir_dataset,
+        bbox,
+        x,
+        y,
+        area,
+        code,
+        shp_dataset,
+        max_depth,
+        epsg,
+        area_error_th,
+    )
