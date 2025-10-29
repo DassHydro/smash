@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 def export_parameters(model: Model, path: FilePath, parameters: list | None = None):
     """
-    Export the smash parameters to tif format in a specified directory.
+    Export the smash parameters to tiff format in a specified directory.
     Relevant metadata will be embedded within the GeoTIFF files. Additionally,
     the `mesh.active_cell` array will be saved as a separate GeoTIFF.
 
