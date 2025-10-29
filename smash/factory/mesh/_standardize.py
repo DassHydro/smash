@@ -129,7 +129,7 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox
 
     # One solution is to force to round as usual : 2.4->2 ; 2.5 -> 3 ; 2.6 -> 3
     for i in range(2):
-        if (bbox[i] - int(bbox[i])) < 0.5:
+        if ((bbox[i] - int(bbox[i])) / xres) < 0.5:
             dleft = np.floor((bbox[i] - xmin) / xres)
         else:
             dleft = np.ceil((bbox[i] - xmin) / xres)
@@ -137,7 +137,7 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox
         bbox[i] = xmin + dleft * xres
 
     for i in range(2, 4):
-        if (bbox[i] - int(bbox[i])) < 0.5:
+        if ((bbox[i] - int(bbox[i])) / yres) < 0.5:
             dtop = np.floor((ymax - bbox[i]) / yres)
         else:
             dtop = np.ceil((ymax - bbox[i]) / yres)
