@@ -83,7 +83,7 @@ def _rasterio_read_param(path: FilePath, mesh: MeshDT, default_value: float = 0.
     xres = mesh.xres
     yres = mesh.yres
 
-    # requiring merge #440, as workaround we test if attr epsg exist.
+    # requiring merge #440, as workaround for this pull and for backward compatibility request we test if attr epsg exist.
     if hasattr(mesh, "epsg"):
         output_crs = rasterio.CRS.from_epsg(mesh.epsg)
     else:
