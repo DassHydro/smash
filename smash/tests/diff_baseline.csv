@@ -1,8 +1,8 @@
-commit 94a8d84d3749902ce67a60509d08d9908ca6c980
-Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Thu Mar 6 17:24:09 2025 +0100
+commit d36264e97d0aa3c89ec64470ae25edaff6a4e046
+Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
+Date:   Wed Oct 29 16:46:13 2025 +0100
 
-    FIX: fix the mahal distance calculation in case of distributed parameters
+    Trigger the tests
 
 TEST NAME                                                      |STATUS
 bbox_mesh.active_cell                                          |NON MODIFIED
@@ -10,6 +10,7 @@ bbox_mesh.cpar_to_rowcol                                       |NON MODIFIED
 bbox_mesh.cscpar                                               |NON MODIFIED
 bbox_mesh.dx                                                   |NON MODIFIED
 bbox_mesh.dy                                                   |NON MODIFIED
+bbox_mesh.epsg                                                 |ADDED
 bbox_mesh.flwacc                                               |NON MODIFIED
 bbox_mesh.flwdir                                               |NON MODIFIED
 bbox_mesh.flwpar                                               |NON MODIFIED
@@ -1076,6 +1077,7 @@ mesh_io.cpar_to_rowcol                                         |NON MODIFIED
 mesh_io.cscpar                                                 |NON MODIFIED
 mesh_io.dx                                                     |NON MODIFIED
 mesh_io.dy                                                     |NON MODIFIED
+mesh_io.epsg                                                   |ADDED
 mesh_io.flwacc                                                 |NON MODIFIED
 mesh_io.flwdir                                                 |NON MODIFIED
 mesh_io.flwdst                                                 |NON MODIFIED
@@ -1142,16 +1144,16 @@ model_io.rr_parameters.values                                  |NON MODIFIED
 model_io.setup.end_time                                        |NON MODIFIED
 model_io.setup.start_time                                      |NON MODIFIED
 model_io.setup.structure                                       |NON MODIFIED
-multiset_estimate.set_1.lcurve_multiset.alpha                  |MODIFIED
-multiset_estimate.set_1.lcurve_multiset.alpha_opt              |MODIFIED
-multiset_estimate.set_1.lcurve_multiset.cost                   |MODIFIED
-multiset_estimate.set_1.lcurve_multiset.mahal_dist             |MODIFIED
-multiset_estimate.set_1.sim_q                                  |MODIFIED
-multiset_estimate.set_2.lcurve_multiset.alpha                  |MODIFIED
-multiset_estimate.set_2.lcurve_multiset.alpha_opt              |MODIFIED
-multiset_estimate.set_2.lcurve_multiset.cost                   |MODIFIED
-multiset_estimate.set_2.lcurve_multiset.mahal_dist             |MODIFIED
-multiset_estimate.set_2.sim_q                                  |MODIFIED
+multiset_estimate.set_1.lcurve_multiset.alpha                  |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.alpha_opt              |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.cost                   |NON MODIFIED
+multiset_estimate.set_1.lcurve_multiset.mahal_dist             |NON MODIFIED
+multiset_estimate.set_1.sim_q                                  |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.alpha                  |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.alpha_opt              |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.cost                   |NON MODIFIED
+multiset_estimate.set_2.lcurve_multiset.mahal_dist             |NON MODIFIED
+multiset_estimate.set_2.sim_q                                  |NON MODIFIED
 net_forward_pass.output                                        |NON MODIFIED
 net_init.bias_layer_1                                          |NON MODIFIED
 net_init.bias_layer_2                                          |NON MODIFIED
@@ -1337,13 +1339,13 @@ optimize.zero-gr5-lr.ann.sim_q                                 |NON MODIFIED
 optimize.zero-gr5-lr.distributed.control_vector                |NON MODIFIED
 optimize.zero-gr5-lr.distributed.sim_q                         |NON MODIFIED
 optimize.zero-gr5-lr.multi-linear.control_vector               |NON MODIFIED
-optimize.zero-gr5-lr.multi-linear.sim_q                        |NON MODIFIED
+optimize.zero-gr5-lr.multi-linear.sim_q                        |MODIFIED
 optimize.zero-gr5-lr.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-gr5-lr.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-gr5-lr.multi-polynomial.sim_q                    |MODIFIED
 optimize.zero-gr5-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr5-lr.uniform.sim_q                             |NON MODIFIED
 optimize.zero-gr5_mlp-kw.ann.control_vector                    |NON MODIFIED
-optimize.zero-gr5_mlp-kw.ann.sim_q                             |NON MODIFIED
+optimize.zero-gr5_mlp-kw.ann.sim_q                             |MODIFIED
 optimize.zero-gr5_mlp-kw.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr5_mlp-kw.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr5_mlp-kw.multi-linear.control_vector           |NON MODIFIED
@@ -1706,6 +1708,7 @@ xy_mesh.cpar_to_rowcol                                         |NON MODIFIED
 xy_mesh.cscpar                                                 |NON MODIFIED
 xy_mesh.dx                                                     |NON MODIFIED
 xy_mesh.dy                                                     |NON MODIFIED
+xy_mesh.epsg                                                   |ADDED
 xy_mesh.flwacc                                                 |NON MODIFIED
 xy_mesh.flwdir                                                 |NON MODIFIED
 xy_mesh.flwdst                                                 |NON MODIFIED
