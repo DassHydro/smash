@@ -200,8 +200,8 @@ with :math:`l_i` and :math:`u_i` the bound constraint on the :math:`i^{th}` conc
 :math:`l_i < \theta_i(x) < u_i, i\in[1..N_{\theta}]` and for conceptual states :math:`l_i < h_{0_s} < u_i,\; i=N_{\theta}+s, \; s\in [1..N_h]`.
 
 
-Multi-Polynomial
-----------------
+Multi-Power
+-----------
 
 This mapping is analoguous to the multi-linear mapping but with optimizable exponents applied to each physical descriptor.
 

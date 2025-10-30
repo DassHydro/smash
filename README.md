@@ -10,7 +10,7 @@
 </h1><br>
 
 [![PyPI](https://badge.fury.io/py/hydro-smash.svg)](https://badge.fury.io/py/hydro-smash)
-[![DOI](https://img.shields.io/badge/DOI-10.5194%2Fegusphere--2025--690-blue)](https://doi.org/10.5194/egusphere-2025-690)
+[![DOI](https://img.shields.io/badge/DOI-10.5194%2Fgmd--18--7003--2025-blue)](https://doi.org/10.5194/gmd-18-7003-2025)
 
 **smash** (**S**patially distributed **M**odeling and **AS**similation for **H**ydrology) is a Python library, interfaced with an efficient Fortran computational engine, that provides user-friendly routines for both hydrological research and operational applications.
 
@@ -40,49 +40,55 @@ For **smash** software use, please cite:
 
 > Colleoni, F., Huynh, N. N. T., Garambois, P.-A., Jay-Allemand, M., Organde, D., Renard, B., De Fournas, T., El Baz, A., Demargne, J., and Javelle, P. (2025). 
 > SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework. 
-> EGUsphere, 2025, 1–36. 
-> https://doi.org/10.5194/egusphere-2025-690.
+> Geosci. Model Dev., 18, 2025, 7003–7034. 
+> https://doi.org/10.5194/gmd-18-7003-2025.
 
 BibTeX entry:
 
 ```bibtex
 @article{Colleoni2025smash,
     author  = {Colleoni, François and Huynh, Ngo Nghi Truyen and Garambois, Pierre-André and Jay-Allemand, Maxime and Organde, Didier and Renard, Benjamin and De Fournas, Thomas and El Baz, Apolline and Demargne, Julie and Javelle, Pierre},
-    title   = {SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework},
-    journal = {EGUsphere},
-    volume  = {2025},
+    title   = {SMASH v1.0: a differentiable and regionalizable high-resolution hydrological modeling and data assimilation framework},
+    journal = {Geoscientific Model Development},
+    volume  = {18},
     year    = {2025},
-    pages   = {1--36},
-    doi     = {10.5194/egusphere-2025-690}
+    number  = {19},
+    pages   = {7003--7034},
+    doi     = {10.5194/gmd-18-7003-2025}
 }
 ```
 
 Please also cite the relevant references corresponding to the algorithms and methods used:
 
-- Hybrid process-parameterization for water flux corrections:
+- Hybrid physics-AI framework for learning regionalization and refining internal water fluxes of algebraic or ordinary differential equations (ODEs)-based solvers:
 
     > Huynh, N. N. T., Garambois, P.-A., Renard, B., Colleoni, F., Monnier, J., and Roux, H. (2025). 
-    > A Distributed Hybrid Physics-AI Framework for Learning Corrections of Internal Hydrological Fluxes and Enhancing High-Resolution Regionalized Flood Modeling. 
-    > EGUsphere, 2025, 1–34. 
-    > https://doi.org/10.5194/egusphere-2024-3665.
+    > A distributed hybrid physics–AI framework for learning corrections of internal hydrological fluxes and enhancing high-resolution regionalized flood modeling. 
+    > Hydrol. Earth Syst. Sci., 29, 3589–3613. 
+    > https://doi.org/10.5194/hess-29-3589-2025.
 
-- Hybrid regionalization, HDA-PR algorithm:
+    > Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Monnier, J. (2025). 
+    > Hybrid Physics-AI and Neural ODE Approaches for Spatially Distributed Hydrological Modeling. 
+    > EGUsphere, 2025, 1–24. 
+    > https://doi.org/10.5194/egusphere-2025-2797.
+
+- Hybrid Data Assimilation and Parameter Regionalization (HDA-PR) approach:
 
     > Huynh, N. N. T., Garambois, P.-A., Colleoni, F., Renard, B., Roux, H., Demargne, J., Jay-Allemand, M., and Javelle, P. (2024). 
     > Learning Regionalization Using Accurate Spatial Cost Gradients Within a Differentiable High-Resolution Hydrological Model: Application to the French Mediterranean Region. 
-    > Water Resources Research, 60, e2024WR037544. 
+    > Water Resour. Res., 60, e2024WR037544. 
     > https://doi.org/10.1029/2024WR037544.
 
 - Signatures, multi-criteria calibration, hydrograph segmentation algorithm:
 
     > Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Javelle, P. (2023). 
     > Signatures-and-sensitivity-based multi-criteria variational calibration for distributed hydrological modeling applied to Mediterranean floods. 
-    > Journal of Hydrology, 625, 129992. 
+    > J. Hydrol., 625, 129992. 
     > https://doi.org/10.1016/j.jhydrol.2023.129992.
 
 - Fully distributed variational calibration:
 
     > Jay-Allemand, M., Javelle, P., Gejadze, I., Arnaud, P., Malaterre, P.-O., Fine, J.-A., and Organde, D. (2020). 
     > On the potential of variational calibration for a fully distributed hydrological model: application on a Mediterranean catchment. 
-    > Hydrology and Earth System Sciences, 24, 5519–5538. 
+    > Hydrol. Earth Syst. Sci., 24, 5519–5538. 
     > https://doi.org/10.5194/hess-24-5519-2020.

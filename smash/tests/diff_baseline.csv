@@ -1170,8 +1170,10 @@ optimize.zero-gr4-kw.distributed.control_vector                |NON MODIFIED
 optimize.zero-gr4-kw.distributed.sim_q                         |NON MODIFIED
 optimize.zero-gr4-kw.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-gr4-kw.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-gr4-kw.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-gr4-kw.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-gr4-kw.multi-polynomial.control_vector           |DELETED
+optimize.zero-gr4-kw.multi-polynomial.sim_q                    |DELETED
+optimize.zero-gr4-kw.multi-power.control_vector                |ADDED
+optimize.zero-gr4-kw.multi-power.sim_q                         |ADDED
 optimize.zero-gr4-kw.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr4-kw.uniform.sim_q                             |NON MODIFIED
 optimize.zero-gr4-lag0.ann.control_vector                      |NON MODIFIED
@@ -1180,8 +1182,10 @@ optimize.zero-gr4-lag0.distributed.control_vector              |NON MODIFIED
 optimize.zero-gr4-lag0.distributed.sim_q                       |NON MODIFIED
 optimize.zero-gr4-lag0.multi-linear.control_vector             |NON MODIFIED
 optimize.zero-gr4-lag0.multi-linear.sim_q                      |NON MODIFIED
-optimize.zero-gr4-lag0.multi-polynomial.control_vector         |NON MODIFIED
-optimize.zero-gr4-lag0.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-gr4-lag0.multi-polynomial.control_vector         |DELETED
+optimize.zero-gr4-lag0.multi-polynomial.sim_q                  |DELETED
+optimize.zero-gr4-lag0.multi-power.control_vector              |ADDED
+optimize.zero-gr4-lag0.multi-power.sim_q                       |ADDED
 optimize.zero-gr4-lag0.uniform.control_vector                  |NON MODIFIED
 optimize.zero-gr4-lag0.uniform.sim_q                           |NON MODIFIED
 optimize.zero-gr4-lr.ann.control_vector                        |NON MODIFIED
@@ -1190,8 +1194,10 @@ optimize.zero-gr4-lr.distributed.control_vector                |NON MODIFIED
 optimize.zero-gr4-lr.distributed.sim_q                         |NON MODIFIED
 optimize.zero-gr4-lr.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-gr4-lr.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-gr4-lr.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-gr4-lr.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-gr4-lr.multi-polynomial.control_vector           |DELETED
+optimize.zero-gr4-lr.multi-polynomial.sim_q                    |DELETED
+optimize.zero-gr4-lr.multi-power.control_vector                |ADDED
+optimize.zero-gr4-lr.multi-power.sim_q                         |ADDED
 optimize.zero-gr4-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr4-lr.uniform.sim_q                             |NON MODIFIED
 optimize.zero-gr4_mlp-kw.ann.control_vector                    |NON MODIFIED
@@ -1200,8 +1206,10 @@ optimize.zero-gr4_mlp-kw.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr4_mlp-kw.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr4_mlp-kw.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr4_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr4_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr4_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr4_mlp-kw.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr4_mlp-kw.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr4_mlp-kw.multi-power.control_vector            |ADDED
+optimize.zero-gr4_mlp-kw.multi-power.sim_q                     |ADDED
 optimize.zero-gr4_mlp-kw.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr4_mlp-kw.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr4_mlp-lag0.ann.control_vector                  |NON MODIFIED
@@ -1210,8 +1218,10 @@ optimize.zero-gr4_mlp-lag0.distributed.control_vector          |NON MODIFIED
 optimize.zero-gr4_mlp-lag0.distributed.sim_q                   |NON MODIFIED
 optimize.zero-gr4_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
 optimize.zero-gr4_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-gr4_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-gr4_mlp-lag0.multi-polynomial.control_vector     |DELETED
+optimize.zero-gr4_mlp-lag0.multi-polynomial.sim_q              |DELETED
+optimize.zero-gr4_mlp-lag0.multi-power.control_vector          |ADDED
+optimize.zero-gr4_mlp-lag0.multi-power.sim_q                   |ADDED
 optimize.zero-gr4_mlp-lag0.uniform.control_vector              |NON MODIFIED
 optimize.zero-gr4_mlp-lag0.uniform.sim_q                       |NON MODIFIED
 optimize.zero-gr4_mlp-lr.ann.control_vector                    |NON MODIFIED
@@ -1220,8 +1230,10 @@ optimize.zero-gr4_mlp-lr.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr4_mlp-lr.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr4_mlp-lr.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr4_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr4_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr4_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr4_mlp-lr.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr4_mlp-lr.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr4_mlp-lr.multi-power.control_vector            |ADDED
+optimize.zero-gr4_mlp-lr.multi-power.sim_q                     |ADDED
 optimize.zero-gr4_mlp-lr.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr4_mlp-lr.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr4_ode-kw.ann.control_vector                    |NON MODIFIED
@@ -1230,8 +1242,10 @@ optimize.zero-gr4_ode-kw.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr4_ode-kw.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr4_ode-kw.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr4_ode-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr4_ode-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr4_ode-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr4_ode-kw.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr4_ode-kw.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr4_ode-kw.multi-power.control_vector            |ADDED
+optimize.zero-gr4_ode-kw.multi-power.sim_q                     |ADDED
 optimize.zero-gr4_ode-kw.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr4_ode-kw.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr4_ode-lag0.ann.control_vector                  |NON MODIFIED
@@ -1240,8 +1254,10 @@ optimize.zero-gr4_ode-lag0.distributed.control_vector          |NON MODIFIED
 optimize.zero-gr4_ode-lag0.distributed.sim_q                   |NON MODIFIED
 optimize.zero-gr4_ode-lag0.multi-linear.control_vector         |NON MODIFIED
 optimize.zero-gr4_ode-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-gr4_ode-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-gr4_ode-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-gr4_ode-lag0.multi-polynomial.control_vector     |DELETED
+optimize.zero-gr4_ode-lag0.multi-polynomial.sim_q              |DELETED
+optimize.zero-gr4_ode-lag0.multi-power.control_vector          |ADDED
+optimize.zero-gr4_ode-lag0.multi-power.sim_q                   |ADDED
 optimize.zero-gr4_ode-lag0.uniform.control_vector              |NON MODIFIED
 optimize.zero-gr4_ode-lag0.uniform.sim_q                       |NON MODIFIED
 optimize.zero-gr4_ode-lr.ann.control_vector                    |NON MODIFIED
@@ -1250,8 +1266,10 @@ optimize.zero-gr4_ode-lr.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr4_ode-lr.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr4_ode-lr.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr4_ode-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr4_ode-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr4_ode-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr4_ode-lr.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr4_ode-lr.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr4_ode-lr.multi-power.control_vector            |ADDED
+optimize.zero-gr4_ode-lr.multi-power.sim_q                     |ADDED
 optimize.zero-gr4_ode-lr.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr4_ode-lr.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr4_ode_mlp-kw.ann.control_vector                |NON MODIFIED
@@ -1260,8 +1278,10 @@ optimize.zero-gr4_ode_mlp-kw.distributed.control_vector        |NON MODIFIED
 optimize.zero-gr4_ode_mlp-kw.distributed.sim_q                 |NON MODIFIED
 optimize.zero-gr4_ode_mlp-kw.multi-linear.control_vector       |NON MODIFIED
 optimize.zero-gr4_ode_mlp-kw.multi-linear.sim_q                |NON MODIFIED
-optimize.zero-gr4_ode_mlp-kw.multi-polynomial.control_vector   |NON MODIFIED
-optimize.zero-gr4_ode_mlp-kw.multi-polynomial.sim_q            |NON MODIFIED
+optimize.zero-gr4_ode_mlp-kw.multi-polynomial.control_vector   |DELETED
+optimize.zero-gr4_ode_mlp-kw.multi-polynomial.sim_q            |DELETED
+optimize.zero-gr4_ode_mlp-kw.multi-power.control_vector        |ADDED
+optimize.zero-gr4_ode_mlp-kw.multi-power.sim_q                 |ADDED
 optimize.zero-gr4_ode_mlp-kw.uniform.control_vector            |NON MODIFIED
 optimize.zero-gr4_ode_mlp-kw.uniform.sim_q                     |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lag0.ann.control_vector              |NON MODIFIED
@@ -1270,8 +1290,10 @@ optimize.zero-gr4_ode_mlp-lag0.distributed.control_vector      |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lag0.distributed.sim_q               |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lag0.multi-linear.control_vector     |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lag0.multi-linear.sim_q              |NON MODIFIED
-optimize.zero-gr4_ode_mlp-lag0.multi-polynomial.control_vector |NON MODIFIED
-optimize.zero-gr4_ode_mlp-lag0.multi-polynomial.sim_q          |NON MODIFIED
+optimize.zero-gr4_ode_mlp-lag0.multi-polynomial.control_vector |DELETED
+optimize.zero-gr4_ode_mlp-lag0.multi-polynomial.sim_q          |DELETED
+optimize.zero-gr4_ode_mlp-lag0.multi-power.control_vector      |ADDED
+optimize.zero-gr4_ode_mlp-lag0.multi-power.sim_q               |ADDED
 optimize.zero-gr4_ode_mlp-lag0.uniform.control_vector          |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lag0.uniform.sim_q                   |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lr.ann.control_vector                |NON MODIFIED
@@ -1280,8 +1302,10 @@ optimize.zero-gr4_ode_mlp-lr.distributed.control_vector        |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lr.distributed.sim_q                 |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lr.multi-linear.control_vector       |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lr.multi-linear.sim_q                |NON MODIFIED
-optimize.zero-gr4_ode_mlp-lr.multi-polynomial.control_vector   |NON MODIFIED
-optimize.zero-gr4_ode_mlp-lr.multi-polynomial.sim_q            |NON MODIFIED
+optimize.zero-gr4_ode_mlp-lr.multi-polynomial.control_vector   |DELETED
+optimize.zero-gr4_ode_mlp-lr.multi-polynomial.sim_q            |DELETED
+optimize.zero-gr4_ode_mlp-lr.multi-power.control_vector        |ADDED
+optimize.zero-gr4_ode_mlp-lr.multi-power.sim_q                 |ADDED
 optimize.zero-gr4_ode_mlp-lr.uniform.control_vector            |NON MODIFIED
 optimize.zero-gr4_ode_mlp-lr.uniform.sim_q                     |NON MODIFIED
 optimize.zero-gr4_ri-kw.ann.control_vector                     |NON MODIFIED
@@ -1290,8 +1314,10 @@ optimize.zero-gr4_ri-kw.distributed.control_vector             |NON MODIFIED
 optimize.zero-gr4_ri-kw.distributed.sim_q                      |NON MODIFIED
 optimize.zero-gr4_ri-kw.multi-linear.control_vector            |NON MODIFIED
 optimize.zero-gr4_ri-kw.multi-linear.sim_q                     |NON MODIFIED
-optimize.zero-gr4_ri-kw.multi-polynomial.control_vector        |NON MODIFIED
-optimize.zero-gr4_ri-kw.multi-polynomial.sim_q                 |NON MODIFIED
+optimize.zero-gr4_ri-kw.multi-polynomial.control_vector        |DELETED
+optimize.zero-gr4_ri-kw.multi-polynomial.sim_q                 |DELETED
+optimize.zero-gr4_ri-kw.multi-power.control_vector             |ADDED
+optimize.zero-gr4_ri-kw.multi-power.sim_q                      |ADDED
 optimize.zero-gr4_ri-kw.uniform.control_vector                 |NON MODIFIED
 optimize.zero-gr4_ri-kw.uniform.sim_q                          |NON MODIFIED
 optimize.zero-gr4_ri-lag0.ann.control_vector                   |NON MODIFIED
@@ -1300,8 +1326,10 @@ optimize.zero-gr4_ri-lag0.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr4_ri-lag0.distributed.sim_q                    |NON MODIFIED
 optimize.zero-gr4_ri-lag0.multi-linear.control_vector          |NON MODIFIED
 optimize.zero-gr4_ri-lag0.multi-linear.sim_q                   |NON MODIFIED
-optimize.zero-gr4_ri-lag0.multi-polynomial.control_vector      |NON MODIFIED
-optimize.zero-gr4_ri-lag0.multi-polynomial.sim_q               |NON MODIFIED
+optimize.zero-gr4_ri-lag0.multi-polynomial.control_vector      |DELETED
+optimize.zero-gr4_ri-lag0.multi-polynomial.sim_q               |DELETED
+optimize.zero-gr4_ri-lag0.multi-power.control_vector           |ADDED
+optimize.zero-gr4_ri-lag0.multi-power.sim_q                    |ADDED
 optimize.zero-gr4_ri-lag0.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr4_ri-lag0.uniform.sim_q                        |NON MODIFIED
 optimize.zero-gr4_ri-lr.ann.control_vector                     |NON MODIFIED
@@ -1310,8 +1338,10 @@ optimize.zero-gr4_ri-lr.distributed.control_vector             |NON MODIFIED
 optimize.zero-gr4_ri-lr.distributed.sim_q                      |NON MODIFIED
 optimize.zero-gr4_ri-lr.multi-linear.control_vector            |NON MODIFIED
 optimize.zero-gr4_ri-lr.multi-linear.sim_q                     |NON MODIFIED
-optimize.zero-gr4_ri-lr.multi-polynomial.control_vector        |NON MODIFIED
-optimize.zero-gr4_ri-lr.multi-polynomial.sim_q                 |NON MODIFIED
+optimize.zero-gr4_ri-lr.multi-polynomial.control_vector        |DELETED
+optimize.zero-gr4_ri-lr.multi-polynomial.sim_q                 |DELETED
+optimize.zero-gr4_ri-lr.multi-power.control_vector             |ADDED
+optimize.zero-gr4_ri-lr.multi-power.sim_q                      |ADDED
 optimize.zero-gr4_ri-lr.uniform.control_vector                 |NON MODIFIED
 optimize.zero-gr4_ri-lr.uniform.sim_q                          |NON MODIFIED
 optimize.zero-gr5-kw.ann.control_vector                        |NON MODIFIED
@@ -1320,8 +1350,10 @@ optimize.zero-gr5-kw.distributed.control_vector                |NON MODIFIED
 optimize.zero-gr5-kw.distributed.sim_q                         |NON MODIFIED
 optimize.zero-gr5-kw.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-gr5-kw.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-gr5-kw.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-gr5-kw.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-gr5-kw.multi-polynomial.control_vector           |DELETED
+optimize.zero-gr5-kw.multi-polynomial.sim_q                    |DELETED
+optimize.zero-gr5-kw.multi-power.control_vector                |ADDED
+optimize.zero-gr5-kw.multi-power.sim_q                         |ADDED
 optimize.zero-gr5-kw.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr5-kw.uniform.sim_q                             |NON MODIFIED
 optimize.zero-gr5-lag0.ann.control_vector                      |NON MODIFIED
@@ -1330,8 +1362,10 @@ optimize.zero-gr5-lag0.distributed.control_vector              |NON MODIFIED
 optimize.zero-gr5-lag0.distributed.sim_q                       |NON MODIFIED
 optimize.zero-gr5-lag0.multi-linear.control_vector             |NON MODIFIED
 optimize.zero-gr5-lag0.multi-linear.sim_q                      |NON MODIFIED
-optimize.zero-gr5-lag0.multi-polynomial.control_vector         |NON MODIFIED
-optimize.zero-gr5-lag0.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-gr5-lag0.multi-polynomial.control_vector         |DELETED
+optimize.zero-gr5-lag0.multi-polynomial.sim_q                  |DELETED
+optimize.zero-gr5-lag0.multi-power.control_vector              |ADDED
+optimize.zero-gr5-lag0.multi-power.sim_q                       |ADDED
 optimize.zero-gr5-lag0.uniform.control_vector                  |NON MODIFIED
 optimize.zero-gr5-lag0.uniform.sim_q                           |NON MODIFIED
 optimize.zero-gr5-lr.ann.control_vector                        |NON MODIFIED
@@ -1339,9 +1373,17 @@ optimize.zero-gr5-lr.ann.sim_q                                 |NON MODIFIED
 optimize.zero-gr5-lr.distributed.control_vector                |NON MODIFIED
 optimize.zero-gr5-lr.distributed.sim_q                         |NON MODIFIED
 optimize.zero-gr5-lr.multi-linear.control_vector               |NON MODIFIED
+<<<<<<< HEAD
 optimize.zero-gr5-lr.multi-linear.sim_q                        |MODIFIED
 optimize.zero-gr5-lr.multi-polynomial.control_vector           |NON MODIFIED
 optimize.zero-gr5-lr.multi-polynomial.sim_q                    |MODIFIED
+=======
+optimize.zero-gr5-lr.multi-linear.sim_q                        |NON MODIFIED
+optimize.zero-gr5-lr.multi-polynomial.control_vector           |DELETED
+optimize.zero-gr5-lr.multi-polynomial.sim_q                    |DELETED
+optimize.zero-gr5-lr.multi-power.control_vector                |ADDED
+optimize.zero-gr5-lr.multi-power.sim_q                         |ADDED
+>>>>>>> main
 optimize.zero-gr5-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr5-lr.uniform.sim_q                             |NON MODIFIED
 optimize.zero-gr5_mlp-kw.ann.control_vector                    |NON MODIFIED
@@ -1350,8 +1392,10 @@ optimize.zero-gr5_mlp-kw.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr5_mlp-kw.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr5_mlp-kw.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr5_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr5_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr5_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr5_mlp-kw.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr5_mlp-kw.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr5_mlp-kw.multi-power.control_vector            |ADDED
+optimize.zero-gr5_mlp-kw.multi-power.sim_q                     |ADDED
 optimize.zero-gr5_mlp-kw.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr5_mlp-kw.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr5_mlp-lag0.ann.control_vector                  |NON MODIFIED
@@ -1360,8 +1404,10 @@ optimize.zero-gr5_mlp-lag0.distributed.control_vector          |NON MODIFIED
 optimize.zero-gr5_mlp-lag0.distributed.sim_q                   |NON MODIFIED
 optimize.zero-gr5_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
 optimize.zero-gr5_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-gr5_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-gr5_mlp-lag0.multi-polynomial.control_vector     |DELETED
+optimize.zero-gr5_mlp-lag0.multi-polynomial.sim_q              |DELETED
+optimize.zero-gr5_mlp-lag0.multi-power.control_vector          |ADDED
+optimize.zero-gr5_mlp-lag0.multi-power.sim_q                   |ADDED
 optimize.zero-gr5_mlp-lag0.uniform.control_vector              |NON MODIFIED
 optimize.zero-gr5_mlp-lag0.uniform.sim_q                       |NON MODIFIED
 optimize.zero-gr5_mlp-lr.ann.control_vector                    |NON MODIFIED
@@ -1370,8 +1416,10 @@ optimize.zero-gr5_mlp-lr.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr5_mlp-lr.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr5_mlp-lr.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr5_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr5_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr5_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr5_mlp-lr.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr5_mlp-lr.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr5_mlp-lr.multi-power.control_vector            |ADDED
+optimize.zero-gr5_mlp-lr.multi-power.sim_q                     |ADDED
 optimize.zero-gr5_mlp-lr.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr5_mlp-lr.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr5_ri-kw.ann.control_vector                     |NON MODIFIED
@@ -1380,8 +1428,10 @@ optimize.zero-gr5_ri-kw.distributed.control_vector             |NON MODIFIED
 optimize.zero-gr5_ri-kw.distributed.sim_q                      |NON MODIFIED
 optimize.zero-gr5_ri-kw.multi-linear.control_vector            |NON MODIFIED
 optimize.zero-gr5_ri-kw.multi-linear.sim_q                     |NON MODIFIED
-optimize.zero-gr5_ri-kw.multi-polynomial.control_vector        |NON MODIFIED
-optimize.zero-gr5_ri-kw.multi-polynomial.sim_q                 |NON MODIFIED
+optimize.zero-gr5_ri-kw.multi-polynomial.control_vector        |DELETED
+optimize.zero-gr5_ri-kw.multi-polynomial.sim_q                 |DELETED
+optimize.zero-gr5_ri-kw.multi-power.control_vector             |ADDED
+optimize.zero-gr5_ri-kw.multi-power.sim_q                      |ADDED
 optimize.zero-gr5_ri-kw.uniform.control_vector                 |NON MODIFIED
 optimize.zero-gr5_ri-kw.uniform.sim_q                          |NON MODIFIED
 optimize.zero-gr5_ri-lag0.ann.control_vector                   |NON MODIFIED
@@ -1390,8 +1440,10 @@ optimize.zero-gr5_ri-lag0.distributed.control_vector           |NON MODIFIED
 optimize.zero-gr5_ri-lag0.distributed.sim_q                    |NON MODIFIED
 optimize.zero-gr5_ri-lag0.multi-linear.control_vector          |NON MODIFIED
 optimize.zero-gr5_ri-lag0.multi-linear.sim_q                   |NON MODIFIED
-optimize.zero-gr5_ri-lag0.multi-polynomial.control_vector      |NON MODIFIED
-optimize.zero-gr5_ri-lag0.multi-polynomial.sim_q               |NON MODIFIED
+optimize.zero-gr5_ri-lag0.multi-polynomial.control_vector      |DELETED
+optimize.zero-gr5_ri-lag0.multi-polynomial.sim_q               |DELETED
+optimize.zero-gr5_ri-lag0.multi-power.control_vector           |ADDED
+optimize.zero-gr5_ri-lag0.multi-power.sim_q                    |ADDED
 optimize.zero-gr5_ri-lag0.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr5_ri-lag0.uniform.sim_q                        |NON MODIFIED
 optimize.zero-gr5_ri-lr.ann.control_vector                     |NON MODIFIED
@@ -1400,8 +1452,10 @@ optimize.zero-gr5_ri-lr.distributed.control_vector             |NON MODIFIED
 optimize.zero-gr5_ri-lr.distributed.sim_q                      |NON MODIFIED
 optimize.zero-gr5_ri-lr.multi-linear.control_vector            |NON MODIFIED
 optimize.zero-gr5_ri-lr.multi-linear.sim_q                     |NON MODIFIED
-optimize.zero-gr5_ri-lr.multi-polynomial.control_vector        |NON MODIFIED
-optimize.zero-gr5_ri-lr.multi-polynomial.sim_q                 |NON MODIFIED
+optimize.zero-gr5_ri-lr.multi-polynomial.control_vector        |DELETED
+optimize.zero-gr5_ri-lr.multi-polynomial.sim_q                 |DELETED
+optimize.zero-gr5_ri-lr.multi-power.control_vector             |ADDED
+optimize.zero-gr5_ri-lr.multi-power.sim_q                      |ADDED
 optimize.zero-gr5_ri-lr.uniform.control_vector                 |NON MODIFIED
 optimize.zero-gr5_ri-lr.uniform.sim_q                          |NON MODIFIED
 optimize.zero-gr6-kw.ann.control_vector                        |NON MODIFIED
@@ -1410,8 +1464,10 @@ optimize.zero-gr6-kw.distributed.control_vector                |NON MODIFIED
 optimize.zero-gr6-kw.distributed.sim_q                         |NON MODIFIED
 optimize.zero-gr6-kw.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-gr6-kw.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-gr6-kw.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-gr6-kw.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-gr6-kw.multi-polynomial.control_vector           |DELETED
+optimize.zero-gr6-kw.multi-polynomial.sim_q                    |DELETED
+optimize.zero-gr6-kw.multi-power.control_vector                |ADDED
+optimize.zero-gr6-kw.multi-power.sim_q                         |ADDED
 optimize.zero-gr6-kw.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr6-kw.uniform.sim_q                             |NON MODIFIED
 optimize.zero-gr6-lag0.ann.control_vector                      |NON MODIFIED
@@ -1420,8 +1476,10 @@ optimize.zero-gr6-lag0.distributed.control_vector              |NON MODIFIED
 optimize.zero-gr6-lag0.distributed.sim_q                       |NON MODIFIED
 optimize.zero-gr6-lag0.multi-linear.control_vector             |NON MODIFIED
 optimize.zero-gr6-lag0.multi-linear.sim_q                      |NON MODIFIED
-optimize.zero-gr6-lag0.multi-polynomial.control_vector         |NON MODIFIED
-optimize.zero-gr6-lag0.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-gr6-lag0.multi-polynomial.control_vector         |DELETED
+optimize.zero-gr6-lag0.multi-polynomial.sim_q                  |DELETED
+optimize.zero-gr6-lag0.multi-power.control_vector              |ADDED
+optimize.zero-gr6-lag0.multi-power.sim_q                       |ADDED
 optimize.zero-gr6-lag0.uniform.control_vector                  |NON MODIFIED
 optimize.zero-gr6-lag0.uniform.sim_q                           |NON MODIFIED
 optimize.zero-gr6-lr.ann.control_vector                        |NON MODIFIED
@@ -1430,8 +1488,10 @@ optimize.zero-gr6-lr.distributed.control_vector                |NON MODIFIED
 optimize.zero-gr6-lr.distributed.sim_q                         |NON MODIFIED
 optimize.zero-gr6-lr.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-gr6-lr.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-gr6-lr.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-gr6-lr.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-gr6-lr.multi-polynomial.control_vector           |DELETED
+optimize.zero-gr6-lr.multi-polynomial.sim_q                    |DELETED
+optimize.zero-gr6-lr.multi-power.control_vector                |ADDED
+optimize.zero-gr6-lr.multi-power.sim_q                         |ADDED
 optimize.zero-gr6-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-gr6-lr.uniform.sim_q                             |NON MODIFIED
 optimize.zero-gr6_mlp-kw.ann.control_vector                    |NON MODIFIED
@@ -1440,8 +1500,10 @@ optimize.zero-gr6_mlp-kw.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr6_mlp-kw.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr6_mlp-kw.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr6_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr6_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr6_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr6_mlp-kw.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr6_mlp-kw.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr6_mlp-kw.multi-power.control_vector            |ADDED
+optimize.zero-gr6_mlp-kw.multi-power.sim_q                     |ADDED
 optimize.zero-gr6_mlp-kw.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr6_mlp-kw.uniform.sim_q                         |NON MODIFIED
 optimize.zero-gr6_mlp-lag0.ann.control_vector                  |NON MODIFIED
@@ -1450,8 +1512,10 @@ optimize.zero-gr6_mlp-lag0.distributed.control_vector          |NON MODIFIED
 optimize.zero-gr6_mlp-lag0.distributed.sim_q                   |NON MODIFIED
 optimize.zero-gr6_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
 optimize.zero-gr6_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-gr6_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-gr6_mlp-lag0.multi-polynomial.control_vector     |DELETED
+optimize.zero-gr6_mlp-lag0.multi-polynomial.sim_q              |DELETED
+optimize.zero-gr6_mlp-lag0.multi-power.control_vector          |ADDED
+optimize.zero-gr6_mlp-lag0.multi-power.sim_q                   |ADDED
 optimize.zero-gr6_mlp-lag0.uniform.control_vector              |NON MODIFIED
 optimize.zero-gr6_mlp-lag0.uniform.sim_q                       |NON MODIFIED
 optimize.zero-gr6_mlp-lr.ann.control_vector                    |NON MODIFIED
@@ -1460,8 +1524,10 @@ optimize.zero-gr6_mlp-lr.distributed.control_vector            |NON MODIFIED
 optimize.zero-gr6_mlp-lr.distributed.sim_q                     |NON MODIFIED
 optimize.zero-gr6_mlp-lr.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-gr6_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-gr6_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-gr6_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-gr6_mlp-lr.multi-polynomial.control_vector       |DELETED
+optimize.zero-gr6_mlp-lr.multi-polynomial.sim_q                |DELETED
+optimize.zero-gr6_mlp-lr.multi-power.control_vector            |ADDED
+optimize.zero-gr6_mlp-lr.multi-power.sim_q                     |ADDED
 optimize.zero-gr6_mlp-lr.uniform.control_vector                |NON MODIFIED
 optimize.zero-gr6_mlp-lr.uniform.sim_q                         |NON MODIFIED
 optimize.zero-grc-kw.ann.control_vector                        |NON MODIFIED
@@ -1470,8 +1536,10 @@ optimize.zero-grc-kw.distributed.control_vector                |NON MODIFIED
 optimize.zero-grc-kw.distributed.sim_q                         |NON MODIFIED
 optimize.zero-grc-kw.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-grc-kw.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-grc-kw.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-grc-kw.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-grc-kw.multi-polynomial.control_vector           |DELETED
+optimize.zero-grc-kw.multi-polynomial.sim_q                    |DELETED
+optimize.zero-grc-kw.multi-power.control_vector                |ADDED
+optimize.zero-grc-kw.multi-power.sim_q                         |ADDED
 optimize.zero-grc-kw.uniform.control_vector                    |NON MODIFIED
 optimize.zero-grc-kw.uniform.sim_q                             |NON MODIFIED
 optimize.zero-grc-lag0.ann.control_vector                      |NON MODIFIED
@@ -1480,8 +1548,10 @@ optimize.zero-grc-lag0.distributed.control_vector              |NON MODIFIED
 optimize.zero-grc-lag0.distributed.sim_q                       |NON MODIFIED
 optimize.zero-grc-lag0.multi-linear.control_vector             |NON MODIFIED
 optimize.zero-grc-lag0.multi-linear.sim_q                      |NON MODIFIED
-optimize.zero-grc-lag0.multi-polynomial.control_vector         |NON MODIFIED
-optimize.zero-grc-lag0.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-grc-lag0.multi-polynomial.control_vector         |DELETED
+optimize.zero-grc-lag0.multi-polynomial.sim_q                  |DELETED
+optimize.zero-grc-lag0.multi-power.control_vector              |ADDED
+optimize.zero-grc-lag0.multi-power.sim_q                       |ADDED
 optimize.zero-grc-lag0.uniform.control_vector                  |NON MODIFIED
 optimize.zero-grc-lag0.uniform.sim_q                           |NON MODIFIED
 optimize.zero-grc-lr.ann.control_vector                        |NON MODIFIED
@@ -1490,8 +1560,10 @@ optimize.zero-grc-lr.distributed.control_vector                |NON MODIFIED
 optimize.zero-grc-lr.distributed.sim_q                         |NON MODIFIED
 optimize.zero-grc-lr.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-grc-lr.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-grc-lr.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-grc-lr.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-grc-lr.multi-polynomial.control_vector           |DELETED
+optimize.zero-grc-lr.multi-polynomial.sim_q                    |DELETED
+optimize.zero-grc-lr.multi-power.control_vector                |ADDED
+optimize.zero-grc-lr.multi-power.sim_q                         |ADDED
 optimize.zero-grc-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-grc-lr.uniform.sim_q                             |NON MODIFIED
 optimize.zero-grc_mlp-kw.ann.control_vector                    |NON MODIFIED
@@ -1500,8 +1572,10 @@ optimize.zero-grc_mlp-kw.distributed.control_vector            |NON MODIFIED
 optimize.zero-grc_mlp-kw.distributed.sim_q                     |NON MODIFIED
 optimize.zero-grc_mlp-kw.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-grc_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grc_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grc_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-grc_mlp-kw.multi-polynomial.control_vector       |DELETED
+optimize.zero-grc_mlp-kw.multi-polynomial.sim_q                |DELETED
+optimize.zero-grc_mlp-kw.multi-power.control_vector            |ADDED
+optimize.zero-grc_mlp-kw.multi-power.sim_q                     |ADDED
 optimize.zero-grc_mlp-kw.uniform.control_vector                |NON MODIFIED
 optimize.zero-grc_mlp-kw.uniform.sim_q                         |NON MODIFIED
 optimize.zero-grc_mlp-lag0.ann.control_vector                  |NON MODIFIED
@@ -1510,8 +1584,10 @@ optimize.zero-grc_mlp-lag0.distributed.control_vector          |NON MODIFIED
 optimize.zero-grc_mlp-lag0.distributed.sim_q                   |NON MODIFIED
 optimize.zero-grc_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
 optimize.zero-grc_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-grc_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-grc_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-grc_mlp-lag0.multi-polynomial.control_vector     |DELETED
+optimize.zero-grc_mlp-lag0.multi-polynomial.sim_q              |DELETED
+optimize.zero-grc_mlp-lag0.multi-power.control_vector          |ADDED
+optimize.zero-grc_mlp-lag0.multi-power.sim_q                   |ADDED
 optimize.zero-grc_mlp-lag0.uniform.control_vector              |NON MODIFIED
 optimize.zero-grc_mlp-lag0.uniform.sim_q                       |NON MODIFIED
 optimize.zero-grc_mlp-lr.ann.control_vector                    |NON MODIFIED
@@ -1520,8 +1596,10 @@ optimize.zero-grc_mlp-lr.distributed.control_vector            |NON MODIFIED
 optimize.zero-grc_mlp-lr.distributed.sim_q                     |NON MODIFIED
 optimize.zero-grc_mlp-lr.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-grc_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grc_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grc_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-grc_mlp-lr.multi-polynomial.control_vector       |DELETED
+optimize.zero-grc_mlp-lr.multi-polynomial.sim_q                |DELETED
+optimize.zero-grc_mlp-lr.multi-power.control_vector            |ADDED
+optimize.zero-grc_mlp-lr.multi-power.sim_q                     |ADDED
 optimize.zero-grc_mlp-lr.uniform.control_vector                |NON MODIFIED
 optimize.zero-grc_mlp-lr.uniform.sim_q                         |NON MODIFIED
 optimize.zero-grd-kw.ann.control_vector                        |NON MODIFIED
@@ -1530,8 +1608,10 @@ optimize.zero-grd-kw.distributed.control_vector                |NON MODIFIED
 optimize.zero-grd-kw.distributed.sim_q                         |NON MODIFIED
 optimize.zero-grd-kw.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-grd-kw.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-grd-kw.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-grd-kw.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-grd-kw.multi-polynomial.control_vector           |DELETED
+optimize.zero-grd-kw.multi-polynomial.sim_q                    |DELETED
+optimize.zero-grd-kw.multi-power.control_vector                |ADDED
+optimize.zero-grd-kw.multi-power.sim_q                         |ADDED
 optimize.zero-grd-kw.uniform.control_vector                    |NON MODIFIED
 optimize.zero-grd-kw.uniform.sim_q                             |NON MODIFIED
 optimize.zero-grd-lag0.ann.control_vector                      |NON MODIFIED
@@ -1540,8 +1620,10 @@ optimize.zero-grd-lag0.distributed.control_vector              |NON MODIFIED
 optimize.zero-grd-lag0.distributed.sim_q                       |NON MODIFIED
 optimize.zero-grd-lag0.multi-linear.control_vector             |NON MODIFIED
 optimize.zero-grd-lag0.multi-linear.sim_q                      |NON MODIFIED
-optimize.zero-grd-lag0.multi-polynomial.control_vector         |NON MODIFIED
-optimize.zero-grd-lag0.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-grd-lag0.multi-polynomial.control_vector         |DELETED
+optimize.zero-grd-lag0.multi-polynomial.sim_q                  |DELETED
+optimize.zero-grd-lag0.multi-power.control_vector              |ADDED
+optimize.zero-grd-lag0.multi-power.sim_q                       |ADDED
 optimize.zero-grd-lag0.uniform.control_vector                  |NON MODIFIED
 optimize.zero-grd-lag0.uniform.sim_q                           |NON MODIFIED
 optimize.zero-grd-lr.ann.control_vector                        |NON MODIFIED
@@ -1550,8 +1632,10 @@ optimize.zero-grd-lr.distributed.control_vector                |NON MODIFIED
 optimize.zero-grd-lr.distributed.sim_q                         |NON MODIFIED
 optimize.zero-grd-lr.multi-linear.control_vector               |NON MODIFIED
 optimize.zero-grd-lr.multi-linear.sim_q                        |NON MODIFIED
-optimize.zero-grd-lr.multi-polynomial.control_vector           |NON MODIFIED
-optimize.zero-grd-lr.multi-polynomial.sim_q                    |NON MODIFIED
+optimize.zero-grd-lr.multi-polynomial.control_vector           |DELETED
+optimize.zero-grd-lr.multi-polynomial.sim_q                    |DELETED
+optimize.zero-grd-lr.multi-power.control_vector                |ADDED
+optimize.zero-grd-lr.multi-power.sim_q                         |ADDED
 optimize.zero-grd-lr.uniform.control_vector                    |NON MODIFIED
 optimize.zero-grd-lr.uniform.sim_q                             |NON MODIFIED
 optimize.zero-grd_mlp-kw.ann.control_vector                    |NON MODIFIED
@@ -1560,8 +1644,10 @@ optimize.zero-grd_mlp-kw.distributed.control_vector            |NON MODIFIED
 optimize.zero-grd_mlp-kw.distributed.sim_q                     |NON MODIFIED
 optimize.zero-grd_mlp-kw.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-grd_mlp-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grd_mlp-kw.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grd_mlp-kw.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-grd_mlp-kw.multi-polynomial.control_vector       |DELETED
+optimize.zero-grd_mlp-kw.multi-polynomial.sim_q                |DELETED
+optimize.zero-grd_mlp-kw.multi-power.control_vector            |ADDED
+optimize.zero-grd_mlp-kw.multi-power.sim_q                     |ADDED
 optimize.zero-grd_mlp-kw.uniform.control_vector                |NON MODIFIED
 optimize.zero-grd_mlp-kw.uniform.sim_q                         |NON MODIFIED
 optimize.zero-grd_mlp-lag0.ann.control_vector                  |NON MODIFIED
@@ -1570,8 +1656,10 @@ optimize.zero-grd_mlp-lag0.distributed.control_vector          |NON MODIFIED
 optimize.zero-grd_mlp-lag0.distributed.sim_q                   |NON MODIFIED
 optimize.zero-grd_mlp-lag0.multi-linear.control_vector         |NON MODIFIED
 optimize.zero-grd_mlp-lag0.multi-linear.sim_q                  |NON MODIFIED
-optimize.zero-grd_mlp-lag0.multi-polynomial.control_vector     |NON MODIFIED
-optimize.zero-grd_mlp-lag0.multi-polynomial.sim_q              |NON MODIFIED
+optimize.zero-grd_mlp-lag0.multi-polynomial.control_vector     |DELETED
+optimize.zero-grd_mlp-lag0.multi-polynomial.sim_q              |DELETED
+optimize.zero-grd_mlp-lag0.multi-power.control_vector          |ADDED
+optimize.zero-grd_mlp-lag0.multi-power.sim_q                   |ADDED
 optimize.zero-grd_mlp-lag0.uniform.control_vector              |NON MODIFIED
 optimize.zero-grd_mlp-lag0.uniform.sim_q                       |NON MODIFIED
 optimize.zero-grd_mlp-lr.ann.control_vector                    |NON MODIFIED
@@ -1580,8 +1668,10 @@ optimize.zero-grd_mlp-lr.distributed.control_vector            |NON MODIFIED
 optimize.zero-grd_mlp-lr.distributed.sim_q                     |NON MODIFIED
 optimize.zero-grd_mlp-lr.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-grd_mlp-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-grd_mlp-lr.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-grd_mlp-lr.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-grd_mlp-lr.multi-polynomial.control_vector       |DELETED
+optimize.zero-grd_mlp-lr.multi-polynomial.sim_q                |DELETED
+optimize.zero-grd_mlp-lr.multi-power.control_vector            |ADDED
+optimize.zero-grd_mlp-lr.multi-power.sim_q                     |ADDED
 optimize.zero-grd_mlp-lr.uniform.control_vector                |NON MODIFIED
 optimize.zero-grd_mlp-lr.uniform.sim_q                         |NON MODIFIED
 optimize.zero-loieau-kw.ann.control_vector                     |NON MODIFIED
@@ -1590,8 +1680,10 @@ optimize.zero-loieau-kw.distributed.control_vector             |NON MODIFIED
 optimize.zero-loieau-kw.distributed.sim_q                      |NON MODIFIED
 optimize.zero-loieau-kw.multi-linear.control_vector            |NON MODIFIED
 optimize.zero-loieau-kw.multi-linear.sim_q                     |NON MODIFIED
-optimize.zero-loieau-kw.multi-polynomial.control_vector        |NON MODIFIED
-optimize.zero-loieau-kw.multi-polynomial.sim_q                 |NON MODIFIED
+optimize.zero-loieau-kw.multi-polynomial.control_vector        |DELETED
+optimize.zero-loieau-kw.multi-polynomial.sim_q                 |DELETED
+optimize.zero-loieau-kw.multi-power.control_vector             |ADDED
+optimize.zero-loieau-kw.multi-power.sim_q                      |ADDED
 optimize.zero-loieau-kw.uniform.control_vector                 |NON MODIFIED
 optimize.zero-loieau-kw.uniform.sim_q                          |NON MODIFIED
 optimize.zero-loieau-lag0.ann.control_vector                   |NON MODIFIED
@@ -1600,8 +1692,10 @@ optimize.zero-loieau-lag0.distributed.control_vector           |NON MODIFIED
 optimize.zero-loieau-lag0.distributed.sim_q                    |NON MODIFIED
 optimize.zero-loieau-lag0.multi-linear.control_vector          |NON MODIFIED
 optimize.zero-loieau-lag0.multi-linear.sim_q                   |NON MODIFIED
-optimize.zero-loieau-lag0.multi-polynomial.control_vector      |NON MODIFIED
-optimize.zero-loieau-lag0.multi-polynomial.sim_q               |NON MODIFIED
+optimize.zero-loieau-lag0.multi-polynomial.control_vector      |DELETED
+optimize.zero-loieau-lag0.multi-polynomial.sim_q               |DELETED
+optimize.zero-loieau-lag0.multi-power.control_vector           |ADDED
+optimize.zero-loieau-lag0.multi-power.sim_q                    |ADDED
 optimize.zero-loieau-lag0.uniform.control_vector               |NON MODIFIED
 optimize.zero-loieau-lag0.uniform.sim_q                        |NON MODIFIED
 optimize.zero-loieau-lr.ann.control_vector                     |NON MODIFIED
@@ -1610,8 +1704,10 @@ optimize.zero-loieau-lr.distributed.control_vector             |NON MODIFIED
 optimize.zero-loieau-lr.distributed.sim_q                      |NON MODIFIED
 optimize.zero-loieau-lr.multi-linear.control_vector            |NON MODIFIED
 optimize.zero-loieau-lr.multi-linear.sim_q                     |NON MODIFIED
-optimize.zero-loieau-lr.multi-polynomial.control_vector        |NON MODIFIED
-optimize.zero-loieau-lr.multi-polynomial.sim_q                 |NON MODIFIED
+optimize.zero-loieau-lr.multi-polynomial.control_vector        |DELETED
+optimize.zero-loieau-lr.multi-polynomial.sim_q                 |DELETED
+optimize.zero-loieau-lr.multi-power.control_vector             |ADDED
+optimize.zero-loieau-lr.multi-power.sim_q                      |ADDED
 optimize.zero-loieau-lr.uniform.control_vector                 |NON MODIFIED
 optimize.zero-loieau-lr.uniform.sim_q                          |NON MODIFIED
 optimize.zero-loieau_mlp-kw.ann.control_vector                 |NON MODIFIED
@@ -1620,8 +1716,10 @@ optimize.zero-loieau_mlp-kw.distributed.control_vector         |NON MODIFIED
 optimize.zero-loieau_mlp-kw.distributed.sim_q                  |NON MODIFIED
 optimize.zero-loieau_mlp-kw.multi-linear.control_vector        |NON MODIFIED
 optimize.zero-loieau_mlp-kw.multi-linear.sim_q                 |NON MODIFIED
-optimize.zero-loieau_mlp-kw.multi-polynomial.control_vector    |NON MODIFIED
-optimize.zero-loieau_mlp-kw.multi-polynomial.sim_q             |NON MODIFIED
+optimize.zero-loieau_mlp-kw.multi-polynomial.control_vector    |DELETED
+optimize.zero-loieau_mlp-kw.multi-polynomial.sim_q             |DELETED
+optimize.zero-loieau_mlp-kw.multi-power.control_vector         |ADDED
+optimize.zero-loieau_mlp-kw.multi-power.sim_q                  |ADDED
 optimize.zero-loieau_mlp-kw.uniform.control_vector             |NON MODIFIED
 optimize.zero-loieau_mlp-kw.uniform.sim_q                      |NON MODIFIED
 optimize.zero-loieau_mlp-lag0.ann.control_vector               |NON MODIFIED
@@ -1630,8 +1728,10 @@ optimize.zero-loieau_mlp-lag0.distributed.control_vector       |NON MODIFIED
 optimize.zero-loieau_mlp-lag0.distributed.sim_q                |NON MODIFIED
 optimize.zero-loieau_mlp-lag0.multi-linear.control_vector      |NON MODIFIED
 optimize.zero-loieau_mlp-lag0.multi-linear.sim_q               |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.multi-polynomial.control_vector  |NON MODIFIED
-optimize.zero-loieau_mlp-lag0.multi-polynomial.sim_q           |NON MODIFIED
+optimize.zero-loieau_mlp-lag0.multi-polynomial.control_vector  |DELETED
+optimize.zero-loieau_mlp-lag0.multi-polynomial.sim_q           |DELETED
+optimize.zero-loieau_mlp-lag0.multi-power.control_vector       |ADDED
+optimize.zero-loieau_mlp-lag0.multi-power.sim_q                |ADDED
 optimize.zero-loieau_mlp-lag0.uniform.control_vector           |NON MODIFIED
 optimize.zero-loieau_mlp-lag0.uniform.sim_q                    |NON MODIFIED
 optimize.zero-loieau_mlp-lr.ann.control_vector                 |NON MODIFIED
@@ -1640,8 +1740,10 @@ optimize.zero-loieau_mlp-lr.distributed.control_vector         |NON MODIFIED
 optimize.zero-loieau_mlp-lr.distributed.sim_q                  |NON MODIFIED
 optimize.zero-loieau_mlp-lr.multi-linear.control_vector        |NON MODIFIED
 optimize.zero-loieau_mlp-lr.multi-linear.sim_q                 |NON MODIFIED
-optimize.zero-loieau_mlp-lr.multi-polynomial.control_vector    |NON MODIFIED
-optimize.zero-loieau_mlp-lr.multi-polynomial.sim_q             |NON MODIFIED
+optimize.zero-loieau_mlp-lr.multi-polynomial.control_vector    |DELETED
+optimize.zero-loieau_mlp-lr.multi-polynomial.sim_q             |DELETED
+optimize.zero-loieau_mlp-lr.multi-power.control_vector         |ADDED
+optimize.zero-loieau_mlp-lr.multi-power.sim_q                  |ADDED
 optimize.zero-loieau_mlp-lr.uniform.control_vector             |NON MODIFIED
 optimize.zero-loieau_mlp-lr.uniform.sim_q                      |NON MODIFIED
 optimize.zero-vic3l-kw.ann.control_vector                      |NON MODIFIED
@@ -1650,8 +1752,10 @@ optimize.zero-vic3l-kw.distributed.control_vector              |NON MODIFIED
 optimize.zero-vic3l-kw.distributed.sim_q                       |NON MODIFIED
 optimize.zero-vic3l-kw.multi-linear.control_vector             |NON MODIFIED
 optimize.zero-vic3l-kw.multi-linear.sim_q                      |NON MODIFIED
-optimize.zero-vic3l-kw.multi-polynomial.control_vector         |NON MODIFIED
-optimize.zero-vic3l-kw.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-vic3l-kw.multi-polynomial.control_vector         |DELETED
+optimize.zero-vic3l-kw.multi-polynomial.sim_q                  |DELETED
+optimize.zero-vic3l-kw.multi-power.control_vector              |ADDED
+optimize.zero-vic3l-kw.multi-power.sim_q                       |ADDED
 optimize.zero-vic3l-kw.uniform.control_vector                  |NON MODIFIED
 optimize.zero-vic3l-kw.uniform.sim_q                           |NON MODIFIED
 optimize.zero-vic3l-lag0.ann.control_vector                    |NON MODIFIED
@@ -1660,8 +1764,10 @@ optimize.zero-vic3l-lag0.distributed.control_vector            |NON MODIFIED
 optimize.zero-vic3l-lag0.distributed.sim_q                     |NON MODIFIED
 optimize.zero-vic3l-lag0.multi-linear.control_vector           |NON MODIFIED
 optimize.zero-vic3l-lag0.multi-linear.sim_q                    |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-polynomial.control_vector       |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-polynomial.sim_q                |NON MODIFIED
+optimize.zero-vic3l-lag0.multi-polynomial.control_vector       |DELETED
+optimize.zero-vic3l-lag0.multi-polynomial.sim_q                |DELETED
+optimize.zero-vic3l-lag0.multi-power.control_vector            |ADDED
+optimize.zero-vic3l-lag0.multi-power.sim_q                     |ADDED
 optimize.zero-vic3l-lag0.uniform.control_vector                |NON MODIFIED
 optimize.zero-vic3l-lag0.uniform.sim_q                         |NON MODIFIED
 optimize.zero-vic3l-lr.ann.control_vector                      |NON MODIFIED
@@ -1670,8 +1776,10 @@ optimize.zero-vic3l-lr.distributed.control_vector              |NON MODIFIED
 optimize.zero-vic3l-lr.distributed.sim_q                       |NON MODIFIED
 optimize.zero-vic3l-lr.multi-linear.control_vector             |NON MODIFIED
 optimize.zero-vic3l-lr.multi-linear.sim_q                      |NON MODIFIED
-optimize.zero-vic3l-lr.multi-polynomial.control_vector         |NON MODIFIED
-optimize.zero-vic3l-lr.multi-polynomial.sim_q                  |NON MODIFIED
+optimize.zero-vic3l-lr.multi-polynomial.control_vector         |DELETED
+optimize.zero-vic3l-lr.multi-polynomial.sim_q                  |DELETED
+optimize.zero-vic3l-lr.multi-power.control_vector              |ADDED
+optimize.zero-vic3l-lr.multi-power.sim_q                       |ADDED
 optimize.zero-vic3l-lr.uniform.control_vector                  |NON MODIFIED
 optimize.zero-vic3l-lr.uniform.sim_q                           |NON MODIFIED
 precipitation_indices.d1                                       |NON MODIFIED
