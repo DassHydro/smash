@@ -210,7 +210,7 @@ Next, we define the optimization options to estimate the hydrological parameters
     ... 
     >>> optimize_options_cnn = {
     ...     "net": net_cnn,
-    ...     "learning_rate": 0.003,  # lower lr since more sensitive weights update
+    ...     "learning_rate": 0.003,
     ...     "termination_crit": dict(maxiter=250, early_stopping=50),
     ...     "random_state": 1,
     ...     "parameters": list(problem.keys()),

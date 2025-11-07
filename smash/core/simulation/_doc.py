@@ -1634,7 +1634,7 @@ Get the default optimization options for a different mapping
         +----------------------------------------------------------+
         Total parameters: 265
         Trainable parameters: 265,
-    'learning_rate': 0.001,
+    'learning_rate': 0.003,
     'random_state': None,
     'termination_crit': {'maxiter': 200, 'early_stopping': 0}
 }
