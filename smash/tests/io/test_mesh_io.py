@@ -7,7 +7,7 @@ import smash
 
 
 def generic_mesh_io(**kwargs) -> dict:
-    setup, mesh = smash.factory.load_dataset("Cance")
+    _, mesh = smash.factory.load_dataset("Cance")
 
     smash.io.save_mesh(mesh, "tmp_mesh.hdf5")
 
