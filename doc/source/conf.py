@@ -13,6 +13,7 @@
 import inspect
 import os
 import pathlib
+import re
 import sys
 import warnings
 from datetime import datetime
@@ -45,15 +46,28 @@ def get_min_max_python_versions():
     return min_py_version, max_py_version
 
 
+def normalize_version(release: str) -> str:
+    if "+" not in release:
+        return release
+
+    match = re.match(r"(\d+)\.(\d+)(?:\.(\d+))?", release)
+    major, minor, _ = match.groups()
+    major, minor = int(major), int(minor)
+
+    # Increment minor for dev version. Switch to major if next release is a major.
+    minor += 1
+
+    return f"{major}.{minor}.dev0"
+
+
 # -- Project information -----------------------------------------------------
 
 project = "smash"
 copyright = f"2022-{datetime.now().year}, INRAE"
 author = "INRAE"
 
-# The full version, including alpha/beta/rc tags
-release = smash.__version__
-
+# The full version, including alpha/beta/rc/dev0 tags.
+release = normalize_version(smash.__version__)
 
 # -- Set dynamic variables for the documentation -----------------------------
 
@@ -135,7 +149,7 @@ html_theme_options = {
     "navbar_end": ["search-button", "version-switcher", "theme-switcher", "navbar-icon-links"],
     "navbar_persistent": [],
     "switcher": {
-        "version_match": "dev" if "rc" in release.split("+")[0] else release,
+        "version_match": "dev" if "dev0" in release else release,
         "json_url": "https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/versions.json",
     },
     "show_version_warning_banner": True,
@@ -232,7 +246,7 @@ def linkcode_resolve(domain, info):
 
     branch = get_active_branch_name()
 
-    if "+" in smash.__version__:
+    if "dev0" in release:
         return f"https://github.com/DassHydro/smash/blob/{branch}/smash/{fn}{linespec}"
     else:
         return f"https://github.com/DassHydro/smash/blob/v{smash.__version__}/smash/{fn}{linespec}"
