@@ -40,3 +40,4 @@ Pull requests merged
 * FIX: correct formula in math/num and add DOI smash paper (#475) by @nghi-truyen in https://github.com/DassHydro/smash/pull/484
 * FIX: small bug when creating a mesh with a bbox  (#474) by @maximejay and @inoelloc by @nghi-truyen in https://github.com/DassHydro/smash/pull/485
 * MAINT/BUG: Fix OpenMP use for hybrid GR models (#476) by @nghi-truyen in https://github.com/DassHydro/smash/pull/486
+* ENH: Update dev doc versioning (#489) by @inoelloc by @nghi-truyen in https://github.com/DassHydro/smash/pull/490
