@@ -1,0 +1,43 @@
+.. _release.1.1.3-notes:
+
+=========================
+smash 1.1.3 Release Notes
+=========================
+
+The smash 1.1.3 release fixes a few compatibility issues and enhances several functionalities, including:
+
+- ``Separated computation of interception reservoir capacity``  
+  The computation of the interception parameter can now be performed independently from model initialization.
+
+- ``Improvements to meshing methods``  
+  Several enhancements have been made to the meshing procedures, including updates to regional meshing, surface error computation, and bounding box calculations.
+
+- ``OpenMP support for hybrid methods``  
+  Hybrid model structures for flux correction (with algebraic resolution) can now be used with OpenMP to significantly reduce optimization time.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+- François Colleoni (`<https://github.com/inoelloc>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* The interception reservoir capacities can be now calibrated after the model creation (#432) by @maximejay by @nghi-truyen in https://github.com/DassHydro/smash/pull/459
+* DOC: add/update ref citation (#460) by @nghi-truyen in https://github.com/DassHydro/smash/pull/461
+* Maint update workflow dependency version (#465) by @inoelloc by @nghi-truyen in https://github.com/DassHydro/smash/pull/466
+* FIX: RUF059 Unpacked variable array_type is never used (#467) by @nghi-truyen in https://github.com/DassHydro/smash/pull/479
+* MAINT: Regional meshing (#430) by @maximejay by @nghi-truyen in https://github.com/DassHydro/smash/pull/480
+* MAINT: adapt learning rate for regionalization in real cases (#468) by @nghi-truyen in https://github.com/DassHydro/smash/pull/481
+* MAINT: Exclude mesh outlets based on surface error (#462) by @maximejay by @nghi-truyen in https://github.com/DassHydro/smash/pull/482
+* MAINT: Drop macOS 13 runner and switch to macOS 15 arm64 only (#472) by @inoelloc by @nghi-truyen in https://github.com/DassHydro/smash/pull/483
+* FIX: correct formula in math/num and add DOI smash paper (#475) by @nghi-truyen in https://github.com/DassHydro/smash/pull/484
+* FIX: small bug when creating a mesh with a bbox  (#474) by @maximejay and @inoelloc by @nghi-truyen in https://github.com/DassHydro/smash/pull/485
+* MAINT/BUG: Fix OpenMP use for hybrid GR models (#476) by @nghi-truyen in https://github.com/DassHydro/smash/pull/486
+* ENH: Update dev doc versioning (#489) by @inoelloc by @nghi-truyen in https://github.com/DassHydro/smash/pull/490
