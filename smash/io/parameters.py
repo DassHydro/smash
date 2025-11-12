@@ -141,7 +141,7 @@ def save_grid_parameters(
     model: Model, path: FilePath, parameters: str | ListLike | None = None, save_active_cell: bool = False
 ) -> None:
     """
-    Save the Model grid parameters to GeoTIFF.
+    Save the Model grid parameters (rainfall-runoff parameters and initial states) to GeoTIFF.
 
     Grid parameters are saved to GeoTIFF format in a specified directory. Relevant metadata
     will be embedded within the GeoTIFF files. Additionally, the active cell mask can
@@ -174,7 +174,8 @@ def save_grid_parameters(
 
     See Also
     --------
-    read_grid_parameters: Read the Model grid parameters from GeoTIFF.
+    read_grid_parameters: Read the Model grid parameters (rainfall-runoff parameters and initial states)
+        from GeoTIFF.
 
     Examples
     --------
@@ -261,7 +262,7 @@ def save_grid_parameters(
 
 def read_grid_parameters(model: Model, path: FilePath, parameters: str | ListLike | None = None) -> None:
     """
-    Read the Model grid parameters from GeoTIFF.
+    Read the Model grid parameters (rainfall-runoff parameters and initial states) from GeoTIFF.
 
     Grid parameters are read from GeoTIFF format in a specified directory.
 
@@ -289,7 +290,8 @@ def read_grid_parameters(model: Model, path: FilePath, parameters: str | ListLik
 
     See Also
     --------
-    save_grid_parameters: Save the Model grid parameters to GeoTIFF.
+    save_grid_parameters: Save the Model grid parameters (rainfall-runoff parameters and initial states)
+        to GeoTIFF.
 
     Examples
     --------
