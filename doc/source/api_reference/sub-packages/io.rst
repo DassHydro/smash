@@ -24,6 +24,14 @@ Mesh
       save_mesh
       read_mesh
 
+Parameters
+**********
+.. autosummary::
+      :toctree: smash/
+
+      save_grid_parameters
+      read_grid_parameters
+
 Model
 *****
 .. autosummary::
