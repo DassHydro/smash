@@ -29,6 +29,7 @@ module mwd_response
     type ResponseDT
 
         real(sp), dimension(:, :), allocatable :: q
+        real(sp), dimension(:, :), allocatable :: qt
 
     end type ResponseDT
 
@@ -44,6 +45,9 @@ contains
 
         allocate (this%q(mesh%ng, setup%ntime_step))
         this%q = -99._sp
+        
+        allocate (this%qt(mesh%nac, setup%ntime_step))
+        this%qt = -99._sp
 
     end subroutine ResponseDT_initialise
 

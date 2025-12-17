@@ -141,7 +141,7 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 if __name__ == "__main__":
     # % Disable stderr
     # % Disable tqdm progress bar (printed to standard error)
-    sys.stderr = open("/dev/null", "w")
+    # ~ sys.stderr = open("/dev/null", "w")
 
     args = parser()
 
@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
     # % Disable stdout
     # % TODO: replace this by adding a verbose argument at Model initialisation
-    sys.stdout = open("/dev/null", "w")
+    # ~ sys.stdout = open("/dev/null", "w")
 
     model = smash.Model(setup, mesh)
 
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         model_structure.append(wmodel)
 
     # # % Enable stdout
-    sys.stdout = sys.__stdout__
+    # ~ sys.stdout = sys.__stdout__
     module_names = sorted(glob.glob("tests/**/test_*.py", recursive=True))
 
     module_names = adjust_module_names(module_names)
@@ -219,4 +219,4 @@ if __name__ == "__main__":
     compare_baseline(baseline, new_baseline)
 
     # % Enable stderr
-    sys.stderr = sys.__stderr__
+    # ~ sys.stderr = sys.__stderr__
