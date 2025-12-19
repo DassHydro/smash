@@ -16,7 +16,7 @@
 !%          ``serr_mu_parameters``     SErr_Mu_ParametersDT
 !%          ``serr_sigma_parameters``  SErr_Sigma_ParametersDT
 !%
-!§      Subroutine
+!%      Subroutine
 !%      ----------
 !%
 !%      - ParametersDT_initialise
