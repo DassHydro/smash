@@ -19,7 +19,7 @@ authors = [
     {name = "INRAE RECOVER RHAX Team", email = "pierre-andre.garambois@inrae.fr"},
 ]
 license = {text = "GPL-3.0"}
-requires-python = ">=3.9, <3.13"  # required format: ">=min_version, <max_version"
+requires-python = ">=3.10, <3.14"  # required format: ">=min_version, <max_version"
 classifiers = [
     'Development Status :: 5 - Production/Stable',  
     'Intended Audience :: Science/Research',
@@ -28,10 +28,10 @@ classifiers = [
     'Programming Language :: Fortran',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3 :: Only',
     'Topic :: Scientific/Engineering',
     'Operating System :: Unix',
@@ -84,7 +84,7 @@ tag_prefix = "v"
 parentdir_prefix = "smash-"
 
 [tool.cibuildwheel]
-skip = "cp38-* cp313-* *_i686 *_ppc64le *_s390x"
+skip = "cp39-* cp314-* *_i686 *_ppc64le *_s390x"
 test-command = 'python -c "import smash; print(smash.__version__)"'
 build-verbosity = 3
 
