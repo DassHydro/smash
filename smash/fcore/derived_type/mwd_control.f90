@@ -17,7 +17,7 @@
 !%          ``u_raw``                  Control vector upper bound raw
 !%          ``nbd``                    Control vector kind of bound
 !%
-!§      Subroutine
+!%      Subroutine
 !%      ----------
 !%
 !%      - ControlDT_initialise

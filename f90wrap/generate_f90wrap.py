@@ -134,31 +134,14 @@ def get_decorated_attr_replace_rules(flag: str, attribute: set[str]) -> ReplaceR
 
 def get_derived_type_procedure_replace_rules(python_file: str) -> ReplaceRules:
     content = open(python_file, "r").read()
-    procedure = {}
     class_matches = re.findall(r"class (\w+)\(f90wrap.runtime.FortranDerivedType\)", content)
 
-    for cm in class_matches:
-        pattern = r"def ({0}_\w+\([\w\s,]*\)):".format(cm.lower())
-        procedure[cm] = re.findall(pattern, content)
-
     repl_rules = ReplaceRules()
-    for key, value in procedure.items():
-        if value:
-            for v in value:
-                nv = re.search(r"{0}_(.*)".format(key.lower()), v).group(1)
-                repl_rules.pattern += [rf"(class {key}\(f90wrap.runtime.FortranDerivedType\):)"]
-                repl_rules.repl += [rf"\1\n\tdef {nv}:\n\t\treturn {v}"]
+    for cls in class_matches:
+        repl_rules.pattern += [rf"def\s+{cls.lower()}_(\w+)"]
+        repl_rules.repl += [r"def \1"]
+
     return repl_rules
-
-
-def get_del_method_replace_rules() -> ReplaceRules:
-    indent_pattern = lambda match: "try:\n\t\t\t" + indent(match.group(0) + "\n\texcept:\n\t\tpass")
-    return ReplaceRules(
-        [r"if self._alloc(.*?)finalise\(this=self._handle\)"],
-        [
-            indent_pattern,
-        ],
-    )
 
 
 def get_repr_method_replace_rules() -> ReplaceRules:
@@ -182,7 +165,6 @@ def get_replace_rules(fortran_file: str, python_file: str, module: str) -> Repla
             repl_rules += get_decorated_attr_replace_rules(flag, attr)
 
     repl_rules += get_derived_type_procedure_replace_rules(python_file)
-    repl_rules += get_del_method_replace_rules()
     repl_rules += get_repr_method_replace_rules()
     repl_rules += get_tab_to_space_replace_rules()
 
@@ -207,6 +189,7 @@ def generate_f90wrap_files(fortran_files: list[str], kind_map_file: str, module:
         kind_map_file,
         "--py-mod-names",
         "py_mod_names",
+        "--move-methods",
         "--package",
         "-m",
         module,
