@@ -48,7 +48,7 @@ from smash._constant import (
 
 def test_module_name():
     # % Check snow module name
-    assert SNOW_MODULE == ["zero", "ssn"]
+    assert SNOW_MODULE == ["sm_zero", "ssn"]
 
     # % Check hydrological module
     assert HYDROLOGICAL_MODULE == [
@@ -72,7 +72,7 @@ def test_module_name():
     ]
 
     # % Check routing module
-    assert ROUTING_MODULE == ["lag0", "lr", "kw"]
+    assert ROUTING_MODULE == ["rm_zero", "lag0", "lr", "kw"]
 
 
 def test_module_parameters():
@@ -125,9 +125,43 @@ def test_module_parameters():
         + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ode_mlp
         + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
         * 3  # % gr5, gr5_mlp, gr5_ri
-        + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
+        + [
+            [
+                "pn",
+                "en",
+                "pr",
+                "perc",
+                "ps",
+                "es",
+                "lexc",
+                "prr",
+                "prd",
+                "pre",
+                "qr",
+                "qd",
+                "qe",
+                "qt",
+            ]
+        ]
         * 2  # % gr6, gr6_mlp
-        + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
+        + [
+            [
+                "pn",
+                "en",
+                "pr",
+                "perc",
+                "ps",
+                "es",
+                "lexc",
+                "prr",
+                "prd",
+                "prl",
+                "qr",
+                "qd",
+                "ql",
+                "qt",
+            ]
+        ]
         * 2  # % grc, grc_mlp
         + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
         + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
@@ -139,12 +173,17 @@ def test_module_parameters():
     assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], ["llr"], ["akw", "bkw"]]
 
     # % Check routing module rr internal fluxes
-    assert list(ROUTING_MODULE_RR_INTERNAL_FLUXES.values()) == [["qup"], ["qup"], ["qim1j"]]
+    assert list(ROUTING_MODULE_RR_INTERNAL_FLUXES.values()) == [
+        [],
+        ["qup"],
+        ["qup"],
+        ["qim1j"],
+    ]
 
     # % Check routing module rr states
     assert list(ROUTING_MODULE_RR_STATES.values()) == [[], ["hlr"], []]
 
-    assert list(ROUTING_MODULE_NQZ.values()) == [1, 1, 2]
+    assert list(ROUTING_MODULE_NQZ.values()) == [1, 1, 1, 2]
 
 
 def test_parameters():
@@ -243,7 +282,14 @@ def test_structural_error_parameters():
 
 def test_parameterization_neural_network_structure():
     # % Check nn_parameters keys
-    assert NN_PARAMETERS_KEYS == ["weight_1", "bias_1", "weight_2", "bias_2", "weight_3", "bias_3"]
+    assert NN_PARAMETERS_KEYS == [
+        "weight_1",
+        "bias_1",
+        "weight_2",
+        "bias_2",
+        "weight_3",
+        "bias_3",
+    ]
 
     # % Check in/out size of the parameterization NN
     assert HYDROLOGICAL_MODULE_INOUT_NEURONS == dict(

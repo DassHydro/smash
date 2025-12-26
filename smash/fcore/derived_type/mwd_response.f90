@@ -45,7 +45,7 @@ contains
 
         allocate (this%q(mesh%ng, setup%ntime_step))
         this%q = -99._sp
-        
+
         allocate (this%qt(mesh%nac, setup%ntime_step))
         this%qt = -99._sp
 

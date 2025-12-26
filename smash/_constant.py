@@ -50,7 +50,7 @@ F_PRECISION = 1.0e-5
 ### MODULE ###
 ##############
 
-SNOW_MODULE = ["zero", "ssn"]
+SNOW_MODULE = ["sm_zero", "ssn"]
 
 HYDROLOGICAL_MODULE = [
     "gr4",
@@ -72,7 +72,7 @@ HYDROLOGICAL_MODULE = [
     "vic3l",
 ]
 
-ROUTING_MODULE = ["lag0", "lr", "kw"]
+ROUTING_MODULE = ["rm_zero", "lag0", "lr", "kw"]
 
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
 
@@ -109,7 +109,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_PARAMETERS = dict(
-    zip(ROUTING_MODULE, [[], ["llr"], ["akw", "bkw"]])  # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], [], ["llr"], ["akw", "bkw"]])  # % zero # % lag0  # % lr  # % kw
 )
 
 # % Following MODULE order
@@ -124,7 +124,7 @@ SNOW_MODULE_RR_STATES = dict(
     zip(
         SNOW_MODULE,
         [
-            [],  # % zero
+            [],  # % sm_zero
             ["hs"],  # % ssn
         ],
     )
@@ -147,23 +147,21 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_STATES = dict(
-    zip(ROUTING_MODULE, [[], ["hlr"], []])  # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], [], ["hlr"], []])  # % lag0  # % lr  # % kw
 )
 
 # % Following MODULE order
 MODULE_RR_STATES = dict(**SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES)
 
 # % Following ROUTING_MODULE order
-ROUTING_MODULE_NQZ = dict(
-    zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
-)
+ROUTING_MODULE_NQZ = dict(zip(ROUTING_MODULE, [1, 1, 1, 2]))  # % rm_zero # % lag0  # % lr  # % kw
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
         SNOW_MODULE,
         [
-            [],  # % zero
+            [],  # % sn_zero
             ["mlt"],  # % ssn
         ],
     )
@@ -174,17 +172,96 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
         HYDROLOGICAL_MODULE,
         (
-            [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 3  # % gr4, gr4_mlp, gr4_ri
             + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ode_mlp
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 3  # % gr5, gr5_mlp, gr5_ri
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "pre",
+                    "qr",
+                    "qd",
+                    "qe",
+                    "qt",
+                ]
+            ]
             * 2  # % gr6, gr6_mlp
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "prl",
+                    "qr",
+                    "qd",
+                    "ql",
+                    "qt",
+                ]
+            ]
             * 2  # % grc, grc_mlp
             + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
-            + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
+            + [
+                [
+                    "ei",
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 2  # % loieau, loieau_mlp
             + [["pn", "en", "qr", "qb", "qt"]]  # % vic3l
         ),
@@ -193,7 +270,7 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_INTERNAL_FLUXES = dict(
-    zip(ROUTING_MODULE, [["qup"], ["qup"], ["qim1j"]])  # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], ["qup"], ["qup"], ["qim1j"]])  # % rm_zero # % lag0  # % lr  # % kw
 )
 
 MODULE_RR_INTERNAL_FLUXES = dict(
@@ -670,7 +747,7 @@ OPTIMIZABLE_NN_PARAMETERS = [
 #############
 
 DEFAULT_MODEL_SETUP = {
-    "snow_module": "zero",
+    "snow_module": "sm_zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
     "hidden_neuron": 16,
@@ -883,7 +960,12 @@ DEFAULT_TERMINATION_CRIT = dict(
             ],
         )
     ),
-    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
+    **dict(
+        zip(
+            ADAPTIVE_OPTIMIZER,
+            len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}],
+        )
+    ),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -999,11 +1081,15 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 }
 
 OPTIMIZER_CONTROL_TFM = {
-    (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
-    if optimizer == "sbs"
-    else ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
-    if mapping != "ann"
-    else ["keep"]  # no tfm applied for any optimizer used with ann mapping
+    (mapping, optimizer): (
+        ["sbs", "normalize", "keep"]  # in case of sbs optimizer
+        if optimizer == "sbs"
+        else (
+            ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
+            if mapping != "ann"
+            else ["keep"]
+        )
+    )  # no tfm applied for any optimizer used with ann mapping
     for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
 }  # first element of the list is the default tfm for each tuple key (mapping, optimizer)
 

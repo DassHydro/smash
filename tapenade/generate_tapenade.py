@@ -60,6 +60,7 @@ def generate_tapenade_file(fortran_files: list[str], module: str, openmp: bool) 
         os.path.abspath(os.path.dirname(__file__)), "tapenade_3.16", "bin", "tapenade"
     )
     files = [os.path.join(".", os.path.basename(f)) for f in fortran_files]
+
     cmd_args = [
         tapenade_exe,
         "-b",
@@ -77,6 +78,8 @@ def generate_tapenade_file(fortran_files: list[str], module: str, openmp: bool) 
         module,
         "-head",
         r"base_forward_run(parameters.control.x)\(output.cost)",
+        "-head",
+        r"base_forward_run(parameters.control.x)\(output.response.qt)",
     ]
 
     if openmp:

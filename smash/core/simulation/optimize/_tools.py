@@ -10,6 +10,7 @@ from smash._constant import (
 )
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
+from smash.fcore._mw_forward import forward_run_b0 as wrap_forward_run_b0
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_parameters_manipulation import (
     control_to_parameters as wrap_control_to_parameters,
@@ -17,6 +18,9 @@ from smash.fcore._mwd_parameters_manipulation import (
 from smash.fcore._mwd_parameters_manipulation import (
     parameters_to_control as wrap_parameters_to_control,
 )
+
+from smash.fcore._mwd_parameters import ParametersDT
+from smash.fcore._mwd_output import OutputDT
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
@@ -353,9 +357,36 @@ def _get_parameters_b(
 ) -> ParametersDT:
     parameters_b = parameters.copy()
     output_b = model._output.copy()
+
     output_b.cost = np.float32(1)
 
     wrap_forward_run_b(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        parameters,
+        parameters_b,
+        model._output,
+        output_b,
+        wrap_options,
+        wrap_returns,
+    )
+
+    return parameters_b
+
+
+def _get_parameters_b0(
+    model: Model,
+    parameters: ParametersDT,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+) -> ParametersDT:
+    parameters_b = parameters.copy()
+    output_b = model._output.copy()
+
+    output_b.qt = np.float32(1)
+
+    wrap_forward_run_b0(
         model.setup,
         model.mesh,
         model._input_data,

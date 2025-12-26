@@ -73,26 +73,12 @@ contains
             output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, setup%nqz)
 
         end do
-!~         Solution privilégié
-        if setup%routing_module eq "zeros" then
-            do i = 1, mesh%nbx
-                do j = 1, mesh%nby
-                    k = mesh%rowcol_to_ind_ac(i, j)
-                    output%response%qt(i, time_step) = checkpoint_variable%ac_qtz(k, setup%nqz)
-                end do
+
+        if (setup%routing_module == "rm_zero") then
+            do i = 1, mesh%nac
+                output%response%qt(i, time_step) = checkpoint_variable%ac_qtz(i, setup%nqz)
             end do
         end if
-        
-!~         if setup%routing_module eq "zeros" then
-!~             if (allocated(returns%mask_time_step)) then
-!~                 if (returns%mask_time_step(time_step)) then
-!~                     if (returns%q_domain_flag) then
-!~                         call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qtz(:, setup%nqz), &
-!~                         & returns%q_domain(:, :, time_step_returns))
-!~                     end if
-!~                 end if
-!~             end if
-!~         end if
 
         !$AD start-exclude
         if (allocated(returns%mask_time_step)) then
@@ -158,7 +144,7 @@ contains
             select case (setup%snow_module)
 
                 ! 'zero' module
-            case ("zero")
+            case ("sm_zero")
 
                 ! Nothing to do
 
@@ -794,11 +780,11 @@ contains
 
             ! Routing module
             select case (setup%routing_module)
-            
-            case ("zeros")
-                
+
+            case ("rm_zero")
+
                 ! Only copy qt in q
-                checkpoint_variable%ac_qz=checkpoint_variable%ac_qtz
+                checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
 
                 ! 'lag0' module
             case ("lag0")
