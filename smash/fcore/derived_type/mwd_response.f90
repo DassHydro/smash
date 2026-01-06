@@ -45,9 +45,17 @@ contains
 
         allocate (this%q(mesh%ng, setup%ntime_step))
         this%q = -99._sp
-
-        allocate (this%qt(mesh%nac, setup%ntime_step))
-        this%qt = -99._sp
+        
+!~         When conditionning this allocatation, tapenade force 
+!~         its value to zeros before calling SIMULATION_B...
+        if (setup%routing_module == "rm_zero") then
+            allocate (this%qt(mesh%nac, setup%ntime_step))
+            this%qt = -99._sp
+        else
+            !save memory
+            allocate (this%qt(1, 1))
+            this%qt = -99._sp
+        end if
 
     end subroutine ResponseDT_initialise
 

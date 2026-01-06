@@ -2112,8 +2112,16 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     ALLOCATE(this%q(mesh%ng, setup%ntime_step))
     this%q = -99._sp
-    ALLOCATE(this%qt(mesh%nac, setup%ntime_step))
-    this%qt = -99._sp
+!~         When conditionning this allocatation, tapenade force 
+!~         its value to zeros before calling SIMULATION_B...
+    IF (setup%routing_module .EQ. 'rm_zero') THEN
+      ALLOCATE(this%qt(mesh%nac, setup%ntime_step))
+      this%qt = -99._sp
+    ELSE
+!save memory
+      ALLOCATE(this%qt(1, 1))
+      this%qt = -99._sp
+    END IF
   END SUBROUTINE RESPONSEDT_INITIALISE
 
   SUBROUTINE RESPONSEDT_COPY(this, this_copy)
@@ -2215,7 +2223,6 @@ MODULE MWD_OUTPUT_DIFF
 !% only: Rr_StatesDT, Rr_StatesDT_initialise
   USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
-!~         real(sp), dimension(:, :), allocatable :: qt
   TYPE OUTPUTDT
       TYPE(RESPONSEDT) :: response
       TYPE(RR_STATESDT) :: rr_final_states
@@ -2229,8 +2236,6 @@ MODULE MWD_OUTPUT_DIFF
 CONTAINS
   SUBROUTINE OUTPUTDT_INITIALISE(this, setup, mesh)
     IMPLICIT NONE
-!~         allocate (this%qt(mesh%nac, setup%ntime_step))
-!~         this%qt = -99._sp
     TYPE(OUTPUTDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh

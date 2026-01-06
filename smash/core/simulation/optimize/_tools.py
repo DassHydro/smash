@@ -19,9 +19,6 @@ from smash.fcore._mwd_parameters_manipulation import (
     parameters_to_control as wrap_parameters_to_control,
 )
 
-from smash.fcore._mwd_parameters import ParametersDT
-from smash.fcore._mwd_output import OutputDT
-
 if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.factory.net.net import Net
