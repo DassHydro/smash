@@ -2140,7 +2140,7 @@ END MODULE MWD_RESPONSE_DIFF
 !%          ``keys``                   Rainfall-runoff states keys
 !%          ``values``                 Rainfall-runoff states values
 !%
-!§      Subroutine
+!%      Subroutine
 !%      ----------
 !%
 !%      - RR_StatesDT_initialise
@@ -2266,7 +2266,7 @@ END MODULE MWD_OUTPUT_DIFF
 !%          ``u_raw``                  Control vector upper bound raw
 !%          ``nbd``                    Control vector kind of bound
 !%
-!§      Subroutine
+!%      Subroutine
 !%      ----------
 !%
 !%      - ControlDT_initialise
@@ -2626,7 +2626,7 @@ END MODULE MWD_SERR_SIGMA_PARAMETERS_DIFF
 !%          ``serr_mu_parameters``     SErr_Mu_ParametersDT
 !%          ``serr_sigma_parameters``  SErr_Sigma_ParametersDT
 !%
-!§      Subroutine
+!%      Subroutine
 !%      ----------
 !%
 !%      - ParametersDT_initialise
