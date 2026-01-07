@@ -113,13 +113,13 @@ def test_forward_run_mlp():
 
     # % Test some multi layer perceptron models versus classical models
     mlp_to_cls_structure = {
-        "zero-gr4_mlp-lr": "zero-gr4-lr",
-        "zero-gr4_ode_mlp-lr": "zero-gr4_ode-lr",
-        "zero-gr5_mlp-lr": "zero-gr5-lr",
-        "zero-gr6_mlp-lr": "zero-gr6-lr",
-        "zero-grd_mlp-lr": "zero-grd-lr",
-        "zero-grc_mlp-lr": "zero-grc-lr",
-        "zero-loieau_mlp-lr": "zero-loieau-lr",
+        "sm_zero-gr4_mlp-lr": "sm_zero-gr4-lr",
+        "sm_zero-gr4_ode_mlp-lr": "sm_zero-gr4_ode-lr",
+        "sm_zero-gr5_mlp-lr": "sm_zero-gr5-lr",
+        "sm_zero-gr6_mlp-lr": "sm_zero-gr6-lr",
+        "sm_zero-grd_mlp-lr": "sm_zero-grd-lr",
+        "sm_zero-grc_mlp-lr": "sm_zero-grc-lr",
+        "sm_zero-loieau_mlp-lr": "sm_zero-loieau-lr",
     }
     all_structure = [model.setup.structure for model in pytest.model_structure]
     for mlp_structure, cls_structure in mlp_to_cls_structure.items():

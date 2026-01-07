@@ -170,7 +170,7 @@ def test_module_parameters():
     )
 
     # % Check routing module rr parameters
-    assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], ["llr"], ["akw", "bkw"]]
+    assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], [], ["llr"], ["akw", "bkw"]]
 
     # % Check routing module rr internal fluxes
     assert list(ROUTING_MODULE_RR_INTERNAL_FLUXES.values()) == [
