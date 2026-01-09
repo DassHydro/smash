@@ -48,7 +48,7 @@ from smash._constant import (
 
 def test_module_name():
     # % Check snow module name
-    assert SNOW_MODULE == ["sm_zero", "ssn"]
+    assert SNOW_MODULE == ["zero", "ssn"]
 
     # % Check hydrological module
     assert HYDROLOGICAL_MODULE == [
@@ -72,7 +72,7 @@ def test_module_name():
     ]
 
     # % Check routing module
-    assert ROUTING_MODULE == ["rm_zero", "lag0", "lr", "kw"]
+    assert ROUTING_MODULE == ["zero", "lag0", "lr", "kw"]
 
 
 def test_module_parameters():
@@ -181,7 +181,7 @@ def test_module_parameters():
     ]
 
     # % Check routing module rr states
-    assert list(ROUTING_MODULE_RR_STATES.values()) == [[], ["hlr"], []]
+    assert list(ROUTING_MODULE_RR_STATES.values()) == [[], [], ["hlr"], []]
 
     assert list(ROUTING_MODULE_NQZ.values()) == [1, 1, 1, 2]
 

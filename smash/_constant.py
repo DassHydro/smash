@@ -17,21 +17,33 @@ def get_structure() -> list[str]:
 
 def get_rr_parameters_from_structure(structure: str) -> list[str]:
     rr_parameters = []
-    [rr_parameters.extend(MODULE_RR_PARAMETERS[module]) for module in structure.split("-")]
+    
+    sm, hm, rm = structure.split("-") 
+    rr_parameters.extend(SNOW_MODULE_RR_PARAMETERS[sm]) 
+    rr_parameters.extend(HYDROLOGICAL_MODULE_RR_PARAMETERS[hm]) 
+    rr_parameters.extend(ROUTING_MODULE_RR_PARAMETERS[rm]) 
 
     return rr_parameters
 
 
 def get_rr_states_from_structure(structure: str) -> list[str]:
     rr_states = []
-    [rr_states.extend(MODULE_RR_STATES[module]) for module in structure.split("-")]
+    sm, hm, rm = structure.split("-") 
+    rr_states.extend(SNOW_MODULE_RR_STATES[sm]) 
+    rr_states.extend(HYDROLOGICAL_MODULE_RR_STATES[hm]) 
+    rr_states.extend(ROUTING_MODULE_RR_STATES[rm]) 
 
     return rr_states
 
 
 def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     rr_internal_fluxes = []
-    [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
+    
+    sm, hm, rm = structure.split("-") 
+    rr_internal_fluxes.extend(SNOW_MODULE_RR_INTERNAL_FLUXES[sm]) 
+    rr_internal_fluxes.extend(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES[hm]) 
+    rr_internal_fluxes.extend(ROUTING_MODULE_RR_INTERNAL_FLUXES[rm])
+    
     return rr_internal_fluxes
 
 
@@ -50,7 +62,7 @@ F_PRECISION = 1.0e-5
 ### MODULE ###
 ##############
 
-SNOW_MODULE = ["sm_zero", "ssn"]
+SNOW_MODULE = ["zero", "ssn"]
 
 HYDROLOGICAL_MODULE = [
     "gr4",
@@ -72,7 +84,7 @@ HYDROLOGICAL_MODULE = [
     "vic3l",
 ]
 
-ROUTING_MODULE = ["rm_zero", "lag0", "lr", "kw"]
+ROUTING_MODULE = ["zero", "lag0", "lr", "kw"]
 
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
 
@@ -113,18 +125,18 @@ ROUTING_MODULE_RR_PARAMETERS = dict(
 )
 
 # % Following MODULE order
-MODULE_RR_PARAMETERS = dict(
-    **SNOW_MODULE_RR_PARAMETERS,
-    **HYDROLOGICAL_MODULE_RR_PARAMETERS,
-    **ROUTING_MODULE_RR_PARAMETERS,
-)
+# ~ MODULE_RR_PARAMETERS = dict(
+    # ~ **SNOW_MODULE_RR_PARAMETERS,
+    # ~ **HYDROLOGICAL_MODULE_RR_PARAMETERS,
+    # ~ **ROUTING_MODULE_RR_PARAMETERS,
+# ~ )
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_STATES = dict(
     zip(
         SNOW_MODULE,
         [
-            [],  # % sm_zero
+            [],  # % zero
             ["hs"],  # % ssn
         ],
     )
@@ -150,11 +162,9 @@ ROUTING_MODULE_RR_STATES = dict(
     zip(ROUTING_MODULE, [[], [], ["hlr"], []])  # % lag0  # % lr  # % kw
 )
 
-# % Following MODULE order
-MODULE_RR_STATES = dict(**SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES)
 
 # % Following ROUTING_MODULE order
-ROUTING_MODULE_NQZ = dict(zip(ROUTING_MODULE, [1, 1, 1, 2]))  # % rm_zero # % lag0  # % lr  # % kw
+ROUTING_MODULE_NQZ = dict(zip(ROUTING_MODULE, [1, 1, 1, 2]))  # % zero # % lag0  # % lr  # % kw
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
@@ -270,14 +280,9 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_INTERNAL_FLUXES = dict(
-    zip(ROUTING_MODULE, [[], ["qup"], ["qup"], ["qim1j"]])  # % rm_zero # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], ["qup"], ["qup"], ["qim1j"]])  # % zero # % lag0  # % lr  # % kw
 )
 
-MODULE_RR_INTERNAL_FLUXES = dict(
-    **SNOW_MODULE_RR_INTERNAL_FLUXES,
-    **HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
-    **ROUTING_MODULE_RR_INTERNAL_FLUXES,
-)
 
 ### STRUCTURE ###
 #################
@@ -747,7 +752,7 @@ OPTIMIZABLE_NN_PARAMETERS = [
 #############
 
 DEFAULT_MODEL_SETUP = {
-    "snow_module": "sm_zero",
+    "snow_module": "zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
     "hidden_neuron": 16,

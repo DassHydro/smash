@@ -74,7 +74,7 @@ contains
 
         end do
 
-        if (setup%routing_module == "rm_zero") then
+        if (setup%routing_module == "zero") then
             do i = 1, mesh%nac
                 output%response%qt(i, time_step) = checkpoint_variable%ac_qtz(i, setup%nqz)
             end do
@@ -144,7 +144,7 @@ contains
             select case (setup%snow_module)
 
                 ! 'zero' module
-            case ("sm_zero")
+            case ("zero")
 
                 ! Nothing to do
 
@@ -781,7 +781,7 @@ contains
             ! Routing module
             select case (setup%routing_module)
 
-            case ("rm_zero")
+            case ("zero")
 
                 ! Only copy qt in q
                 checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz

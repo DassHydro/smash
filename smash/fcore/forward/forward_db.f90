@@ -2114,7 +2114,7 @@ CONTAINS
     this%q = -99._sp
 !~         When conditionning this allocatation, tapenade force 
 !~         its value to zeros before calling SIMULATION_B...
-    IF (setup%routing_module .EQ. 'rm_zero') THEN
+    IF (setup%routing_module .EQ. 'zero') THEN
       ALLOCATE(this%qt(mesh%nac, setup%ntime_step))
       this%qt = -99._sp
     ELSE
@@ -24797,7 +24797,7 @@ CONTAINS
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
-    IF (setup%routing_module .EQ. 'rm_zero') THEN
+    IF (setup%routing_module .EQ. 'zero') THEN
       DO i=1,mesh%nac
         output_d%response%qt(i, time_step) = checkpoint_variable_d%&
 &         ac_qtz(i, setup%nqz)
@@ -24831,7 +24831,7 @@ CONTAINS
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
     END DO
-    IF (setup%routing_module .EQ. 'rm_zero') THEN
+    IF (setup%routing_module .EQ. 'zero') THEN
       DO i=mesh%nac,1,-1
         checkpoint_variable_b%ac_qtz(i, setup%nqz) = &
 &         checkpoint_variable_b%ac_qtz(i, setup%nqz) + output_b%response&
@@ -24864,7 +24864,7 @@ CONTAINS
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
-    IF (setup%routing_module .EQ. 'rm_zero') THEN
+    IF (setup%routing_module .EQ. 'zero') THEN
       DO i=1,mesh%nac
         output%response%qt(i, time_step) = checkpoint_variable%ac_qtz(i&
 &         , setup%nqz)
@@ -24925,7 +24925,7 @@ CONTAINS
 &                     checkpoint_variable_d%ac_qz)
 ! Snow module
       SELECT CASE  (setup%snow_module) 
-      CASE ('sm_zero') 
+      CASE ('zero') 
 
       CASE ('ssn') 
 ! 'zero' module
@@ -25854,7 +25854,7 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
-      CASE ('rm_zero') 
+      CASE ('zero') 
 ! Only copy qt in q
         checkpoint_variable_d%ac_qz = checkpoint_variable_d%ac_qtz
         checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
@@ -25962,7 +25962,7 @@ CONTAINS
       CALL ROLL_DISCHARGE(checkpoint_variable%ac_qz)
 ! Snow module
       SELECT CASE  (setup%snow_module) 
-      CASE ('sm_zero') 
+      CASE ('zero') 
         CALL PUSHCONTROL1B(0)
       CASE ('ssn') 
 ! 'zero' module
@@ -26717,7 +26717,7 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
-      CASE ('rm_zero') 
+      CASE ('zero') 
 ! Only copy qt in q
         checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
         CALL PUSHCONTROL3B(1)
@@ -27825,7 +27825,7 @@ CONTAINS
       CALL ROLL_DISCHARGE(checkpoint_variable%ac_qz)
 ! Snow module
       SELECT CASE  (setup%snow_module) 
-      CASE ('sm_zero') 
+      CASE ('zero') 
 
       CASE ('ssn') 
 ! 'zero' module
@@ -28433,7 +28433,7 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
-      CASE ('rm_zero') 
+      CASE ('zero') 
 ! Only copy qt in q
         checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
       CASE ('lag0') 

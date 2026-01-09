@@ -48,7 +48,7 @@ contains
         
 !~         When conditionning this allocatation, tapenade force 
 !~         its value to zeros before calling SIMULATION_B...
-        if (setup%routing_module == "rm_zero") then
+        if (setup%routing_module == "zero") then
             allocate (this%qt(mesh%nac, setup%ntime_step))
             this%qt = -99._sp
         else
