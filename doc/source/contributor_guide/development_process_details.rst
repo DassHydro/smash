@@ -1582,10 +1582,14 @@ Python guideline
 Test
 ----
 
-Tests are run with the ``make test`` or ``make test-coverage`` command using the `pytest <https://docs.pytest.org/en/7.4.x/>`__ library:
+Tests are run with the ``make test``, ``make test-light`` or ``make test-coverage`` command using the `pytest <https://docs.pytest.org/en/7.4.x/>`__ library:
 
 - ``make test``
     Run unit tests. This tests are also run in the continuous integration service (``CI``).
+
+- ``make test-light``
+    Run unit tests but in a lighter version than ``make test``. Its purpose is to quickly check
+    that there are no obvious bugs using only one model structure (``zero-gr4-lr``)
 
 - ``make test-coverage``
     Run unit tests with coverage. It will display coverage result in the terminal and generate a html file.
