@@ -4,11 +4,18 @@ import h5py
 import pytest
 
 import smash
-from smash._constant import STRUCTURE
+from smash._constant import HYDROLOGICAL_MODULE, ROUTING_MODULE, SNOW_MODULE
+
+AVAILABLE_TEST_LEVEL = ("light", "full")
 
 # TODO: Might add test on France dataset
 # TODO: Add parallel tests
 ### GLOBAL VARIABLES ###
+
+test_level = os.environ.get("SMASH_TEST_LEVEL") or "full"
+assert test_level in AVAILABLE_TEST_LEVEL, (
+    f"Unknown test_level '{test_level}'. Choices: {AVAILABLE_TEST_LEVEL}"
+)
 
 setup, mesh = smash.factory.load_dataset("Cance")
 
@@ -23,12 +30,22 @@ setup["read_pet"] = False
 pytest.model_structure = []
 pytest.sparse_model_structure = []
 
-for structure in STRUCTURE:
+# Select base structure
+base_sm, base_hm, base_rm = "zero", "gr4", "lr"
+if test_level == "light":
+    structure = [f"{base_sm}-{base_hm}-{base_rm}"]
+elif test_level == "full":
+    structure = []
+    structure.extend([f"{sm}-{base_hm}-{base_rm}" for sm in SNOW_MODULE])
+    structure.extend([f"{base_sm}-{hm}-{base_rm}" for hm in HYDROLOGICAL_MODULE])
+    structure.extend([f"{base_sm}-{base_hm}-{rm}" for rm in ROUTING_MODULE])
+
+for struct in structure:
     (
         setup["snow_module"],
         setup["hydrological_module"],
         setup["routing_module"],
-    ) = structure.split("-")
+    ) = struct.split("-")
 
     setup["sparse_storage"] = False
     model = smash.Model(setup, mesh)
