@@ -35,11 +35,15 @@ doc-clean:
 test:
 	cd smash/tests ; pytest
 
+#% Light testing code with pytest
+test-light:
+	cd smash/tests ; SMASH_TEST_LEVEL="light" pytest
+
 #% Testing code with pytest and coverage
 test-coverage:
 	cd smash/tests ; pytest --cov-report term --cov-report html --cov=smash
 
-#% Generate baseline for test with args (see argparser in gen_baseline.py)
+#% Generate baseline for test
 test-baseline:
 	cd smash/tests ; python3 generate_baseline.py
 

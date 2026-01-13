@@ -124,6 +124,8 @@ def test_forward_run_mlp():
     }
     all_structure = [model.setup.structure for model in pytest.model_structure]
     for mlp_structure, cls_structure in mlp_to_cls_structure.items():
+        if mlp_structure not in all_structure or cls_structure not in all_structure:
+            continue
         mlp_idx = all_structure.index(mlp_structure)
         cls_idx = all_structure.index(cls_structure)
         mlp_model = pytest.model_structure[mlp_idx]

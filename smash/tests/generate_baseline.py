@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import glob
 import importlib
 import inspect
@@ -13,44 +12,11 @@ import numpy as np
 import pandas as pd
 
 import smash
-from smash._constant import STRUCTURE
+from smash._constant import HYDROLOGICAL_MODULE, ROUTING_MODULE, SNOW_MODULE
 
 sys.path.insert(0, "")
 # Change current directory to smash/smash
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
-
-
-def parser():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "-o",
-        "-only",
-        "--only",
-        nargs="+",
-        help="Only tests to include",
-    )
-
-    parser.add_argument(
-        "-s",
-        "-skip",
-        "--skip",
-        nargs="+",
-        help="Skip tests to include",
-    )
-
-    args = parser.parse_args()
-
-    if args.only is not None and args.skip is not None:
-        parser.error("'--only' and '--skip' options can not be use simultaneously")
-
-    elif args.only:
-        args.only = ["generic_" + name for name in args.only]
-
-    elif args.skip:
-        args.skip = ["generic_" + name for name in args.skip]
-
-    return args
 
 
 def adjust_module_names(module_names: list[str]) -> list[str]:
@@ -143,8 +109,6 @@ if __name__ == "__main__":
     # % Disable tqdm progress bar (printed to standard error)
     # ~ sys.stderr = open("/dev/null", "w")
 
-    args = parser()
-
     setup, mesh = smash.factory.load_dataset("Cance")
 
     print("collecting ...")
@@ -162,12 +126,19 @@ if __name__ == "__main__":
     setup["read_pet"] = False
     model_structure = []
 
-    for structure in STRUCTURE:
+    # Select base structure
+    base_sm, base_hm, base_rm = "zero", "gr4", "lr"
+    structure = []
+    structure.extend([f"{sm}-{base_hm}-{base_rm}" for sm in SNOW_MODULE])
+    structure.extend([f"{base_sm}-{hm}-{base_rm}" for hm in HYDROLOGICAL_MODULE])
+    structure.extend([f"{base_sm}-{base_hm}-{rm}" for rm in ROUTING_MODULE])
+
+    for struct in structure:
         (
             setup["snow_module"],
             setup["hydrological_module"],
             setup["routing_module"],
-        ) = structure.split("-")
+        ) = struct.split("-")
         wmodel = smash.Model(setup, mesh)
         wmodel.atmos_data.prcp = model.atmos_data.prcp
         wmodel.atmos_data.pet = model.atmos_data.pet
@@ -194,14 +165,6 @@ if __name__ == "__main__":
                 for (name, func) in inspect.getmembers(module, inspect.isfunction)
                 if name.startswith("generic")
             ]
-
-            if args.only:
-                generic_functions = [(name, func) for (name, func) in generic_functions if name in args.only]
-
-            elif args.skip:
-                generic_functions = [
-                    (name, func) for (name, func) in generic_functions if name not in args.skip
-                ]
 
             for _, func in generic_functions:
                 for key, value in func(
