@@ -4,9 +4,9 @@ import sys
 
 import numpy as np
 import pytest
-from f90wrap.runtime import FortranDerivedTypeArray
 
 import smash
+from f90wrap.runtime import FortranDerivedTypeArray
 
 
 def generic_model_io(**kwargs) -> dict:

@@ -17,33 +17,33 @@ def get_structure() -> list[str]:
 
 def get_rr_parameters_from_structure(structure: str) -> list[str]:
     rr_parameters = []
-    
-    sm, hm, rm = structure.split("-") 
-    rr_parameters.extend(SNOW_MODULE_RR_PARAMETERS[sm]) 
-    rr_parameters.extend(HYDROLOGICAL_MODULE_RR_PARAMETERS[hm]) 
-    rr_parameters.extend(ROUTING_MODULE_RR_PARAMETERS[rm]) 
+
+    sm, hm, rm = structure.split("-")
+    rr_parameters.extend(SNOW_MODULE_RR_PARAMETERS[sm])
+    rr_parameters.extend(HYDROLOGICAL_MODULE_RR_PARAMETERS[hm])
+    rr_parameters.extend(ROUTING_MODULE_RR_PARAMETERS[rm])
 
     return rr_parameters
 
 
 def get_rr_states_from_structure(structure: str) -> list[str]:
     rr_states = []
-    sm, hm, rm = structure.split("-") 
-    rr_states.extend(SNOW_MODULE_RR_STATES[sm]) 
-    rr_states.extend(HYDROLOGICAL_MODULE_RR_STATES[hm]) 
-    rr_states.extend(ROUTING_MODULE_RR_STATES[rm]) 
+    sm, hm, rm = structure.split("-")
+    rr_states.extend(SNOW_MODULE_RR_STATES[sm])
+    rr_states.extend(HYDROLOGICAL_MODULE_RR_STATES[hm])
+    rr_states.extend(ROUTING_MODULE_RR_STATES[rm])
 
     return rr_states
 
 
 def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     rr_internal_fluxes = []
-    
-    sm, hm, rm = structure.split("-") 
-    rr_internal_fluxes.extend(SNOW_MODULE_RR_INTERNAL_FLUXES[sm]) 
-    rr_internal_fluxes.extend(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES[hm]) 
+
+    sm, hm, rm = structure.split("-")
+    rr_internal_fluxes.extend(SNOW_MODULE_RR_INTERNAL_FLUXES[sm])
+    rr_internal_fluxes.extend(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES[hm])
     rr_internal_fluxes.extend(ROUTING_MODULE_RR_INTERNAL_FLUXES[rm])
-    
+
     return rr_internal_fluxes
 
 

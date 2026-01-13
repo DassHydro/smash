@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 import h5py
 import numpy as np
-from f90wrap.runtime import FortranDerivedType, FortranDerivedTypeArray
 
+from f90wrap.runtime import FortranDerivedType, FortranDerivedTypeArray
 from smash.fcore._mwd_sparse_matrix import Sparse_MatrixDT
 
 if TYPE_CHECKING:

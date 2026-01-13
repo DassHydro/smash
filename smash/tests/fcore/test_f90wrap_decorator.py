@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from smash.fcore._mwd_mesh import MeshDT
 from smash.fcore._mwd_setup import SetupDT
 
