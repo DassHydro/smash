@@ -180,8 +180,6 @@ contains
 
         real(sp) :: pr_imd, ht_imd, nm1, d1pnm1
 
-        logical, save :: first_call = .true. ! for debug file
-
         nm1 = n - 1._sp
         d1pnm1 = 1._sp/nm1
 
@@ -393,18 +391,6 @@ contains
         integer :: row, col, k, time_step_returns
         real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
 
-        ! Added for debug
-        !character(len=256) :: gr4_output_file
-        !logical :: file_exists
-        !gr4_output_file = "/home/adminberkaoui/Documents/article_runs/cance/hy1d_sim/gr4_outputs.csv"
-        ! File handling
-        !inquire(file=gr4_output_file, exist=file_exists)
-        !if (time_step == 1 .or. .not. file_exists) then
-            !open(unit=20, file=gr4_output_file, status="replace", action="write")
-            !write(20, '(A)') "time_step,cell_index,ac_qt,qr,qd,l,prr,prd,ac_prcp"
-            !close(20)
-        !endif
-        !open(unit=20, file=gr4_output_file, status="old", action="write", position="append")
         
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -462,12 +448,11 @@ contains
                 end if
 
 
-                ! Write to file
+                
 #ifdef _OPENMP
                 !$OMP critical
 #endif
-                !write(20, '(I10,",",I10,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6,",",ES15.6)') &
-                    !time_step, k, ac_qt(k), qr, qd, l, prr, prd, ac_prcp(k)
+                
 #ifdef _OPENMP
                 !$OMP end critical
 #endif
@@ -496,8 +481,8 @@ contains
 #ifdef _OPENMP
         !$OMP end parallel do
 #endif
-        ! Close the file
-        close(20)
+        
+
     end subroutine gr4_time_step
 
     subroutine gr4_mlp_time_step(setup, mesh, input_data, options, returns, time_step, weight_1, bias_1, &

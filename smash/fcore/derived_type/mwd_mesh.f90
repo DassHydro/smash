@@ -79,6 +79,8 @@ module mwd_mesh
 
         logical :: use_subgrid_area
 
+        real(sp) :: alpha ! Coefficient for CFL stability condition
+
         integer :: npar
         integer, dimension(:), allocatable :: ncpar
         integer, dimension(:), allocatable :: cscpar

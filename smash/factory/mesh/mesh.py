@@ -430,7 +430,8 @@ def generate_mesh_from_subgrid(
     burning_depth: int = 0,
     max_depth: int = 1,
     use_subgrid_area: bool = False,
-    return_analysis_data: bool = False
+    return_analysis_data: bool = False,
+    alpha: float = 0.7,
 ) -> dict:
     """
     Generate mesh with subgrid network using gauge stations for basins delineation.
@@ -484,6 +485,9 @@ def generate_mesh_from_subgrid(
     return_analysis_data : bool, default False
         If True, additional data included in the returned mesh for visual analysis.
     
+    alpha : float, default 0.7
+        Coefficient for CFL stability condition.
+    
     Returns
     -------
     dict
@@ -530,6 +534,8 @@ def generate_mesh_from_subgrid(
     
     # 4. Update masked_mesh with subgrid network data
     masked_mesh.update(subgrid_network)
+
+    masked_mesh['alpha'] = alpha # Add CFL alpha to the mesh dictionary
     
     return masked_mesh
 
