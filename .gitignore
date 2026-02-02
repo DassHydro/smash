@@ -74,3 +74,15 @@ doc/source/api_reference/**/smash
 doc/*-dataset
 doc/**/*~
 doc/**/*#
+
+# IDE and editors
+.vscode/
+.idea/
+
+# GDAL auxiliary files
+*.tif.aux.xml
+*.shp.xml
+
+# OS files
+.DS_Store
+Thumbs.db
