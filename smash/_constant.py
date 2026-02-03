@@ -124,13 +124,6 @@ ROUTING_MODULE_RR_PARAMETERS = dict(
     zip(ROUTING_MODULE, [[], [], ["llr"], ["akw", "bkw"]])  # % zero # % lag0  # % lr  # % kw
 )
 
-# % Following MODULE order
-# ~ MODULE_RR_PARAMETERS = dict(
-    # ~ **SNOW_MODULE_RR_PARAMETERS,
-    # ~ **HYDROLOGICAL_MODULE_RR_PARAMETERS,
-    # ~ **ROUTING_MODULE_RR_PARAMETERS,
-# ~ )
-
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_STATES = dict(
     zip(
@@ -159,7 +152,7 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_STATES = dict(
-    zip(ROUTING_MODULE, [[], [], ["hlr"], []])  # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], [], ["hlr"], []])  # % zero # % lag0  # % lr  # % kw
 )
 
 
@@ -171,7 +164,7 @@ SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
         SNOW_MODULE,
         [
-            [],  # % sn_zero
+            [],  # % zero
             ["mlt"],  # % ssn
         ],
     )
@@ -755,6 +748,7 @@ DEFAULT_MODEL_SETUP = {
     "snow_module": "zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
+    "return_opt_grad": "none",
     "hidden_neuron": 16,
     "serr_mu_mapping": "Zero",
     "serr_sigma_mapping": "Linear",
@@ -1179,6 +1173,8 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
 }
 
 SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain", "internal_fluxes"]
+
+RETURN_OPT_GRAD = ["none", "q", "qe"]
 
 ### IO ###
 ##########

@@ -74,9 +74,15 @@ contains
 
         end do
 
-        if (setup%routing_module == "zero") then
+        if (setup%return_opt_grad == "qe") then
             do i = 1, mesh%nac
-                output%response%qt(i, time_step) = checkpoint_variable%ac_qtz(i, setup%nqz)
+                output%response%qac(i, time_step) = checkpoint_variable%ac_qtz(i, setup%nqz)
+            end do
+        end if
+
+        if (setup%return_opt_grad == "q") then
+            do i = 1, mesh%nac
+                output%response%qac(i, time_step) = checkpoint_variable%ac_qz(i, setup%nqz)
             end do
         end if
 

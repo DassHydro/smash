@@ -60,7 +60,7 @@ contains
 
     end subroutine forward_run_d
 
-    subroutine forward_run_d0(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, returns)
+    subroutine forward_run_q_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, returns)
 
         implicit none
 
@@ -75,11 +75,11 @@ contains
         type(OptionsDT) :: option_d
         option_d = options
 
-        call base_forward_run_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, option_d, returns)
+        call base_forward_run_q_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, option_d, returns)
 
-    end subroutine forward_run_d0
+    end subroutine forward_run_q_d
 
-    subroutine forward_run_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, returns)
+    subroutine forward_run_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, option_b, returns)
 
         implicit none
 
@@ -88,17 +88,17 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters, parameters_b
         type(OutputDT), intent(inout) :: output, output_b
-        type(OptionsDT), intent(in) :: options
+        type(OptionsDT), intent(in) :: options, option_b
         type(ReturnsDT), intent(inout) :: returns
 
-        type(OptionsDT) :: option_b
-        option_b = options
+!~         type(OptionsDT) :: option_b
+!~         option_b = options
 
         call base_forward_run_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, option_b, returns)
 
     end subroutine forward_run_b
 
-    subroutine forward_run_b0(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, returns)
+    subroutine forward_run_q_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, option_b, returns)
 
         implicit none
 
@@ -107,15 +107,15 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters, parameters_b
         type(OutputDT), intent(inout) :: output, output_b
-        type(OptionsDT), intent(in) :: options
+        type(OptionsDT), intent(in) :: options, option_b
         type(ReturnsDT), intent(inout) :: returns
 
-        type(OptionsDT) :: option_b
-        option_b = options
+!~         type(OptionsDT) :: option_b
+!~         option_b = options
 
-        call base_forward_run_b0(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, option_b, returns)
+        call base_forward_run_q_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, option_b, returns)
 
-    end subroutine forward_run_b0
+    end subroutine forward_run_q_b
 
     subroutine multiple_forward_run_sample_to_parameters(sample, samples_kind, samples_ind, parameters)
 

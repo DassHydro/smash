@@ -1,9 +1,8 @@
-commit 08e393c39215a430af13f992bc0ee2fc8deb20c6
-Merge: bb977d41 316d0e47
-Author: maximejay <maximejay@users.noreply.github.com>
-Date:   Tue Jan 13 15:18:24 2026 +0100
+commit 717ece35910a1f17f44c8e75104c13f40508b307
+Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
+Date:   Tue Jan 13 18:01:17 2026 +0100
 
-    Merge branch 'DassHydro:main' into interface_gamma_routing_model
+    make check
 
 TEST NAME                                                |STATUS
 bbox_mesh.active_cell                                    |NON MODIFIED
@@ -25,7 +24,7 @@ bbox_mesh.xmin                                           |NON MODIFIED
 bbox_mesh.xres                                           |NON MODIFIED
 bbox_mesh.ymax                                           |NON MODIFIED
 bbox_mesh.yres                                           |NON MODIFIED
-custom_bayesian_optimize.zero-gr4-lr.custom_set_1.sim_q  |MODIFIED
+custom_bayesian_optimize.zero-gr4-lr.custom_set_1.sim_q  |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_2.sim_q  |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_3.sim_q  |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_4.sim_q  |NON MODIFIED
@@ -105,13 +104,13 @@ forward_run.zero-gr4-lr.rr_states.hlr                    |NON MODIFIED
 forward_run.zero-gr4-lr.rr_states.hp                     |NON MODIFIED
 forward_run.zero-gr4-lr.rr_states.ht                     |NON MODIFIED
 forward_run.zero-gr4-lr.sim_q                            |NON MODIFIED
-forward_run.zero-gr4-zero.cost                           |ADDED
-forward_run.zero-gr4-zero.jobs                           |ADDED
-forward_run.zero-gr4-zero.q_domain                       |ADDED
-forward_run.zero-gr4-zero.rr_states.hi                   |ADDED
-forward_run.zero-gr4-zero.rr_states.hp                   |ADDED
-forward_run.zero-gr4-zero.rr_states.ht                   |ADDED
-forward_run.zero-gr4-zero.sim_q                          |ADDED
+forward_run.zero-gr4-zero.cost                           |NON MODIFIED
+forward_run.zero-gr4-zero.jobs                           |NON MODIFIED
+forward_run.zero-gr4-zero.q_domain                       |NON MODIFIED
+forward_run.zero-gr4-zero.rr_states.hi                   |NON MODIFIED
+forward_run.zero-gr4-zero.rr_states.hp                   |NON MODIFIED
+forward_run.zero-gr4-zero.rr_states.ht                   |NON MODIFIED
+forward_run.zero-gr4-zero.sim_q                          |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.cost                         |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.jobs                         |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.q_domain                     |NON MODIFIED
@@ -284,18 +283,18 @@ internal_fluxes.zero-gr4-lr.qd                           |NON MODIFIED
 internal_fluxes.zero-gr4-lr.qr                           |NON MODIFIED
 internal_fluxes.zero-gr4-lr.qt                           |NON MODIFIED
 internal_fluxes.zero-gr4-lr.qup                          |NON MODIFIED
-internal_fluxes.zero-gr4-zero.en                         |ADDED
-internal_fluxes.zero-gr4-zero.es                         |ADDED
-internal_fluxes.zero-gr4-zero.lexc                       |ADDED
-internal_fluxes.zero-gr4-zero.perc                       |ADDED
-internal_fluxes.zero-gr4-zero.pn                         |ADDED
-internal_fluxes.zero-gr4-zero.pr                         |ADDED
-internal_fluxes.zero-gr4-zero.prd                        |ADDED
-internal_fluxes.zero-gr4-zero.prr                        |ADDED
-internal_fluxes.zero-gr4-zero.ps                         |ADDED
-internal_fluxes.zero-gr4-zero.qd                         |ADDED
-internal_fluxes.zero-gr4-zero.qr                         |ADDED
-internal_fluxes.zero-gr4-zero.qt                         |ADDED
+internal_fluxes.zero-gr4-zero.en                         |NON MODIFIED
+internal_fluxes.zero-gr4-zero.es                         |NON MODIFIED
+internal_fluxes.zero-gr4-zero.lexc                       |NON MODIFIED
+internal_fluxes.zero-gr4-zero.perc                       |NON MODIFIED
+internal_fluxes.zero-gr4-zero.pn                         |NON MODIFIED
+internal_fluxes.zero-gr4-zero.pr                         |NON MODIFIED
+internal_fluxes.zero-gr4-zero.prd                        |NON MODIFIED
+internal_fluxes.zero-gr4-zero.prr                        |NON MODIFIED
+internal_fluxes.zero-gr4-zero.ps                         |NON MODIFIED
+internal_fluxes.zero-gr4-zero.qd                         |NON MODIFIED
+internal_fluxes.zero-gr4-zero.qr                         |NON MODIFIED
+internal_fluxes.zero-gr4-zero.qt                         |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.en                       |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.es                       |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.lexc                     |NON MODIFIED
@@ -610,16 +609,16 @@ optimize.zero-gr4-lr.multi-power.control_vector          |NON MODIFIED
 optimize.zero-gr4-lr.multi-power.sim_q                   |NON MODIFIED
 optimize.zero-gr4-lr.uniform.control_vector              |NON MODIFIED
 optimize.zero-gr4-lr.uniform.sim_q                       |NON MODIFIED
-optimize.zero-gr4-zero.ann.control_vector                |ADDED
-optimize.zero-gr4-zero.ann.sim_q                         |ADDED
-optimize.zero-gr4-zero.distributed.control_vector        |ADDED
-optimize.zero-gr4-zero.distributed.sim_q                 |ADDED
-optimize.zero-gr4-zero.multi-linear.control_vector       |ADDED
-optimize.zero-gr4-zero.multi-linear.sim_q                |ADDED
-optimize.zero-gr4-zero.multi-power.control_vector        |ADDED
-optimize.zero-gr4-zero.multi-power.sim_q                 |ADDED
-optimize.zero-gr4-zero.uniform.control_vector            |ADDED
-optimize.zero-gr4-zero.uniform.sim_q                     |ADDED
+optimize.zero-gr4-zero.ann.control_vector                |NON MODIFIED
+optimize.zero-gr4-zero.ann.sim_q                         |NON MODIFIED
+optimize.zero-gr4-zero.distributed.control_vector        |NON MODIFIED
+optimize.zero-gr4-zero.distributed.sim_q                 |NON MODIFIED
+optimize.zero-gr4-zero.multi-linear.control_vector       |NON MODIFIED
+optimize.zero-gr4-zero.multi-linear.sim_q                |NON MODIFIED
+optimize.zero-gr4-zero.multi-power.control_vector        |NON MODIFIED
+optimize.zero-gr4-zero.multi-power.sim_q                 |NON MODIFIED
+optimize.zero-gr4-zero.uniform.control_vector            |NON MODIFIED
+optimize.zero-gr4-zero.uniform.sim_q                     |NON MODIFIED
 optimize.zero-gr4_mlp-lr.ann.control_vector              |NON MODIFIED
 optimize.zero-gr4_mlp-lr.ann.sim_q                       |NON MODIFIED
 optimize.zero-gr4_mlp-lr.distributed.control_vector      |NON MODIFIED
@@ -693,7 +692,7 @@ optimize.zero-gr5_ri-lr.uniform.sim_q                    |NON MODIFIED
 optimize.zero-gr6-lr.ann.control_vector                  |NON MODIFIED
 optimize.zero-gr6-lr.ann.sim_q                           |NON MODIFIED
 optimize.zero-gr6-lr.distributed.control_vector          |NON MODIFIED
-optimize.zero-gr6-lr.distributed.sim_q                   |MODIFIED
+optimize.zero-gr6-lr.distributed.sim_q                   |NON MODIFIED
 optimize.zero-gr6-lr.multi-linear.control_vector         |NON MODIFIED
 optimize.zero-gr6-lr.multi-linear.sim_q                  |NON MODIFIED
 optimize.zero-gr6-lr.multi-power.control_vector          |NON MODIFIED

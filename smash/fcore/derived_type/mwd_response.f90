@@ -29,7 +29,7 @@ module mwd_response
     type ResponseDT
 
         real(sp), dimension(:, :), allocatable :: q
-        real(sp), dimension(:, :), allocatable :: qt
+        real(sp), dimension(:, :), allocatable :: qac
 
     end type ResponseDT
 
@@ -45,16 +45,17 @@ contains
 
         allocate (this%q(mesh%ng, setup%ntime_step))
         this%q = -99._sp
-        
-!~         When conditionning this allocatation, tapenade force 
+
+!~         When conditionning this allocatation, tapenade force
 !~         its value to zeros before calling SIMULATION_B...
-        if (setup%routing_module == "zero") then
-            allocate (this%qt(mesh%nac, setup%ntime_step))
-            this%qt = -99._sp
-        else
-            !save memory
-            allocate (this%qt(1, 1))
-            this%qt = -99._sp
+        !save memory
+        allocate (this%qac(1, 1))
+        this%qac = -99._sp
+
+        if (setup%return_opt_grad .eq. "q" .or. setup%return_opt_grad .eq. "qe") then
+            deallocate (this%qac)
+            allocate (this%qac(mesh%nac, setup%ntime_step))
+            this%qac = -99._sp
         end if
 
     end subroutine ResponseDT_initialise

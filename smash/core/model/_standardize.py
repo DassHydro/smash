@@ -19,6 +19,7 @@ from smash._constant import (
     HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
     NN_PARAMETERS_KEYS,
+    RETURN_OPT_GRAD,
     ROUTING_MODULE,
     ROUTING_MODULE_NQZ,
     ROUTING_MODULE_RR_INTERNAL_FLUXES,
@@ -140,6 +141,23 @@ def _standardize_model_setup_snow_module(snow_module: str, **kwargs) -> str:
         raise TypeError("snow_module model setup must be a str")
 
     return snow_module
+
+
+def _standardize_model_setup_return_opt_grad(return_opt_grad: str, **kwargs) -> str:
+    if isinstance(return_opt_grad, str):
+        if return_opt_grad.lower() in RETURN_OPT_GRAD:
+            return_opt_grad = return_opt_grad.lower()
+
+        else:
+            raise ValueError(
+                f"Unknown optional returned gradient '{return_opt_grad}' for return_opt_grad in model setup. "
+                f"Choices: {RETURN_OPT_GRAD}"
+            )
+
+    else:
+        raise TypeError("return_opt_grad model setup must be a str")
+
+    return return_opt_grad
 
 
 def _standardize_model_setup_hydrological_module(hydrological_module: str, **kwargs) -> str:

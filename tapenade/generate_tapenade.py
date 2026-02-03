@@ -79,7 +79,7 @@ def generate_tapenade_file(fortran_files: list[str], module: str, openmp: bool) 
         "-head",
         r"base_forward_run(parameters.control.x)\(output.cost)",
         "-head",
-        r"base_forward_run(parameters.control.x)\(output.response.qt)",
+        r"base_forward_run_q(parameters.control.x)\(output.response.qac)",
     ]
 
     if openmp:
