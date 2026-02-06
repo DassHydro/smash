@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
-from smash._constant import MAX_DURATION, PEAK_QUANT
+from smash._constant import MAX_DURATION, PEAK_QUANT, PEAK_VALUE
 from smash.core.signal_analysis.segmentation._tools import _events_grad, _get_season
 from smash.core.signal_analysis.signatures._standardize import (
     _standardize_signatures_args,
@@ -91,6 +90,7 @@ class Signatures:
 def signatures(
     model: Model,
     sign: str | ListLike[str] | None = None,
+    gauge: str | ListLike[str] = "all",
     event_seg: dict[str, Any] | None = None,
     domain: str = "obs",
 ):
@@ -114,9 +114,20 @@ def signatures(
         .. note::
             If not given, all of continuous and flood event signatures will be computed.
 
+    gauge : `str` or `list[str, ...]`, default 'all'
+        Type of gauge to compute signatures. There are two ways to specify it:
+
+        - An alias among ``'all'`` (all gauge codes) or ``'dws'`` (most downstream gauge code(s))
+        - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes
+          defined in the `Model.mesh`
+
+        >>> gauge = "dws"
+        >>> gauge = "V3524010"
+        >>> gauge = ["V3524010", "V3515010"]
+
     event_seg : `dict[str, Any]` or None, default None
         A dictionary of event segmentation options when calculating flood event signatures.
-        The keys are ``'peak_quant'``, ``'max_duration'``, and ``'by'``.
+        The keys are ``'peak_quant'``, ``'peak_value'``, ``'max_duration'``, and ``'by'``.
 
         .. note::
             If not given, default values will be set for all elements.
@@ -197,9 +208,9 @@ def signatures(
     0.20841039717197418
     """
 
-    cs, es, domain, event_seg = _standardize_signatures_args(sign, domain, event_seg)
+    cs, es, gauge, domain, event_seg = _standardize_signatures_args(model, sign, gauge, domain, event_seg)
 
-    res = _signatures(model, cs, es, domain, **event_seg)
+    res = _signatures(model, cs, es, gauge, domain, **event_seg)
 
     return Signatures(res)
 
@@ -209,8 +220,10 @@ def _signatures(
     instance: Model,
     cs: ListLike,
     es: ListLike,
+    gauge: np.ndarray,
     domain: str,
     peak_quant: float = PEAK_QUANT,
+    peak_value: float = PEAK_VALUE,
     max_duration: float = MAX_DURATION,
     by: str = "obs",
     **unknown_options,
@@ -233,80 +246,68 @@ def _signatures(
 
     if len(cs) + len(es) > 0:
         for i, catchment in enumerate(instance.mesh.code):
+            if catchment not in gauge:
+                continue
+
             prcp = prcp_cvt[i, :]  # already conversion of instance.atmos_data.mean_prcp[i, :]
 
             suffix = "_data" if domain == "obs" else ""
             q = getattr(instance, f"response{suffix}").q[i, :].copy()
 
-            if (prcp < 0).all() or (q < 0).all():
-                warnings.warn(
-                    f"Catchment {catchment} has no precipitation or/and discharge data",
-                    stacklevel=2,
-                )
+            if len(cs) > 0:
+                csignatures = [_signature_computation(prcp, q, signature) for signature in cs]
 
-                row_cs = pd.DataFrame([[catchment] + [np.nan] * (len(col_cs) - 1)], columns=col_cs)
-                row_es = pd.DataFrame([[catchment] + [np.nan] * (len(col_es) - 1)], columns=col_es)
+                row_cs = pd.DataFrame([[catchment] + csignatures], columns=col_cs)
 
                 df_cs = row_cs.copy() if df_cs.empty else pd.concat([df_cs, row_cs], ignore_index=True)
-                df_es = row_es.copy() if df_es.empty else pd.concat([df_es, row_es], ignore_index=True)
 
-            else:
-                if len(cs) > 0:
-                    csignatures = [_signature_computation(prcp, q, signature) for signature in cs]
+            if len(es) > 0:
+                suffix = "_data" if by == "obs" else ""
+                q_seg = getattr(instance, f"response{suffix}").q[i, :].copy()
 
-                    row_cs = pd.DataFrame([[catchment] + csignatures], columns=col_cs)
+                list_events = _events_grad(
+                    prcp, q_seg, peak_quant, peak_value, max_duration, instance.setup.dt
+                )
 
-                    df_cs = row_cs.copy() if df_cs.empty else pd.concat([df_cs, row_cs], ignore_index=True)
+                if len(list_events) == 0:
+                    row_es = pd.DataFrame(
+                        [[catchment] + [np.nan] * (len(col_es) - 1)],
+                        columns=col_es,
+                    )
 
-                if len(es) > 0:
-                    suffix = "_data" if by == "obs" else ""
-                    q_seg = getattr(instance, f"response{suffix}").q[i, :].copy()
+                    df_es = row_es.copy() if df_es.empty else pd.concat([df_es, row_es], ignore_index=True)
 
-                    list_events = _events_grad(prcp, q_seg, peak_quant, max_duration, instance.setup.dt)
+                else:
+                    for t in list_events:
+                        ts = t["start"]
+                        te = t["end"]
 
-                    if len(list_events) == 0:
+                        event_prcp = prcp[ts : te + 1]
+                        event_q = q[ts : te + 1]
+
+                        season = _get_season(date_range[ts].date())
+
+                        esignatures = [
+                            _signature_computation(event_prcp, event_q, signature) for signature in es
+                        ]
+
                         row_es = pd.DataFrame(
-                            [[catchment] + [np.nan] * (len(col_es) - 1)],
+                            [
+                                [
+                                    catchment,
+                                    season,
+                                    date_range[ts],
+                                    date_range[te],
+                                    t["multipeak"],
+                                ]
+                                + esignatures
+                            ],
                             columns=col_es,
                         )
 
                         df_es = (
                             row_es.copy() if df_es.empty else pd.concat([df_es, row_es], ignore_index=True)
                         )
-
-                    else:
-                        for t in list_events:
-                            ts = t["start"]
-                            te = t["end"]
-
-                            event_prcp = prcp[ts : te + 1]
-                            event_q = q[ts : te + 1]
-
-                            season = _get_season(date_range[ts].date())
-
-                            esignatures = [
-                                _signature_computation(event_prcp, event_q, signature) for signature in es
-                            ]
-
-                            row_es = pd.DataFrame(
-                                [
-                                    [
-                                        catchment,
-                                        season,
-                                        date_range[ts],
-                                        date_range[te],
-                                        t["multipeak"],
-                                    ]
-                                    + esignatures
-                                ],
-                                columns=col_es,
-                            )
-
-                            df_es = (
-                                row_es.copy()
-                                if df_es.empty
-                                else pd.concat([df_es, row_es], ignore_index=True)
-                            )
 
     df_cs.replace(-99, np.nan, inplace=True)
     df_es.replace(-99, np.nan, inplace=True)

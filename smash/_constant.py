@@ -819,9 +819,13 @@ ACTIVATION_FUNCTION = [func.lower() for func in ACTIVATION_FUNCTION_CLASS]
 
 PEAK_QUANT = 0.995
 
+PEAK_VALUE = 0
+
 MAX_DURATION = 240
 
-EVENT_SEG_KEYS = ["peak_quant", "max_duration", "by"]
+EVENT_SEG_SIGNATURES_KEYS = ["peak_quant", "peak_value", "max_duration", "by"]
+
+EVENT_SEG_SIMULATION_KEYS = ["peak_quant", "peak_value", "max_duration"]
 
 
 ### GENERATE SAMPLES ###
@@ -1015,7 +1019,7 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
-        "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
+        "event_seg": dict(zip(EVENT_SEG_SIMULATION_KEYS, [PEAK_QUANT, PEAK_VALUE, MAX_DURATION])),
     },
     "optimize": {
         "jobs_cmpt": "nse",
@@ -1027,7 +1031,7 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
-        "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
+        "event_seg": dict(zip(EVENT_SEG_SIMULATION_KEYS, [PEAK_QUANT, PEAK_VALUE, MAX_DURATION])),
     },
     "bayesian_optimize": {
         "end_warmup": None,

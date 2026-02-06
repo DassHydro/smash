@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import warnings
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from smash._constant import MAX_DURATION, PEAK_QUANT
+from smash._constant import MAX_DURATION, PEAK_QUANT, PEAK_VALUE
 from smash.fcore._mwd_signatures import baseflow_separation as wrap_baseflow_separation
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
 
 
-def _get_season(now: datetime):
+def _get_season(now: datetime) -> tuple:
     year = 2000  # % dummy leap year to allow input X-02-29 (leap day)
     seasons = [
         ("winter", (date(year, 1, 1), date(year, 3, 20))),
@@ -37,7 +36,7 @@ def _detect_peaks(
     mpd: int = 1,
     threshold: int = 0,
     kpsh: bool = False,
-):
+) -> np.ndarray:
     x = np.atleast_1d(x).astype("float64")
     if x.size < 3:
         return np.array([], dtype=int)
@@ -100,6 +99,7 @@ def _events_grad(
     p: np.ndarray,
     q: np.ndarray,
     peak_quant: float,
+    peak_value: float,  # in m3/s
     max_duration: float,  # in hour
     dt: int,
     rg_quant: float = 0.8,
@@ -107,7 +107,7 @@ def _events_grad(
     start_seg: int = 72,  # in hour
     st_power: int = 24,  # in hour
     end_search: int = 48,  # in hour
-):
+) -> list:
     # % time step conversion
     max_duration = round(max_duration * 3600 / dt)
     start_seg = round(start_seg * 3600 / dt)
@@ -118,7 +118,12 @@ def _events_grad(
     p = np.where(p < 0, np.nan, p)
     q = np.where(q < 0, np.nan, q)
 
-    ind = _detect_peaks(q, mph=np.quantile(q[q > 0], peak_quant))
+    if peak_quant > 0:
+        ind_pq = _detect_peaks(q, mph=np.nanquantile(q, peak_quant))
+        ind = ind_pq[np.where(q[ind_pq] >= peak_value)[0]]  # only keep peaks with a minimum peak value
+    else:
+        ind = _detect_peaks(q, mph=peak_value)
+
     list_events = []
 
     for i_peak in ind:
@@ -209,31 +214,29 @@ def _events_grad(
 
 def _mask_event(
     model: Model,
+    gauge: np.ndarray,
     peak_quant: float = PEAK_QUANT,
+    peak_value: float = PEAK_VALUE,  # in m3/s
     max_duration: float = MAX_DURATION,  # in hour
 ) -> dict:
     mask = np.zeros(model.response_data.q.shape)
     n_event = np.zeros(model.mesh.ng)
 
     for i, catchment in enumerate(model.mesh.code):
+        if catchment not in gauge:
+            continue
+
         prcp = model.atmos_data.mean_prcp[i, :].copy()
         qobs = model.response_data.q[i, :].copy()
 
-        if (prcp < 0).all() or (qobs < 0).all():
-            warnings.warn(
-                f"Catchment {catchment} has no observed precipitation or/and discharge data",
-                stacklevel=2,
-            )
+        list_events = _events_grad(prcp, qobs, peak_quant, peak_value, max_duration, model.setup.dt)
 
-        else:
-            list_events = _events_grad(prcp, qobs, peak_quant, max_duration, model.setup.dt)
+        n_event[i] = len(list_events)
 
-            n_event[i] = len(list_events)
+        for event_number, t in enumerate(list_events):
+            ts = t["start"]
+            te = t["end"]
 
-            for event_number, t in enumerate(list_events):
-                ts = t["start"]
-                te = t["end"]
-
-                mask[i, ts : te + 1] = event_number + 1
+            mask[i, ts : te + 1] = event_number + 1
 
     return {"n": n_event, "mask": mask}
