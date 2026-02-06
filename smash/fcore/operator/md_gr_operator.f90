@@ -290,7 +290,7 @@ contains
 
     subroutine gr_production_transfer_ode_mlp(fq, jacobian_nn_1, jacobian_nn_2, pn, en, imperviousness, &
     & cp, ct, kexc, hp, ht, q, l)
-        !% Solve state-space neural ODE system with implicit Euler
+        !% Solve state-space UDE system with implicit Euler
 
         implicit none
 

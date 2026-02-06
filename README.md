@@ -40,7 +40,7 @@ For **smash** software use, please cite:
 
 > Colleoni, F., Huynh, N. N. T., Garambois, P.-A., Jay-Allemand, M., Organde, D., Renard, B., De Fournas, T., El Baz, A., Demargne, J., and Javelle, P. (2025). 
 > SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework. 
-> Geosci. Model Dev., 18, 2025, 7003–7034. 
+> Geosci. Model Dev., 18, 7003–7034. 
 > https://doi.org/10.5194/gmd-18-7003-2025.
 
 BibTeX entry:
@@ -60,17 +60,17 @@ BibTeX entry:
 
 Please also cite the relevant references corresponding to the algorithms and methods used:
 
-- Hybrid physics-AI framework for learning regionalization and refining internal water fluxes of algebraic or ordinary differential equations (ODEs)-based solvers:
+- Hybrid physics–AI frameworks for regionalization learning and water flux correction:
+
+    > Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Monnier, J. (2026). 
+    > A hybrid physics–AI approach using universal differential equations with state-dependent neural networks for learnable, regionalizable, spatially distributed hydrological modeling. 
+    > Geosci. Model Dev., 19, 1055–1074. 
+    > https://doi.org/10.5194/gmd-19-1055-2026.
 
     > Huynh, N. N. T., Garambois, P.-A., Renard, B., Colleoni, F., Monnier, J., and Roux, H. (2025). 
     > A distributed hybrid physics–AI framework for learning corrections of internal hydrological fluxes and enhancing high-resolution regionalized flood modeling. 
     > Hydrol. Earth Syst. Sci., 29, 3589–3613. 
     > https://doi.org/10.5194/hess-29-3589-2025.
-
-    > Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Monnier, J. (2025). 
-    > Hybrid Physics-AI and Neural ODE Approaches for Spatially Distributed Hydrological Modeling. 
-    > EGUsphere, 2025, 1–24. 
-    > https://doi.org/10.5194/egusphere-2025-2797.
 
 - Hybrid Data Assimilation and Parameter Regionalization (HDA-PR) approach:
 
