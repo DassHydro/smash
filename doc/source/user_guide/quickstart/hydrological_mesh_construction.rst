@@ -27,6 +27,7 @@ Let's begin by importing the necessary libraries for this tutorial.
 .. ipython:: python
 
     import smash
+    import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
 
