@@ -17,21 +17,33 @@ def get_structure() -> list[str]:
 
 def get_rr_parameters_from_structure(structure: str) -> list[str]:
     rr_parameters = []
-    [rr_parameters.extend(MODULE_RR_PARAMETERS[module]) for module in structure.split("-")]
+
+    sm, hm, rm = structure.split("-")
+    rr_parameters.extend(SNOW_MODULE_RR_PARAMETERS[sm])
+    rr_parameters.extend(HYDROLOGICAL_MODULE_RR_PARAMETERS[hm])
+    rr_parameters.extend(ROUTING_MODULE_RR_PARAMETERS[rm])
 
     return rr_parameters
 
 
 def get_rr_states_from_structure(structure: str) -> list[str]:
     rr_states = []
-    [rr_states.extend(MODULE_RR_STATES[module]) for module in structure.split("-")]
+    sm, hm, rm = structure.split("-")
+    rr_states.extend(SNOW_MODULE_RR_STATES[sm])
+    rr_states.extend(HYDROLOGICAL_MODULE_RR_STATES[hm])
+    rr_states.extend(ROUTING_MODULE_RR_STATES[rm])
 
     return rr_states
 
 
 def get_rr_internal_fluxes_from_structure(structure: str) -> list[str]:
     rr_internal_fluxes = []
-    [rr_internal_fluxes.extend(MODULE_RR_INTERNAL_FLUXES[module]) for module in structure.split("-")]
+
+    sm, hm, rm = structure.split("-")
+    rr_internal_fluxes.extend(SNOW_MODULE_RR_INTERNAL_FLUXES[sm])
+    rr_internal_fluxes.extend(HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES[hm])
+    rr_internal_fluxes.extend(ROUTING_MODULE_RR_INTERNAL_FLUXES[rm])
+
     return rr_internal_fluxes
 
 
@@ -72,7 +84,7 @@ HYDROLOGICAL_MODULE = [
     "vic3l",
 ]
 
-ROUTING_MODULE = ["lag0", "lr", "kw"]
+ROUTING_MODULE = ["zero", "lag0", "lr", "kw"]
 
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
 
@@ -109,14 +121,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_PARAMETERS = dict(
-    zip(ROUTING_MODULE, [[], ["llr"], ["akw", "bkw"]])  # % lag0  # % lr  # % kw
-)
-
-# % Following MODULE order
-MODULE_RR_PARAMETERS = dict(
-    **SNOW_MODULE_RR_PARAMETERS,
-    **HYDROLOGICAL_MODULE_RR_PARAMETERS,
-    **ROUTING_MODULE_RR_PARAMETERS,
+    zip(ROUTING_MODULE, [[], [], ["llr"], ["akw", "bkw"]])  # % zero # % lag0  # % lr  # % kw
 )
 
 # % Following SNOW_MODULE order
@@ -147,16 +152,12 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_STATES = dict(
-    zip(ROUTING_MODULE, [[], ["hlr"], []])  # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], [], ["hlr"], []])  # % zero # % lag0  # % lr  # % kw
 )
 
-# % Following MODULE order
-MODULE_RR_STATES = dict(**SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES)
 
 # % Following ROUTING_MODULE order
-ROUTING_MODULE_NQZ = dict(
-    zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
-)
+ROUTING_MODULE_NQZ = dict(zip(ROUTING_MODULE, [1, 1, 1, 2]))  # % zero # % lag0  # % lr  # % kw
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
@@ -174,17 +175,96 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
         HYDROLOGICAL_MODULE,
         (
-            [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 3  # % gr4, gr4_mlp, gr4_ri
             + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ode_mlp
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 3  # % gr5, gr5_mlp, gr5_ri
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "pre",
+                    "qr",
+                    "qd",
+                    "qe",
+                    "qt",
+                ]
+            ]
             * 2  # % gr6, gr6_mlp
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "prl",
+                    "qr",
+                    "qd",
+                    "ql",
+                    "qt",
+                ]
+            ]
             * 2  # % grc, grc_mlp
             + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
-            + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
+            + [
+                [
+                    "ei",
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 2  # % loieau, loieau_mlp
             + [["pn", "en", "qr", "qb", "qt"]]  # % vic3l
         ),
@@ -193,14 +273,9 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_INTERNAL_FLUXES = dict(
-    zip(ROUTING_MODULE, [["qup"], ["qup"], ["qim1j"]])  # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], ["qup"], ["qup"], ["qim1j"]])  # % zero # % lag0  # % lr  # % kw
 )
 
-MODULE_RR_INTERNAL_FLUXES = dict(
-    **SNOW_MODULE_RR_INTERNAL_FLUXES,
-    **HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
-    **ROUTING_MODULE_RR_INTERNAL_FLUXES,
-)
 
 ### STRUCTURE ###
 #################
@@ -673,6 +748,7 @@ DEFAULT_MODEL_SETUP = {
     "snow_module": "zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
+    "return_opt_grad": "none",
     "hidden_neuron": 16,
     "serr_mu_mapping": "Zero",
     "serr_sigma_mapping": "Linear",
@@ -887,7 +963,12 @@ DEFAULT_TERMINATION_CRIT = dict(
             ],
         )
     ),
-    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
+    **dict(
+        zip(
+            ADAPTIVE_OPTIMIZER,
+            len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}],
+        )
+    ),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -1003,11 +1084,15 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 }
 
 OPTIMIZER_CONTROL_TFM = {
-    (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
-    if optimizer == "sbs"
-    else ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
-    if mapping != "ann"
-    else ["keep"]  # no tfm applied for any optimizer used with ann mapping
+    (mapping, optimizer): (
+        ["sbs", "normalize", "keep"]  # in case of sbs optimizer
+        if optimizer == "sbs"
+        else (
+            ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
+            if mapping != "ann"
+            else ["keep"]
+        )
+    )  # no tfm applied for any optimizer used with ann mapping
     for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
 }  # first element of the list is the default tfm for each tuple key (mapping, optimizer)
 
@@ -1092,6 +1177,8 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
 }
 
 SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain", "internal_fluxes"]
+
+RETURN_OPT_GRAD = ["none", "q", "qe"]
 
 ### IO ###
 ##########

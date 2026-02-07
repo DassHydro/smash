@@ -12,6 +12,7 @@
 !%          ``snow_module``            Snow module
 !%          ``hydrological_module``    Hydrological module
 !%          ``routing_module``         Routing module
+!%          ``return_opt_grad``        Return optional gradient ["q" | "qe"], default is "zero"
 !%          ``neurons``                Number of neurons in trainable layers
 !%          ``serr_mu_mapping``        Mapping for structural error model
 !%          ``serr_sigma_mapping``     Mapping for structural error model
@@ -86,6 +87,8 @@ module mwd_setup
         character(lchar) :: snow_module = "..." !$F90W char
         character(lchar) :: hydrological_module = "..." !$F90W char
         character(lchar) :: routing_module = "..."!$F90W char
+
+        character(lchar) :: return_opt_grad = "..."!$F90W char
 
         character(lchar) :: serr_mu_mapping = "..." !$F90W char
         character(lchar) :: serr_sigma_mapping = "..." !$F90W char

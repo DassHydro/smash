@@ -141,6 +141,7 @@ class Model:
         routing_module : `str`, default 'lr'
             Name of routing module. Should be one of:
 
+            - ``'zero'``
             - ``'lag0'``
             - ``'lr'``
             - ``'kw'``
@@ -148,6 +149,14 @@ class Model:
             .. hint::
                 See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>`
                 section
+
+        return_opt_grad : `str`, default `none`
+            Name of the optional gradient to return. If not `none` smash will return inside
+            the variable response.qac the gradient following the diff rule
+            base_forward_run_q(parameters.control.x)\\(output.response.qac)
+            where output.response.qac store the elementaries discharges produced by the
+            hydrological module, if `return_opt_grad=='qe'`, or the domain discharges
+            produced by the routing module, if `return_opt_grad=='q'`.
 
         hidden_neuron : `int` or `list[int]`, default 16
             Number of neurons in hidden layer(s) of the parameterization neural network

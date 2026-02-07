@@ -74,6 +74,18 @@ contains
 
         end do
 
+        if (setup%return_opt_grad == "qe") then
+            do i = 1, mesh%nac
+                output%response%qac(i, time_step) = checkpoint_variable%ac_qtz(i, setup%nqz)
+            end do
+        end if
+
+        if (setup%return_opt_grad == "q") then
+            do i = 1, mesh%nac
+                output%response%qac(i, time_step) = checkpoint_variable%ac_qz(i, setup%nqz)
+            end do
+        end if
+
         !$AD start-exclude
         if (allocated(returns%mask_time_step)) then
             if (returns%mask_time_step(time_step)) then
@@ -774,6 +786,11 @@ contains
 
             ! Routing module
             select case (setup%routing_module)
+
+            case ("zero")
+
+                ! Only copy qt in q
+                checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
 
                 ! 'lag0' module
             case ("lag0")
