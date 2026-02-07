@@ -59,7 +59,7 @@ def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
 
 
 def _standardize_model_setup_directory(read: bool, key: str, value: str | None) -> str:
-    directory_kind = key.split("_")[0]
+    directory_kind = key.split("_", maxsplit=1)[0]
 
     if read:
         if value is None:
@@ -76,7 +76,7 @@ def _standardize_model_setup_directory(read: bool, key: str, value: str | None) 
 
 
 def _standardize_model_setup_file(read: bool, key: str, value: str | None) -> str:
-    file_kind = key.split("_")[0]
+    file_kind = key.split("_", maxsplit=1)[0]
 
     if read:
         if value is None:
