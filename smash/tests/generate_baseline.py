@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import glob
 import importlib
+import importlib.util
 import inspect
 import os
 import re
@@ -20,7 +21,7 @@ os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 
 
 def adjust_module_names(module_names: list[str]) -> list[str]:
-    rep = {"/": ".", ".py": ""}
+    rep = {"\\": "/"}
 
     rep = {re.escape(k): v for k, v in rep.items()}
 
@@ -28,9 +29,21 @@ def adjust_module_names(module_names: list[str]) -> list[str]:
 
     ret = [pattern.sub(lambda m: rep[re.escape(m.group(0))], name) for name in module_names]
 
-    ret.remove("tests.test_define_global_vars")
+    if "tests/test_define_global_vars.py" in ret:
+        ret.remove("tests/test_define_global_vars.py")
 
     return ret
+
+
+def load_module_from_path(path: str):
+    abs_path = os.path.abspath(path)
+    module_name = "baseline_test_" + re.sub(r"[^a-zA-Z0-9_]", "_", abs_path)
+    spec = importlib.util.spec_from_file_location(module_name, abs_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load module from {abs_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def dump_to_baseline(f: h5py.File, key: str, value: np.ndarray):
@@ -158,7 +171,7 @@ if __name__ == "__main__":
     with h5py.File("tests/new_baseline.hdf5", "w") as f:
         for mn in module_names:
             print(mn, end=" ")
-            module = importlib.import_module(mn)
+            module = load_module_from_path(mn)
 
             generic_functions = [
                 (name, func)
