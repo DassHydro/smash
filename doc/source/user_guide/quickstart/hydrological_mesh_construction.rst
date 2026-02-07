@@ -63,7 +63,7 @@ This function requires a flow direction file ``France_flwdir.tif`` and gauge att
 .. note::
 
     By default, the bounding box—i.e., the extent of the domain—is automatically computed as the smallest possible rectangle that encloses the boundaries of the hydrological catchments. 
-    However, users can specify a custom bounding box if desired. The bounding box is defined as a list of four coordinate values: bbox = [xmin, xmax, ymin, ymax], where x refers to latitude and y to longitude.
+    However, users can specify a custom bounding box if desired. The bounding box is defined as a list of four coordinate values: bbox = [xmin, xmax, ymin, ymax], where x refers to longitude and y to latitude.
 
     .. ipython:: python
         :verbatim:
