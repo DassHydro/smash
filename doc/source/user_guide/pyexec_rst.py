@@ -75,7 +75,7 @@ class CodeExecutor:
             sys.stdout = redirected_output
 
             try:
-                last_line = code.split("\n")[-1]  # to print if it is a variable
+                last_line = code.rsplit("\n", maxsplit=1)[-1]  # to print if it is a variable
 
                 if last_line.startswith((" ", "\t", ")", "]", "}")):
                     # Execute the entire block
