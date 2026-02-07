@@ -14,7 +14,7 @@ from smash._constant import (
     DEFAULT_SIMULATION_COST_OPTIONS,
     DEFAULT_SIMULATION_RETURN_OPTIONS,
     DEFAULT_TERMINATION_CRIT,
-    EVENT_SEG_KEYS,
+    EVENT_SEG_SIMULATION_KEYS,
     F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
@@ -52,6 +52,7 @@ from smash._constant import (
 from smash.core.signal_analysis.segmentation._standardize import (  # noqa: F401
     _standardize_hydrograph_segmentation_max_duration,
     _standardize_hydrograph_segmentation_peak_quant,
+    _standardize_hydrograph_segmentation_peak_value,
 )
 from smash.core.signal_analysis.segmentation._tools import _mask_event
 
@@ -894,17 +895,14 @@ def _standardize_simulation_cost_options_wgauge(
 
 def _standardize_simulation_cost_options_event_seg(event_seg: dict, **kwargs) -> dict:
     if isinstance(event_seg, dict):
-        simulation_event_seg_keys = EVENT_SEG_KEYS.copy()
-        simulation_event_seg_keys.remove("by")
-
         for key, value in event_seg.items():
-            if key in simulation_event_seg_keys:
+            if key in EVENT_SEG_SIMULATION_KEYS:
                 func = eval(f"_standardize_hydrograph_segmentation_{key}")
                 event_seg[key] = func(value)
 
             else:
                 raise ValueError(
-                    f"Unknown event_seg key '{key}' in cost_options. Choices: {simulation_event_seg_keys}"
+                    f"Unknown event_seg key '{key}' in cost_options. Choices: {EVENT_SEG_SIMULATION_KEYS}"
                 )
 
     else:
@@ -1257,7 +1255,7 @@ def _standardize_simulation_cost_options_finalize(model: Model, func_name: str, 
     cost_options["njrc"] = cost_options["jreg_cmpt"].size if "jreg_cmpt" in cost_options else 0
 
     if any(f.startswith("E") for f in cost_options.get("jobs_cmpt", [])):
-        info_event = _mask_event(model=model, **cost_options["event_seg"])
+        info_event = _mask_event(model=model, gauge=cost_options["gauge"], **cost_options["event_seg"])
         cost_options["n_event"] = info_event["n"]
         cost_options["mask_event"] = info_event["mask"]
 

@@ -1,31 +1,33 @@
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING
 
-import numpy as np
 import pandas as pd
 
-from smash._constant import MAX_DURATION, PEAK_QUANT
+from smash._constant import MAX_DURATION, PEAK_QUANT, PEAK_VALUE
 from smash.core.signal_analysis.segmentation._standardize import (
     _standardize_hydrograph_segmentation_args,
 )
 from smash.core.signal_analysis.segmentation._tools import _events_grad, _get_season
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from smash.core.model.model import Model
-    from smash.util._typing import Numeric
+    from smash.util._typing import ListLike, Numeric
+
 
 __all__ = ["hydrograph_segmentation"]
 
 
 def hydrograph_segmentation(
     model: Model,
-    peak_quant: float = PEAK_QUANT,
+    gauge: str | ListLike = "all",
+    peak_quant: Numeric = PEAK_QUANT,
+    peak_value: Numeric = PEAK_VALUE,
     max_duration: Numeric = MAX_DURATION,
     by: str = "obs",
 ):
-    # % TODO FC: Add advanced user guide
     """
     Compute segmentation information of flood events over all catchments of Model.
 
@@ -34,9 +36,26 @@ def hydrograph_segmentation(
     model : `Model`
         Primary data structure of the hydrological model `smash`.
 
-    peak_quant : `float`, default 0.995
+    gauge : `str` or `list[str, ...]`, default 'all'
+        Type of gauge for segmentation. There are two ways to specify it:
+
+        - An alias among ``'all'`` (all gauge codes) or ``'dws'`` (most downstream gauge code(s))
+        - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes
+          defined in the `Model.mesh`
+
+        >>> gauge = "dws"
+        >>> gauge = "V3524010"
+        >>> gauge = ["V3524010", "V3515010"]
+
+    peak_quant : `float` or `int`, default 0.995
         Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed
-        discharge time series.
+        or simulated (depending on the value of **by**) discharge time series.
+
+    peak_value : `float` or `int`, default 0
+        Events will be selected if their discharge peaks exceed the **peak_value** threshold of the observed
+        or simulated (depending on the value of **by**) discharge time series (in m3/s).
+        This is a complementary criterion to **peak_quant** even if **peak_quant** is not defined.
+        Set **peak_quant** to 0 to disable it and use only **peak_value**.
 
     max_duration : `float`, default 240
         The expected maximum duration of an event (in hours). If multiple events are detected, their duration
@@ -57,9 +76,9 @@ def hydrograph_segmentation(
         - ``'start'`` : the beginning of event.
         - ``'end'`` : the end of event.
         - ``'multipeak'`` : whether the event has multiple peaks.
-        - ``'maxrainfall'`` : the moment that the maximum precipation is observed.
+        - ``'maxrainfall'`` : the moment that the maximum precipitation is observed.
         - ``'flood'`` : the moment that the maximum discharge is observed.
-        - ``'season'`` : the season that event occurrs.
+        - ``'season'`` : the season in which the event occurs.
 
     Examples
     --------
@@ -84,7 +103,7 @@ def hydrograph_segmentation(
     0  V3524010 2014-11-03 03:00:00  ... 2014-11-04 19:00:00  autumn
     [1 rows x 7 columns]
 
-    Lower the **peak_quant** to potentially retrieve more than one event
+    Lower the **peak_quant** to potentially retrieve more events
 
     >>> hydro_seg = smash.hydrograph_segmentation(model, peak_quant=0.99)
     >>> hydro_seg
@@ -106,12 +125,16 @@ def hydrograph_segmentation(
     [2 rows x 7 columns]
     """
 
-    peak_quant, max_duration, by = _standardize_hydrograph_segmentation_args(peak_quant, max_duration, by)
+    gauge, peak_quant, peak_value, max_duration, by = _standardize_hydrograph_segmentation_args(
+        model, gauge, peak_quant, peak_value, max_duration, by
+    )
 
-    return _hydrograph_segmentation(model, peak_quant, max_duration, by)
+    return _hydrograph_segmentation(model, gauge, peak_quant, peak_value, max_duration, by)
 
 
-def _hydrograph_segmentation(instance: Model, peak_quant: float, max_duration: Numeric, by: str):
+def _hydrograph_segmentation(
+    instance: Model, gauge: np.ndarray, peak_quant: float, peak_value: float, max_duration: float, by: str
+):
     date_range = pd.date_range(
         start=instance.setup.start_time,
         periods=instance.atmos_data.mean_prcp.shape[1],
@@ -123,33 +146,26 @@ def _hydrograph_segmentation(instance: Model, peak_quant: float, max_duration: N
     df = pd.DataFrame(columns=col_name)
 
     for i, catchment in enumerate(instance.mesh.code):
+        if catchment not in gauge:
+            continue
+
         prcp = instance.atmos_data.mean_prcp[i, :].copy()
 
         suffix = "_data" if by == "obs" else ""
         q = getattr(instance, f"response{suffix}").q[i, :].copy()
 
-        if (prcp < 0).all() or (q < 0).all():
-            warnings.warn(
-                f"Catchment {catchment} has no precipitation or/and discharge data",
-                stacklevel=2,
+        list_events = _events_grad(prcp, q, peak_quant, peak_value, max_duration, instance.setup.dt)
+
+        for t in list_events:
+            ts = date_range[t["start"]]
+            te = date_range[t["end"]]
+            peakq = date_range[t["peakQ"]]
+            peakp = date_range[t["peakP"]]
+            season = _get_season(ts)
+
+            pdrow = pd.DataFrame(
+                [[catchment, ts, te, t["multipeak"], peakp, peakq, season]], columns=col_name
             )
-
-            pdrow = pd.DataFrame([[catchment] + [np.nan] * (len(col_name) - 1)], columns=col_name)
             df = pdrow.copy() if df.empty else pd.concat([df, pdrow], ignore_index=True)
-
-        else:
-            list_events = _events_grad(prcp, q, peak_quant, max_duration, instance.setup.dt)
-
-            for t in list_events:
-                ts = date_range[t["start"]]
-                te = date_range[t["end"]]
-                peakq = date_range[t["peakQ"]]
-                peakp = date_range[t["peakP"]]
-                season = _get_season(ts)
-
-                pdrow = pd.DataFrame(
-                    [[catchment, ts, te, t["multipeak"], peakp, peakq, season]], columns=col_name
-                )
-                df = pdrow.copy() if df.empty else pd.concat([df, pdrow], ignore_index=True)
 
     return df
