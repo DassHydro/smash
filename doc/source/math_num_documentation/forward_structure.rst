@@ -1298,7 +1298,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.hybrid_ude:
 
-.. dropdown:: Hybrid GR4 embedding UDEs (gr4_ode_mlp)
+.. dropdown:: Hybrid state-space GR4 for flux correction (gr4_ude)
     :animate: fade-in-slide-down
 
     This hybrid continuous state-space model is embedded within an MLP into the ODEs, forming universal differential equations (UDEs), for process-parameterization.

@@ -57,7 +57,7 @@ HYDROLOGICAL_MODULE = [
     "gr4_mlp",
     "gr4_ri",
     "gr4_ode",
-    "gr4_ode_mlp",
+    "gr4_ude",
     "gr5",
     "gr5_mlp",
     "gr5_ri",
@@ -95,7 +95,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         (
             [["ci", "cp", "ct", "kexc"]] * 2  # % gr4, gr4_mlp,
             + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc"]]  # % gr4_ri
-            + [["ci", "cp", "ct", "kexc"]] * 2  # % gr4_ode, gr4_ode_mlp
+            + [["ci", "cp", "ct", "kexc"]] * 2  # % gr4_ode, gr4_ude
             + [["ci", "cp", "ct", "kexc", "aexc"]] * 2  # % gr5, gr5_mlp
             + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"]]  # % gr5_ri
             + [["ci", "cp", "ct", "be", "kexc", "aexc"]] * 2  # % gr6, gr6_mlp
@@ -135,7 +135,7 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
     zip(
         HYDROLOGICAL_MODULE,
         (
-            [["hi", "hp", "ht"]] * 8  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri
+            [["hi", "hp", "ht"]] * 8  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri
             + [["hi", "hp", "ht", "he"]] * 2  # % gr6, gr6_mlp
             + [["hi", "hp", "ht", "hl"]] * 2  # % grc, grc_mlp
             + [["hp", "ht"]] * 2  # % grd, grd_mlp
@@ -176,7 +176,7 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
         (
             [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
             * 3  # % gr4, gr4_mlp, gr4_ri
-            + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ode_mlp
+            + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ude
             + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
             * 3  # % gr5, gr5_mlp, gr5_ri
             + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
@@ -253,7 +253,7 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
                 (4, 4),  # % gr4_mlp
                 (0, 0),  # % gr4_ri
                 (0, 0),  # % gr4_ode
-                (4, 4),  # % gr4_ode_mlp
+                (4, 4),  # % gr4_ude
                 (0, 0),  # % gr5
                 (4, 4),  # % gr5_mlp
                 (0, 0),  # % gr5_ri
@@ -276,16 +276,16 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
-    "cp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "ci",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
+    "cp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # % grd, grd_mlp
-    "ct",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "ct",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # %grd, grd_mlp
     "alpha1",  # % gr4_ri, gr5_ri
     "alpha2",  # % gr4_ri, gr5_ri
     "cl",  # % grc, grc_mlp
     "be",  # % gr6, gr6_mlp
-    "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp, grc, grc_mlp
+    "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr6, gr6_mlp, grc, grc_mlp
     "aexc",  # % gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp
     "ca",  # % loieau, loieau_mlp
     "cc",  # % loieau, loieau_mlp
@@ -306,10 +306,10 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
-    "hp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "hi",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
+    "hp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # % grd, grd_mlp
-    "ht",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "ht",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # % grd, grd_mlp
     "hl",  # % grc, grc_mlp
     "he",  # % gr6, gr6_mlp
