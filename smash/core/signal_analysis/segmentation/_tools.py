@@ -118,11 +118,8 @@ def _events_grad(
     p = np.where(p < 0, np.nan, p)
     q = np.where(q < 0, np.nan, q)
 
-    if peak_quant > 0:
-        ind_pq = _detect_peaks(q, mph=np.nanquantile(q, peak_quant))
-        ind = ind_pq[np.where(q[ind_pq] >= peak_value)[0]]  # only keep peaks with a minimum peak value
-    else:
-        ind = _detect_peaks(q, mph=peak_value)
+    threshold = max(np.nanquantile(q, peak_quant), peak_value)
+    ind = _detect_peaks(q, mph=threshold)
 
     list_events = []
 
