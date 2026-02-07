@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pandas as pd
+
 from smash._constant import MAX_DURATION, PEAK_QUANT, PEAK_VALUE
 from smash.core.signal_analysis.segmentation._standardize import (
     _standardize_hydrograph_segmentation_args,
@@ -14,7 +16,6 @@ if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.util._typing import ListLike, Numeric
 
-import pandas as pd
 
 __all__ = ["hydrograph_segmentation"]
 
