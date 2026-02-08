@@ -39,7 +39,7 @@ Refer to the [Getting Started](https://smash.recover.inrae.fr/getting_started) g
 For **smash** software use, please cite:
 
 > Colleoni, F., Huynh, N. N. T., Garambois, P.-A., Jay-Allemand, M., Organde, D., Renard, B., De Fournas, T., El Baz, A., Demargne, J., and Javelle, P. (2025). 
-> SMASH v1.0: A Differentiable and Regionalizable High-Resolution Hydrological Modeling and Data Assimilation Framework. 
+> SMASH v1.0: a differentiable and regionalizable high-resolution hydrological modeling and data assimilation framework. 
 > Geosci. Model Dev., 18, 7003–7034. 
 > https://doi.org/10.5194/gmd-18-7003-2025.
 
