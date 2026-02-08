@@ -60,7 +60,7 @@ BibTeX entry:
 
 Please also cite the relevant references corresponding to the algorithms and methods used:
 
-- Hybrid physics–AI frameworks for regionalization learning and water flux correction:
+- Hybrid physics–AI frameworks embedding neural networks for internal flux correction into (i) a universal differential equations (UDE) solver or (ii) algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs):
 
     > Huynh, N. N. T., Garambois, P.-A., Colleoni, F., and Monnier, J. (2026). 
     > A hybrid physics–AI approach using universal differential equations with state-dependent neural networks for learnable, regionalizable, spatially distributed hydrological modeling. 
@@ -72,7 +72,7 @@ Please also cite the relevant references corresponding to the algorithms and met
     > Hydrol. Earth Syst. Sci., 29, 3589–3613. 
     > https://doi.org/10.5194/hess-29-3589-2025.
 
-- Hybrid Data Assimilation and Parameter Regionalization (HDA-PR) approach:
+- Learning regionalization of spatially distributed hydrological pararameters (Hybrid Data Assimilation and Parameter Regionalization, HDA-PR, approach):
 
     > Huynh, N. N. T., Garambois, P.-A., Colleoni, F., Renard, B., Roux, H., Demargne, J., Jay-Allemand, M., and Javelle, P. (2024). 
     > Learning Regionalization Using Accurate Spatial Cost Gradients Within a Differentiable High-Resolution Hydrological Model: Application to the French Mediterranean Region. 
