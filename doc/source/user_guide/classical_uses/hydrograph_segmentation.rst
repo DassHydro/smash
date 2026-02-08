@@ -54,8 +54,8 @@ The result is represented by a `pandas.DataFrame` with 7 columns.
 - ``code`` : The catchment code,
 - ``start`` : The beginning of event under ``YYYY-MM-DD HH:MM:SS`` format,
 - ``end`` : The end of event under ``YYYY-MM-DD HH:MM:SS`` format,
-- ``multipeak`` : Boolean which indicates whether the event has multiple peak,
-- ``maxrainfall`` : The moment when the maximum precipation is observed under ``YYYY-MM-DD HH:MM:SS`` format,
+- ``multipeak`` : Boolean which indicates whether the event has multiple peaks,
+- ``maxrainfall`` : The moment when the maximum precipitation is observed under ``YYYY-MM-DD HH:MM:SS`` format,
 - ``flood`` : The moment when the maximum discharge is observed under ``YYYY-MM-DD HH:MM:SS`` format,
 - ``season`` : The season in which the event occurs.
 
@@ -141,6 +141,61 @@ We can once again visualize the segmented events of catchment ``V3524010`` on th
     @savefig user_guide.in_depth.event_segmentation.event_seg_2.png
     fig.suptitle("V3524010");
 
+Threshold value option
+**********************
+
+The threshold value to determine the peak of events can also be defined by the ``peak_value`` parameter.
+By default, ``peak_value`` is set to 0 (not used). Once set, this parameter acts as a complementary criterion to ``peak_quant``, meaning peaks must exceed both the quantile threshold and the specified value (in m³/s).
+
+.. ipython:: python
+
+    event_seg_3 = smash.hydrograph_segmentation(model, peak_quant=0.99, peak_value=250);
+    event_seg_3
+
+We can visualize the segmented events with the ``peak_value`` criterion applied:
+
+.. ipython:: python
+
+    starts = pd.to_datetime(event_seg_3["start"])
+    ends = pd.to_datetime(event_seg_3["end"])
+
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+    fig.subplots_adjust(hspace=0)
+
+    ax1.bar(dti, mean_prcp, color="lightslategrey", label="Rainfall");
+    ax1.axvspan(starts[0], ends[0], alpha=.1, color="red", label="Event segmentation");
+    ax1.grid(alpha=.7, ls="--")
+    ax1.get_xaxis().set_visible(False)
+    ax1.set_ylabel("$mm$");
+    ax1.invert_yaxis()
+
+    ax2.plot(dti, qobs, label="Observed discharge");
+    ax2.axvspan(starts[0], ends[0], alpha=.1, color="red");
+    ax2.axhline(y=250, color="orange", linestyle="--", label="Peak value threshold");
+    ax2.grid(alpha=.7, ls="--")
+    ax2.tick_params(axis="x", labelrotation=20)
+    ax2.set_ylabel("$m^3/s$");
+    ax2.set_xlim(ax1.get_xlim());
+
+    fig.legend();
+    @savefig user_guide.in_depth.event_segmentation.event_seg_3.png
+    fig.suptitle("V3524010");
+
+.. hint::
+    To disable the peak quantile criterion and use only the ``peak_value`` criterion to select peaks, set ``peak_quant=0``.
+
+Gauge option
+************
+
+The ``gauge`` parameter allows us to specify a list of catchment codes for which the hydrograph segmentation should be performed.
+By default, the segmentation is applied to all catchments in the model. However, if we want to focus on specific catchments, we can provide them by either their codes or aliases.
+
+.. ipython:: python
+
+    # Only segment events for downstream gauge
+    events_dws = smash.hydrograph_segmentation(model, gauge="dws");
+    events_dws
+
 Max duration option
 *******************
 
@@ -149,15 +204,15 @@ The default value is 240 hours, but it can be adjusted as needed. For example, s
 
 .. ipython:: python
 
-    event_seg_3 = smash.hydrograph_segmentation(model, max_duration=120);
-    event_seg_3
+    event_seg_4 = smash.hydrograph_segmentation(model, max_duration=120);
+    event_seg_4
 
 Visualizing segmented events of catchment ``V3524010``:
  
 .. ipython:: python
 
-    starts = pd.to_datetime(event_seg_3["start"])
-    ends = pd.to_datetime(event_seg_3["end"])
+    starts = pd.to_datetime(event_seg_4["start"])
+    ends = pd.to_datetime(event_seg_4["end"])
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
     fig.subplots_adjust(hspace=0)
@@ -179,7 +234,7 @@ Visualizing segmented events of catchment ``V3524010``:
     ax2.set_xlim(ax1.get_xlim());
 
     fig.legend();
-    @savefig user_guide.in_depth.event_segmentation.event_seg_3.png
+    @savefig user_guide.in_depth.event_segmentation.event_seg_4.png
     fig.suptitle("V3524010");
 
 Discharge type option
@@ -195,15 +250,15 @@ In this case, it is important to ensure that a simulation (either forward run or
     model.forward_run()
     qsim = model.response.q[0, :]
 
-    event_seg_4 = smash.hydrograph_segmentation(model, by='sim');
-    event_seg_4
+    event_seg_5 = smash.hydrograph_segmentation(model, by='sim');
+    event_seg_5
 
 Visualizing hydrograph segmented by simulated discharge of catchment ``V3524010``:
 
 .. ipython:: python
 
-    starts = pd.to_datetime(event_seg_4["start"])
-    ends = pd.to_datetime(event_seg_4["end"])
+    starts = pd.to_datetime(event_seg_5["start"])
+    ends = pd.to_datetime(event_seg_5["end"])
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
     fig.subplots_adjust(hspace=0)
@@ -225,7 +280,7 @@ Visualizing hydrograph segmented by simulated discharge of catchment ``V3524010`
     ax2.set_xlim(ax1.get_xlim());
 
     fig.legend();
-    @savefig user_guide.in_depth.event_segmentation.event_seg_4.png
+    @savefig user_guide.in_depth.event_segmentation.event_seg_5.png
     fig.suptitle("V3524010");
 
 .. ipython:: python
