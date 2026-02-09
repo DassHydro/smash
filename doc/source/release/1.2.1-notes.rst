@@ -15,6 +15,10 @@ The smash 1.2.1 release adds functionalities and fixes some compatibility issues
     The name ``gr4_ode_mlp`` for the hybrid GR4 structure with flux correction in the state-space model
     is deprecated and replaced by ``gr4_ude`` for consistency with the associated research paper.
 
+- ``New make command``
+    A new ``make test-light`` command has been added to run a lightweight test suite on a
+    single model structure, allowing for a quick check of core functionalities.
+
 ------------
 Contributors
 ------------
