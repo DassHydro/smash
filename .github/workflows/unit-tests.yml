@@ -44,7 +44,7 @@ jobs:
         - name: Build
           run: |
             . test/bin/activate
-            make
+            make edit
 
         - name: Run Tests
           run: |
