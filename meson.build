@@ -94,7 +94,7 @@ fortran_ignore_warnings = ff.get_supported_arguments(
 
 # https://github.com/scipy/scipy/blob/main/scipy/meson.build#L42-L74
 incdir_numpy = run_command(
-    py3,
+    py,
     [
         '-c',
         '''import os
