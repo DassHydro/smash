@@ -1,0 +1,30 @@
+.. _release.1.2.1-notes:
+
+=========================
+smash 1.2.1 Release Notes
+=========================
+
+The smash 1.2.1 release adds functionalities and fixes some compatibility issues, including:
+
+- ``New options for segmentation function``
+    Two new arguments have been added for hydrograph segmentation: one to select the gauges (**gauge**)
+    on which the segmentation is performed, and another to define an absolute threshold
+    for event selection (**peak_value**).
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* ENH/MAINT: two new arguments added to segmentation algorithms (#503) by @nghi-truyen in https://github.com/DassHydro/smash/pull/510
+* DOC: Fix typo mesh user guide switch latitude and longitude (#506) by @inoelloc in https://github.com/DassHydro/smash/pull/512
+* MAINT: Pin compile and run time version of f90wrap to 0.3.0 (#505) by @inoelloc in https://github.com/DassHydro/smash/pull/511
+* DOC/MAINT: replace neural ODE by UDE and add doi for UDE paper (#504) by @nghi-truyen in https://github.com/DassHydro/smash/pull/513
