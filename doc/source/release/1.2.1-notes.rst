@@ -11,6 +11,10 @@ The smash 1.2.1 release adds functionalities and fixes some compatibility issues
     on which the segmentation is performed, and another to define an absolute threshold
     for event selection (**peak_value**).
 
+- ``'gr4_ode_mlp' structure is deprecated and replaced by 'gr4_ude'``
+    The name ``gr4_ode_mlp`` for the hybrid GR4 structure with flux correction in the state-space model
+    is deprecated and replaced by ``gr4_ude`` for consistency with the associated research paper.
+
 ------------
 Contributors
 ------------
@@ -24,6 +28,7 @@ This release was made possible thanks to the contributions of:
 Pull requests merged
 --------------------
 
+* MAINT: Update test (#497) by @inoelloc in https://github.com/DassHydro/smash/pull/498
 * ENH/MAINT: two new arguments added to segmentation algorithms (#503) by @nghi-truyen in https://github.com/DassHydro/smash/pull/510
 * DOC: Fix typo mesh user guide switch latitude and longitude (#506) by @inoelloc in https://github.com/DassHydro/smash/pull/512
 * MAINT: Pin compile and run time version of f90wrap to 0.3.0 (#505) by @inoelloc in https://github.com/DassHydro/smash/pull/511
