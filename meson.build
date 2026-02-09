@@ -94,11 +94,11 @@ fortran_ignore_warnings = ff.get_supported_arguments(
 
 incdir_numpy = run_command(
     py, '-c',
-    'import numpy; print(numpy.get_include())',
+    'import numpy; import os; print(os.path.relpath(numpy.get_include()))',
     check: true,
 ).stdout().strip()
 
-inc_np = include_directories(incdir_numpy, is_system: true)
+inc_np = include_directories(incdir_numpy)
 
 incdir_f2py = incdir_numpy / '..' / '..' / 'f2py' / 'src'
 inc_f2py = include_directories(incdir_f2py)
