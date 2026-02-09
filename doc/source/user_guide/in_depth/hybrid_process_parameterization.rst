@@ -4,9 +4,10 @@
 Hybrid Process-Parameterization with Neural Networks
 ====================================================
 
-The process-parameterization neural networks are integrated into `smash` for GR-like model structures, either within algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs), or within state-space models that numerically solve the ODEs. 
+The process-parameterization neural networks are integrated into `smash` for GR-like model structures, either within algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs), or within state-space models that numerically solve the ODEs.
+The later is referred to as universal differential equations (UDEs), with state-dependent neural networks embedded into the ODEs. 
 These networks are used to refine internal water fluxes in hydrological models using a multilayer perceptron (MLP) based on the original hydrological model. 
-For example, the model structure ``gr4_mlp`` is used to embed an MLP into the original ``gr4`` model, while the structure ``gr4_ode_mlp`` embeds neural ODEs into the original continuous state-space ``gr4_ode`` model. 
+For example, the model structure ``gr4_mlp`` is used to embed an MLP into the original ``gr4`` model, while the structure ``gr4_ude`` embeds UDEs into the original continuous state-space ``gr4_ode`` model. 
 Please refer to the description of :ref:`Hydrological Operators <math_num_documentation.forward_structure.hydrological_module>` for mathematical details on different model structures. 
 For simplicity, we will only refer to the ``gr4_mlp`` structure in this tutorial, but the same principles apply to the other hybrid structures.
 
@@ -55,7 +56,7 @@ A maximum of two hidden layers is supported.
     The activation functions are not user-configurable. 
     They are fixed to ``SiLU`` for the hidden layer(s) and ``TanH`` for the output layer. 
     The ``SiLU`` function is twice differentiable everywhere and provides smooth gradients, ensuring numerical stability during optimization, 
-    particularly when integrating neural ODEs (refer to the description of the ``gr4_ode_mlp`` structure in :ref:`Hydrological Operators <math_num_documentation.forward_structure.hydrological_module>`).
+    particularly when integrating UDEs (refer to the description of the ``gr4_ude`` structure in :ref:`Hydrological Operators <math_num_documentation.forward_structure.hydrological_module>`).
 
 Now, we create the :class:`smash.Model` object using the ``setup`` and ``mesh`` dictionaries.
 

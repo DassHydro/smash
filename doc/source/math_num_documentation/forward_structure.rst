@@ -1296,12 +1296,12 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     .. math::
         q_{t} = 0.1\tilde{h_p}^{\alpha_1}p_n + k_{exc}\tilde{h_t}^{\alpha_3} + \frac{c_t}{\alpha_2-1}\tilde{h_t}^{\alpha_2}
 
-.. _math_num_documentation.forward_structure.hydrological_module.hybrid_neural_ode:
+.. _math_num_documentation.forward_structure.hydrological_module.hybrid_ude:
 
-.. dropdown:: Hybrid GR4 with neural ODEs (gr4_ode_mlp)
+.. dropdown:: Hybrid state-space GR4 for flux correction (gr4_ude)
     :animate: fade-in-slide-down
 
-    This hybrid continuous state-space model is embedded within an MLP into the ODEs for process-parameterization.
+    This hybrid continuous state-space model is embedded within an MLP into the ODEs, forming universal differential equations (UDEs), for process-parameterization.
     This process-parameterization neural network takes as inputs the neutralized precipitation, the neutralized potential evapotranspiration, and the model states from the previous time step, and produces the corrections of internal water fluxes as outputs:
     
     .. math::
@@ -1310,7 +1310,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
     where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
     :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
-    :math:`f_p, f_e, f_t, f_l` are the corrections applied to the ODE system as follows.
+    :math:`f_p, f_e, f_t, f_l` are the corrections applied to the UDE system as follows.
     
     .. math::
         \frac{d\boldsymbol{h}}{dt}=\left(\begin{array}{c} 
@@ -1329,13 +1329,13 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     .. note::
         The output layer of this neural network uses a ``TanH`` activation function to map the hydrological flux corrections to the range :math:`]-1, 1[`. 
         The hidden layer(s) use a ``SiLU`` function, which is twice differentiable everywhere and provides smooth gradients. 
-        This is essential because the process-parameterization network must be twice differentiable—once for solving the ODEs and once for the calibration process to ensure numerical consistency during optimization—particularly as we aim to preserve the original structure by producing outputs close to zero at the beginning of optimization.
+        This is essential because the process-parameterization network must be twice differentiable—once for solving the UDEs and once for the calibration process to ensure numerical consistency during optimization—particularly as we aim to preserve the original structure by producing outputs close to zero at the beginning of optimization.
 
 
-    This ODE system is solved using an implicit Euler scheme, where the Newton-Raphson method is used to approximate the sought states with a Jacobian matrix explicitly computed. 
+    This UDE system is solved using an implicit Euler scheme, where the Newton-Raphson method is used to approximate the sought states with a Jacobian matrix explicitly computed. 
     The Jacobian matrix is computed using the chain rule, where the derivatives of the neural network are computed using the backpropagation algorithm.
     
-    Then, hydrological runoff flux (lateral discharge feeding the routing module) produced at the pixel scale is computed by the closure equation of the ODE system as follows:
+    Then, hydrological runoff flux (lateral discharge feeding the routing module) produced at the pixel scale is computed by the closure equation of the UDE system as follows:
 
     .. math::
         q_{t} = 0.1\tilde{h_p}^{\alpha_1}p_n(1+f_p) + k_{exc}\tilde{h_t}^{\alpha_3}(1+f_l) + \frac{c_t}{\alpha_2-1}\tilde{h_t}^{\alpha_2}(1+f_t)

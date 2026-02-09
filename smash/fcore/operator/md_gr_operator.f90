@@ -9,12 +9,12 @@
 !%      - gr_threshold_exchange
 !%      - gr_transfer
 !%      - gr_production_transfer_ode
-!%      - gr_production_transfer_ode_mlp
+!%      - gr_production_transfer_ude
 !%      - gr4_time_step
 !%      - gr4_mlp_time_step
 !%      - gr4_ri_time_step
 !%      - gr4_ode_time_step
-!%      - gr4_ode_mlp_time_step
+!%      - gr4_ude_time_step
 !%      - gr5_time_step
 !%      - gr5_mlp_time_step
 !%      - gr5_ri_time_step
@@ -288,9 +288,9 @@ contains
 
     end subroutine gr_production_transfer_ode
 
-    subroutine gr_production_transfer_ode_mlp(fq, jacobian_nn_1, jacobian_nn_2, pn, en, imperviousness, &
+    subroutine gr_production_transfer_ude(fq, jacobian_nn_1, jacobian_nn_2, pn, en, imperviousness, &
     & cp, ct, kexc, hp, ht, q, l)
-        !% Solve state-space neural ODE system with implicit Euler
+        !% Solve state-space UDE system with implicit Euler
 
         implicit none
 
@@ -370,7 +370,7 @@ contains
         q = 0.25_sp*(1._sp + fq(4))*ct*ht**5 &  ! Range of correction ct: (0, 2)
         & + 0.1_sp*(1._sp + fq(1))*pn*hp**2 + l  ! Range of correction pn: (0, 2)
 
-    end subroutine gr_production_transfer_ode_mlp
+    end subroutine gr_production_transfer_ude
 
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -792,7 +792,7 @@ contains
 
     end subroutine gr4_ode_time_step
 
-    subroutine gr4_ode_mlp_time_step(setup, mesh, input_data, options, returns, time_step, &
+    subroutine gr4_ude_time_step(setup, mesh, input_data, options, returns, time_step, &
     & weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, &
     & ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -894,7 +894,7 @@ contains
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_production_transfer_ode_mlp(output_layer(:, k), output_jacobian_1(:, k), output_jacobian_2(:, k), &
+                    call gr_production_transfer_ude(output_layer(:, k), output_jacobian_1(:, k), output_jacobian_2(:, k), &
                     & pn(k), en(k), imperviousness, ac_cp(k), ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
 
                 else
@@ -927,7 +927,7 @@ contains
             end do
         end do
 
-    end subroutine gr4_ode_mlp_time_step
+    end subroutine gr4_ude_time_step
 
     subroutine gr5_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
