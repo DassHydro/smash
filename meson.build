@@ -98,7 +98,7 @@ incdir_numpy = run_command(
     check: true,
 ).stdout().strip()
 
-inc_np = include_directories(incdir_numpy)
+inc_np = include_directories(incdir_numpy, is_system: true)
 
 incdir_f2py = incdir_numpy / '..' / '..' / 'f2py' / 'src'
 inc_f2py = include_directories(incdir_f2py)
