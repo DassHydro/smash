@@ -99,16 +99,14 @@ incdir_numpy = run_command(
         '-c',
         '''import os
 import numpy as np
-
 try:
     incdir = os.path.relpath(np.get_include())
 except Exception:
     incdir = np.get_include()
-
 print(incdir)
 ''',
     ],
-    check=True,
+    check: true,
 ).stdout().strip()
 
 inc_np = include_directories(incdir_numpy)
