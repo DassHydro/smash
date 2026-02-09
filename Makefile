@@ -58,6 +58,6 @@ check:
 
 #% Clean
 clean:
-	@rm -rf build
+	@git clean -fdX
 
-.PHONY: all edit tap tap-cmp doc doc-clean test test-baseline format check clean
+.PHONY: all edit tap tap-cmp doc doc-clean test test-light test-coverage test-baseline format check clean
