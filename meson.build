@@ -92,10 +92,23 @@ fortran_ignore_warnings = ff.get_supported_arguments(
     _fflag_wno_surprising,
 )
 
+https://github.com/scipy/scipy/blob/main/scipy/meson.build#L42-74
 incdir_numpy = run_command(
-    py, '-c',
-    'import numpy; import os; print(os.path.relpath(numpy.get_include()))',
-    check: true,
+    py3,
+    [
+        '-c',
+        '''import os
+import numpy as np
+
+try:
+    incdir = os.path.relpath(np.get_include())
+except Exception:
+    incdir = np.get_include()
+
+print(incdir)
+''',
+    ],
+    check=True,
 ).stdout().strip()
 
 inc_np = include_directories(incdir_numpy)
