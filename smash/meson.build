@@ -10,7 +10,7 @@ py.install_sources(
     preserve_path: true,
 )
 
-python_subdirs = ['core', 'factory', 'io', 'util']
+python_subdirs = ['core', 'factory', 'io', 'util', 'tests']
 
 foreach subdir: python_subdirs
     install_subdir(subdir, install_dir: py.get_install_dir() / 'smash')
