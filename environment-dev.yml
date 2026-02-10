@@ -16,6 +16,7 @@ dependencies:
     - versioneer[toml]
     - geopandas
     - rasterio
+    - pyflwdir
     - pandas
     - h5py
     - tqdm

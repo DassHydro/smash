@@ -6,6 +6,7 @@ numpy
 f90wrap
 versioneer[toml]
 geopandas
+pyflwdir
 rasterio
 pandas
 h5py
