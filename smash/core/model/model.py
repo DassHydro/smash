@@ -448,6 +448,7 @@ class Model:
                 [mesh["cross_sections"][i]["nlevels"] for i in range(mesh["ncs"])],
                 [mesh["cross_sections"][i]["nlat"] for i in range(mesh["ncs"])],
                 [mesh["cross_sections"][i]["nup"] for i in range(mesh["ncs"])],
+                [mesh["cross_sections"][i]["nus_cs"] for i in range(mesh["ncs"])],
                 mesh["nseg"],
                 [mesh["segments"][i]["nds_seg"] for i in range(mesh["nseg"])],
                 [mesh["segments"][i]["nus_seg"] for i in range(mesh["nseg"])],

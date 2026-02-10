@@ -33,11 +33,20 @@ module mwd_cross_section
         integer :: nup
         integer, dimension(:, :), allocatable :: up_rowcols !$F90W index-array
 
+        integer :: ids_cs                                    ! Downstream CS index
+        integer :: nus_cs                                    ! Number of upstream CS
+        integer, dimension(:), allocatable :: ius_cs         ! Upstream CS indices
+        real(sp) :: dx                                       ! Distance to downstream
+        logical :: is_outlet                                 ! Outlet flag
+        real(sp) :: bathy_bc                                 ! Boundary condition bathymetry (outlet only)
+
+
+
     end type Cross_SectionDT
 
 contains
 
-    subroutine Cross_SectionDT_initialise(this, nlevels, nlat, nup)
+    subroutine Cross_SectionDT_initialise(this, nlevels, nlat, nup, nus_cs)
 
         implicit none
 
@@ -45,10 +54,12 @@ contains
         integer, intent(in) :: nlevels
         integer, intent(in) :: nlat
         integer, intent(in) :: nup
+        integer, intent(in) :: nus_cs
 
         this%nlevels = nlevels
         this%nlat = nlat
         this%nup = nup
+        this%nus_cs = nus_cs
 
         this%coord = -99._sp
         this%rowcol = -99
@@ -66,6 +77,13 @@ contains
         this%lat_rowcols = -99
         allocate (this%up_rowcols(this%nup, 2))
         this%up_rowcols = -99
+
+        this%ids_cs = -99
+        allocate (this%ius_cs(this%nus_cs))
+        this%ius_cs = -99
+        this%dx = -99._sp
+        this%is_outlet = .false.
+        this%bathy_bc = -999._sp
 
     end subroutine Cross_SectionDT_initialise
 

@@ -110,14 +110,14 @@ module mwd_mesh
 contains
 
     subroutine MeshDT_initialise(this, setup, nrow, ncol, npar, ng, &
-                                 ncs, nlevels, nlat, nup, nseg, nds_seg, nus_seg)
+                                 ncs, nlevels, nlat, nup, nus_cs, nseg, nds_seg, nus_seg)
 
         implicit none
 
         type(MeshDT), intent(inout) :: this
         type(SetupDT), intent(inout) :: setup
         integer, intent(in) :: nrow, ncol, npar, ng, ncs, nseg
-        integer, dimension(ncs), intent(in) :: nlevels, nlat, nup
+        integer, dimension(ncs), intent(in) :: nlevels, nlat, nup, nus_cs
         integer, dimension(nseg), intent(in) :: nds_seg, nus_seg
 
         integer :: i
@@ -192,7 +192,7 @@ contains
 
         allocate (this%cross_sections(this%ncs))
         do i = 1, this%ncs
-            call Cross_SectionDT_initialise(this%cross_sections(i), nlevels(i), nlat(i), nup(i))
+            call Cross_SectionDT_initialise(this%cross_sections(i), nlevels(i), nlat(i), nup(i), nus_cs(i))
         end do
 
         allocate (this%segments(this%nseg))

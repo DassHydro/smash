@@ -1225,32 +1225,13 @@ def _compute_subgrid_network(
         ascending=[True, False]  # stream ascending, abscissa descending
     ).reset_index(drop=True)
 
-    # Convert DataFrame to SMASH format
-    cross_sections = [{
-        'rowcol': cs['rowcol'],
-        'cs_coords': cs['cs_coords'],
-        "x": cs['curvilinear_abscissa'],
-        "bathy": cs['bathy'],
-        "nlevels": cs['nlevels'],
-        "manning": np.full(1, cs['manning'], dtype=np.float32),
-        "level_heights": cs['level_heights'],
-        "level_widths": np.array([cs['level_width']], dtype=np.float32),
-        "nlat": cs['nlat'],
-        "lat_rowcols": (
-            np.array(cs['lat_rowcols'], dtype=np.int32) 
-            if cs['nlat'] > 0 
-            else np.zeros((0,2), dtype=np.int32)
-        ),
-        "nup": cs['nup'],
-        "up_rowcols": (
-            np.array(cs['up_rowcols'], dtype=np.int32) 
-            if cs['nup'] > 0 
-            else np.zeros((0,2), dtype=np.int32)
-        ),
-        **({'elevtn': cs['adj_elevtn']} if 'adj_elevtn' in cs else {})
-    } for _, cs in df_cs.iterrows()]
+    # Create alias 'x' for 'curvilinear_abscissa' (used in topology calculation): TEMPORARY
+    df_cs['x'] = df_cs['curvilinear_abscissa']
 
+    # Add index column after sorting
+    df_cs['cs_idx'] = df_cs.index
 
+    
     ### ----- COMPUTE SEGMENTS (df_seg) -----------------------------------------------------------
     
     segments = []
@@ -1282,6 +1263,146 @@ def _compute_subgrid_network(
             'nus_seg': len(us_seg),
             'us_segment': us_seg,
         })
+    
+    # ======================================================================
+    # COMPUTE CROSS-SECTION TOPOLOGY (ids_cs, ius_cs, nus_cs)
+    # ======================================================================
+    # Map: segment_idx → ordered list of CS indices
+    segment_to_cs = {}
+    for idx, cs in df_cs.iterrows():
+        seg_idx = cs['stream_idx']
+        segment_to_cs.setdefault(seg_idx, []).append(idx)
+
+    # Initialize topology fields
+    df_cs['ids_cs'] = -1            # downstream CS index
+    df_cs['ius_cs'] = [[] for _ in range(len(df_cs))]  # upstream CS indices
+    df_cs['nus_cs'] = 0             # number of upstream CS
+
+    for seg_idx, cs_list in segment_to_cs.items():
+        segment = segments[seg_idx]
+        n_cs = len(cs_list)
+
+        for local_pos, cs_idx in enumerate(cs_list):
+
+            # --------------------------------------------------
+            # DOWNSTREAM CS
+            # --------------------------------------------------
+            if local_pos < n_cs - 1:
+                # Inside segment → next CS
+                df_cs.at[cs_idx, 'ids_cs'] = cs_list[local_pos + 1]
+            else:
+                # Last CS of segment
+                if segment['nds_seg'] == 0:
+                    # Outlet
+                    df_cs.at[cs_idx, 'ids_cs'] = cs_idx
+                else:
+                    # First CS of downstream segment
+                    ds_seg_idx = segment['ds_segment'][0]
+                    df_cs.at[cs_idx, 'ids_cs'] = segment_to_cs[ds_seg_idx][0]
+
+            # --------------------------------------------------
+            # UPSTREAM CS
+            # --------------------------------------------------
+            if local_pos > 0:
+                # Inside segment → previous CS
+                us_list = [cs_list[local_pos - 1]]
+            else:
+                # First CS of segment
+                if segment['nus_seg'] == 0:
+                    # Source
+                    us_list = []
+                else:
+                    # Confluence → last CS of upstream segments
+                    us_list = [
+                        segment_to_cs[us_seg_idx][-1]
+                        for us_seg_idx in segment['us_segment']
+                    ]
+
+            df_cs.at[cs_idx, 'ius_cs'] = us_list
+            df_cs.at[cs_idx, 'nus_cs'] = len(us_list)
+
+    # ======================================================================
+    # COMPUTE dx AND OUTLET BC
+    # ======================================================================
+    df_cs['dx'] = 0.0
+    df_cs['is_outlet'] = False
+    df_cs['bathy_bc'] = -999.0  # Initialize BC bathymetry (only for outlet)
+
+    for idx in df_cs.index:
+        ids_cs = df_cs.at[idx, 'ids_cs']
+        ius_cs_list = df_cs.at[idx, 'ius_cs']
+
+        x_i = df_cs.at[idx, 'x']
+        b_i = df_cs.at[idx, 'bathy'] # "real-geomorpho" bathymetry at CS
+
+        # --------------------------------------------------
+        # STANDARD CASE
+        # --------------------------------------------------
+        if ids_cs != idx:
+            df_cs.at[idx, 'dx'] = x_i - df_cs.at[ids_cs, 'x']
+            df_cs.at[idx, 'is_outlet'] = False
+            df_cs.at[idx, 'bathy_bc'] = -999.0  # Not an outlet, no BC
+
+        # --------------------------------------------------
+        # OUTLET CASE
+        # --------------------------------------------------
+        else:
+            df_cs.at[idx, 'is_outlet'] = True
+
+            us_x_sum = 0.0
+            us_s_sum = 0.0
+
+            for ius in ius_cs_list:
+                x_us = df_cs.at[ius, 'x']
+                b_us = df_cs.at[ius, 'bathy']
+
+                # Fortran formulation
+                us_x_sum += (x_us - x_i)
+                us_s_sum += (b_us - b_i) / (x_us - x_i)
+
+            us_x_mean = us_x_sum / len(ius_cs_list)
+            us_s_mean = us_s_sum / len(ius_cs_list)
+
+            # Distance to fictitious downstream point
+            df_cs.at[idx, 'dx'] = us_x_mean
+            
+            x_bc = x_i - us_x_mean
+            df_cs.at[idx, 'bathy_bc'] = b_i + us_s_mean * x_bc
+            
+
+    # Convert DataFrame to SMASH format
+    cross_sections = [{
+    'rowcol': cs['rowcol'],
+    'cs_coords': cs['cs_coords'],
+    'x': cs['x'],
+    'bathy': cs['bathy'],
+    'bathy_bc': cs['bathy_bc'],
+    'nlevels': cs['nlevels'],
+    'manning': np.full(1, cs['manning'], dtype=np.float32),
+    'level_heights': cs['level_heights'],
+    'level_widths': np.array([cs['level_width']], dtype=np.float32),
+    'nlat': cs['nlat'],
+    'lat_rowcols': (
+        np.array(cs['lat_rowcols'], dtype=np.int32)
+        if cs['nlat'] > 0 else np.zeros((0, 2), dtype=np.int32)
+    ),
+    'nup': cs['nup'],
+    'up_rowcols': (
+        np.array(cs['up_rowcols'], dtype=np.int32)
+        if cs['nup'] > 0 else np.zeros((0, 2), dtype=np.int32)
+    ),
+
+    # --------------------------
+    # HYDRAULIC TOPOLOGY (FINAL)
+    # --------------------------
+    'ids_cs': int(cs['ids_cs']) + 1, # + 1 --> Fortran indexing
+    'nus_cs': int(cs['nus_cs']),
+    'ius_cs': np.array(cs['ius_cs'], dtype=np.int32) + 1, # + 1 --> Fortran indexing
+    'dx': float(cs['dx']),
+    'is_outlet': bool(cs['is_outlet']),
+
+    **({'elevtn': cs['adj_elevtn']} if 'adj_elevtn' in cs else {})
+} for _, cs in df_cs.iterrows()]
 
     ### ----- COMPUTE UNIT CATCHMENT AREAS -----------------------------------------------------------
     
