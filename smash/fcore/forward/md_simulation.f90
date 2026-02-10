@@ -22,7 +22,7 @@ module md_simulation
     use md_checkpoint_variable !% only: Checkpoint_VariableDT
     use md_snow_operator !% only: ssn_time_step
     use md_gr_operator !% only: gr4_time_step, gr4_mlp_time_step, gr4_ri_time_step, gr4_ode_time_step, &
-    !% & gr4_ode_mlp_time_step, gr5_time_step, gr5_mlp_time_step, gr5_ri_time_step, gr6_time_step, &
+    !% & gr4_ude_time_step, gr5_time_step, gr5_mlp_time_step, gr5_ri_time_step, gr6_time_step, &
     !% & gr6_mlp_time_step, grc_time_step, grc_mlp_time_step, grd_time_step, grd_mlp_time_step,
     !% & loieau_time_step, loieau_mlp_time_step
     use md_vic3l_operator !% only: vic3l_time_step
@@ -309,15 +309,15 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 4
                 rr_states_inc = rr_states_inc + 3
 
-                ! 'gr4_ode_mlp' module
-            case ("gr4_ode_mlp")
+                ! 'gr4_ude' module
+            case ("gr4_ude")
 
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
                 h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
                 h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
 
-                call gr4_ode_mlp_time_step( &
+                call gr4_ude_time_step( &
                     setup, &
                     mesh, &
                     input_data, &

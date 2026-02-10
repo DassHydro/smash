@@ -37,7 +37,7 @@ def generic_internal_fluxes(model_structure: list[smash.Model], **kwargs) -> dic
 
 
 def run_internal_fluxes_option(model: smash.Model, custom_options) -> dict:
-    instance, res = smash.forward_run(
+    _, res = smash.forward_run(
         model,
         **custom_options,
     )
@@ -48,7 +48,7 @@ def test_run_internal_fluxes():
     res = generic_internal_fluxes(pytest.model_structure)
 
     for key, value in res.items():
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-05, equal_nan=True), key
 
 
 def test_run_internal_fluxes_shapes():
@@ -109,7 +109,7 @@ def test_run_internal_fluxes_shapes():
 
 
 def optimize_internal_fluxes_shapes(model: smash.Model, custom_options) -> dict:
-    instance, res = smash.optimize(
+    _, res = smash.optimize(
         model,
         **custom_options,
     )

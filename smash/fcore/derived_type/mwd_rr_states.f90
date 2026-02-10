@@ -13,7 +13,7 @@
 !%          ``keys``                   Rainfall-runoff states keys
 !%          ``values``                 Rainfall-runoff states values
 !%
-!§      Subroutine
+!%      Subroutine
 !%      ----------
 !%
 !%      - RR_StatesDT_initialise

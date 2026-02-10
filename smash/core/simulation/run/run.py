@@ -89,7 +89,7 @@ class ForwardRun:
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
         **time_step**.
 
-    internal_fluxes : `dict[str, numpy.ndarray]`
+    internal_fluxes : dict[str, `numpy.ndarray`]
         A dictionary where keys are the names of the internal fluxes and the values are array of
         shape *(nrow, ncol, n)* representing an internal flux on the domain for each **time_step**.
 

@@ -4,9 +4,9 @@ import sys
 
 import numpy as np
 import pytest
+from f90wrap.runtime import FortranDerivedTypeArray
 
 import smash
-from f90wrap.runtime import FortranDerivedTypeArray
 
 
 def generic_model_io(**kwargs) -> dict:
@@ -121,12 +121,12 @@ def test_sparse_model_io_cmp():
 
                         if compare:
                             if isinstance(fdt_value, np.ndarray):
-                                assert np.allclose(
-                                    fdt_value, fdt_value_rld, atol=1e-6
-                                ), f"sparse_model_io_cmp.{sub_attr}.{fdt_attr}"
+                                assert np.allclose(fdt_value, fdt_value_rld, atol=1e-6), (
+                                    f"sparse_model_io_cmp.{sub_attr}.{fdt_attr}"
+                                )
                             else:
-                                assert (
-                                    fdt_value == fdt_value_rld
-                                ), f"sparse_model_io_cmp.{sub_attr}.{fdt_attr}"
+                                assert fdt_value == fdt_value_rld, (
+                                    f"sparse_model_io_cmp.{sub_attr}.{fdt_attr}"
+                                )
             else:
                 assert value == value_rld, f"sparse_model_io_cmp.{sub_attr}"

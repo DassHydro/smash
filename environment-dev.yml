@@ -2,7 +2,7 @@ name: smash-dev
 channels:
     - conda-forge
 dependencies:
-    - python=3.12
+    - python=3.13
     - pip
 
     # required dependencies
@@ -32,7 +32,6 @@ dependencies:
     - pickleshare
     - sphinxcontrib-bibtex
     - sphinx-design
-    - sphinx-autosummary-accessors
     - matplotlib
 
     # test

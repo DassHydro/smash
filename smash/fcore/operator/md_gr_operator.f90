@@ -9,12 +9,12 @@
 !%      - gr_threshold_exchange
 !%      - gr_transfer
 !%      - gr_production_transfer_ode
-!%      - gr_production_transfer_ode_mlp
+!%      - gr_production_transfer_ude
 !%      - gr4_time_step
 !%      - gr4_mlp_time_step
 !%      - gr4_ri_time_step
 !%      - gr4_ode_time_step
-!%      - gr4_ode_mlp_time_step
+!%      - gr4_ude_time_step
 !%      - gr5_time_step
 !%      - gr5_mlp_time_step
 !%      - gr5_ri_time_step
@@ -259,13 +259,13 @@ contains
             fhp = ((1._sp - hp**2)*pn - hp*(2._sp - hp)*en)*inv_cp
             dh(1) = hp - hp0 - dt*fhp
 
-            fht = (0.9_sp*pn*hp**2 - ct*ht**5 + kexc*ht**3.5_sp)*inv_ct
+            fht = (0.9_sp*pn*hp**2 - 0.25_sp*ct*ht**5 + kexc*ht**3.5_sp)*inv_ct
             dh(2) = ht - ht0 - dt*fht
 
             jacob(1, 1) = 1._sp + dt*2._sp*(hp*(pn - en) + en)*inv_cp  ! 1 - dt*nabla_hp(fhp)
             jacob(1, 2) = 0._sp  ! -dt*nabla_ht(fhp)
             jacob(2, 1) = -dt*1.8_sp*pn*hp*inv_ct  ! -dt*nabla_hp(fht)
-            jacob(2, 2) = 1._sp - dt*(3.5_sp*kexc*(ht**2.5_sp) - 5._sp*ct*ht**4)*inv_ct  ! 1 - dt*nabla_ht(fht)
+            jacob(2, 2) = 1._sp - dt*(3.5_sp*kexc*(ht**2.5_sp) - 1.25_sp*ct*ht**4)*inv_ct  ! 1 - dt*nabla_ht(fht)
 
             call solve_linear_system_2vars(jacob, delta_h, dh)
 
@@ -284,17 +284,19 @@ contains
 
         l = kexc*ht**3.5_sp
 
-        q = ct*ht**5 + 0.1_sp*pn*hp**2 + l
+        q = 0.25_sp*ct*ht**5 + 0.1_sp*pn*hp**2 + l
 
     end subroutine gr_production_transfer_ode
 
-    subroutine gr_production_transfer_ode_mlp(fq, jacobian_nn, pn, en, imperviousness, cp, ct, kexc, hp, ht, q, l)
-        !% Solve state-space neural ODE system with implicit Euler
+    subroutine gr_production_transfer_ude(fq, jacobian_nn_1, jacobian_nn_2, pn, en, imperviousness, &
+    & cp, ct, kexc, hp, ht, q, l)
+        !% Solve state-space UDE system with implicit Euler
 
         implicit none
 
-        real(sp), dimension(5), intent(in) :: fq  ! fixed NN output size
-        real(sp), dimension(size(fq), 4), intent(in) :: jacobian_nn  ! fixed NN input size
+        real(sp), dimension(4), intent(in) :: fq  ! fixed NN output size
+        real(sp), dimension(size(fq)), intent(in) :: jacobian_nn_1  ! grad wrt hp
+        real(sp), dimension(size(fq)), intent(in) :: jacobian_nn_2  ! grad wrt ht
         real(sp), intent(in) :: en, imperviousness, cp, ct, kexc
         real(sp), intent(inout) :: pn, hp, ht, q
         real(sp), intent(out) :: l
@@ -326,27 +328,27 @@ contains
             fhp = ((1._sp - hp**2)*pn*(1._sp + fq(1)) - hp*(2._sp - hp)*en*(1._sp + fq(2)))*inv_cp
             dh(1) = hp - hp0 - dt*fhp
 
-            ! Range of correction c0.9: (1, 0), for the remaining terms: (0, 2)
-            fht = (0.9_sp*(1._sp - fq(3)**2)*pn*hp**2 - (1._sp + fq(5))*ct*ht**5 &
-            & + (kexc*ht**3.5_sp)*(1._sp + fq(4)))*inv_ct
+            ! Range of correction for the three terms: (0, 2)
+            fht = (0.9_sp*(1._sp + fq(1))*pn*hp**2 - 0.25_sp*(1._sp + fq(4))*ct*ht**5 &
+            & + (kexc*ht**3.5_sp)*(1._sp + fq(3)))*inv_ct
             dh(2) = ht - ht0 - dt*fht
 
             ! 1 - dt*nabla_hp(fhp)
-            jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn(1, 1)*(1 - hp**2) - 2._sp*hp*(1._sp + fq(1))) &
-            & - en*(jacobian_nn(2, 1)*hp*(2._sp - hp) + 2._sp*(1._sp - hp)*(1._sp + fq(2))))*inv_cp
+            jacob(1, 1) = 1._sp - dt*(pn*(jacobian_nn_1(1)*(1 - hp**2) - 2._sp*hp*(1._sp + fq(1))) &
+            & - en*(jacobian_nn_1(2)*hp*(2._sp - hp) + 2._sp*(1._sp - hp)*(1._sp + fq(2))))*inv_cp
 
             ! -dt*nabla_ht(fhp)
-            jacob(1, 2) = -dt*(pn*jacobian_nn(1, 2)*(1 - hp**2) &
-            & - en*jacobian_nn(2, 2)*hp*(2._sp - hp))*inv_cp
+            jacob(1, 2) = -dt*(pn*jacobian_nn_2(1)*(1 - hp**2) &
+            & - en*jacobian_nn_2(2)*hp*(2._sp - hp))*inv_cp
 
             ! -dt*nabla_hp(fht)
-            jacob(2, 1) = -dt*(1.8_sp*pn*(hp*(1._sp - fq(3)**2) - jacobian_nn(3, 1)*fq(3)*hp**2) &
-            & - jacobian_nn(5, 1)*ct*ht**5 + jacobian_nn(4, 1)*kexc*ht**3.5_sp)*inv_ct
+            jacob(2, 1) = -dt*(0.9_sp*pn*hp*(2._sp*(1._sp + fq(1)) + jacobian_nn_1(1)*hp) &
+            & - 0.25_sp*jacobian_nn_1(4)*ct*ht**5 + jacobian_nn_1(3)*kexc*ht**3.5_sp)*inv_ct
 
             ! 1 - dt*nabla_ht(fht)
-            jacob(2, 2) = 1._sp - dt*(3.5_sp*(1._sp + fq(4))*kexc*ht**2.5 + jacobian_nn(4, 2)*ht**3.5 &
-            & - 1.8_sp*fq(3)*jacobian_nn(3, 2)*pn*hp**2 &
-            & - 5._sp*(1._sp + fq(5))*ct*ht**4 - jacobian_nn(5, 2)*ht**5)*inv_ct
+            jacob(2, 2) = 1._sp - dt*((3.5_sp*(1._sp + fq(3)) + jacobian_nn_2(3)*ht)*kexc*ht**2.5 &
+            & + 0.9_sp*jacobian_nn_2(1)*pn*hp**2 &
+            & - (1.25_sp*(1._sp + fq(4)) + 0.25_sp*jacobian_nn_2(4)*ht)*ct*ht**4)*inv_ct
 
             call solve_linear_system_2vars(jacob, delta_h, dh)
 
@@ -363,13 +365,12 @@ contains
 
         end do
 
-        l = (1._sp + fq(4))*kexc*ht**3.5_sp  ! Range of correction kexc: (0, 2)
+        l = (1._sp + fq(3))*kexc*ht**3.5_sp  ! Range of correction kexc: (0, 2)
 
-        q = (1._sp + fq(5))*ct*ht**5 &  ! Range of correction ct: (0, 2)
-        & + (0.1_sp + 0.9_sp*fq(3)**2) &  ! Range of correction c0.1: (1, 10)
-        & *(1._sp + fq(1))*pn*hp**2 + l  ! Range of correction pn: (0, 2)
+        q = 0.25_sp*(1._sp + fq(4))*ct*ht**5 &  ! Range of correction ct: (0, 2)
+        & + 0.1_sp*(1._sp + fq(1))*pn*hp**2 + l  ! Range of correction pn: (0, 2)
 
-    end subroutine gr_production_transfer_ode_mlp
+    end subroutine gr_production_transfer_ude
 
     subroutine gr4_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -508,10 +509,10 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
+        real(sp), dimension(setup%neurons(setup%n_layers + 1)) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
+        real(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -521,11 +522,13 @@ contains
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
 
-        ! Interception with OPENMP
+        ! Hydrological module
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
-        !$OMP& private(row, col, k)
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, weight_1, bias_1, weight_2, bias_2, &
+        !$OMP& weight_3, bias_3, ac_ci, ac_hi, ac_cp, beta, ac_ct, ac_kexc, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pn, en, pr, perc, ps, es, l, &
+        !$OMP& prr, prd, qr, qd, input_layer, output_layer)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -536,67 +539,27 @@ contains
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn(k), en(k))
+                    ! Interception
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn, en)
 
-                else
-
-                    pn(k) = 0._sp
-                    en(k) = 0._sp
-
-                end if
-
-            end do
-        end do
-#ifdef _OPENMP
-        !$OMP end parallel do
-#endif
-
-        ! Forward MLP without OPENMP
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+                    ! Forward MLP
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
                     call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k))
+                    & input_layer, output_layer)
 
-                else
-                    output_layer(:, k) = 0._sp
-
-                end if
-
-            end do
-        end do
-
-        ! Production and transfer with OPENMP
-#ifdef _OPENMP
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_hp, ac_ht, ac_qt, pn, en) &
-        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd)
-#endif
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                imperviousness = input_data%physio_data%imperviousness(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), imperviousness, ac_cp(k), &
+                    ! Production
+                    imperviousness = input_data%physio_data%imperviousness(row, col)
+                    call gr_production(output_layer(1), output_layer(2), pn, en, imperviousness, ac_cp(k), &
                     & beta, ac_hp(k), pr, perc, ps, es)
 
-                    call gr_exchange(output_layer(4, k), ac_kexc(k), ac_ht(k), l)
+                    ! Exchange
+                    call gr_exchange(output_layer(4), ac_kexc(k), ac_ht(k), l)
 
                 else
+                    pn = 0._sp
+                    en = 0._sp
+
+                    output_layer = 0._sp
 
                     pr = 0._sp
                     perc = 0._sp
@@ -604,9 +567,9 @@ contains
 
                 end if
 
-                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l  ! Range of correction c0.9: (1, 0)
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (1, 10)
-
+                ! Transfer
+                prr = (0.9_sp*(1._sp - output_layer(3)**2))*(pr + perc) + l  ! Range of correction c0.9: (1, 0)
+                prd = (0.1_sp + 0.9_sp*output_layer(3)**2)*(pr + perc)  ! Range of correction c0.1: (1, 10)
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
                 qd = max(0._sp, prd + l)
@@ -630,7 +593,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/pn(k), en(k), pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -809,8 +772,15 @@ contains
 
                 imperviousness = input_data%physio_data%imperviousness(row, col)
 
-                call gr_production_transfer_ode(pn(k), en(k), imperviousness, ac_cp(k), ac_ct(k), &
-                & ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_production_transfer_ode(pn(k), en(k), imperviousness, ac_cp(k), ac_ct(k), &
+                    & ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
+
+                else
+                    ac_qt(k) = 0._sp
+                    l = 0._sp
+                end if
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
@@ -839,7 +809,7 @@ contains
 
     end subroutine gr4_ode_time_step
 
-    subroutine gr4_ode_mlp_time_step(setup, mesh, input_data, options, returns, time_step, &
+    subroutine gr4_ude_time_step(setup, mesh, input_data, options, returns, time_step, &
     & weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, &
     & ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -864,7 +834,8 @@ contains
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
         real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), setup%neurons(1), mesh%nac) :: jacobian_nn
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_jacobian_1
+        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_jacobian_2
         real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
         integer :: row, col, k, time_step_returns
         real(sp) :: imperviousness, l
@@ -916,10 +887,12 @@ contains
 
                     input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
                     call forward_and_backward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k), jacobian_nn(:, :, k))
+                    & input_layer, output_layer(:, k), output_jacobian_1(:, k), output_jacobian_2(:, k))
 
                 else
                     output_layer(:, k) = 0._sp
+                    output_jacobian_1(:, k) = 0._sp
+                    output_jacobian_2(:, k) = 0._sp
 
                 end if
 
@@ -936,8 +909,15 @@ contains
 
                 imperviousness = input_data%physio_data%imperviousness(row, col)
 
-                call gr_production_transfer_ode_mlp(output_layer(:, k), jacobian_nn(:, :, k), pn(k), en(k), &
-                & imperviousness, ac_cp(k), ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_production_transfer_ude(output_layer(:, k), output_jacobian_1(:, k), output_jacobian_2(:, k), &
+                    & pn(k), en(k), imperviousness, ac_cp(k), ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k), l)
+
+                else
+                    ac_qt(k) = 0._sp
+                    l = 0._sp
+                end if
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
@@ -964,7 +944,7 @@ contains
             end do
         end do
 
-    end subroutine gr4_ode_mlp_time_step
+    end subroutine gr4_ude_time_step
 
     subroutine gr5_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -1087,10 +1067,10 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
+        real(sp), dimension(setup%neurons(setup%n_layers + 1)) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
+        real(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, prd, qr, qd
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1100,11 +1080,13 @@ contains
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
 
-        ! Interception with OPENMP
+        ! Hydrological module
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
-        !$OMP& private(row, col, k)
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, weight_1, bias_1, weight_2, bias_2, &
+        !$OMP& weight_3, bias_3, ac_ci, ac_hi, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pn, en, pr, perc, ps, es, l, &
+        !$OMP& prr, prd, qr, qd, input_layer, output_layer)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1115,67 +1097,27 @@ contains
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn(k), en(k))
+                    ! Interception
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn, en)
 
-                else
-
-                    pn(k) = 0._sp
-                    en(k) = 0._sp
-
-                end if
-
-            end do
-        end do
-#ifdef _OPENMP
-        !$OMP end parallel do
-#endif
-
-        ! Forward MLP without OPENMP
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+                    ! Forward MLP
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
                     call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k))
+                    & input_layer, output_layer)
 
-                else
-                    output_layer(:, k) = 0._sp
-
-                end if
-
-            end do
-        end do
-
-        ! Production and transfer with OPENMP
-#ifdef _OPENMP
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_qt, pn, en) &
-        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd)
-#endif
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                imperviousness = input_data%physio_data%imperviousness(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), imperviousness, ac_cp(k), &
+                    ! Production
+                    imperviousness = input_data%physio_data%imperviousness(row, col)
+                    call gr_production(output_layer(1), output_layer(2), pn, en, imperviousness, ac_cp(k), &
                     & beta, ac_hp(k), pr, perc, ps, es)
 
-                    call gr_threshold_exchange(output_layer(4, k), ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+                    ! Exchange
+                    call gr_threshold_exchange(output_layer(4), ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
                 else
+                    pn = 0._sp
+                    en = 0._sp
+
+                    output_layer = 0._sp
 
                     pr = 0._sp
                     perc = 0._sp
@@ -1183,9 +1125,9 @@ contains
 
                 end if
 
-                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc) + l  ! Range of correction c0.9: (1, 0)
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (1, 10)
-
+                ! Transfer
+                prr = (0.9_sp*(1._sp - output_layer(3)**2))*(pr + perc) + l  ! Range of correction c0.9: (1, 0)
+                prd = (0.1_sp + 0.9_sp*output_layer(3)**2)*(pr + perc)  ! Range of correction c0.1: (1, 10)
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
                 qd = max(0._sp, prd + l)
@@ -1209,7 +1151,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/pn(k), en(k), pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -1449,10 +1391,10 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
+        real(sp), dimension(setup%neurons(setup%n_layers + 1)) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, imperviousness, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
+        real(sp) :: beta, imperviousness, pn, en, pr, perc, ps, es, l, prr, pre, prd, qr, qd, qe
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -1462,11 +1404,14 @@ contains
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
 
-        ! Interception with OPENMP
+        ! Hydrological module
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
-        !$OMP& private(row, col, k)
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, weight_1, bias_1, weight_2, bias_2, &
+        !$OMP& weight_3, bias_3, ac_ci, ac_hi, ac_cp, beta, ac_ct, ac_be, ac_kexc, ac_aexc, &
+        !$OMP& ac_hp, ac_ht, ac_he, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pn, en, pr, perc, ps, es, l, &
+        !$OMP& prr, pre, prd, qr, qd, qe, input_layer, output_layer)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1477,69 +1422,27 @@ contains
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn(k), en(k))
+                    ! Interception
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn, en)
 
-                else
-
-                    pn(k) = 0._sp
-                    en(k) = 0._sp
-
-                end if
-
-            end do
-        end do
-#ifdef _OPENMP
-        !$OMP end parallel do
-#endif
-
-        ! Forward MLP without OPENMP
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn(k), en(k)/)
+                    ! Forward MLP
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), ac_he(k), pn, en/)
                     call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k))
+                    & input_layer, output_layer)
 
-                else
-                    output_layer(:, k) = 0._sp
-
-                end if
-
-            end do
-        end do
-
-        ! Production and transfer with OPENMP
-#ifdef _OPENMP
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, beta, ac_ct, ac_be, ac_kexc, ac_aexc, ac_hp, ac_ht, ac_he, ac_qt, pn, en) &
-        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, l, prr, &
-        !$OMP& pre, prd, qr, qd, qe)
-#endif
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                imperviousness = input_data%physio_data%imperviousness(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    call gr_production(output_layer(1, k), output_layer(2, k), &
-                    & pn(k), en(k), imperviousness, ac_cp(k), &
+                    ! Production
+                    imperviousness = input_data%physio_data%imperviousness(row, col)
+                    call gr_production(output_layer(1), output_layer(2), pn, en, imperviousness, ac_cp(k), &
                     & beta, ac_hp(k), pr, perc, ps, es)
 
-                    call gr_threshold_exchange(output_layer(5, k), ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+                    ! Exchange
+                    call gr_threshold_exchange(output_layer(5), ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
                 else
+                    pn = 0._sp
+                    en = 0._sp
+
+                    output_layer = 0._sp
 
                     pr = 0._sp
                     perc = 0._sp
@@ -1547,15 +1450,16 @@ contains
 
                 end if
 
-                prr = (0.6_sp - 0.4_sp*output_layer(4, k))* &  ! Range of correction c0.6: (5/3, 1/3)
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
+                ! Transfer
+                prr = (0.6_sp - 0.4_sp*output_layer(4))* &  ! Range of correction c0.6: (5/3, 1/3)
+                & (0.9_sp*(1._sp - output_layer(3)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc) + l
 
-                pre = (0.4_sp*(1._sp + output_layer(4, k)))* &  ! Range of correction c0.4: (0, 2)
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
+                pre = (0.4_sp*(1._sp + output_layer(4)))* &  ! Range of correction c0.4: (0, 2)
+                & (0.9_sp*(1._sp - output_layer(3)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc) + l
 
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
+                prd = (0.1_sp + 0.9_sp*output_layer(3)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 call gr_exponential_transfer(pre, ac_be(k), ac_he(k), qe)
@@ -1581,7 +1485,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/pn(k), en(k), pr, perc, ps, es, l, prr, prd, pre, qr, qd, qe, ac_qt(k)/)
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, pre, qr, qd, qe, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -1715,21 +1619,23 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, pn, en
+        real(sp), dimension(setup%neurons(setup%n_layers + 1)) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
+        real(sp) :: imperviousness, pn, en, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
 
         ac_prcp = ac_prcp + ac_mlt
 
-        ! Interception with OPENMP
+        ! Hydrological module
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(mesh, ac_prcp, ac_pet, ac_ci, ac_hi, pn, en) &
-        !$OMP& private(row, col, k)
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, weight_1, bias_1, weight_2, bias_2, &
+        !$OMP& weight_3, bias_3, ac_ci, ac_hi, ac_cp, ac_ct, ac_cl, ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, pn, en, pr, perc, ps, es, l, &
+        !$OMP& prr, prl, prd, qr, ql, qd, input_layer, output_layer)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1740,67 +1646,27 @@ contains
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn(k), en(k))
+                    ! Interception
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(k), pn, en)
 
-                else
-
-                    pn(k) = 0._sp
-                    en(k) = 0._sp
-
-                end if
-
-            end do
-        end do
-#ifdef _OPENMP
-        !$OMP end parallel do
-#endif
-
-        ! Forward MLP without OPENMP
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn(k), en(k)/)
+                    ! Forward MLP
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), ac_hl(k), pn, en/)
                     call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k))
+                    & input_layer, output_layer)
 
-                else
-                    output_layer(:, k) = 0._sp
-
-                end if
-
-            end do
-        end do
-
-        ! Production and transfer with OPENMP
-#ifdef _OPENMP
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, ac_ct, ac_cl, ac_kexc, ac_hp, ac_ht, ac_hl, ac_qt, pn, en) &
-        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, l, prr, prl, prd, qr, ql, qd)
-#endif
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                imperviousness = input_data%physio_data%imperviousness(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), imperviousness, ac_cp(k), &
+                    ! Production
+                    imperviousness = input_data%physio_data%imperviousness(row, col)
+                    call gr_production(output_layer(1), output_layer(2), pn, en, imperviousness, ac_cp(k), &
                     & 1000._sp, ac_hp(k), pr, perc, ps, es)
 
-                    call gr_exchange(output_layer(5, k), ac_kexc(k), ac_ht(k), l)
+                    ! Exchange
+                    call gr_exchange(output_layer(5), ac_kexc(k), ac_ht(k), l)
 
                 else
+                    pn = 0._sp
+                    en = 0._sp
+
+                    output_layer = 0._sp
 
                     pr = 0._sp
                     perc = 0._sp
@@ -1808,15 +1674,16 @@ contains
 
                 end if
 
-                prr = (0.6_sp - 0.4_sp*output_layer(4, k))* &  ! Range of correction c0.6: (5/3, 1/3)
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
+                ! Transfer
+                prr = (0.6_sp - 0.4_sp*output_layer(4))* &  ! Range of correction c0.6: (5/3, 1/3)
+                & (0.9_sp*(1._sp - output_layer(3)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc) + l
 
-                prl = (0.4_sp*(1._sp + output_layer(4, k)))* &  ! Range of correction c0.4: (0, 2)
-                & (0.9_sp*(1._sp - output_layer(3, k)**2))* &  ! Range of correction c0.9: (1, 0)
+                prl = (0.4_sp*(1._sp + output_layer(4)))* &  ! Range of correction c0.4: (0, 2)
+                & (0.9_sp*(1._sp - output_layer(3)**2))* &  ! Range of correction c0.9: (1, 0)
                 & (pr + perc)
 
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
+                prd = (0.1_sp + 0.9_sp*output_layer(3)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
 
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
                 call gr_transfer(5._sp, ac_prcp(k), prl, ac_cl(k), ac_hl(k), ql)
@@ -1842,7 +1709,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/pn(k), en(k), pr, perc, ps, es, l, prr, prd, prl, qr, qd, ql, ac_qt(k)/)
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, prl, qr, qd, ql, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -1968,21 +1835,23 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
+        real(sp), dimension(setup%neurons(setup%n_layers + 1)) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: imperviousness, pr, perc, ps, es, prr, qr
+        real(sp) :: imperviousness, ei, pn, en, pr, perc, ps, es, prr, qr
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
 
         ac_prcp = ac_prcp + ac_mlt
 
-        ! Interception with OPENMP
+        ! Hydrological module
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(mesh, ac_prcp, ac_pet, ei, pn, en) &
-        !$OMP& private(row, col, k)
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, weight_1, bias_1, weight_2, bias_2, &
+        !$OMP& weight_3, bias_3, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, ei, pn, en, pr, perc, ps, es, &
+        !$OMP& prr, qr, input_layer, output_layer)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -1993,76 +1862,35 @@ contains
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    ei(k) = min(ac_pet(k), ac_prcp(k))
-                    pn(k) = max(0._sp, ac_prcp(k) - ei(k))
-                    en(k) = ac_pet(k) - ei(k)
+                    ! Interception
+                    ei = min(ac_pet(k), ac_prcp(k))
+                    pn = max(0._sp, ac_prcp(k) - ei)
+                    en = ac_pet(k) - ei
 
-                else
-
-                    ei(k) = 0._sp
-                    pn(k) = 0._sp
-                    en(k) = 0._sp
-
-                end if
-
-            end do
-        end do
-#ifdef _OPENMP
-        !$OMP end parallel do
-#endif
-
-        ! Forward MLP without OPENMP
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn(k), en(k)/)
+                    ! Forward MLP
+                    input_layer(:) = (/ac_hp(k), ac_ht(k), pn, en/)
                     call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k))
+                    & input_layer, output_layer)
 
-                else
-                    output_layer(:, k) = 0._sp
-
-                end if
-
-            end do
-        end do
-
-        ! Production and transfer with OPENMP
-#ifdef _OPENMP
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_cp, ac_ct, ac_hp, ac_ht, ac_qt, ei, pn, en) &
-        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, prr, qr)
-#endif
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                imperviousness = input_data%physio_data%imperviousness(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), imperviousness, ac_cp(k), &
+                    ! Production
+                    imperviousness = input_data%physio_data%imperviousness(row, col)
+                    call gr_production(output_layer(1), output_layer(2), pn, en, imperviousness, ac_cp(k), &
                     & 1000._sp, ac_hp(k), pr, perc, ps, es)
 
                 else
+                    ei = 0._sp
+                    pn = 0._sp
+                    en = 0._sp
+
+                    output_layer = 0._sp
 
                     pr = 0._sp
                     perc = 0._sp
 
                 end if
 
+                ! Transfer
                 prr = pr + perc
-
                 call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
                 ac_qt(k) = qr
@@ -2084,7 +1912,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/ei(k), pn(k), en(k), pr, perc, ps, es, prr, qr, ac_qt(k)/)
+                                ) = (/ei, pn, en, pr, perc, ps, es, prr, qr, ac_qt(k)/)
                         end if
                     end if
                 end if
@@ -2216,10 +2044,10 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
         real(sp), dimension(setup%neurons(1)) :: input_layer
-        real(sp), dimension(setup%neurons(setup%n_layers + 1), mesh%nac) :: output_layer
-        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, ei, pn, en
+        real(sp), dimension(setup%neurons(setup%n_layers + 1)) :: output_layer
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
         integer :: row, col, k, time_step_returns
-        real(sp) :: beta, imperviousness, pr, perc, ps, es, prr, prd, qr, qd
+        real(sp) :: beta, imperviousness, ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
@@ -2229,11 +2057,13 @@ contains
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
 
-        ! Interception with OPENMP
+        ! Hydrological module
 #ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(mesh, ac_prcp, ac_pet, ei, pn, en) &
-        !$OMP& private(row, col, k)
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_pet, weight_1, bias_1, weight_2, bias_2, &
+        !$OMP& weight_3, bias_3, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, imperviousness, ei, pn, en, pr, perc, ps, es, &
+        !$OMP& prr, prd, qr, qd, input_layer, output_layer)
 #endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
@@ -2244,76 +2074,36 @@ contains
 
                 if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    ei(k) = min(ac_pet(k), ac_prcp(k))
-                    pn(k) = max(0._sp, ac_prcp(k) - ei(k))
-                    en(k) = ac_pet(k) - ei(k)
+                    ! Interception
+                    ei = min(ac_pet(k), ac_prcp(k))
+                    pn = max(0._sp, ac_prcp(k) - ei)
+                    en = ac_pet(k) - ei
 
-                else
-
-                    ei(k) = 0._sp
-                    pn(k) = 0._sp
-                    en(k) = 0._sp
-
-                end if
-
-            end do
-        end do
-#ifdef _OPENMP
-        !$OMP end parallel do
-#endif
-
-        ! Forward MLP without OPENMP
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    input_layer(:) = (/ac_ha(k), ac_hc(k), pn(k), en(k)/)
+                    ! Forward MLP
+                    input_layer(:) = (/ac_ha(k), ac_hc(k), pn, en/)
                     call forward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-                    & input_layer, output_layer(:, k))
+                    & input_layer, output_layer)
 
-                else
-                    output_layer(:, k) = 0._sp
-
-                end if
-
-            end do
-        end do
-
-        ! Production and transfer with OPENMP
-#ifdef _OPENMP
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, returns, output_layer, ac_prcp, ac_pet, &
-        !$OMP& ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt, ei, pn, en) &
-        !$OMP& private(row, col, k, time_step_returns, imperviousness, pr, perc, ps, es, prr, prd, qr, qd)
-#endif
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                k = mesh%rowcol_to_ind_ac(row, col)
-
-                imperviousness = input_data%physio_data%imperviousness(row, col)
-
-                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
-
-                    call gr_production(output_layer(1, k), output_layer(2, k), pn(k), en(k), imperviousness, ac_ca(k), &
+                    ! Production
+                    imperviousness = input_data%physio_data%imperviousness(row, col)
+                    call gr_production(output_layer(1), output_layer(2), pn, en, imperviousness, ac_ca(k), &
                     & beta, ac_ha(k), pr, perc, ps, es)
 
                 else
+                    ei = 0._sp
+                    pn = 0._sp
+                    en = 0._sp
+
+                    output_layer = 0._sp
 
                     pr = 0._sp
                     perc = 0._sp
 
                 end if
 
-                prr = (0.9_sp*(1._sp - output_layer(3, k)**2))*(pr + perc)  ! Range of correction c0.9: (1, 0)
-                prd = (0.1_sp + 0.9_sp*output_layer(3, k)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
+                ! Transfer
+                prr = (0.9_sp*(1._sp - output_layer(3)**2))*(pr + perc)  ! Range of correction c0.9: (1, 0)
+                prd = (0.1_sp + 0.9_sp*output_layer(3)**2)*(pr + perc)  ! Range of correction c0.1: (0, 10)
 
                 call gr_transfer(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), qr)
 
@@ -2338,7 +2128,7 @@ contains
                                 col, &
                                 time_step_returns, &
                                 setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
-                                ) = (/ei(k), pn(k), en(k), pr, perc, ps, es, prr, prd, qr, qd, ac_qt(k)/)
+                                ) = (/ei, pn, en, pr, perc, ps, es, prr, prd, qr, qd, ac_qt(k)/)
                         end if
                     end if
                 end if

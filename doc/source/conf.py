@@ -13,22 +13,71 @@
 import inspect
 import os
 import pathlib
+import re
 import sys
 import warnings
+from datetime import datetime
+
+# % TODO: change this when the minimum Python version is 3.11
+try:  # for Python >= 3.11
+    from tomllib import load as load_toml
+except ModuleNotFoundError:  # for Python < 3.11
+    from tomli import load as load_toml
 
 import smash
 
 sys.path.insert(0, os.path.abspath("../.."))
 
+# -- Additional functions ----------------------------------------------------
+
+
+# Get min/max Python versions from pyproject.toml
+def get_min_max_python_versions():
+    with open("../../pyproject.toml", "rb") as f:
+        requires_python = load_toml(f)["project"]["requires-python"]
+
+    min_py_version, max_py_version = (
+        v.split(s)[1].strip() for v, s in zip(requires_python.split(","), [">=", "<"])
+    )
+
+    major_max_version, minor_max_version = max_py_version.split(".")
+    max_py_version = f"{major_max_version}.{int(minor_max_version) - 1}"
+
+    return min_py_version, max_py_version
+
+
+def normalize_version(release: str) -> str:
+    if "+" not in release:
+        return release
+
+    match = re.match(r"(\d+)\.(\d+)(?:\.(\d+))?", release)
+    major, minor, _ = match.groups()
+    major, minor = int(major), int(minor)
+
+    # Increment minor for dev version. Switch to major if next release is a major.
+    minor += 1
+
+    return f"{major}.{minor}.dev0"
+
 
 # -- Project information -----------------------------------------------------
 
 project = "smash"
-copyright = "2022-2024, INRAE"
+copyright = f"2022-{datetime.now().year}, INRAE"
 author = "INRAE"
 
-# The full version, including alpha/beta/rc tags
-release = smash.__version__
+# The full version, including alpha/beta/rc/dev0 tags.
+release = normalize_version(smash.__version__)
+
+# -- Set dynamic variables for the documentation -----------------------------
+
+min_py_version, max_py_version = get_min_max_python_versions()
+
+# Define RST replacements
+rst_prolog = f"""
+.. |min_py_version| replace:: {min_py_version}
+.. |max_py_version| replace:: {max_py_version}
+"""
 
 
 # -- General configuration ---------------------------------------------------
@@ -50,7 +99,6 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "matplotlib.sphinxext.plot_directive",
-    "sphinx_autosummary_accessors",
 ]
 
 
@@ -97,13 +145,19 @@ html_theme_options = {
     "footer_start": ["copyright"],
     "footer_center": ["sphinx-version"],
     "footer_end": ["theme-version"],
+    # Add documentation version switcher:
+    "navbar_end": ["search-button", "version-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_persistent": [],
+    "switcher": {
+        "version_match": "dev" if "dev0" in release else release,
+        "json_url": "https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/versions.json",
+    },
+    "show_version_warning_banner": True,
 }
 
 html_context = {"default_mode": "light"}
 
-html_css_files = [
-    "css/smash.css",
-]
+html_css_files = ["css/smash.css"]
 
 html_use_modindex = True
 
@@ -192,7 +246,7 @@ def linkcode_resolve(domain, info):
 
     branch = get_active_branch_name()
 
-    if "+" in smash.__version__:
+    if "dev0" in release:
         return f"https://github.com/DassHydro/smash/blob/{branch}/smash/{fn}{linespec}"
     else:
         return f"https://github.com/DassHydro/smash/blob/v{smash.__version__}/smash/{fn}{linespec}"

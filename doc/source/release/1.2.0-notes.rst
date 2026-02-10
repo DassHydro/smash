@@ -1,0 +1,31 @@
+.. _release.1.2.0-notes:
+
+=========================
+smash 1.2.0 Release Notes
+=========================
+
+The smash 1.2.0 release adds several functionalities and fixes some compatibility issues, including:
+
+- ``New IO methods for handling parameters with GeoTiff``
+    IO methods have been added to read and write gridded hydrological parameters in GeoTiff format.
+
+- ``Compatibility with f90wrap and Python versions``
+    Fixed compatibility issues with a recent version of f90wrap, added support for Python 3.13, and dropped support for Python 3.9.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* ENH: IO grid parameters with geotif by @maximejay in https://github.com/DassHydro/smash/pull/440
+* MAINT: f90wrap 0.3.0 compatibility by @inoelloc in https://github.com/DassHydro/smash/pull/494
+* MAINT: Support Python 3.13 and drop 3.9 by @nghi-truyen in https://github.com/DassHydro/smash/pull/495

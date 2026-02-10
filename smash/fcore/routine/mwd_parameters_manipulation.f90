@@ -34,8 +34,8 @@
 !%      - distributed_rr_initial_states_get_control_size
 !%      - multi_linear_rr_parameters_get_control_size
 !%      - multi_linear_rr_initial_states_get_control_size
-!%      - multi_polynomial_rr_parameters_get_control_size
-!%      - multi_polynomial_rr_initial_states_get_control_size
+!%      - multi_power_rr_parameters_get_control_size
+!%      - multi_power_rr_initial_states_get_control_size
 !%      - serr_mu_parameters_get_control_size
 !%      - nn_parameters_get_control_size
 !%      - get_control_sizes
@@ -46,8 +46,8 @@
 !%      - distributed_rr_initial_states_fill_control
 !%      - multi_linear_rr_parameters_fill_control
 !%      - multi_linear_rr_initial_states_fill_control
-!%      - multi_polynomial_rr_parameters_fill_control
-!%      - multi_polynomial_rr_initial_states_fill_control
+!%      - multi_power_rr_parameters_fill_control
+!%      - multi_power_rr_initial_states_fill_control
 !%      - serr_mu_parameters_fill_control
 !%      - serr_sigma_parameters_fill_control
 !%      - nn_parameters_fill_control
@@ -59,8 +59,8 @@
 !%      - distributed_rr_initial_states_fill_parameters
 !%      - multi_linear_rr_parameters_fill_parameters
 !%      - multi_linear_rr_initial_states_fill_parameters
-!%      - multi_polynomial_rr_parameters_fill_parameters
-!%      - multi_polynomial_rr_initial_states_fill_parameters
+!%      - multi_power_rr_parameters_fill_parameters
+!%      - multi_power_rr_initial_states_fill_parameters
 !%      - serr_mu_parameters_fill_parameters
 !%      - serr_sigma_parameters_fill_parameters
 !%      - nn_parameters_fill_parameters
@@ -494,23 +494,23 @@ contains
 
             if (.not. nbd_mask(i)) cycle
 
-            if (parameters%control%l_bkg(i) .lt. 0._sp) then
+            if (parameters%control%l_raw(i) .lt. 0._sp) then
 
                 parameters%control%x(i) = asinh(parameters%control%x(i))
-                parameters%control%l(i) = asinh(parameters%control%l_bkg(i))
-                parameters%control%u(i) = asinh(parameters%control%u_bkg(i))
+                parameters%control%l(i) = asinh(parameters%control%l_raw(i))
+                parameters%control%u(i) = asinh(parameters%control%u_raw(i))
 
-            else if (parameters%control%l_bkg(i) .ge. 0._sp .and. parameters%control%u_bkg(i) .le. 1._sp) then
+            else if (parameters%control%l_raw(i) .ge. 0._sp .and. parameters%control%u_raw(i) .le. 1._sp) then
 
                 parameters%control%x(i) = log(parameters%control%x(i)/(1._sp - parameters%control%x(i)))
-                parameters%control%l(i) = log(parameters%control%l_bkg(i)/(1._sp - parameters%control%l_bkg(i)))
-                parameters%control%u(i) = log(parameters%control%u_bkg(i)/(1._sp - parameters%control%u_bkg(i)))
+                parameters%control%l(i) = log(parameters%control%l_raw(i)/(1._sp - parameters%control%l_raw(i)))
+                parameters%control%u(i) = log(parameters%control%u_raw(i)/(1._sp - parameters%control%u_raw(i)))
 
             else
 
                 parameters%control%x(i) = log(parameters%control%x(i))
-                parameters%control%l(i) = log(parameters%control%l_bkg(i))
-                parameters%control%u(i) = log(parameters%control%u_bkg(i))
+                parameters%control%l(i) = log(parameters%control%l_raw(i))
+                parameters%control%u(i) = log(parameters%control%u_raw(i))
 
             end if
 
@@ -535,11 +535,11 @@ contains
 
             if (.not. nbd_mask(i)) cycle
 
-            if (parameters%control%l_bkg(i) .lt. 0._sp) then
+            if (parameters%control%l_raw(i) .lt. 0._sp) then
 
                 parameters%control%x(i) = sinh(parameters%control%x(i))
 
-            else if (parameters%control%l_bkg(i) .ge. 0._sp .and. parameters%control%u_bkg(i) .le. 1._sp) then
+            else if (parameters%control%l_raw(i) .ge. 0._sp .and. parameters%control%u_raw(i) .le. 1._sp) then
 
                 parameters%control%x(i) = exp(parameters%control%x(i))/(1._sp + exp(parameters%control%x(i)))
 
@@ -551,8 +551,8 @@ contains
 
         end do
 
-        parameters%control%l = parameters%control%l_bkg
-        parameters%control%u = parameters%control%u_bkg
+        parameters%control%l = parameters%control%l_raw
+        parameters%control%u = parameters%control%u_raw
 
     end subroutine sbs_inv_control_tfm
 
@@ -569,8 +569,8 @@ contains
 
         where (nbd_mask)
 
-            parameters%control%x = (parameters%control%x - parameters%control%l_bkg)/ &
-                                   (parameters%control%u_bkg - parameters%control%l_bkg)
+            parameters%control%x = (parameters%control%x - parameters%control%l_raw)/ &
+                                   (parameters%control%u_raw - parameters%control%l_raw)
             parameters%control%l = 0._sp
             parameters%control%u = 1._sp
 
@@ -592,9 +592,9 @@ contains
         where (nbd_mask)
 
             parameters%control%x = parameters%control%x* &
-            & (parameters%control%u_bkg - parameters%control%l_bkg) + parameters%control%l_bkg
-            parameters%control%l = parameters%control%l_bkg
-            parameters%control%u = parameters%control%u_bkg
+            & (parameters%control%u_raw - parameters%control%l_raw) + parameters%control%l_raw
+            parameters%control%l = parameters%control%l_raw
+            parameters%control%u = parameters%control%u_raw
 
         end where
 
@@ -743,7 +743,7 @@ contains
 
     end subroutine multi_linear_rr_initial_states_get_control_size
 
-    subroutine multi_polynomial_rr_parameters_get_control_size(setup, options, n)
+    subroutine multi_power_rr_parameters_get_control_size(setup, options, n)
 
         implicit none
 
@@ -763,9 +763,9 @@ contains
 
         end do
 
-    end subroutine multi_polynomial_rr_parameters_get_control_size
+    end subroutine multi_power_rr_parameters_get_control_size
 
-    subroutine multi_polynomial_rr_initial_states_get_control_size(setup, options, n)
+    subroutine multi_power_rr_initial_states_get_control_size(setup, options, n)
 
         implicit none
 
@@ -785,7 +785,7 @@ contains
 
         end do
 
-    end subroutine multi_polynomial_rr_initial_states_get_control_size
+    end subroutine multi_power_rr_initial_states_get_control_size
 
     subroutine serr_mu_parameters_get_control_size(options, n)
 
@@ -859,10 +859,10 @@ contains
             call multi_linear_rr_parameters_get_control_size(setup, options, nbk(1))
             call multi_linear_rr_initial_states_get_control_size(setup, options, nbk(2))
 
-        case ("multi-polynomial")
+        case ("multi-power")
 
-            call multi_polynomial_rr_parameters_get_control_size(setup, options, nbk(1))
-            call multi_polynomial_rr_initial_states_get_control_size(setup, options, nbk(2))
+            call multi_power_rr_parameters_get_control_size(setup, options, nbk(1))
+            call multi_power_rr_initial_states_get_control_size(setup, options, nbk(2))
 
         case ("ann")
 
@@ -1157,7 +1157,7 @@ contains
 
     end subroutine multi_linear_rr_initial_states_fill_control
 
-    subroutine multi_polynomial_rr_parameters_fill_control(setup, mesh, parameters, options)
+    subroutine multi_power_rr_parameters_fill_control(setup, mesh, parameters, options)
 
         implicit none
 
@@ -1211,9 +1211,9 @@ contains
 
         end do
 
-    end subroutine multi_polynomial_rr_parameters_fill_control
+    end subroutine multi_power_rr_parameters_fill_control
 
-    subroutine multi_polynomial_rr_initial_states_fill_control(setup, mesh, parameters, options)
+    subroutine multi_power_rr_initial_states_fill_control(setup, mesh, parameters, options)
 
         implicit none
 
@@ -1267,7 +1267,7 @@ contains
 
         end do
 
-    end subroutine multi_polynomial_rr_initial_states_fill_control
+    end subroutine multi_power_rr_initial_states_fill_control
 
     subroutine serr_mu_parameters_fill_control(setup, mesh, parameters, options)
 
@@ -1469,10 +1469,10 @@ contains
             call multi_linear_rr_parameters_fill_control(setup, mesh, parameters, options)
             call multi_linear_rr_initial_states_fill_control(setup, mesh, parameters, options)
 
-        case ("multi-polynomial")
+        case ("multi-power")
 
-            call multi_polynomial_rr_parameters_fill_control(setup, mesh, parameters, options)
-            call multi_polynomial_rr_initial_states_fill_control(setup, mesh, parameters, options)
+            call multi_power_rr_parameters_fill_control(setup, mesh, parameters, options)
+            call multi_power_rr_initial_states_fill_control(setup, mesh, parameters, options)
 
         end select
 
@@ -1482,10 +1482,10 @@ contains
 
         call nn_parameters_fill_control(setup, options, parameters)
 
-        ! Store background
-        parameters%control%x_bkg = parameters%control%x
-        parameters%control%l_bkg = parameters%control%l
-        parameters%control%u_bkg = parameters%control%u
+        ! Store raw control values
+        parameters%control%x_raw = parameters%control%x
+        parameters%control%l_raw = parameters%control%l
+        parameters%control%u_raw = parameters%control%u
 
     end subroutine fill_control
 
@@ -1747,7 +1747,7 @@ contains
 
     end subroutine multi_linear_rr_initial_states_fill_parameters
 
-    subroutine multi_polynomial_rr_parameters_fill_parameters(setup, mesh, input_data, parameters, options)
+    subroutine multi_power_rr_parameters_fill_parameters(setup, mesh, input_data, parameters, options)
 
         implicit none
 
@@ -1794,9 +1794,9 @@ contains
 
         end do
 
-    end subroutine multi_polynomial_rr_parameters_fill_parameters
+    end subroutine multi_power_rr_parameters_fill_parameters
 
-    subroutine multi_polynomial_rr_initial_states_fill_parameters(setup, mesh, input_data, parameters, options)
+    subroutine multi_power_rr_initial_states_fill_parameters(setup, mesh, input_data, parameters, options)
 
         implicit none
 
@@ -1843,7 +1843,7 @@ contains
 
         end do
 
-    end subroutine multi_polynomial_rr_initial_states_fill_parameters
+    end subroutine multi_power_rr_initial_states_fill_parameters
 
     subroutine serr_mu_parameters_fill_parameters(setup, mesh, parameters, options)
 
@@ -2018,10 +2018,10 @@ contains
             call multi_linear_rr_parameters_fill_parameters(setup, mesh, input_data, parameters, options)
             call multi_linear_rr_initial_states_fill_parameters(setup, mesh, input_data, parameters, options)
 
-        case ("multi-polynomial")
+        case ("multi-power")
 
-            call multi_polynomial_rr_parameters_fill_parameters(setup, mesh, input_data, parameters, options)
-            call multi_polynomial_rr_initial_states_fill_parameters(setup, mesh, input_data, parameters, options)
+            call multi_power_rr_parameters_fill_parameters(setup, mesh, input_data, parameters, options)
+            call multi_power_rr_initial_states_fill_parameters(setup, mesh, input_data, parameters, options)
 
         end select
 

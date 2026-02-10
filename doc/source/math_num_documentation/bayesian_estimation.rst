@@ -26,7 +26,7 @@ Both structural errors :math:`\delta_{g,t}` and observation errors  :math:`\vare
 Probabilistic models
 --------------------
 
-The first step of Bayesian inference is to hypothesize a **probabilistic model** that could have generated the analyzed data - here, observed streamflows :math:`\boldsymbol{y}^{*}`. Given the formulation in :ref:`equation 1 <math_num_documentation.bayesian_estimation.errors>`, this is equivalent to proposing probabilistic models for errors :math:`\varepsilon_{g,t}` and :math:`\delta_{g,t}` -  the simulated streamflows :math:`y_{g,t}(\boldsymbol{\rho})` being computed by model :math:`\mathcal{M}` in a deterministic way. The following probabilistic modeling assumptions are made in `smash`:
+The first step of Bayesian inference is to hypothesize a **probabilistic model** that could have generated the analyzed data - here, observed streamflows :math:`\boldsymbol{y}^{*}`. Given the formulation in Eq. :eq:`math_num_documentation.bayesian_estimation.errors`, this is equivalent to proposing probabilistic models for errors :math:`\varepsilon_{g,t}` and :math:`\delta_{g,t}` -  the simulated streamflows :math:`y_{g,t}(\boldsymbol{\rho})` being computed by model :math:`\mathcal{M}` in a deterministic way. The following probabilistic modeling assumptions are made in `smash`:
 
 .. math::
     :name: math_num_documentation.bayesian_estimation.error_models
@@ -72,7 +72,7 @@ Under the assumptions described in the previous section, the likelihood function
 
 where :math:`f_{\mathcal{N}} \left( x; m, v \right)` is the `Gaussian probability density function <https://en.wikipedia.org/wiki/Normal_distribution>`_ (pdf) with mean :math:`m` and variance :math:`v` evaluated at :math:`x`. Note that if an observed streamflow is missing, the corresponding term is simply dropped from the double product.
 
-Maximizing the likelihood function in :ref:`equation 3 <math_num_documentation.bayesian_estimation.likelihood>` with respect to the unknown parameters :math:`(\boldsymbol{\rho},\boldsymbol{\mu},\boldsymbol{\sigma})` provides an estimate of these parameters. The likelihood can therefore play a role similar to the cost function described in the :ref:`math_num_documentation.forward_inverse_problem` section. In fact, formal equivalences can even be demonstrated in some cases: for instance, maximizing the likelihood obtained with :math:`\phi_{\mu}=0` and :math:`\phi_{\sigma}=\sigma_{0,g}` is equivalent to minimizing a 'sum of squares' cost function. This will be illustrated in the case studies.
+Maximizing the likelihood function in Eq. :eq:`math_num_documentation.bayesian_estimation.likelihood` with respect to the unknown parameters :math:`(\boldsymbol{\rho},\boldsymbol{\mu},\boldsymbol{\sigma})` provides an estimate of these parameters. The likelihood can therefore play a role similar to the cost function described in the :ref:`math_num_documentation.forward_inverse_problem` section. In fact, formal equivalences can even be demonstrated in some cases: for instance, maximizing the likelihood obtained with :math:`\phi_{\mu}=0` and :math:`\phi_{\sigma}=\sigma_{0,g}` is equivalent to minimizing a 'sum of squares' cost function. This will be illustrated in the case studies.
 
 
 Prior distribution
@@ -95,7 +95,7 @@ The specification of priors is case-specific and depends on the target parameter
 Posterior distribution
 ----------------------
 
-The posterior pdf of unknown parameters :math:`(\boldsymbol{\rho},\boldsymbol{\mu},\boldsymbol{\sigma})` can be obtained, up a constant of proportionality, by simply multiplying the likelihood of :ref:`equation 3 <math_num_documentation.bayesian_estimation.likelihood>` and the prior pdf of :ref:`equation 4 <math_num_documentation.bayesian_estimation.prior>`:
+The posterior pdf of unknown parameters :math:`(\boldsymbol{\rho},\boldsymbol{\mu},\boldsymbol{\sigma})` can be obtained, up a constant of proportionality, by simply multiplying the likelihood of Eq. :eq:`math_num_documentation.bayesian_estimation.likelihood` and the prior pdf of :ref:`equation 4 <math_num_documentation.bayesian_estimation.prior>`:
 
 .. math::
     :name: math_num_documentation.bayesian_estimation.posterior

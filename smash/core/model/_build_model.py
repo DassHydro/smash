@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import rasterio
-
 from f90wrap.runtime import FortranDerivedType
+
 from smash._constant import (
     DEFAULT_RR_INITIAL_STATES,
     DEFAULT_RR_PARAMETERS,
@@ -128,6 +128,52 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         wrap_compute_mean_atmos(setup, mesh, input_data)  # % Fortran subroutine
 
 
+def _adjust_interception(
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+    parameters: ParametersDT,
+    active_cell_only: bool = True,
+):
+    # % If structure contains ci and is at sub-daily time step and if user wants the capacity to be adjusted
+    if STRUCTURE_ADJUST_CI[setup.structure] and setup.dt < 86_400:
+        print("</> Adjusting GR interception capacity")
+        # % Date
+        day_index = pd.date_range(start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s")[
+            1:
+        ].to_series()
+
+        # % Date to proleptic Gregorian ordinal
+        day_index = day_index.apply(lambda x: x.toordinal()).to_numpy()
+
+        # % Scale to 1 (Fortran indexing)
+        day_index = day_index - day_index[0] + 1
+
+        ind = np.argwhere(parameters.rr_parameters.keys == "ci").item()
+
+        if not active_cell_only:
+            # % Backup active cell and local active cell
+            active_cell_bak = mesh.active_cell.copy()
+            local_active_cell_bak = mesh.local_active_cell.copy()
+            # % Set all cells as active
+            mesh.active_cell[:] = 1
+            mesh.local_active_cell[:] = 1
+
+        wrap_adjust_interception_capacity(
+            setup,
+            mesh,
+            input_data,
+            day_index,
+            day_index[-1],
+            parameters.rr_parameters.values[..., ind],
+        )  # % Fortran subroutine
+
+        if not active_cell_only:
+            # % Restore active cell and local active cell if not adjusting for active cells only
+            mesh.active_cell = active_cell_bak
+            mesh.local_active_cell = local_active_cell_bak
+
+
 def _build_parameters(
     setup: SetupDT,
     mesh: MeshDT,
@@ -165,30 +211,8 @@ def _build_parameters(
         value = DEFAULT_RR_INITIAL_STATES[key]
         parameters.rr_initial_states.values[..., i] = value
 
-    # % If structure contains ci and is at sub daily time step and if user wants the capacity to be adjusted
-    if STRUCTURE_ADJUST_CI[setup.structure] and setup.dt < 86_400 and setup.adjust_interception:
-        print("</> Adjusting GR interception capacity")
-        # % Date
-        day_index = pd.date_range(start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s")[
-            1:
-        ].to_series()
-
-        # % Date to proleptic Gregorian ordinal
-        day_index = day_index.apply(lambda x: x.toordinal()).to_numpy()
-
-        # % Scale to 1 (Fortran indexing)
-        day_index = day_index - day_index[0] + 1
-
-        ind = np.argwhere(parameters.rr_parameters.keys == "ci").item()
-
-        wrap_adjust_interception_capacity(
-            setup,
-            mesh,
-            input_data,
-            day_index,
-            day_index[-1],
-            parameters.rr_parameters.values[..., ind],
-        )  # % Fortran subroutine
+    if setup.adjust_interception:
+        _adjust_interception(setup, mesh, input_data, parameters, active_cell_only=True)
 
     # % Build structural error mu parameters
     parameters.serr_mu_parameters.keys = SERR_MU_MAPPING_PARAMETERS[setup.serr_mu_mapping]

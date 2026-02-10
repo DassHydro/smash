@@ -1,0 +1,153 @@
+.. _release.1.1.0-notes:
+
+=========================
+smash 1.1.0 Release Notes
+=========================
+
+The smash 1.1.0 release introduces several new solvers and functionalities, while continuing efforts to improve usability, fix bugs, and enrich the documentation. The highlights are:
+
+- ``Hybrid Physics-AI hydrological solvers: spatially distributed neural-augmented algebraic and ODE models``
+    In addition to regionalization neural networks, the process-parameterization neural networks are integrated into `smash` for GR-like model structures to refine internal water fluxes, either within algebraic models solving analytical solutions of time-integrated ordinary differential equations (ODEs), or within state-space models that numerically solve the ODEs.
+
+- ``Migration of optimization methods to Python``
+    All optimization methods have been reimplemented in Python, replacing the previous Fortran-based versions. This change enables the use of various adaptive optimizers for all mappings and supports callback signatures for retrieving intermediate results during the calibration process.
+
+- ``Convolutional neural networks for regionalization``
+    Convolutional neural networks (CNNs) are now supported for the HDA-PR (Hybrid Data Assimilation-Parameters Regionalization) algorithm. 
+    The `smash.factory.Net` sub-package has been updated to accommodate a generic neural network configuration for regionalization.
+
+- ``Variants of GR-like model structures``
+    New variants of the GR-like model structures have been introduced, featuring alternative parameterizations of the conceptual reservoirs. 
+    These updates also include the incorporation of rainfall intensity and imperviousness.
+
+- ``Fix for active and non-active cells``
+    Issues related to missing physical descriptors on active cells and incorrect handling of boundary conditions outside the calibration domain have been resolved.
+
+- ``Expanded user guide``
+    The user guide has been significantly expanded, now offering step-by-step tutorials ranging from quick-start examples to advanced usage of `smash`.
+
+- ``Expanded contributor guide``
+    The :ref:`Contributor Guide <contributor_guide>` has been significantly expanded, now providing more detailed explanations of the `smash` development process.
+
+- ``Complete mathematical documentation``
+    A more complete mathematical description of all methods used in `smash` is now available in the :ref:`Math / Num Documentation <math_num_documentation>`.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Apolline El Baz (`<https://github.com/asjeb>`__)
+- Pierre-André Garambois (`<https://github.com/pag13>`__)
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+- Benjamin Renard (`<https://github.com/benRenard>`__)
+- Ahmad Akhtari (`<https://github.com/ahmad-3100>`__)
+- Ngoc Bao Nguyen (`<https://github.com/ngocbao1022>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* Maintenance/1.0.x by @inoelloc in https://github.com/DassHydro/smash/pull/208
+* Maintenance/1.0.x by @inoelloc in https://github.com/DassHydro/smash/pull/229
+* ENH/MAINT: enhance metric computation method by @nghi-truyen in https://github.com/DassHydro/smash/pull/216
+* Rebase of MJA pull request on main by @inoelloc in https://github.com/DassHydro/smash/pull/241
+* MAINT: macos py312 wheels by @inoelloc in https://github.com/DassHydro/smash/pull/242
+* DOC: Add pypi badge for smash by @nghi-truyen in https://github.com/DassHydro/smash/pull/256
+* MAINT: Sphinx v7.4 compatibility by @inoelloc in https://github.com/DassHydro/smash/pull/258
+* MAINT: Add Python3.12 unit tests by @inoelloc in https://github.com/DassHydro/smash/pull/261
+* FIX: Check descriptor missing values on active cells by @inoelloc in https://github.com/DassHydro/smash/pull/263
+* DOC: Update contributor guide summary by @inoelloc in https://github.com/DassHydro/smash/pull/264
+* FIX: Correct the filling of the control vector in case of distributed mapping by @inoelloc in https://github.com/DassHydro/smash/pull/266
+* FIX: scaling layer for bounded outputs from activation layer by @nghi-truyen in https://github.com/DassHydro/smash/pull/268
+* FIX: docstring serr_sigma_parameters by @nghi-truyen in https://github.com/DassHydro/smash/pull/274
+* Internal fluxes by @asjeb in https://github.com/DassHydro/smash/pull/232
+* DOC: correct control_tfm documentation by @nghi-truyen in https://github.com/DassHydro/smash/pull/277
+* Fix crash in generate mesh if a well is present at a cell by @maximejay in https://github.com/DassHydro/smash/pull/280
+* DOC: add note to contributor guide for test-baseline by @nghi-truyen in https://github.com/DassHydro/smash/pull/283
+* Exponential store gr6 by @asjeb in https://github.com/DassHydro/smash/pull/210
+* ENH: set parameters condition outside active cell by @inoelloc in https://github.com/DassHydro/smash/pull/287
+* MAINT/ENH: move Fortran optimizers, `smash.multiple_optimize()` is deprecated by @nghi-truyen in https://github.com/DassHydro/smash/pull/250
+* MAINT: v1.0.2 release note by @inoelloc in https://github.com/DassHydro/smash/pull/289
+* ENH/MAINT: CNN regionalization, `smash.Net.add()` is deprecated by @nghi-truyen in https://github.com/DassHydro/smash/pull/255
+* manage kernel pip by @asjeb in https://github.com/DassHydro/smash/pull/293
+* DOC: Update getting started installation by @inoelloc in https://github.com/DassHydro/smash/pull/296
+* MAINT: Update release note by @inoelloc in https://github.com/DassHydro/smash/pull/299
+* ENH: new hybrid hydrological models using neural network and ODE-based system by @nghi-truyen in https://github.com/DassHydro/smash/pull/294
+* Check well in flwdir by @maximejay in https://github.com/DassHydro/smash/pull/298
+* FIX: fix baseline and add minor corrections to previous PRs by @nghi-truyen in https://github.com/DassHydro/smash/pull/308
+* FIX PR: apply suggestion changes from FC review regarding to hybird model branch by @nghi-truyen in https://github.com/DassHydro/smash/pull/311
+* ENH: new methods added to `smash.factory.Net` by @nghi-truyen in https://github.com/DassHydro/smash/pull/312
+* ENH: Add grc structure based on MJA dev by @inoelloc in https://github.com/DassHydro/smash/pull/313
+* ENH: add adaptive optimizers for all mappings by @nghi-truyen in https://github.com/DassHydro/smash/pull/315
+* MAINT: remove also dataset directories when using make doc-clean by @nghi-truyen in https://github.com/DassHydro/smash/pull/319
+* ENH: add callback signature for optimize method by @nghi-truyen in https://github.com/DassHydro/smash/pull/318
+* MAINT: remove cost options control info by @nghi-truyen in https://github.com/DassHydro/smash/pull/320
+* MAINT: change the default NN for ANN-based regionalization by @nghi-truyen in https://github.com/DassHydro/smash/pull/321
+* FIX: Rounding error with array slice with lat-lon raster by @inoelloc in https://github.com/DassHydro/smash/pull/323
+* FIX: Fix the exchange term in gr6/grc svg structure by @inoelloc in https://github.com/DassHydro/smash/pull/324
+* ENH: retrieve model parameters from control vector value by @nghi-truyen in https://github.com/DassHydro/smash/pull/322
+* Gr rainfall intensity by @asjeb in https://github.com/DassHydro/smash/pull/325
+* MAINT: Sparse optimize on only one structure by @inoelloc in https://github.com/DassHydro/smash/pull/328
+* FIX: reset random seed after setting random_state by @nghi-truyen in https://github.com/DassHydro/smash/pull/331
+* FIX: Update sink detection by @inoelloc in https://github.com/DassHydro/smash/pull/326
+* ENH: add n_iter key for callback and return_options optimize by @nghi-truyen in https://github.com/DassHydro/smash/pull/332
+* ENH: Add hybrid models for gr and loieau structures by @nghi-truyen in https://github.com/DassHydro/smash/pull/327
+* update internal fluxes by @asjeb in https://github.com/DassHydro/smash/pull/333
+* MAINT/FIX: add ps/es returns for gr4_ri and gr5_ri by @asjeb in https://github.com/DassHydro/smash/pull/335
+* MAINT/FIX: fix expressions for ps, es and gr in gr production by @nghi-truyen in https://github.com/DassHydro/smash/pull/337
+* ENH: Contour-based meshing with shapefiles by @inoelloc in https://github.com/DassHydro/smash/pull/338
+* FIX: checking control size in case of ANN by @nghi-truyen in https://github.com/DassHydro/smash/pull/342
+* MAINT: Switch to macOS-13 env by @inoelloc in https://github.com/DassHydro/smash/pull/346
+* Fix missing return lcurve pnd by @maximejay in https://github.com/DassHydro/smash/pull/344
+* Fix grc structure (model for reunion) by @maximejay in https://github.com/DassHydro/smash/pull/343
+* Fix: Initialise wjreg  by @maximejay in https://github.com/DassHydro/smash/pull/348
+* FIX: update grc_mlp structure following the change on grc structure by @nghi-truyen in https://github.com/DassHydro/smash/pull/347
+* Fix: initialise wjreg_fast before return the result by @maximejay in https://github.com/DassHydro/smash/pull/350
+* ENH: add test to check the forward pass of default hybrid structures by @nghi-truyen in https://github.com/DassHydro/smash/pull/352
+* MAINT: Developer guide and pyproject.toml by @inoelloc in https://github.com/DassHydro/smash/pull/354
+* Fix wrong slice size on model.response_data.q when checking available discharges by @maximejay in https://github.com/DassHydro/smash/pull/361
+* GR with imperviousness by @asjeb in https://github.com/DassHydro/smash/pull/349
+* ENH: add implcit neural ode solver for gr4 model by @nghi-truyen in https://github.com/DassHydro/smash/pull/358
+* MAINT: Upgrade Python version to 3.12 for docker and workflow by @nghi-truyen in https://github.com/DassHydro/smash/pull/362
+* ENH: add multiple peaks info to hydrograph segmentation algo by @nghi-truyen in https://github.com/DassHydro/smash/pull/365
+* Doc rainfall intensity by @asjeb in https://github.com/DassHydro/smash/pull/364
+* DOC: new user guide structure by @nghi-truyen in https://github.com/DassHydro/smash/pull/366
+* DOC: imperviousness by @asjeb in https://github.com/DassHydro/smash/pull/368
+* DOC:rainfall indices by @asjeb in https://github.com/DassHydro/smash/pull/369
+* Doc segmentation algorithm by @asjeb in https://github.com/DassHydro/smash/pull/367
+* DOC: fix model initialization for examples in user guide tutorials by @nghi-truyen in https://github.com/DassHydro/smash/pull/370
+* Doc hydro signatures by @ahmad-3100 in https://github.com/DassHydro/smash/pull/373
+* DOC: change of user guide order/title and fix tutos in classical uses section by @nghi-truyen in https://github.com/DassHydro/smash/pull/374
+* MAINT: Fix flux correction and Jaco calculation for hybrid gr4_ode_mlp structure by @nghi-truyen in https://github.com/DassHydro/smash/pull/375
+* DOC: external tool - sensitivity analysis by @ngocbao1022 in https://github.com/DassHydro/smash/pull/377
+* DOC: fix normalized states in Math/Num description by @nghi-truyen in https://github.com/DassHydro/smash/pull/380
+* DOC: Dynamic copyright year by @inoelloc in https://github.com/DassHydro/smash/pull/382
+* Doc update structure by @asjeb in https://github.com/DassHydro/smash/pull/381
+* DOC: multi criteria tutorial by @asjeb in https://github.com/DassHydro/smash/pull/379
+* MAINT: update ruff format with new version by @nghi-truyen in https://github.com/DassHydro/smash/pull/386
+* ENH/DOC: add automatic output code block generation, improve contributor guide by @nghi-truyen in https://github.com/DassHydro/smash/pull/385
+* MAINT/ENH: enhance user guide writing method by @nghi-truyen in https://github.com/DassHydro/smash/pull/387
+* DOC: improve sensitivity analysis doc: by @ngocbao1022 in https://github.com/DassHydro/smash/pull/388
+* Doc data format description by @asjeb in https://github.com/DassHydro/smash/pull/389
+* MAINT: directly remove generated files when compiling doc by @nghi-truyen in https://github.com/DassHydro/smash/pull/390
+* Remove autosummary sphinx extension by @nghi-truyen in https://github.com/DassHydro/smash/pull/394
+* MAINT: Remove sphinx-autosummary-accessors from smash dependencies by @nghi-truyen in https://github.com/DassHydro/smash/pull/395
+* ENH: Dynamic variables for Python versions in documentation by @nghi-truyen in https://github.com/DassHydro/smash/pull/396
+* DOC: add user guide retrieving control by @nghi-truyen in https://github.com/DassHydro/smash/pull/392
+* DOC: Finished Bayesian tutorial by @benRenard in https://github.com/DassHydro/smash/pull/383
+* DOC: add tuto for large sample simulation by @ahmad-3100 in https://github.com/DassHydro/smash/pull/384
+* MAINT/ENH: add SiLU activation function by @nghi-truyen in https://github.com/DassHydro/smash/pull/400
+* MAINT: change the name _bkg in control info to _raw by @nghi-truyen in https://github.com/DassHydro/smash/pull/402
+* MAINT/BUG: fix Fortran descriptor derived type still initialized while read_descriptor is set to False by @nghi-truyen in https://github.com/DassHydro/smash/pull/405
+* MAINT/FIX: correct the mahal distance calculation in case of distributed parameters by @nghi-truyen in https://github.com/DassHydro/smash/pull/401
+* MAINT: minor fix typos for smash doc by @nghi-truyen in https://github.com/DassHydro/smash/pull/408
+* ENH/DOC: Add dropdown items to go to older smash versions by @nghi-truyen in https://github.com/DassHydro/smash/pull/407
+* DOC: how to cite smash by @nghi-truyen in https://github.com/DassHydro/smash/pull/410
+* Add related paper citation + minor fixes by @nghi-truyen in https://github.com/DassHydro/smash/pull/411
+* DOC/ENH: add math/num descriptions for hybrid flux correction structures by @nghi-truyen in https://github.com/DassHydro/smash/pull/413
+* DOC/ENH: add tuto for advanced regionalization with NNs by @nghi-truyen in https://github.com/DassHydro/smash/pull/412
+* Finish tuto and math/num description for hybrid structures and neural ODE by @nghi-truyen in https://github.com/DassHydro/smash/pull/415

@@ -33,15 +33,19 @@ doc-clean:
 
 #% Testing code with pytest
 test:
-	cd smash/tests ; pytest
+	pytest
+
+#% Light testing code with pytest
+test-light:
+	SMASH_TEST_LEVEL="light" pytest
 
 #% Testing code with pytest and coverage
 test-coverage:
-	cd smash/tests ; pytest --cov-report term --cov-report html --cov=smash
+	pytest --cov-report term --cov-report html --cov=smash
 
-#% Generate baseline for test with args (see argparser in gen_baseline.py)
+#% Generate baseline for test
 test-baseline:
-	cd smash/tests ; python3 generate_baseline.py
+	python3 smash/tests/generate_baseline.py
 
 #% Format Python files with ruff and Fortran files with fprettify
 format:
@@ -54,6 +58,6 @@ check:
 
 #% Clean
 clean:
-	@rm -rf build
+	@git clean -fdX
 
-.PHONY: all edit tap tap-cmp doc doc-clean test test-baseline format check clean
+.PHONY: all edit tap tap-cmp doc doc-clean test test-light test-coverage test-baseline format check clean

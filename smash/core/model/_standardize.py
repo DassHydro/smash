@@ -61,7 +61,7 @@ def _standardize_model_setup_bool(key: str, value: bool | int) -> bool:
 
 
 def _standardize_model_setup_directory(read: bool, key: str, value: str | None) -> str:
-    directory_kind = key.split("_")[0]
+    directory_kind = key.split("_", maxsplit=1)[0]
 
     if read:
         if value is None:
@@ -78,7 +78,7 @@ def _standardize_model_setup_directory(read: bool, key: str, value: str | None) 
 
 
 def _standardize_model_setup_file(read: bool, key: str, value: str | None) -> str:
-    file_kind = key.split("_")[0]
+    file_kind = key.split("_", maxsplit=1)[0]
 
     if read:
         if value is None:
@@ -440,8 +440,10 @@ def _standardize_model_setup_descriptor_directory(
     return _standardize_model_setup_directory(read_descriptor, "descriptor_directory", descriptor_directory)
 
 
-def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, **kwargs) -> np.ndarray:
-    if descriptor_name is None:
+def _standardize_model_setup_descriptor_name(
+    read_descriptor: bool, descriptor_name: ListLike | None, **kwargs
+) -> np.ndarray:
+    if (not read_descriptor) or (descriptor_name is None):
         descriptor_name = np.empty(shape=0)
     elif isinstance(descriptor_name, (list, tuple, np.ndarray)):
         descriptor_name = np.array(descriptor_name, ndmin=1)
@@ -536,7 +538,7 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["n_layers"] = max(0, np.count_nonzero(setup["neurons"]) - 1)
 
     setup["ntime_step"] = int((setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"])
-    setup["nd"] = setup["descriptor_name"].size
+    setup["nd"] = setup["descriptor_name"].size if setup["read_descriptor"] else 0
     setup["nrrp"] = len(STRUCTURE_RR_PARAMETERS[setup["structure"]])
     setup["nrrs"] = len(STRUCTURE_RR_STATES[setup["structure"]])
     setup["nhy1dp"] = len(STRUCTURE_HY1D_PARAMETERS[setup["structure"]])
@@ -854,7 +856,7 @@ def _standardize_set_nn_parameters_weight_value(
 
     elif isinstance(value, list):
         weights = [
-            getattr(model._parameters.nn_parameters, f"weight_{i+1}") for i in range(model.setup.n_layers)
+            getattr(model._parameters.nn_parameters, f"weight_{i + 1}") for i in range(model.setup.n_layers)
         ]
 
         if len(value) != len(weights):
@@ -892,7 +894,7 @@ def _standardize_set_nn_parameters_bias_value(
 
     elif isinstance(value, list):
         biases = [
-            getattr(model._parameters.nn_parameters, f"bias_{i+1}") for i in range(model.setup.n_layers)
+            getattr(model._parameters.nn_parameters, f"bias_{i + 1}") for i in range(model.setup.n_layers)
         ]
 
         if len(value) != len(biases):

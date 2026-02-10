@@ -18,7 +18,7 @@
 !%          ``nn_parameters``          NN_ParametersDT
 !%          ``hy_parameters``          HY_ParametersDT
 !%
-!§      Subroutine
+!%      Subroutine
 !%      ----------
 !%
 !%      - ParametersDT_initialise

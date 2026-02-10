@@ -4,7 +4,7 @@
 Mapping
 =======
 
-This section, follows on from the :ref:`math_num_documentation.forward_inverse_problem.mapping` section and the general definition of the mapping operator :math:`\phi` (:ref:`Eq. 3 <math_num_documentation.forward_inverse_problem.mapping_general>`) that is a component of the forward model. 
+This section, follows on from the :ref:`math_num_documentation.forward_inverse_problem.mapping` section and the general definition of the mapping operator :math:`\phi` (Eq. :eq:`math_num_documentation.forward_inverse_problem.mapping_general`) that is a component of the forward model. 
 A mapping :math:`\phi` defines how the optimizable control vector :math:`\boldsymbol{\rho}`, and optionnally physical descriptors :math:`\boldsymbol{\mathcal{D}}`, are mapped onto the conceptual model parameters :math:`\boldsymbol{\theta}` and initial states :math:`\boldsymbol{h}_0`. 
 This section provides a detailled definition of all the variants available for defining :math:`\phi` in the forward model.
 
@@ -40,6 +40,8 @@ such that :math:`\forall x\in\Omega`:
         \end{cases}
 
     \end{eqnarray}
+
+.. _math_num_documentation.mapping.spatially_uniform.first_guess:
 
 First guess
 ***********
@@ -198,8 +200,8 @@ with :math:`l_i` and :math:`u_i` the bound constraint on the :math:`i^{th}` conc
 :math:`l_i < \theta_i(x) < u_i, i\in[1..N_{\theta}]` and for conceptual states :math:`l_i < h_{0_s} < u_i,\; i=N_{\theta}+s, \; s\in [1..N_h]`.
 
 
-Multi-Polynomial
-----------------
+Multi-Power
+-----------
 
 This mapping is analoguous to the multi-linear mapping but with optimizable exponents applied to each physical descriptor.
 

@@ -14,6 +14,12 @@ if TYPE_CHECKING:
     from smash.util._typing import AlphaNumeric, AnyTuple, FilePath, ListLike, Numeric
 
 
+def _round_half_up(x: ListLike) -> np.ndarray:
+    x = np.asarray(x)
+    rx = np.where(x >= 0, np.floor(x + 0.5), np.ceil(x - 0.5)).astype(int)
+    return rx
+
+
 def _standardize_flwdir_path(flwdir_path: FilePath) -> str:
     if not isinstance(flwdir_path, (str, os.PathLike)):
         raise TypeError("flwdir_path argument must be of FilePath type (str, PathLike[str])")
@@ -130,9 +136,14 @@ def _standardize_generate_rr_mesh_bbox(flwdir_path: str, bbox: ListLike) -> np.n
         bbox[3] = ymax
 
     # % Pad the bounding box so that the origins overlap
-    bbox[0:2] = xmin + np.rint((bbox[0:2] - xmin) / xres) * xres
-    bbox[2:4] = ymax - np.rint((ymax - bbox[2:4]) / yres) * yres
-
+    # np.rint(): For values exactly halfway between rounded decimal values,
+    # NumPy rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round to 0.0, etc.
+    # This choice cause an issue with the mesh because for a given bounding box,
+    # the extend may vary randomly of about 1 pixel in any direction depending on the value of xmin and ymax.
+    # bbox[0:2] = xmin + np.rint((bbox[0:2] - xmin) / xres) * xres
+    # bbox[2:4] = ymax - np.rint((ymax - bbox[2:4]) / yres) * yres
+    bbox[0:2] = xmin + _round_half_up((bbox[0:2] - xmin) / xres) * xres
+    bbox[2:4] = ymin + _round_half_up((bbox[2:4] - ymin) / yres) * yres
     return bbox
 
 
@@ -249,7 +260,7 @@ def _standardize_generate_rr_mesh_args(
     flwdir_path = _standardize_generate_rr_mesh_flwdir_path(flwdir_path)
 
     if x is None and bbox is None:
-        raise ValueError("bbox argument or (x, y, area) arguments must be defined")
+        raise ValueError("bbox argument and / or (x, y, area) arguments must be defined")
 
     if bbox is not None:
         bbox = _standardize_generate_rr_mesh_bbox(flwdir_path, bbox)

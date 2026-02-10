@@ -35,31 +35,48 @@ contains
         real(sp), dimension(size(bias_1)) :: inter_layer_1
         real(sp), dimension(size(bias_2)) :: inter_layer_2
 
+        integer :: i
+
         call dot_product_2d_1d(weight_1, input_layer, inter_layer_1)
-        inter_layer_1 = inter_layer_1 + bias_1
-        inter_layer_1 = max(0.01_sp*inter_layer_1, inter_layer_1) ! Leaky ReLU
+        ! Loop to work with ATOMIC update OpenMP
+        do i = 1, size(bias_1)
+            inter_layer_1(i) = inter_layer_1(i) + bias_1(i)
+            inter_layer_1(i) = inter_layer_1(i)*(1._sp/(1._sp + exp(-inter_layer_1(i)))) ! SiLU
+        end do
 
         if (size(bias_3) .gt. 0) then  ! Case with 3 layers
 
             call dot_product_2d_1d(weight_2, inter_layer_1, inter_layer_2)
-            inter_layer_2 = inter_layer_2 + bias_2
-            inter_layer_2 = max(0.01_sp*inter_layer_2, inter_layer_2) ! Leaky ReLU
+            ! Loop to work with ATOMIC update OpenMP
+            do i = 1, size(bias_2)
+                inter_layer_2(i) = inter_layer_2(i) + bias_2(i)
+                inter_layer_2(i) = inter_layer_2(i)*(1._sp/(1._sp + exp(-inter_layer_2(i)))) ! SiLU
+            end do
 
             call dot_product_2d_1d(weight_3, inter_layer_2, output_layer)
-            output_layer = tanh(output_layer + bias_3) ! TanH
+            ! Loop to work with ATOMIC update OpenMP
+            do i = 1, size(bias_3)
+                output_layer(i) = output_layer(i) + bias_3(i)
+                output_layer(i) = tanh(output_layer(i)) ! TanH
+            end do
 
         else  ! Case with 2 layers
 
             call dot_product_2d_1d(weight_2, inter_layer_1, output_layer)
-            output_layer = tanh(output_layer + bias_2) ! TanH
+            ! Loop to work with ATOMIC update OpenMP
+            do i = 1, size(bias_2)
+                output_layer(i) = output_layer(i) + bias_2(i)
+                output_layer(i) = tanh(output_layer(i)) ! TanH
+            end do
 
         end if
 
     end subroutine forward_mlp
 
     subroutine forward_and_backward_mlp(weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, &
-    & input_layer, output_layer, output_jacobian)
+    & input_layer, output_layer, output_jacobian_1, output_jacobian_2)
         !% The forward pass and backward pass of the MLP used in hydrological model structure
+        !% also get the jacobian of outputs wrt the first two inputs
 
         implicit none
 
@@ -75,24 +92,28 @@ contains
         real(sp), dimension(:), intent(in)    :: input_layer
 
         real(sp), dimension(:), intent(out)   :: output_layer
-        real(sp), dimension(:, :), intent(out) :: output_jacobian
+        real(sp), dimension(:), intent(out) :: output_jacobian_1
+        real(sp), dimension(:), intent(out) :: output_jacobian_2
 
-        real(sp), dimension(size(bias_1)) :: inter_layer_1, inter_layer_1_tf, layer_1_gradient
-        real(sp), dimension(size(bias_2)) :: inter_layer_2, inter_layer_2_tf, layer_2_gradient
+        real(sp), dimension(size(bias_1)) :: inter_layer_1, inter_layer_1_tf, inter_layer_1_grad, layer_1_grad
+        real(sp), dimension(size(bias_2)) :: inter_layer_2, inter_layer_2_tf, inter_layer_2_grad, layer_2_grad
         integer :: i, j, k
 
-        output_jacobian = 0._sp
-        layer_1_gradient = 0._sp
-        layer_2_gradient = 0._sp
+        output_jacobian_1 = 0._sp
+        output_jacobian_2 = 0._sp
 
         call dot_product_2d_1d(weight_1, input_layer, inter_layer_1)
         inter_layer_1 = inter_layer_1 + bias_1
-        inter_layer_1_tf = max(0.01_sp*inter_layer_1, inter_layer_1) ! Leaky ReLU
+        inter_layer_1_tf = inter_layer_1*(1._sp/(1._sp + exp(-inter_layer_1))) ! SiLU
+        inter_layer_1_grad = inter_layer_1_tf + &
+        & (1._sp - inter_layer_1_tf)/(1._sp + exp(-inter_layer_1))  ! Derivative of SiLU
 
         if (size(bias_3) .gt. 0) then  ! Case with 3 layers
             call dot_product_2d_1d(weight_2, inter_layer_1_tf, inter_layer_2)
             inter_layer_2 = inter_layer_2 + bias_2
-            inter_layer_2_tf = max(0.01_sp*inter_layer_2, inter_layer_2) ! Leaky ReLU
+            inter_layer_2_tf = inter_layer_2*(1._sp/(1._sp + exp(-inter_layer_2))) ! SiLU
+            inter_layer_2_grad = inter_layer_2_tf + &
+            & (1._sp - inter_layer_2_tf)/(1._sp + exp(-inter_layer_2))  ! Derivative of SiLU
 
             call dot_product_2d_1d(weight_3, inter_layer_2_tf, output_layer)
             output_layer = tanh(output_layer + bias_3)  ! TanH
@@ -100,28 +121,24 @@ contains
             ! Compute Jacobian matrix of output wrt input MLP
             do i = 1, size(output_layer)
                 do j = 1, size(inter_layer_2)
-                    layer_2_gradient(j) = (1._sp - output_layer(i)**2)*weight_3(i, j)  ! Derivative of TanH
-                    if (inter_layer_2(j) .lt. 0._sp) layer_2_gradient(j) = layer_2_gradient(j)*0.01_sp
+                    layer_2_grad(j) = (1._sp - output_layer(i)**2)*weight_3(i, j)  ! Derivative of TanH
+                    layer_2_grad(j) = layer_2_grad(j)*inter_layer_2_grad(j)
                 end do
 
                 ! Gradient of second layer wrt first layer
+                layer_1_grad = 0._sp
                 do j = 1, size(inter_layer_1)
                     do k = 1, size(inter_layer_2)
-                        layer_1_gradient(j) = layer_1_gradient(j) + layer_2_gradient(k)*weight_2(k, j)
+                        layer_1_grad(j) = layer_1_grad(j) + layer_2_grad(k)*weight_2(k, j)
                     end do
-                    if (inter_layer_1(j) .lt. 0._sp) layer_1_gradient(j) = layer_1_gradient(j)*0.01_sp
+                    layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
                 end do
 
                 ! Gradient of first layer wrt input layer
-                do j = 1, size(input_layer)
-                    do k = 1, size(inter_layer_1)
-                        output_jacobian(i, j) = output_jacobian(i, j) + layer_1_gradient(k)*weight_1(k, j)
-                    end do
+                do k = 1, size(inter_layer_1)
+                    output_jacobian_1(i) = output_jacobian_1(i) + layer_1_grad(k)*weight_1(k, 1)
+                    output_jacobian_2(i) = output_jacobian_2(i) + layer_1_grad(k)*weight_1(k, 2)
                 end do
-
-                ! Reset tmp gradients
-                layer_2_gradient = 0._sp
-                layer_1_gradient = 0._sp
             end do
 
         else  ! Case with 2 layers
@@ -131,19 +148,15 @@ contains
             ! Compute Jacobian matrix of output wrt input MLP
             do i = 1, size(output_layer)
                 do j = 1, size(inter_layer_1)
-                    layer_1_gradient(j) = (1._sp - output_layer(i)**2)*weight_2(i, j)  ! Derivative of TanH
-                    if (inter_layer_1(j) .lt. 0._sp) layer_1_gradient(j) = layer_1_gradient(j)*0.01_sp
+                    layer_1_grad(j) = (1._sp - output_layer(i)**2)*weight_2(i, j)  ! Derivative of TanH
+                    layer_1_grad(j) = layer_1_grad(j)*inter_layer_1_grad(j)
                 end do
 
                 ! Gradient of first layer wrt input layer
-                do j = 1, size(input_layer)
-                    do k = 1, size(inter_layer_1)
-                        output_jacobian(i, j) = output_jacobian(i, j) + layer_1_gradient(k)*weight_1(k, j)
-                    end do
+                do k = 1, size(inter_layer_1)
+                    output_jacobian_1(i) = output_jacobian_1(i) + layer_1_grad(k)*weight_1(k, 1)
+                    output_jacobian_2(i) = output_jacobian_2(i) + layer_1_grad(k)*weight_1(k, 2)
                 end do
-
-                ! Reset tmp gradients
-                layer_1_gradient = 0._sp
             end do
 
         end if

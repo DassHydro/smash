@@ -16,27 +16,22 @@ Build from source
 System-level dependencies
 *************************
 
-`smash` uses compiled code for speed, which means you need compilers and some other system-level
-(i.e, non-Python / non-PyPI) dependencies to build it on your system.
+`smash` includes compiled code for performance, which means it requires compilers and other system-level (i.e., non-Python / non-PyPI) dependencies to build on your system.
 
-Anaconda (recommended)
-''''''''''''''''''''''
-
-If you are using `Conda <https://www.anaconda.com/>`__, all the dependencies will be installed
-automatically by running the following command:
+To simplify setup, we strongly recommend creating a Conda environment using `Anaconda <https://www.anaconda.com/>`__. 
+All required dependencies will be installed automatically by running the following command:
 
 .. code-block:: none
     
     conda env create -f environment-dev.yml
 
-It will create a Conda environment called ``smash-dev`` that can be activated as follows:
+This creates a Conda environment named ``smash-dev``, which you can activate with:
 
 .. code-block:: none
 
     conda activate smash-dev
 
-Once ``smash-dev`` is created, it is recommended to update pip and your Conda environment
-to ensure you have the latest package versions and to prevent any conflicts:
+Once the ``smash-dev`` environment is set up, we recommend upgrading pip and updating all Conda packages to ensure you have the latest versions and avoid conflicts:
 
 .. code-block:: none
 
@@ -370,7 +365,7 @@ There are no constraints on ``<name>`` here are those on the ``<prefix>``:
 - ``mwd``: the file is a module, is wrapped and differentiated (``mwd_setup.f90``)
 
 .. note::
-    We strongly recommand the use of module. Specifically if the file contains sources to be wrapped or differentiated.
+    We strongly recommend the use of module. Specifically if the file contains sources to be wrapped or differentiated.
 
 .. _contributor_guide.development_process_details.fortran_guideline.global_convention.floating_point_convention:
 
@@ -1587,10 +1582,14 @@ Python guideline
 Test
 ----
 
-Tests are run with the ``make test`` or ``make test-coverage`` command using the `pytest <https://docs.pytest.org/en/7.4.x/>`__ library:
+Tests are run with the ``make test``, ``make test-light`` or ``make test-coverage`` command using the `pytest <https://docs.pytest.org/en/7.4.x/>`__ library:
 
 - ``make test``
     Run unit tests. This tests are also run in the continuous integration service (``CI``).
+
+- ``make test-light``
+    Run unit tests but in a lighter version than ``make test``. Its purpose is to quickly check
+    that there are no obvious bugs using only one model structure (``zero-gr4-lr``)
 
 - ``make test-coverage``
     Run unit tests with coverage. It will display coverage result in the terminal and generate a html file.
@@ -1746,10 +1745,105 @@ Then, you need to call up this file in the desired toctree, for example in the f
 User guide
 **********
 
-The user guide contains all the `smash` tutorials. These tutorials are not hardcoded, the python commands written in the
-``.. ipython:: python`` directives are executed and automatically generate the tutorial output. This is quite handy, as it means you don't have to 
-update the documentation each time the source is modified, and adds an extra layer of testing since the documentation will not compile if 
-there is an error in executing a python command but which, on the other hand, requires a certain amount of computing time.
+The user guide contains tutorials with code examples and explanations of various functionalities of `smash`.
+There are two approaches for writing a tutorial: using the ``.. ipython:: python`` directive or using the ``.. code-block:: python`` directive. 
+The choice between these depends on the complexity and runtime of the tutorial.
+
+- ipython:
+    The ``.. ipython:: python`` directive is more suitable for tutorials that execute quickly.
+    Since Python commands within this directive are run during documentation compilation, outputs are automatically generated.
+    This ensures that the documentation stays up to date without manual updates whenever the source code changes.
+    Additionally, it acts as an extra layer of validation, as the documentation compilation will fail if there are execution errors in any code directive.
+    However, this approach requires additional computation time during documentation building. Here is an example:
+
+    .. code-block:: rst
+
+        .. ipython:: python
+
+            text = "smash developer"
+            text
+
+    The output of the ipython directive is automatically generated when the documentation is compiled.
+
+- code block:
+    The ``.. code-block:: python`` directive is better suited for longer or more complex tutorials where execution time (e.g., model calibration) or dependency on external packages (e.g., hyper-parameter sensitivity estimation using `SALib <https://salib.readthedocs.io/>`__) is a concern.
+    It allows you to include static code snippets without running them during documentation generation.
+    The code should start with ``>>>`` and use ``...`` for continuation lines or within loops/functions.
+
+    .. code-block:: rst
+
+        .. code-block:: python
+
+            >>> def linear_transform(x, a=23, b=5):  
+            ...     y = a * x + b  
+            ...     return y
+            ... 
+            >>> x = -1
+            >>> y = linear_transform(-1) 
+
+    Since the code is not executed, the outputs are not automatically generated. Alternative solutions include using the ``.. code-block:: output`` directive to include output blocks and the ``.. image::`` directive to include figures.
+
+    .. code-block:: rst
+
+        .. code-block:: python
+        
+            >>> text = "smash developer"
+            >>> text
+        
+        .. code-block:: output
+
+            smash developer
+
+    However, this approach may result in outdated documentation if the source code changes.
+    To automatically generate/update output blocks and verify correctness in code blocks, it is highly recommended to use ``doc/source/user_guide/pyexec_rst.py``.
+    This script extracts Python code blocks from the ``rst`` file, executes them, and updates the output accordingly.
+    For example, consider a file named ``doc/source/user_guide/in_depth/foo.rst``:
+
+    .. code-block:: rst
+    
+        .. code-block:: python
+
+            >>> text = "smash developer"
+            >>> text
+    
+        .. code-block:: output
+
+            type any text here
+
+    To extract and execute the Python code from the ``rst`` file, and generate/update the output block:
+
+    .. code-block:: shell
+
+        python3 pyexec_rst.py in_depth/foo.rst
+
+    The output is written in the ``doc/source/user_guide/in_depth/foo.rst`` file (if you choose to overwrite this file, otherwise a new file will be created).
+
+    .. code-block:: rst
+    
+        .. code-block:: python
+
+            >>> text = "smash developer"
+            >>> text
+
+        .. code-block:: output
+
+            smash developer
+
+    .. hint::
+        If you only want to display Python code without executing it when running the ``pyexec_rst.py`` script, use an alternative directive like ``.. code-block:: pycon``.  
+        This preserves Python code formatting while ensuring the script does not capture or execute it:
+
+        .. code-block:: rst
+
+            .. code-block:: pycon
+
+                >>> print("A pycon directive is not executed by pyexec_rst.py")
+
+    .. note::
+
+        Since the ``.. code-block:: python`` directive approach is more manual, it is recommended to add the path of the file written using this approach to ``doc/source/user_guide/files_with_code_block.csv`` (if not already included). 
+        This helps streamline the process of verifying and updating code snippets when the source code changes.
+        You will be asked to do so when running the ``pyexec_rst.py`` script.
 
 API reference
 *************

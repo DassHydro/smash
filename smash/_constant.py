@@ -70,7 +70,7 @@ HYDROLOGICAL_MODULE = [
     "gr4_mlp",
     "gr4_ri",
     "gr4_ode",
-    "gr4_ode_mlp",
+    "gr4_ude",
     "gr5",
     "gr5_mlp",
     "gr5_ri",
@@ -110,7 +110,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         (
             [["ci", "cp", "ct", "kexc"]] * 2  # % gr4, gr4_mlp,
             + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc"]]  # % gr4_ri
-            + [["ci", "cp", "ct", "kexc"]] * 2  # % gr4_ode, gr4_ode_mlp
+            + [["ci", "cp", "ct", "kexc"]] * 2  # % gr4_ode, gr4_ude
             + [["ci", "cp", "ct", "kexc", "aexc"]] * 2  # % gr5, gr5_mlp
             + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"]]  # % gr5_ri
             + [["ci", "cp", "ct", "be", "kexc", "aexc"]] * 2  # % gr6, gr6_mlp
@@ -150,7 +150,7 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
     zip(
         HYDROLOGICAL_MODULE,
         (
-            [["hi", "hp", "ht"]] * 8  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri
+            [["hi", "hp", "ht"]] * 8  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri
             + [["hi", "hp", "ht", "he"]] * 2  # % gr6, gr6_mlp
             + [["hi", "hp", "ht", "hl"]] * 2  # % grc, grc_mlp
             + [["hp", "ht"]] * 2  # % grd, grd_mlp
@@ -191,7 +191,7 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
         (
             [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
             * 3  # % gr4, gr4_mlp, gr4_ri
-            + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ode_mlp
+            + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ude
             + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
             * 3  # % gr5, gr5_mlp, gr5_ri
             + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
@@ -289,7 +289,7 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
                 (4, 4),  # % gr4_mlp
                 (0, 0),  # % gr4_ri
                 (0, 0),  # % gr4_ode
-                (4, 5),  # % gr4_ode_mlp
+                (4, 4),  # % gr4_ude
                 (0, 0),  # % gr5
                 (4, 4),  # % gr5_mlp
                 (0, 0),  # % gr5_ri
@@ -312,16 +312,16 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
-    "cp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "ci",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
+    "cp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # % grd, grd_mlp
-    "ct",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "ct",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # %grd, grd_mlp
     "alpha1",  # % gr4_ri, gr5_ri
     "alpha2",  # % gr4_ri, gr5_ri
     "cl",  # % grc, grc_mlp
     "be",  # % gr6, gr6_mlp
-    "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr6, gr6_mlp, grc, grc_mlp
+    "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr6, gr6_mlp, grc, grc_mlp
     "aexc",  # % gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp
     "ca",  # % loieau, loieau_mlp
     "cc",  # % loieau, loieau_mlp
@@ -342,10 +342,10 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
-    "hp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "hi",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp
+    "hp",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # % grd, grd_mlp
-    "ht",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ode_mlp, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
+    "ht",  # % gr4, gr4_mlp, gr4_ri, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr6, gr6_mlp, grc, grc_mlp,
     # % grd, grd_mlp
     "hl",  # % grc, grc_mlp
     "he",  # % gr6, gr6_mlp
@@ -912,9 +912,13 @@ ACTIVATION_FUNCTION = [func.lower() for func in ACTIVATION_FUNCTION_CLASS]
 
 PEAK_QUANT = 0.995
 
+PEAK_VALUE = 0
+
 MAX_DURATION = 240
 
-EVENT_SEG_KEYS = ["peak_quant", "max_duration", "by"]
+EVENT_SEG_SIGNATURES_KEYS = ["peak_quant", "peak_value", "max_duration", "by"]
+
+EVENT_SEG_SIMULATION_KEYS = ["peak_quant", "peak_value", "max_duration"]
 
 
 ### GENERATE SAMPLES ###
@@ -927,15 +931,15 @@ PROBLEM_KEYS = ["num_vars", "names", "bounds"]
 ### SIMULATION ###
 ##################
 
-REGIONAL_MAPPING = ["multi-linear", "multi-polynomial", "ann"]
+REGIONAL_MAPPING = ["multi-linear", "multi-power", "ann"]
 
 MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
 
 ADAPTIVE_OPTIMIZER = [opt.lower() for opt in OPTIMIZER_CLASS]
 GRADIENT_BASED_OPTIMIZER = ["lbfgsb"] + ADAPTIVE_OPTIMIZER
-HEURISTIC_OPTIMIZER = ["sbs"]
+GRADIENT_FREE_OPTIMIZER = ["sbs", "nelder-mead", "powell"]
 
-OPTIMIZER = HEURISTIC_OPTIMIZER + GRADIENT_BASED_OPTIMIZER
+OPTIMIZER = GRADIENT_FREE_OPTIMIZER + GRADIENT_BASED_OPTIMIZER
 
 # % Following MAPPING order
 # % The first optimizer for each mapping is used as default optimizer
@@ -946,7 +950,7 @@ MAPPING_OPTIMIZER = dict(
             OPTIMIZER,  # for uniform mapping (all optimizers are possible, default is sbs)
             *(
                 [GRADIENT_BASED_OPTIMIZER] * 3
-            ),  # for distributed, multi-linear, multi-polynomial mappings (default is lbfgsb)
+            ),  # for distributed, multi-linear, multi-power mappings (default is lbfgsb)
             ADAPTIVE_OPTIMIZER,  # for ann mapping (default is adam)
         ],
     )
@@ -967,8 +971,13 @@ GAUGE_ALIAS = ["dws", "all"]
 DEFAULT_TERMINATION_CRIT = dict(
     **dict(
         zip(
-            ["sbs", "lbfgsb"],
-            [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
+            ["sbs", "nelder-mead", "powell", "lbfgsb"],
+            [
+                {"maxiter": 50},
+                {"maxiter": 200, "xatol": 1e-4, "fatol": 1e-4},
+                {"maxiter": 50},
+                {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12},
+            ],
         )
     ),
     **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
@@ -992,6 +1001,18 @@ CONTROL_PRIOR_DISTRIBUTION_PARAMETERS = dict(
 
 SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ("uniform", "sbs"): [
+        "parameters",
+        "bounds",
+        "control_tfm",
+        "termination_crit",
+    ],
+    ("uniform", "nelder-mead"): [
+        "parameters",
+        "bounds",
+        "control_tfm",
+        "termination_crit",
+    ],
+    ("uniform", "powell"): [
         "parameters",
         "bounds",
         "control_tfm",
@@ -1032,7 +1053,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
         "descriptor",
         "termination_crit",
     ],
-    ("multi-polynomial", "lbfgsb"): [
+    ("multi-power", "lbfgsb"): [
         "parameters",
         "bounds",
         "control_tfm",
@@ -1041,7 +1062,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ],
     **dict(
         zip(
-            itertools.product(["multi-linear", "multi-polynomial"], ADAPTIVE_OPTIMIZER),
+            itertools.product(["multi-linear", "multi-power"], ADAPTIVE_OPTIMIZER),
             2
             * len(ADAPTIVE_OPTIMIZER)
             * [
@@ -1055,7 +1076,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
                 ]
             ],
         )
-    ),  # product between 2 mappings (multi-linear, multi-polynomial) and all adaptive optimizers
+    ),  # product between 2 mappings (multi-linear, multi-power) and all adaptive optimizers
     **dict(
         zip(
             [("ann", optimizer) for optimizer in ADAPTIVE_OPTIMIZER],
@@ -1077,11 +1098,11 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 OPTIMIZER_CONTROL_TFM = {
     (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
     if optimizer == "sbs"
-    else ["normalize", "keep"]  # in case of ann mapping
+    else ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
     if mapping != "ann"
-    else ["keep"]  # other cases
+    else ["keep"]  # no tfm applied for any optimizer used with ann mapping
     for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
-}
+}  # first element of the list is the default tfm for each tuple key (mapping, optimizer)
 
 DEFAULT_SIMULATION_COST_OPTIONS = {
     "forward_run": {
@@ -1091,7 +1112,7 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
-        "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
+        "event_seg": dict(zip(EVENT_SEG_SIMULATION_KEYS, [PEAK_QUANT, PEAK_VALUE, MAX_DURATION])),
     },
     "optimize": {
         "jobs_cmpt": "nse",
@@ -1103,7 +1124,7 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
-        "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
+        "event_seg": dict(zip(EVENT_SEG_SIMULATION_KEYS, [PEAK_QUANT, PEAK_VALUE, MAX_DURATION])),
     },
     "bayesian_optimize": {
         "end_warmup": None,
