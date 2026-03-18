@@ -366,8 +366,8 @@ class Model:
             List of descriptor name.
             This option is ``mandatory`` if **read_descriptor** is set to True.
 
-        descriptor_tfm : `str`, default 'normalize'
-            Transformation method among ``'normalize'``, ``'standardize'``, or ``'keep'`` applied to the
+        descriptor_tfm : `str`, default 'standardize'
+            Transformation method among ``'standardize'``, ``'normalize'`` or ``'keep'`` applied to the
             descriptor(s). This option is only applicable if **read_descriptor** is set to True.
 
         read_imperviousness : `bool`, default False

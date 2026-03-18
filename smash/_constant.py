@@ -709,7 +709,7 @@ DEFAULT_MODEL_SETUP = {
     "descriptor_format": "tif",
     "descriptor_directory": None,
     "descriptor_name": None,
-    "descriptor_tfm": "normalize",
+    "descriptor_tfm": "standardize",
     "read_imperviousness": False,
     "imperviousness_format": "tif",
     "imperviousness_file": None,
@@ -864,7 +864,7 @@ MAPPING_OPTIMIZER = dict(
     )
 )
 
-DESCRIPTOR_TFM = ["normalize", "standardize", "keep"]
+DESCRIPTOR_TFM = ["standardize", "normalize", "keep"]
 
 JOBS_CMPT = METRICS + SIGNS
 
