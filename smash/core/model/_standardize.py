@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 
 from smash._constant import (
-    DESCRIPTOR_TFM,
     DEFAULT_MODEL_SETUP,
+    DESCRIPTOR_TFM,
     F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_RR_PARAMETERS,
