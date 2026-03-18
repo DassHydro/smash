@@ -14,7 +14,7 @@
 !%          ``l_descriptor``         Descriptor maps field min value             [(descriptor dependent)]
 !%          ``u_descriptor``         Descriptor maps field max value             [(descriptor dependent)]
 !%          ``mean_descriptor``      Descriptor maps field mean value            [(descriptor dependent)]
-!%          ``std_descriptor``       Descriptor maps field standard deviation   [(descriptor dependent)]
+!%          ``std_descriptor``       Descriptor maps field std value             [(descriptor dependent)]
 !%          ======================== =======================================
 !%
 !%      Subroutine
