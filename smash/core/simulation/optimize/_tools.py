@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.factory.net.net import Net
     from smash.fcore._mwd_parameters import ParametersDT
+    from smash.fcore._mwd_physio_data import PhysioDataDT
     from smash.fcore._mwd_returns import ReturnsDT
 
 
@@ -156,6 +157,19 @@ def _set_net_from_vect(vect: np.ndarray, net: Net):
             ind += layer.bias.size
 
 
+def _apply_descriptor_tfm(physio_data: PhysioDataDT, descriptor_tfm: str) -> np.ndarray:
+    desc = physio_data.descriptor.copy()
+
+    if descriptor_tfm == "normalize":
+        return (desc - physio_data.l_descriptor) / (physio_data.u_descriptor - physio_data.l_descriptor)
+
+    elif descriptor_tfm == "standardize":
+        return (desc - physio_data.mean_descriptor) / physio_data.std_descriptor
+
+    else:  # Should be reached by "keep" only
+        return desc
+
+
 def _set_parameters_from_net(
     net: Net, x: np.ndarray, calibrated_parameters: np.ndarray, parameters: ParametersDT
 ) -> bool:
@@ -244,11 +258,7 @@ def _set_control(
 
         _set_net_from_vect(control_vector[ind:], net)  # set weight and bias with control values
 
-        l_desc = model._input_data.physio_data.l_descriptor
-        u_desc = model._input_data.physio_data.u_descriptor
-
-        desc = model._input_data.physio_data.descriptor.copy()
-        desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
+        desc = _apply_descriptor_tfm(model._input_data.physio_data, model.setup.descriptor_tfm)
 
         if net.layers[0].layer_name() == "Dense":
             desc = desc.reshape(-1, desc.shape[-1])

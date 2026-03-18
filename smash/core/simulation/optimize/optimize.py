@@ -20,6 +20,7 @@ from smash.core.simulation._doc import (
     _smash_optimize_doc_substitution,
 )
 from smash.core.simulation.optimize._tools import (
+    _apply_descriptor_tfm,
     _get_lcurve_wjreg_best,
     _get_parameters_b,
     _handle_bayesian_optimize_control_prior,
@@ -808,12 +809,8 @@ def _ann_adaptive_optimize(
     return_options: dict,
     callback: callable | None,
 ) -> Net:
-    # % Preprocessing input descriptors and normalization
-    l_desc = model._input_data.physio_data.l_descriptor
-    u_desc = model._input_data.physio_data.u_descriptor
-
-    desc = model._input_data.physio_data.descriptor.copy()
-    desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
+    # % Descriptor transformation
+    desc = _apply_descriptor_tfm(model._input_data.physio_data, model.setup.descriptor_tfm)
 
     # % Train regionalization network
     net = optimize_options["net"]

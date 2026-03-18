@@ -709,6 +709,7 @@ DEFAULT_MODEL_SETUP = {
     "descriptor_format": "tif",
     "descriptor_directory": None,
     "descriptor_name": None,
+    "descriptor_tfm": "normalize",
     "read_imperviousness": False,
     "imperviousness_format": "tif",
     "imperviousness_file": None,
@@ -862,6 +863,8 @@ MAPPING_OPTIMIZER = dict(
         ],
     )
 )
+
+DESCRIPTOR_TFM = ["normalize", "standardize", "keep"]
 
 JOBS_CMPT = METRICS + SIGNS
 
@@ -1107,6 +1110,7 @@ MODEL_DDT_IO_ATTR_KEYS = {
         "end_time",
         "dt",
         "descriptor_name",
+        "descriptor_tfm",
     ],
     "mesh": [
         "xres",

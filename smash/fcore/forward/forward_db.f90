@@ -5437,6 +5437,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - normalize_inv_control_tfm
 !%      - control_tfm
 !%      - inv_control_tfm
+!%      - apply_descriptor_tfm
 !%      - uniform_rr_parameters_get_control_size
 !%      - uniform_rr_initial_states_get_control_size
 !%      - distributed_rr_parameters_get_control_size
@@ -6259,6 +6260,27 @@ CONTAINS
       CALL NORMALIZE_INV_CONTROL_TFM(parameters)
     END SELECT
   END SUBROUTINE INV_CONTROL_TFM
+
+  SUBROUTINE APPLY_DESCRIPTOR_TFM(setup, input_data, k, desc)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTEGER, INTENT(IN) :: k
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: desc
+    SELECT CASE  (setup%descriptor_tfm) 
+    CASE ('normalize') 
+      desc = (input_data%physio_data%descriptor(:, :, k)-input_data%&
+&       physio_data%l_descriptor(k))/(input_data%physio_data%&
+&       u_descriptor(k)-input_data%physio_data%l_descriptor(k))
+    CASE ('standardize') 
+      desc = (input_data%physio_data%descriptor(:, :, k)-input_data%&
+&       physio_data%mean_descriptor(k))/input_data%physio_data%&
+&       std_descriptor(k)
+    CASE DEFAULT
+!% Should be reached by "keep" only
+      desc = input_data%physio_data%descriptor(:, :, k)
+    END SELECT
+  END SUBROUTINE APPLY_DESCRIPTOR_TFM
 
   SUBROUTINE UNIFORM_RR_PARAMETERS_GET_CONTROL_SIZE(options, n)
     IMPLICIT NONE
@@ -7341,10 +7363,7 @@ CONTAINS
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j)
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
@@ -7394,10 +7413,8 @@ CONTAINS
           ELSE
             CALL PUSHINTEGER4(j)
             j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             wa2d = wa2d + parameters%control%x(j)*norm_desc
             CALL PUSHCONTROL1B(1)
           END IF
@@ -7427,12 +7444,9 @@ CONTAINS
         DO k=setup%nd,1,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
             parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
 &             norm_desc*wa2d_b)
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
             CALL POPINTEGER4(j)
           END IF
         END DO
@@ -7465,10 +7479,7 @@ CONTAINS
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
         END DO
@@ -7509,10 +7520,7 @@ CONTAINS
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
             j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j)
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
@@ -7563,10 +7571,8 @@ CONTAINS
           ELSE
             CALL PUSHINTEGER4(j)
             j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             wa2d = wa2d + parameters%control%x(j)*norm_desc
             CALL PUSHCONTROL1B(1)
           END IF
@@ -7597,12 +7603,9 @@ CONTAINS
         DO k=setup%nd,1,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
             parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
 &             norm_desc*wa2d_b)
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
             CALL POPINTEGER4(j)
           END IF
         END DO
@@ -7635,10 +7638,7 @@ CONTAINS
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
             j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
         END DO
@@ -7680,10 +7680,7 @@ CONTAINS
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             temp = norm_desc**parameters%control%x(j)
             WHERE (norm_desc .LE. 0.0) 
               norm_desc_d = 0.0_4
@@ -7743,10 +7740,7 @@ CONTAINS
             CALL PUSHINTEGER4(j)
             j = j + 2
             CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
             norm_desc = norm_desc**parameters%control%x(j)
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
@@ -7819,10 +7813,7 @@ CONTAINS
           IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             norm_desc = norm_desc**parameters%control%x(j)
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
           END IF
@@ -7865,10 +7856,7 @@ CONTAINS
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
             j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             temp = norm_desc**parameters%control%x(j)
             WHERE (norm_desc .LE. 0.0) 
               norm_desc_d = 0.0_4
@@ -7929,10 +7917,7 @@ CONTAINS
             CALL PUSHINTEGER4(j)
             j = j + 2
             CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
             norm_desc = norm_desc**parameters%control%x(j)
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
@@ -8006,10 +7991,7 @@ CONTAINS
           IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
 &         ) THEN
             j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
+            CALL APPLY_DESCRIPTOR_TFM(setup, input_data, k, norm_desc)
             norm_desc = norm_desc**parameters%control%x(j)
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
           END IF

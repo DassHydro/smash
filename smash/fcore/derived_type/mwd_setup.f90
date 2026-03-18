@@ -48,6 +48,7 @@
 !%          ``descriptor_format``      Descriptor maps format
 !%          ``descriptor_directory``   Descriptor maps directory
 !%          ``descriptor_name``        Descriptor maps names
+!%          ``descriptor_tfm``         Descriptor transformation method
 !%          ``structure``              Structure combaining all modules
 !%          ``snow_module_present``    Presence of snow module
 !%          ``ntime_step``             Number of time steps
@@ -133,6 +134,7 @@ module mwd_setup
         character(lchar) :: descriptor_format = "..." !$F90W char
         character(2*lchar) :: descriptor_directory = "..." !$F90W char
         character(lchar), allocatable, dimension(:) :: descriptor_name !$F90W char-array
+        character(lchar) :: descriptor_tfm = "..." !$F90W char
 
         logical :: read_imperviousness = .false.
         character(lchar) :: imperviousness_format = "..." !$F90W char

@@ -585,19 +585,24 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     f"selected domain"
                 )
 
-            # % Check if descriptor is uniform
             low = np.min(desc, where=mask, initial=np.inf)
             upp = np.max(desc, where=mask, initial=-np.inf)
 
-            if low == upp:
+            mean = np.mean(desc, where=mask)
+            std = np.std(desc, where=mask)
+
+            # % Check if descriptor is uniform when applying transformation
+            if setup.descriptor_tfm != "keep" and low == upp:
                 raise ValueError(
-                    f"Invalid descriptor '{name}'. It contains spatially uniform values on the selected "
-                    f"domain"
+                    f"Invalid descriptor '{name}'. It contains spatially uniform values over the selected "
+                    f"domain which cannot be used for transformation"
                 )
             # % Assign values
             input_data.physio_data.descriptor[..., i] = desc
             input_data.physio_data.l_descriptor[i] = low
             input_data.physio_data.u_descriptor[i] = upp
+            input_data.physio_data.mean_descriptor[i] = mean
+            input_data.physio_data.std_descriptor[i] = std
 
     msg = _get_reading_warning_message(reading_warning)
 

@@ -13,6 +13,8 @@
 !%          ``imperviousness``       Imperviousness map
 !%          ``l_descriptor``         Descriptor maps field min value             [(descriptor dependent)]
 !%          ``u_descriptor``         Descriptor maps field max value             [(descriptor dependent)]
+!%          ``mean_descriptor``      Descriptor maps field mean value            [(descriptor dependent)]
+!%          ``std_descriptor``       Descriptor maps field standard deviation   [(descriptor dependent)]
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -35,7 +37,8 @@ module mwd_physio_data
         real(sp), dimension(:, :), allocatable :: imperviousness
         real(sp), dimension(:), allocatable :: l_descriptor
         real(sp), dimension(:), allocatable :: u_descriptor
-
+        real(sp), dimension(:), allocatable :: mean_descriptor
+        real(sp), dimension(:), allocatable :: std_descriptor
     end type Physio_DataDT
 
 contains
@@ -59,6 +62,12 @@ contains
 
         allocate (this%u_descriptor(setup%nd))
         this%u_descriptor = -99._sp
+
+        allocate (this%mean_descriptor(setup%nd))
+        this%mean_descriptor = -99._sp
+
+        allocate (this%std_descriptor(setup%nd))
+        this%std_descriptor = -99._sp
 
     end subroutine Physio_DataDT_initialise
 

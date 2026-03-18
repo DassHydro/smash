@@ -25,6 +25,7 @@
 !%      - normalize_inv_control_tfm
 !%      - control_tfm
 !%      - inv_control_tfm
+!%      - apply_descriptor_tfm
 !%      - uniform_rr_parameters_get_control_size
 !%      - uniform_rr_initial_states_get_control_size
 !%      - distributed_rr_parameters_get_control_size
@@ -583,6 +584,36 @@ contains
         end select
 
     end subroutine inv_control_tfm
+
+    subroutine apply_descriptor_tfm(setup, input_data, k, desc)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(Input_DataDT), intent(in) :: input_data
+        integer, intent(in) :: k
+        real(sp), dimension(:, :), intent(inout) :: desc
+
+        select case (setup%descriptor_tfm)
+
+        case ("normalize")
+
+            desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%l_descriptor(k))/ &
+            & (input_data%physio_data%u_descriptor(k) - input_data%physio_data%l_descriptor(k))
+
+        case ("standardize")
+
+            desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%mean_descriptor(k))/ &
+            & input_data%physio_data%std_descriptor(k)
+
+            !% Should be reached by "keep" only
+        case default
+
+            desc = input_data%physio_data%descriptor(:, :, k)
+
+        end select
+
+    end subroutine apply_descriptor_tfm
 
     subroutine uniform_rr_parameters_get_control_size(options, n)
 
@@ -1557,8 +1588,7 @@ contains
 
                 j = j + 1
 
-                norm_desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%l_descriptor(k))/ &
-                & (input_data%physio_data%u_descriptor(k) - input_data%physio_data%l_descriptor(k))
+                call apply_descriptor_tfm(setup, input_data, k, norm_desc)
 
                 wa2d = wa2d + parameters%control%x(j)*norm_desc
 
@@ -1604,8 +1634,7 @@ contains
 
                 j = j + 1
 
-                norm_desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%l_descriptor(k))/ &
-                & (input_data%physio_data%u_descriptor(k) - input_data%physio_data%l_descriptor(k))
+                call apply_descriptor_tfm(setup, input_data, k, norm_desc)
 
                 wa2d = wa2d + parameters%control%x(j)*norm_desc
 
@@ -1651,8 +1680,7 @@ contains
 
                 j = j + 2
 
-                norm_desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%l_descriptor(k))/ &
-                & (input_data%physio_data%u_descriptor(k) - input_data%physio_data%l_descriptor(k))
+                call apply_descriptor_tfm(setup, input_data, k, norm_desc)
 
                 norm_desc = norm_desc**parameters%control%x(j)
 
@@ -1700,8 +1728,7 @@ contains
 
                 j = j + 2
 
-                norm_desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%l_descriptor(k))/ &
-                & (input_data%physio_data%u_descriptor(k) - input_data%physio_data%l_descriptor(k))
+                call apply_descriptor_tfm(setup, input_data, k, norm_desc)
 
                 norm_desc = norm_desc**parameters%control%x(j)
 

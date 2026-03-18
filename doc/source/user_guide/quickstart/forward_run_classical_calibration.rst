@@ -200,7 +200,7 @@ and read back using the `smash.io.save_model` and `smash.io.read_model` function
         atmos_data: ['mean_pet', 'mean_prcp', '...', 'sparse_prcp', 'sparse_snow']
         mesh: ['active_cell', 'area', '...', 'xres', 'ymax']
         nn_parameters: ['bias_1', 'bias_2', '...', 'weight_1', 'weight_2']
-        physio_data: ['descriptor', 'imperviousness', 'l_descriptor', 'u_descriptor']
+        physio_data: ['descriptor', 'imperviousness', '...', 'mean_descriptor', 'std_descriptor']
         response: ['q']
         response_data: ['q']
         rr_final_states: ['keys', 'values']
