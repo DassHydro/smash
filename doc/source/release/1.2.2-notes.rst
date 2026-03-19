@@ -1,0 +1,24 @@
+.. _release.1.2.2-notes:
+
+=========================
+smash 1.2.2 Release Notes
+=========================
+
+The smash 1.2.2 release fixes a NumPy compatibility issue:
+
+- ``'np.in1d' has been replaced by 'np.isin'``
+    `np.in1d <https://numpy.org/doc/2.2/reference/generated/numpy.in1d.html>`__ is deprecated since version 2.0. `np.isin <https://numpy.org/doc/stable/reference/generated/numpy.isin.html>`__ is used instead.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* Fix: Replace np.in1d with np.isin for peak detection (#522) by @nghi-truyen in https://github.com/DassHydro/smash/pull/523
