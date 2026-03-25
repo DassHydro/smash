@@ -67,6 +67,9 @@ from smash.core.simulation.optimize.optimize import (
 from smash.core.simulation.run._standardize import _standardize_forward_run_args
 from smash.core.simulation.run.run import _forward_run
 from smash.factory.net._layers import _initialize_nn_parameter
+
+# from smash.fcore._mw_hydr_struct_manipulation import reallocate_hydr_struct
+from smash.fcore._mw_hydr_struct_manipulation import reallocate_dam_struct_data
 from smash.fcore._mwd_input_data import Input_DataDT
 from smash.fcore._mwd_mesh import MeshDT
 from smash.fcore._mwd_output import OutputDT
@@ -91,6 +94,7 @@ if TYPE_CHECKING:
     )
     from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun
     from smash.fcore._mwd_atmos_data import Atmos_DataDT
+    from smash.fcore._mwd_hydraulic_structure import Hydraulic_StructureDT
     from smash.fcore._mwd_nn_parameters import NN_ParametersDT
     from smash.fcore._mwd_physio_data import Physio_DataDT
     from smash.fcore._mwd_response import ResponseDT
@@ -454,7 +458,7 @@ class Model:
 
             _map_dict_to_fortran_derived_type(mesh, self.mesh)
 
-            _build_mesh(self.setup, self.mesh)
+            _build_mesh(self.setup, self.mesh, mesh)
 
             self._input_data = Input_DataDT(self.setup, self.mesh)
 
@@ -687,6 +691,54 @@ class Model:
     @response_data.setter
     def response_data(self, value: Response_DataDT):
         self._input_data.response_data = value
+
+    @property
+    def hydraulic_structure(self) -> Hydraulic_StructureDT:
+        """
+        Model response data.
+
+        Returns
+        -------
+        response_data : `Response_DataDT <fcore._mwd_response_data.Response_DataDT>`
+            It returns a Fortran derived type containing the variables relating to the response data.
+
+        Examples
+        --------
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        Access to Model response data
+
+        >>> model.response_data
+        Response_DataDT
+            q: array([[ 1.237,  1.232,  1.224, ..., 22.951, 22.813, 22.691],
+            [ 0.38 ,  0.382,  0.385, ...,  6.789,  6.759,  6.729],
+            [ 0.094,  0.094,  0.094, ...,  1.588,  1.578,  1.568]],
+            dtype=float32)
+
+        Access to a specific gauge observed discharge time serie
+
+        >>> model.mesh.code
+        array(['V3524010', 'V3515010', 'V3517010'], dtype='<U8')
+        >>> ind = np.argwhere(model.mesh.code == "V3524010").item()
+        >>> ind
+        0
+        >>> model.response_data.q[ind, :]
+        array([ 1.237,  1.232,  1.224, ..., 22.951, 22.813, 22.691], dtype=float32)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
+
+        >>> model.response_data.<TAB>
+        model.response_data.copy()        model.response_data.q
+        model.response_data.from_handle(
+        """
+
+        return self._input_data.hydraulic_structure
+
+    @hydraulic_structure.setter
+    def hydraulic_structure(self, value: Hydraulic_StructureDT):
+        self._input_data.hydraulic_structure = value
 
     @property
     def u_response_data(self) -> U_Response_DataDT:
@@ -1418,6 +1470,24 @@ class Model:
         """
 
         return self.__copy__()
+
+    def set_dam_structure_data(self, key, values):
+        if key in ["dam_hv", "dam_hq"]:
+            reallocate_dam_struct_data(
+                self._input_data.hydraulic_structure.dam_structure,
+                key,
+                self.mesh.ndam,
+                values.shape[2],
+            )
+
+        setattr(self._input_data.hydraulic_structure.dam_structure, key, values)
+
+    def get_dam_structure_data(self, key):
+        if key in ["dam_hv", "dam_hq"]:
+            return getattr(self._input_data.hydraulic_structure.dam_structure, key)
+
+        else:
+            return None
 
     def get_rr_parameters(self, key: str) -> NDArray[np.float32]:
         """
@@ -2778,7 +2848,11 @@ class Model:
                 1.4       , 1.4       , 1.5       ]], dtype=float32)
         """
         _adjust_interception(
-            self.setup, self.mesh, self._input_data, self._parameters, active_cell_only=active_cell_only
+            self.setup,
+            self.mesh,
+            self._input_data,
+            self._parameters,
+            active_cell_only=active_cell_only,
         )
 
     @_model_forward_run_doc_substitution

@@ -78,7 +78,7 @@ def _map_dict_to_fortran_derived_type(dct: dict, fdt: FortranDerivedType, skip: 
                 setattr(fdt, key, value)
 
 
-def _build_mesh(setup: SetupDT, mesh: MeshDT):
+def _build_mesh(setup: SetupDT, mesh: MeshDT, mesh_input: dict):
     wrap_compute_rowcol_to_ind_ac(mesh)  # % Fortran subroutine
     mesh.local_active_cell = mesh.active_cell.copy()
 

@@ -12151,6 +12151,25 @@ MODULE MWD_SPARSE_MATRIX_MANIPULATION_DIFF
 & sparse_matrix_to_matrix, get_sparse_matrix_dat
 
 CONTAINS
+!~     subroutine map_dict_hd_dam_to_meshDT(row, col, hd_type, rel_hv, rel_hq, mesh)
+!~         integer, intent(in) :: row
+!~         integer, intent(in) :: col
+!~         character(lchar), intent(in) :: hd_type
+!~         real(sp), dimension(:,:) :: rel_hv
+!~         real(sp), dimension(:,:) :: rel_hq
+!~         type(MeshDT), intent(inout) :: mesh
+!~         integer, dimension(2) :: shape_rel_hv
+!~         integer, dimension(2) :: shape_rel_hq
+!~         shape_rel_hv=shape(rel_hv)
+!~         shape_rel_hq=shape(rel_hq)
+!~         allocate(mesh%hydraulics_discontinuities(row,col)%dam%rel_hv(shape_rel_hv(1),shape_rel_hv(2)))
+!~         allocate(mesh%hydraulics_discontinuities(row,col)%dam%rel_hq(shape_rel_hq(1),shape_rel_hq(2)))
+!~         mesh%hydraulics_discontinuities(row,col)%discontinuity_type=hd_type
+!~         mesh%hydraulics_discontinuities(row,col)%coordinates(1)=row
+!~         mesh%hydraulics_discontinuities(row,col)%coordinates(2)=col
+!~         mesh%hydraulics_discontinuities(row,col)%dam%rel_hv=rel_hv
+!~         mesh%hydraulics_discontinuities(row,col)%dam%rel_hq=rel_hq
+!~     end subroutine map_dict_hd_dam_to_meshDT
   SUBROUTINE BINARY_SEARCH(n, vector, vle, ind)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: n
@@ -21700,13 +21719,14 @@ END MODULE MD_GR_OPERATOR_DIFF
 !%      ----------
 !%
 !%      - upstream_discharge
+!%      - hydraulics_structures
 !%      - linear_routing
 !%      - kinematic_wave1d
 !%      - lag0_time_step
 !%      - lr_time_step
 !%      - kw_time_step
 MODULE MD_ROUTING_OPERATOR_DIFF
-!% only : sp
+!% only : sp, lchar
   USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
@@ -21716,6 +21736,8 @@ MODULE MD_ROUTING_OPERATOR_DIFF
   USE MWD_OPTIONS_DIFF
 !% only: ReturnsDT
   USE MWD_RETURNS_DIFF
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
   IMPLICIT NONE
 
 CONTAINS
@@ -21811,6 +21833,119 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE UPSTREAM_DISCHARGE
+
+!  Differentiation of hydraulics_structures in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: q hdam
+!   with respect to varying inputs: q hdam
+  SUBROUTINE HYDRAULICS_STRUCTURES_D(setup, mesh, input_data, time_step&
+&   , row, col, hdam, hdam_d, q, q_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTEGER, INTENT(IN) :: row
+    INTEGER, INTENT(IN) :: col
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), INTENT(INOUT) :: hdam
+    REAL(sp), INTENT(INOUT) :: hdam_d
+    REAL(sp), INTENT(INOUT) :: q
+    REAL(sp), INTENT(INOUT) :: q_d
+    INTEGER :: ist, index_structure
+    CHARACTER(len=lchar) :: structure_type
+    IF (mesh%hs_index(row, col) .GT. 0) THEN
+      index_structure = mesh%hs_index(row, col) + 1
+      structure_type = mesh%outlet_type(index_structure)
+    ELSE
+      structure_type = 'none'
+    END IF
+    SELECT CASE  (structure_type) 
+    CASE ('dam') 
+      ist = mesh%hs_index_by_type(index_structure) + 1
+      CALL LAMINAGE_D(setup%dt, input_data%hydraulic_structure%&
+&               dam_structure%dam_hv(ist, :, :), input_data%&
+&               hydraulic_structure%dam_structure%dam_hq(ist, :, :), &
+&               hdam, hdam_d, q, q_d)
+    CASE ('inflow') 
+      ist = mesh%hs_index_by_type(index_structure) + 1
+      q = q + input_data%hydraulic_structure%inflow_structure%inflow(ist&
+&       , time_step)
+    END SELECT
+  END SUBROUTINE HYDRAULICS_STRUCTURES_D
+
+!  Differentiation of hydraulics_structures in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: q hdam
+!   with respect to varying inputs: q hdam
+  SUBROUTINE HYDRAULICS_STRUCTURES_B(setup, mesh, input_data, time_step&
+&   , row, col, hdam, hdam_b, q, q_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTEGER, INTENT(IN) :: row
+    INTEGER, INTENT(IN) :: col
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), INTENT(INOUT) :: hdam
+    REAL(sp), INTENT(INOUT) :: hdam_b
+    REAL(sp), INTENT(INOUT) :: q
+    REAL(sp), INTENT(INOUT) :: q_b
+    INTEGER :: ist, index_structure
+    CHARACTER(len=lchar) :: structure_type
+    IF (mesh%hs_index(row, col) .GT. 0) THEN
+      index_structure = mesh%hs_index(row, col) + 1
+      structure_type = mesh%outlet_type(index_structure)
+    ELSE
+      structure_type = 'none'
+    END IF
+    SELECT CASE  (structure_type) 
+    CASE ('dam') 
+      ist = mesh%hs_index_by_type(index_structure) + 1
+      CALL PUSHREAL4(q)
+      CALL PUSHREAL4(hdam)
+      CALL LAMINAGE(setup%dt, input_data%hydraulic_structure%&
+&             dam_structure%dam_hv(ist, :, :), input_data%&
+&             hydraulic_structure%dam_structure%dam_hq(ist, :, :), hdam&
+&             , q)
+      CALL POPREAL4(hdam)
+      CALL POPREAL4(q)
+      CALL LAMINAGE_B(setup%dt, input_data%hydraulic_structure%&
+&               dam_structure%dam_hv(ist, :, :), input_data%&
+&               hydraulic_structure%dam_structure%dam_hq(ist, :, :), &
+&               hdam, hdam_b, q, q_b)
+    END SELECT
+  END SUBROUTINE HYDRAULICS_STRUCTURES_B
+
+  SUBROUTINE HYDRAULICS_STRUCTURES(setup, mesh, input_data, time_step, &
+&   row, col, hdam, q)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTEGER, INTENT(IN) :: row
+    INTEGER, INTENT(IN) :: col
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), INTENT(INOUT) :: hdam
+    REAL(sp), INTENT(INOUT) :: q
+    INTEGER :: ist, index_structure
+    CHARACTER(len=lchar) :: structure_type
+    IF (mesh%hs_index(row, col) .GT. 0) THEN
+      index_structure = mesh%hs_index(row, col) + 1
+      structure_type = mesh%outlet_type(index_structure)
+    ELSE
+      structure_type = 'none'
+    END IF
+    SELECT CASE  (structure_type) 
+    CASE ('dam') 
+      ist = mesh%hs_index_by_type(index_structure) + 1
+      CALL LAMINAGE(setup%dt, input_data%hydraulic_structure%&
+&             dam_structure%dam_hv(ist, :, :), input_data%&
+&             hydraulic_structure%dam_structure%dam_hq(ist, :, :), hdam&
+&             , q)
+    CASE ('inflow') 
+      ist = mesh%hs_index_by_type(index_structure) + 1
+      q = q + input_data%hydraulic_structure%inflow_structure%inflow(ist&
+&       , time_step)
+    END SELECT
+  END SUBROUTINE HYDRAULICS_STRUCTURES
 
 !  Differentiation of linear_routing in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: hlr q
@@ -22379,14 +22514,15 @@ CONTAINS
   END SUBROUTINE LAG0_TIME_STEP
 
 !  Differentiation of lr_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: ac_qz ac_hlr
-!   with respect to varying inputs: ac_llr ac_qz ac_hlr ac_qtz
-  SUBROUTINE LR_TIME_STEP_D(setup, mesh, options, returns, time_step, &
-&   ac_qtz, ac_qtz_d, ac_llr, ac_llr_d, ac_hlr, ac_hlr_d, ac_qz, ac_qz_d&
-& )
+!   variations   of useful results: ac_hd ac_qz ac_hlr
+!   with respect to varying inputs: ac_llr ac_hd ac_qz ac_hlr ac_qtz
+  SUBROUTINE LR_TIME_STEP_D(setup, mesh, input_data, options, returns, &
+&   time_step, ac_qtz, ac_qtz_d, ac_llr, ac_llr_d, ac_hlr, ac_hlr_d, &
+&   ac_hd, ac_hd_d, ac_qz, ac_qz_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
@@ -22396,9 +22532,12 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_llr_d
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hlr
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hlr_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hd
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hd_d
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz_d
-    INTEGER :: i, j, row, col, k, time_step_returns
+    INTEGER :: i, j, row, col, k, time_step_returns, index_dam, &
+&   index_input_q
     REAL(sp) :: qup
     REAL(sp) :: qup_d
     ac_qz_d(:, setup%nqz) = ac_qtz_d(:, setup%nqz)
@@ -22421,6 +22560,11 @@ CONTAINS
 &                           ac_llr_d(k), ac_hlr(k), ac_hlr_d(k), qup, &
 &                           qup_d, ac_qz(k, setup%nqz), ac_qz_d(k, setup&
 &                           %nqz))
+!Hydraulics structure
+            CALL HYDRAULICS_STRUCTURES_D(setup, mesh, input_data, &
+&                                  time_step, row, col, ac_hd(k), &
+&                                  ac_hd_d(k), ac_qz(k, setup%nqz), &
+&                                  ac_qz_d(k, setup%nqz))
           END IF
         END DO
       ELSE
@@ -22437,6 +22581,11 @@ CONTAINS
 &                           ac_llr_d(k), ac_hlr(k), ac_hlr_d(k), qup, &
 &                           qup_d, ac_qz(k, setup%nqz), ac_qz_d(k, setup&
 &                           %nqz))
+!Hydraulics structure
+            CALL HYDRAULICS_STRUCTURES_D(setup, mesh, input_data, &
+&                                  time_step, row, col, ac_hd(k), &
+&                                  ac_hd_d(k), ac_qz(k, setup%nqz), &
+&                                  ac_qz_d(k, setup%nqz))
           END IF
         END DO
       END IF
@@ -22444,14 +22593,15 @@ CONTAINS
   END SUBROUTINE LR_TIME_STEP_D
 
 !  Differentiation of lr_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: ac_llr ac_qz ac_hlr ac_qtz
-!   with respect to varying inputs: ac_llr ac_qz ac_hlr ac_qtz
-  SUBROUTINE LR_TIME_STEP_B(setup, mesh, options, returns, time_step, &
-&   ac_qtz, ac_qtz_b, ac_llr, ac_llr_b, ac_hlr, ac_hlr_b, ac_qz, ac_qz_b&
-& )
+!   gradient     of useful results: ac_llr ac_hd ac_qz ac_hlr ac_qtz
+!   with respect to varying inputs: ac_llr ac_hd ac_qz ac_hlr ac_qtz
+  SUBROUTINE LR_TIME_STEP_B(setup, mesh, input_data, options, returns, &
+&   time_step, ac_qtz, ac_qtz_b, ac_llr, ac_llr_b, ac_hlr, ac_hlr_b, &
+&   ac_hd, ac_hd_b, ac_qz, ac_qz_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
@@ -22461,9 +22611,12 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_llr_b
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hlr
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hlr_b
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hd
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hd_b
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz_b
-    INTEGER :: i, j, row, col, k, time_step_returns
+    INTEGER :: i, j, row, col, k, time_step_returns, index_dam, &
+&   index_input_q
     REAL(sp) :: qup
     REAL(sp) :: qup_b
     INTEGER :: ad_to
@@ -22490,6 +22643,12 @@ CONTAINS
             CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
 &                         setup%dt, mesh%flwacc(row, col), ac_llr(k), &
 &                         ac_hlr(k), qup, ac_qz(k, setup%nqz))
+!Hydraulics structure
+            CALL PUSHREAL4(ac_qz(k, setup%nqz))
+            CALL PUSHREAL4(ac_hd(k))
+            CALL HYDRAULICS_STRUCTURES(setup, mesh, input_data, &
+&                                time_step, row, col, ac_hd(k), ac_qz(k&
+&                                , setup%nqz))
             CALL PUSHCONTROL1B(1)
           END IF
         END DO
@@ -22511,6 +22670,12 @@ CONTAINS
             CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
 &                         setup%dt, mesh%flwacc(row, col), ac_llr(k), &
 &                         ac_hlr(k), qup, ac_qz(k, setup%nqz))
+!Hydraulics structure
+            CALL PUSHREAL4(ac_qz(k, setup%nqz))
+            CALL PUSHREAL4(ac_hd(k))
+            CALL HYDRAULICS_STRUCTURES(setup, mesh, input_data, &
+&                                time_step, row, col, ac_hd(k), ac_qz(k&
+&                                , setup%nqz))
             CALL PUSHCONTROL1B(1)
           END IF
         END DO
@@ -22528,6 +22693,12 @@ CONTAINS
             row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
             col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
             k = mesh%rowcol_to_ind_ac(row, col)
+            CALL POPREAL4(ac_hd(k))
+            CALL POPREAL4(ac_qz(k, setup%nqz))
+            CALL HYDRAULICS_STRUCTURES_B(setup, mesh, input_data, &
+&                                  time_step, row, col, ac_hd(k), &
+&                                  ac_hd_b(k), ac_qz(k, setup%nqz), &
+&                                  ac_qz_b(k, setup%nqz))
             CALL POPREAL4(ac_hlr(k))
             CALL POPREAL4(qup)
             CALL LINEAR_ROUTING_B(mesh%dx(row, col), mesh%dy(row, col), &
@@ -22547,6 +22718,12 @@ CONTAINS
             row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
             col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
             k = mesh%rowcol_to_ind_ac(row, col)
+            CALL POPREAL4(ac_hd(k))
+            CALL POPREAL4(ac_qz(k, setup%nqz))
+            CALL HYDRAULICS_STRUCTURES_B(setup, mesh, input_data, &
+&                                  time_step, row, col, ac_hd(k), &
+&                                  ac_hd_b(k), ac_qz(k, setup%nqz), &
+&                                  ac_qz_b(k, setup%nqz))
             CALL POPREAL4(ac_hlr(k))
             CALL POPREAL4(qup)
             CALL LINEAR_ROUTING_B(mesh%dx(row, col), mesh%dy(row, col), &
@@ -22565,19 +22742,22 @@ CONTAINS
     ac_qz_b(:, setup%nqz) = 0.0_4
   END SUBROUTINE LR_TIME_STEP_B
 
-  SUBROUTINE LR_TIME_STEP(setup, mesh, options, returns, time_step, &
-&   ac_qtz, ac_llr, ac_hlr, ac_qz)
+  SUBROUTINE LR_TIME_STEP(setup, mesh, input_data, options, returns, &
+&   time_step, ac_qtz, ac_llr, ac_hlr, ac_hd, ac_qz)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(IN) :: ac_qtz
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_llr
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hlr
+    REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hd
     REAL(sp), DIMENSION(mesh%nac, setup%nqz), INTENT(INOUT) :: ac_qz
-    INTEGER :: i, j, row, col, k, time_step_returns
+    INTEGER :: i, j, row, col, k, time_step_returns, index_dam, &
+&   index_input_q
     REAL(sp) :: qup
     ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
 ! Skip the first partition because boundary cells are not routed
@@ -22596,6 +22776,10 @@ CONTAINS
             CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
 &                         setup%dt, mesh%flwacc(row, col), ac_llr(k), &
 &                         ac_hlr(k), qup, ac_qz(k, setup%nqz))
+!Hydraulics structure
+            CALL HYDRAULICS_STRUCTURES(setup, mesh, input_data, &
+&                                time_step, row, col, ac_hd(k), ac_qz(k&
+&                                , setup%nqz))
           END IF
         END DO
       ELSE
@@ -22610,6 +22794,10 @@ CONTAINS
             CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
 &                         setup%dt, mesh%flwacc(row, col), ac_llr(k), &
 &                         ac_hlr(k), qup, ac_qz(k, setup%nqz))
+!Hydraulics structure
+            CALL HYDRAULICS_STRUCTURES(setup, mesh, input_data, &
+&                                time_step, row, col, ac_hd(k), ac_qz(k&
+&                                , setup%nqz))
           END IF
         END DO
       END IF
@@ -22892,6 +23080,652 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE KW_TIME_STEP
+
+!  Differentiation of laminage in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: h q
+!   with respect to varying inputs: h q
+!*************************************************************************
+!      PROCEDURE DE LAMINAGE
+!      dt = pas de temps de la chronique de débit entrant (secondes)
+!      rel_HV = relation hauteur/volume
+!      rel_HQ = relation hauteur/débit
+!      h = water elevation (m)
+!      q = debit in/out (m3/s)
+!*************************************************************************
+  SUBROUTINE LAMINAGE_D(dt, rel_hv, rel_hq, h, h_d, q, q_d)
+    IMPLICIT NONE
+    REAL, INTENT(IN) :: dt
+    REAL, DIMENSION(:, :), INTENT(IN) :: rel_hv
+    REAL, DIMENSION(:, :), INTENT(IN) :: rel_hq
+    REAL, INTENT(INOUT) :: h
+    REAL, INTENT(INOUT) :: h_d
+    REAL, INTENT(INOUT) :: q
+    REAL, INTENT(INOUT) :: q_d
+    INTEGER :: i, n_hv, n_hq
+    REAL :: qbid, volout, volin, volt, qoutmoy
+    REAL :: qbid_d, volout_d, volin_d, volt_d, qoutmoy_d
+    LOGICAL :: dt_min
+    INTRINSIC SIZE
+    INTRINSIC INT
+    n_hv = SIZE(rel_hv, dim=2)
+    n_hq = SIZE(rel_hq, dim=2)
+    qbid = 0.
+    qoutmoy = 0.
+    IF (.NOT.(rel_hv(1, 1) .LT. 0. .OR. rel_hq(1, 1) .LT. 0.)) THEN
+!cdl hv minimum
+      IF (h .LT. rel_hv(1, 1)) THEN
+        h = rel_hv(1, 1)
+        h_d = 0.0
+        qbid_d = 0.0
+        qoutmoy_d = 0.0
+        volt_d = 0.0
+      ELSE
+        qbid_d = 0.0
+        qoutmoy_d = 0.0
+        volt_d = 0.0
+      END IF
+! boucle sur les pas de temps en minutes
+      DO i=1,INT(dt/60.)
+        CALL H_TO_V_D(n_hv, rel_hv, h, h_d, volt, volt_d)
+! transformation des m3/s en mm3 par min
+        volin_d = 60.*q_d/1000000.
+        volin = q*60./1000000.
+        volt_d = volt_d + volin_d
+        volt = volt + volin
+        CALL V_TO_H_D(n_hv, rel_hv, volt, volt_d, h, h_d)
+        CALL H_TO_Q_D(n_hq, rel_hq, h, h_d, qbid, qbid_d)
+        volout_d = 60.*qbid_d/1000000.
+        volout = qbid*60./1000000.
+        volt_d = volt_d - volout_d
+        volt = volt - volout
+        CALL V_TO_H_D(n_hv, rel_hv, volt, volt_d, h, h_d)
+        qoutmoy_d = qoutmoy_d + qbid_d
+        qoutmoy = qoutmoy + qbid
+      END DO
+! fin de la boucle sur l'heure
+      q_d = 60.*qoutmoy_d/dt
+      q = qoutmoy/(dt/60.)
+    END IF
+
+  CONTAINS
+!  Differentiation of v_to_h in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: hauteur
+!   with respect to varying inputs: hauteur volume
+!~             VOLin = q / 1000000. * dt ! Transformation des m3/s de l'hydrogramme en Mm3 par pas de temps
+!~             VOLt = VOLt + VOLin
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             CALL H_to_Q(n_HQ, rel_HQ, Z, Qbid)
+!~             VOLout= Qbid / 1000000. * dt
+!~             VOLt = VOLt - VOLout
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             h = Z
+!~             q = Qbid
+    SUBROUTINE V_TO_H_D(nv, rel_hv, volume, volume_d, hauteur, hauteur_d&
+&   )
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: volume
+      REAL, INTENT(IN) :: volume_d
+      REAL, INTENT(OUT) :: hauteur
+      REAL, INTENT(OUT) :: hauteur_d
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+      REAL :: temp
+      REAL :: temp0
+!.... rel_hv(1,) == hauteur et rel_hv(2,) == volume      
+      DO ii=1,nv-1
+        IF (volume .GE. rel_hv(2, ii) .AND. volume .LE. rel_hv(2, ii+1)&
+&       ) GOTO 100
+      END DO
+      GOTO 110
+ 100  temp = rel_hv(1, ii+1) - rel_hv(1, ii)
+      temp0 = rel_hv(2, ii+1) - rel_hv(2, ii)
+      hauteur_d = temp*volume_d/temp0
+      hauteur = rel_hv(1, ii) + temp*((volume-rel_hv(2, ii))/temp0)
+ 110  CONTINUE
+    END SUBROUTINE V_TO_H_D
+
+!~             VOLin = q / 1000000. * dt ! Transformation des m3/s de l'hydrogramme en Mm3 par pas de temps
+!~             VOLt = VOLt + VOLin
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             CALL H_to_Q(n_HQ, rel_HQ, Z, Qbid)
+!~             VOLout= Qbid / 1000000. * dt
+!~             VOLt = VOLt - VOLout
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             h = Z
+!~             q = Qbid
+    SUBROUTINE V_TO_H(nv, rel_hv, volume, hauteur)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: volume
+      REAL, INTENT(OUT) :: hauteur
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+!.... rel_hv(1,) == hauteur et rel_hv(2,) == volume      
+      DO ii=1,nv-1
+        IF (volume .GE. rel_hv(2, ii) .AND. volume .LE. rel_hv(2, ii+1)&
+&       ) THEN
+          hauteur = rel_hv(1, ii) + (volume-rel_hv(2, ii))*(rel_hv(1, ii&
+&           +1)-rel_hv(1, ii))/(rel_hv(2, ii+1)-rel_hv(2, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE V_TO_H
+
+!  Differentiation of h_to_v in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: volume
+!   with respect to varying inputs: hauteur volume
+!**************************************************************************
+!.....Calcul de V(Mm3) pour un H(m) donné
+!**************************************************************************
+    SUBROUTINE H_TO_V_D(nv, rel_hv, hauteur, hauteur_d, volume, volume_d&
+&   )
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(IN) :: hauteur_d
+      REAL, INTENT(OUT) :: volume
+      REAL, INTENT(OUT) :: volume_d
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+      REAL :: temp
+      REAL :: temp0
+      DO ii=1,nv-1
+        IF (hauteur .GE. rel_hv(1, ii) .AND. hauteur .LE. rel_hv(1, ii+1&
+&           )) GOTO 100
+      END DO
+      GOTO 110
+ 100  temp = rel_hv(2, ii+1) - rel_hv(2, ii)
+      temp0 = rel_hv(1, ii+1) - rel_hv(1, ii)
+      volume_d = temp*hauteur_d/temp0
+      volume = rel_hv(2, ii) + temp*((hauteur-rel_hv(1, ii))/temp0)
+ 110  CONTINUE
+    END SUBROUTINE H_TO_V_D
+
+!**************************************************************************
+!.....Calcul de V(Mm3) pour un H(m) donné
+!**************************************************************************
+    SUBROUTINE H_TO_V(nv, rel_hv, hauteur, volume)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(OUT) :: volume
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+      DO ii=1,nv-1
+        IF (hauteur .GE. rel_hv(1, ii) .AND. hauteur .LE. rel_hv(1, ii+1&
+&           )) THEN
+          volume = rel_hv(2, ii) + (hauteur-rel_hv(1, ii))*(rel_hv(2, ii&
+&           +1)-rel_hv(2, ii))/(rel_hv(1, ii+1)-rel_hv(1, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE H_TO_V
+
+!  Differentiation of h_to_q in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: qsortant
+!   with respect to varying inputs: qsortant hauteur
+!**************************************************************************
+!.....Calcul de Q(m3/s) sortant pour un H(m) donné 
+!**************************************************************************
+    SUBROUTINE H_TO_Q_D(nq, rel_hq, hauteur, hauteur_d, qsortant, &
+&     qsortant_d)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nq
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(IN) :: hauteur_d
+      REAL, INTENT(OUT) :: qsortant
+      REAL, INTENT(OUT) :: qsortant_d
+      REAL, DIMENSION(2, nq) :: rel_hq
+      INTEGER :: ii
+      REAL :: temp
+      REAL :: temp0
+      DO ii=1,nq-1
+        IF (hauteur .GE. rel_hq(1, ii) .AND. hauteur .LE. rel_hq(1, ii+1&
+&           )) GOTO 100
+      END DO
+      GOTO 110
+ 100  temp = rel_hq(2, ii+1) - rel_hq(2, ii)
+      temp0 = rel_hq(1, ii+1) - rel_hq(1, ii)
+      qsortant_d = temp*hauteur_d/temp0
+      qsortant = rel_hq(2, ii) + temp*((hauteur-rel_hq(1, ii))/temp0)
+ 110  CONTINUE
+    END SUBROUTINE H_TO_Q_D
+
+!**************************************************************************
+!.....Calcul de Q(m3/s) sortant pour un H(m) donné 
+!**************************************************************************
+    SUBROUTINE H_TO_Q(nq, rel_hq, hauteur, qsortant)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nq
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(OUT) :: qsortant
+      REAL, DIMENSION(2, nq) :: rel_hq
+      INTEGER :: ii
+      DO ii=1,nq-1
+        IF (hauteur .GE. rel_hq(1, ii) .AND. hauteur .LE. rel_hq(1, ii+1&
+&           )) THEN
+          qsortant = rel_hq(2, ii) + (hauteur-rel_hq(1, ii))*(rel_hq(2, &
+&           ii+1)-rel_hq(2, ii))/(rel_hq(1, ii+1)-rel_hq(1, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE H_TO_Q
+
+  END SUBROUTINE LAMINAGE_D
+
+!  Differentiation of laminage in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: h q
+!   with respect to varying inputs: h q
+!*************************************************************************
+!      PROCEDURE DE LAMINAGE
+!      dt = pas de temps de la chronique de débit entrant (secondes)
+!      rel_HV = relation hauteur/volume
+!      rel_HQ = relation hauteur/débit
+!      h = water elevation (m)
+!      q = debit in/out (m3/s)
+!*************************************************************************
+  SUBROUTINE LAMINAGE_B(dt, rel_hv, rel_hq, h, h_b, q, q_b)
+    IMPLICIT NONE
+    REAL, INTENT(IN) :: dt
+    REAL, DIMENSION(:, :), INTENT(IN) :: rel_hv
+    REAL, DIMENSION(:, :), INTENT(IN) :: rel_hq
+    REAL, INTENT(INOUT) :: h
+    REAL, INTENT(INOUT) :: h_b
+    REAL, INTENT(INOUT) :: q
+    REAL, INTENT(INOUT) :: q_b
+    INTEGER :: i, n_hv, n_hq
+    REAL :: qbid, volout, volin, volt, qoutmoy
+    REAL :: qbid_b, volout_b, volin_b, volt_b, qoutmoy_b
+    LOGICAL :: dt_min
+    INTRINSIC SIZE
+    INTRINSIC INT
+    INTEGER :: ad_to
+    INTEGER :: branch
+    n_hv = SIZE(rel_hv, dim=2)
+    n_hq = SIZE(rel_hq, dim=2)
+    qbid = 0.
+    IF (.NOT.(rel_hv(1, 1) .LT. 0. .OR. rel_hq(1, 1) .LT. 0.)) THEN
+!cdl hv minimum
+      IF (h .LT. rel_hv(1, 1)) THEN
+        h = rel_hv(1, 1)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+! boucle sur les pas de temps en minutes
+      DO i=1,INT(dt/60.)
+        CALL PUSHREAL4(volt)
+        CALL H_TO_V(n_hv, rel_hv, h, volt)
+! transformation des m3/s en mm3 par min
+        volin = q*60./1000000.
+        volt = volt + volin
+        CALL PUSHREAL4(h)
+        CALL V_TO_H(n_hv, rel_hv, volt, h)
+        CALL H_TO_Q(n_hq, rel_hq, h, qbid)
+        volout = qbid*60./1000000.
+        CALL PUSHREAL4(volt)
+        volt = volt - volout
+        CALL PUSHREAL4(h)
+        CALL V_TO_H(n_hv, rel_hv, volt, h)
+      END DO
+      CALL PUSHINTEGER4(i - 1)
+      qoutmoy_b = 60.*q_b/dt
+      q_b = 0.0
+      qbid_b = 0.0
+      volt_b = 0.0
+      CALL POPINTEGER4(ad_to)
+      DO i=ad_to,1,-1
+        CALL POPREAL4(h)
+        CALL V_TO_H_B(n_hv, rel_hv, volt, volt_b, h, h_b)
+        volout_b = -volt_b
+        qbid_b = qbid_b + qoutmoy_b + 60.*volout_b/1000000.
+        CALL POPREAL4(volt)
+        CALL H_TO_Q_B(n_hq, rel_hq, h, h_b, qbid, qbid_b)
+        CALL POPREAL4(h)
+        CALL V_TO_H_B(n_hv, rel_hv, volt, volt_b, h, h_b)
+        volin_b = volt_b
+        q_b = q_b + 60.*volin_b/1000000.
+        CALL POPREAL4(volt)
+        CALL H_TO_V_B(n_hv, rel_hv, h, h_b, volt, volt_b)
+      END DO
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) h_b = 0.0
+    END IF
+
+  CONTAINS
+!  Differentiation of v_to_h in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: hauteur volume
+!   with respect to varying inputs: hauteur volume
+!~             VOLin = q / 1000000. * dt ! Transformation des m3/s de l'hydrogramme en Mm3 par pas de temps
+!~             VOLt = VOLt + VOLin
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             CALL H_to_Q(n_HQ, rel_HQ, Z, Qbid)
+!~             VOLout= Qbid / 1000000. * dt
+!~             VOLt = VOLt - VOLout
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             h = Z
+!~             q = Qbid
+    SUBROUTINE V_TO_H_B(nv, rel_hv, volume, volume_b, hauteur, hauteur_b&
+&   )
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: volume
+      REAL :: volume_b
+      REAL :: hauteur
+      REAL :: hauteur_b
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+      INTEGER :: ad_count
+      INTEGER :: i0
+      INTEGER :: branch
+      ad_count = 1
+!.... rel_hv(1,) == hauteur et rel_hv(2,) == volume      
+      DO ii=1,nv-1
+        IF (volume .GE. rel_hv(2, ii) .AND. volume .LE. rel_hv(2, ii+1)&
+&       ) THEN
+          GOTO 100
+        ELSE
+          ad_count = ad_count + 1
+        END IF
+      END DO
+      CALL PUSHCONTROL1B(0)
+      CALL PUSHINTEGER4(ad_count)
+      GOTO 110
+ 100  CALL PUSHCONTROL1B(1)
+      CALL PUSHINTEGER4(ad_count)
+      volume_b = volume_b + (rel_hv(1, ii+1)-rel_hv(1, ii))*hauteur_b/(&
+&       rel_hv(2, ii+1)-rel_hv(2, ii))
+ 110  CALL POPINTEGER4(ad_count)
+      DO i0=1,ad_count
+        IF (i0 .EQ. 1) THEN
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) hauteur_b = 0.0
+        END IF
+      END DO
+    END SUBROUTINE V_TO_H_B
+
+!~             VOLin = q / 1000000. * dt ! Transformation des m3/s de l'hydrogramme en Mm3 par pas de temps
+!~             VOLt = VOLt + VOLin
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             CALL H_to_Q(n_HQ, rel_HQ, Z, Qbid)
+!~             VOLout= Qbid / 1000000. * dt
+!~             VOLt = VOLt - VOLout
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             h = Z
+!~             q = Qbid
+    SUBROUTINE V_TO_H(nv, rel_hv, volume, hauteur)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: volume
+      REAL, INTENT(OUT) :: hauteur
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+!.... rel_hv(1,) == hauteur et rel_hv(2,) == volume      
+      DO ii=1,nv-1
+        IF (volume .GE. rel_hv(2, ii) .AND. volume .LE. rel_hv(2, ii+1)&
+&       ) THEN
+          hauteur = rel_hv(1, ii) + (volume-rel_hv(2, ii))*(rel_hv(1, ii&
+&           +1)-rel_hv(1, ii))/(rel_hv(2, ii+1)-rel_hv(2, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE V_TO_H
+
+!  Differentiation of h_to_v in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: hauteur volume
+!   with respect to varying inputs: hauteur volume
+!**************************************************************************
+!.....Calcul de V(Mm3) pour un H(m) donné
+!**************************************************************************
+    SUBROUTINE H_TO_V_B(nv, rel_hv, hauteur, hauteur_b, volume, volume_b&
+&   )
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: hauteur
+      REAL :: hauteur_b
+      REAL :: volume
+      REAL :: volume_b
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+      INTEGER :: ad_count
+      INTEGER :: i0
+      INTEGER :: branch
+      ad_count = 1
+      DO ii=1,nv-1
+        IF (hauteur .GE. rel_hv(1, ii) .AND. hauteur .LE. rel_hv(1, ii+1&
+&           )) THEN
+          GOTO 100
+        ELSE
+          ad_count = ad_count + 1
+        END IF
+      END DO
+      CALL PUSHCONTROL1B(0)
+      CALL PUSHINTEGER4(ad_count)
+      GOTO 110
+ 100  CALL PUSHCONTROL1B(1)
+      CALL PUSHINTEGER4(ad_count)
+      hauteur_b = hauteur_b + (rel_hv(2, ii+1)-rel_hv(2, ii))*volume_b/(&
+&       rel_hv(1, ii+1)-rel_hv(1, ii))
+ 110  CALL POPINTEGER4(ad_count)
+      DO i0=1,ad_count
+        IF (i0 .EQ. 1) THEN
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) volume_b = 0.0
+        END IF
+      END DO
+    END SUBROUTINE H_TO_V_B
+
+!**************************************************************************
+!.....Calcul de V(Mm3) pour un H(m) donné
+!**************************************************************************
+    SUBROUTINE H_TO_V(nv, rel_hv, hauteur, volume)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(OUT) :: volume
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+      DO ii=1,nv-1
+        IF (hauteur .GE. rel_hv(1, ii) .AND. hauteur .LE. rel_hv(1, ii+1&
+&           )) THEN
+          volume = rel_hv(2, ii) + (hauteur-rel_hv(1, ii))*(rel_hv(2, ii&
+&           +1)-rel_hv(2, ii))/(rel_hv(1, ii+1)-rel_hv(1, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE H_TO_V
+
+!  Differentiation of h_to_q in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: qsortant hauteur
+!   with respect to varying inputs: qsortant hauteur
+!**************************************************************************
+!.....Calcul de Q(m3/s) sortant pour un H(m) donné 
+!**************************************************************************
+    SUBROUTINE H_TO_Q_B(nq, rel_hq, hauteur, hauteur_b, qsortant, &
+&     qsortant_b)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nq
+      REAL, INTENT(IN) :: hauteur
+      REAL :: hauteur_b
+      REAL :: qsortant
+      REAL :: qsortant_b
+      REAL, DIMENSION(2, nq) :: rel_hq
+      INTEGER :: ii
+      INTEGER :: ad_count
+      INTEGER :: i0
+      INTEGER :: branch
+      ad_count = 1
+      DO ii=1,nq-1
+        IF (hauteur .GE. rel_hq(1, ii) .AND. hauteur .LE. rel_hq(1, ii+1&
+&           )) THEN
+          GOTO 100
+        ELSE
+          ad_count = ad_count + 1
+        END IF
+      END DO
+      CALL PUSHCONTROL1B(0)
+      CALL PUSHINTEGER4(ad_count)
+      GOTO 110
+ 100  CALL PUSHCONTROL1B(1)
+      CALL PUSHINTEGER4(ad_count)
+      hauteur_b = hauteur_b + (rel_hq(2, ii+1)-rel_hq(2, ii))*qsortant_b&
+&       /(rel_hq(1, ii+1)-rel_hq(1, ii))
+ 110  CALL POPINTEGER4(ad_count)
+      DO i0=1,ad_count
+        IF (i0 .EQ. 1) THEN
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) qsortant_b = 0.0
+        END IF
+      END DO
+    END SUBROUTINE H_TO_Q_B
+
+!**************************************************************************
+!.....Calcul de Q(m3/s) sortant pour un H(m) donné 
+!**************************************************************************
+    SUBROUTINE H_TO_Q(nq, rel_hq, hauteur, qsortant)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nq
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(OUT) :: qsortant
+      REAL, DIMENSION(2, nq) :: rel_hq
+      INTEGER :: ii
+      DO ii=1,nq-1
+        IF (hauteur .GE. rel_hq(1, ii) .AND. hauteur .LE. rel_hq(1, ii+1&
+&           )) THEN
+          qsortant = rel_hq(2, ii) + (hauteur-rel_hq(1, ii))*(rel_hq(2, &
+&           ii+1)-rel_hq(2, ii))/(rel_hq(1, ii+1)-rel_hq(1, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE H_TO_Q
+
+  END SUBROUTINE LAMINAGE_B
+
+!*************************************************************************
+!      PROCEDURE DE LAMINAGE
+!      dt = pas de temps de la chronique de débit entrant (secondes)
+!      rel_HV = relation hauteur/volume
+!      rel_HQ = relation hauteur/débit
+!      h = water elevation (m)
+!      q = debit in/out (m3/s)
+!*************************************************************************
+  SUBROUTINE LAMINAGE(dt, rel_hv, rel_hq, h, q)
+    IMPLICIT NONE
+    REAL, INTENT(IN) :: dt
+    REAL, DIMENSION(:, :), INTENT(IN) :: rel_hv
+    REAL, DIMENSION(:, :), INTENT(IN) :: rel_hq
+    REAL, INTENT(INOUT) :: h
+    REAL, INTENT(INOUT) :: q
+    INTEGER :: i, n_hv, n_hq
+    REAL :: qbid, volout, volin, volt, qoutmoy
+    LOGICAL :: dt_min
+    INTRINSIC SIZE
+    INTRINSIC INT
+    n_hv = SIZE(rel_hv, dim=2)
+    n_hq = SIZE(rel_hq, dim=2)
+    qbid = 0.
+    qoutmoy = 0.
+    IF (rel_hv(1, 1) .LT. 0. .OR. rel_hq(1, 1) .LT. 0.) THEN
+      RETURN
+    ELSE
+!cdl hv minimum
+      IF (h .LT. rel_hv(1, 1)) h = rel_hv(1, 1)
+! boucle sur les pas de temps en minutes
+      DO i=1,INT(dt/60.)
+        CALL H_TO_V(n_hv, rel_hv, h, volt)
+! transformation des m3/s en mm3 par min
+        volin = q*60./1000000.
+        volt = volt + volin
+        CALL V_TO_H(n_hv, rel_hv, volt, h)
+        CALL H_TO_Q(n_hq, rel_hq, h, qbid)
+        volout = qbid*60./1000000.
+        volt = volt - volout
+        CALL V_TO_H(n_hv, rel_hv, volt, h)
+        qoutmoy = qoutmoy + qbid
+      END DO
+    END IF
+! fin de la boucle sur l'heure
+    q = qoutmoy/(dt/60.)
+
+  CONTAINS
+!~             VOLin = q / 1000000. * dt ! Transformation des m3/s de l'hydrogramme en Mm3 par pas de temps
+!~             VOLt = VOLt + VOLin
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             CALL H_to_Q(n_HQ, rel_HQ, Z, Qbid)
+!~             VOLout= Qbid / 1000000. * dt
+!~             VOLt = VOLt - VOLout
+!~             CALL V_to_H(n_HV, rel_HV, VOLt, Z)
+!~             h = Z
+!~             q = Qbid
+    SUBROUTINE V_TO_H(nv, rel_hv, volume, hauteur)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: volume
+      REAL, INTENT(OUT) :: hauteur
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+!.... rel_hv(1,) == hauteur et rel_hv(2,) == volume      
+      DO ii=1,nv-1
+        IF (volume .GE. rel_hv(2, ii) .AND. volume .LE. rel_hv(2, ii+1)&
+&       ) THEN
+          hauteur = rel_hv(1, ii) + (volume-rel_hv(2, ii))*(rel_hv(1, ii&
+&           +1)-rel_hv(1, ii))/(rel_hv(2, ii+1)-rel_hv(2, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE V_TO_H
+
+!**************************************************************************
+!.....Calcul de V(Mm3) pour un H(m) donné
+!**************************************************************************
+    SUBROUTINE H_TO_V(nv, rel_hv, hauteur, volume)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nv
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(OUT) :: volume
+      REAL, DIMENSION(2, nv) :: rel_hv
+      INTEGER :: ii
+      DO ii=1,nv-1
+        IF (hauteur .GE. rel_hv(1, ii) .AND. hauteur .LE. rel_hv(1, ii+1&
+&           )) THEN
+          volume = rel_hv(2, ii) + (hauteur-rel_hv(1, ii))*(rel_hv(2, ii&
+&           +1)-rel_hv(2, ii))/(rel_hv(1, ii+1)-rel_hv(1, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE H_TO_V
+
+!**************************************************************************
+!.....Calcul de Q(m3/s) sortant pour un H(m) donné 
+!**************************************************************************
+    SUBROUTINE H_TO_Q(nq, rel_hq, hauteur, qsortant)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: nq
+      REAL, INTENT(IN) :: hauteur
+      REAL, INTENT(OUT) :: qsortant
+      REAL, DIMENSION(2, nq) :: rel_hq
+      INTEGER :: ii
+      DO ii=1,nq-1
+        IF (hauteur .GE. rel_hq(1, ii) .AND. hauteur .LE. rel_hq(1, ii+1&
+&           )) THEN
+          qsortant = rel_hq(2, ii) + (hauteur-rel_hq(1, ii))*(rel_hq(2, &
+&           ii+1)-rel_hq(2, ii))/(rel_hq(1, ii+1)-rel_hq(1, ii))
+          GOTO 100
+        END IF
+      END DO
+ 100  CONTINUE
+    END SUBROUTINE H_TO_Q
+
+  END SUBROUTINE LAMINAGE
 
 END MODULE MD_ROUTING_OPERATOR_DIFF
 
@@ -25749,17 +26583,24 @@ CONTAINS
 ! % hlr
         h1_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1)
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hd
+        h2_d = checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2)
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
 ! % llr
 ! % hlr
-        CALL LR_TIME_STEP_D(setup, mesh, options, returns, t, &
-&                     checkpoint_variable%ac_qtz, checkpoint_variable_d%&
-&                     ac_qtz, checkpoint_variable%ac_rr_parameters(:, &
-&                     rr_parameters_inc+1), checkpoint_variable_d%&
-&                     ac_rr_parameters(:, rr_parameters_inc+1), h1, h1_d&
-&                     , checkpoint_variable%ac_qz, checkpoint_variable_d&
-&                     %ac_qz)
+! hd  dam
+        CALL LR_TIME_STEP_D(setup, mesh, input_data, options, returns, t&
+&                     , checkpoint_variable%ac_qtz, &
+&                     checkpoint_variable_d%ac_qtz, checkpoint_variable%&
+&                     ac_rr_parameters(:, rr_parameters_inc+1), &
+&                     checkpoint_variable_d%ac_rr_parameters(:, &
+&                     rr_parameters_inc+1), h1, h1_d, h2, h2_d, &
+&                     checkpoint_variable%ac_qz, checkpoint_variable_d%&
+&                     ac_qz)
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
       CASE ('kw') 
 ! 'kw' module
 ! % akw
@@ -26608,17 +27449,22 @@ CONTAINS
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hlr
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hd
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
 ! % llr
 ! % hlr
+! hd  dam
         CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                     checkpoint_variable%ac_qz, 1)*SIZE(&
 &                     checkpoint_variable%ac_qz, 2))
+        CALL PUSHREAL4ARRAY(h2, mesh%nac)
         CALL PUSHREAL4ARRAY(h1, mesh%nac)
-        CALL LR_TIME_STEP(setup, mesh, options, returns, t, &
+        CALL LR_TIME_STEP(setup, mesh, input_data, options, returns, t, &
 &                   checkpoint_variable%ac_qtz, checkpoint_variable%&
-&                   ac_rr_parameters(:, rr_parameters_inc+1), h1, &
+&                   ac_rr_parameters(:, rr_parameters_inc+1), h1, h2, &
 &                   checkpoint_variable%ac_qz)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         CALL PUSHCONTROL2B(2)
       CASE ('kw') 
 ! 'kw' module
@@ -26655,20 +27501,29 @@ CONTAINS
 &                         checkpoint_variable_b%ac_qz)
         END IF
       ELSE IF (branch .EQ. 2) THEN
+        h2_b = 0.0_4
+        h2_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2)
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = 0.0_4
         h1_b = 0.0_4
         h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = 0.0_4
         CALL POPREAL4ARRAY(h1, mesh%nac)
+        CALL POPREAL4ARRAY(h2, mesh%nac)
         CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                    checkpoint_variable%ac_qz, 1)*SIZE(&
 &                    checkpoint_variable%ac_qz, 2))
-        CALL LR_TIME_STEP_B(setup, mesh, options, returns, t, &
-&                     checkpoint_variable%ac_qtz, checkpoint_variable_b%&
-&                     ac_qtz, checkpoint_variable%ac_rr_parameters(:, &
-&                     rr_parameters_inc+1), checkpoint_variable_b%&
-&                     ac_rr_parameters(:, rr_parameters_inc+1), h1, h1_b&
-&                     , checkpoint_variable%ac_qz, checkpoint_variable_b&
-&                     %ac_qz)
-        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = h1_b
+        CALL LR_TIME_STEP_B(setup, mesh, input_data, options, returns, t&
+&                     , checkpoint_variable%ac_qtz, &
+&                     checkpoint_variable_b%ac_qtz, checkpoint_variable%&
+&                     ac_rr_parameters(:, rr_parameters_inc+1), &
+&                     checkpoint_variable_b%ac_rr_parameters(:, &
+&                     rr_parameters_inc+1), h1, h1_b, h2, h2_b, &
+&                     checkpoint_variable%ac_qz, checkpoint_variable_b%&
+&                     ac_qz)
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
+&         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + h2_b
+        checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
+&         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) + h1_b
       ELSE
         CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
 &                    checkpoint_variable%ac_qz, 1)*SIZE(&
@@ -28310,13 +29165,17 @@ CONTAINS
 ! % To avoid potential aliasing tapenade warning (DF02)
 ! % hlr
         h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc+1)
+! % hd
+        h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc+2)
 ! % llr
 ! % hlr
-        CALL LR_TIME_STEP(setup, mesh, options, returns, t, &
+! hd  dam
+        CALL LR_TIME_STEP(setup, mesh, input_data, options, returns, t, &
 &                   checkpoint_variable%ac_qtz, checkpoint_variable%&
-&                   ac_rr_parameters(:, rr_parameters_inc+1), h1, &
+&                   ac_rr_parameters(:, rr_parameters_inc+1), h1, h2, &
 &                   checkpoint_variable%ac_qz)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
+        checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         rr_parameters_inc = rr_parameters_inc + 1
         rr_states_inc = rr_states_inc + 1
       CASE ('kw') 
