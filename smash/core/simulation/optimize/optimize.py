@@ -1311,6 +1311,7 @@ def _gradient_free_optimize_problem(
 def _backward_run(
     model: Model,
     grad_mode: str = "j",
+    input_derivatives: np.ndarray | None = None,
     mapping: str = "uniform",
     optimizer: str | None = None,
     optimize_options: dict[str, Any] | None = None,
@@ -1358,7 +1359,7 @@ def _backward_run(
     if grad_mode == "j":
         parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
     elif grad_mode in ["q", "qt"]:
-        parameters_b = _get_parameters_q_b(model, parameters, wrap_options, wrap_returns)
+        parameters_b = _get_parameters_q_b(model, parameters, wrap_options, wrap_returns, input_derivatives)
 
     grad = parameters_b.control.x.copy()
     name = parameters_b.control.name.copy()

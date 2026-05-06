@@ -46,9 +46,9 @@ contains
         allocate (this%q(mesh%ng, setup%ntime_step))
         this%q = -99._sp
 
-!~         When conditionning this allocatation, tapenade force
-!~         its value to zeros before calling SIMULATION_B...
-        !save memory
+        !When conditionning this allocatation, tapenade force
+        !its value to zeros before calling SIMULATION_B...
+        !save memory, reallocate it latter
         allocate (this%qac(1, 1))
         this%qac = -99._sp
 

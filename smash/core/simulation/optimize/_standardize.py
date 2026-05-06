@@ -4,6 +4,8 @@ import inspect
 import warnings
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from smash._constant import GRADIENT_BASED_OPTIMIZER, GRADIENT_FREE_OPTIMIZER, MAPPING
 from smash.core.simulation._standardize import (
     _standardize_simulation_common_options,
@@ -165,6 +167,29 @@ def _standardize_bayesian_optimize_args(
         return_options,
         callback,
     )
+
+
+def _standardize_input_derivatives(input_derivatives, grad_mode, model):
+    if input_derivatives is None:
+        return None
+
+    if not isinstance(input_derivatives, (np.ndarray, float)):
+        raise ValueError("input_derivaties option must be an np.ndarray.")
+
+    if grad_mode == "j" and len(input_derivatives) > 0:
+        raise ValueError(
+            f"""Inconsitant grad_mode value {grad_mode} and input_derivatives value.
+            Input_derivatives must be None if grade_mode is set to `j`"""
+        )
+
+    if grad_mode in ["qt", "q"]:
+        if input_derivatives.shape != (model.mesh.nac, model.setup.ntime_step):
+            raise ValueError(
+                f"""Wrong shape of input_derivatives with shape {input_derivatives.shape}.
+            Shape must be equal to model.output.response.qac {(model.mesh.nac, model.setup.ntime_step)}"""
+            )
+
+    return input_derivatives
 
 
 def _standardize_grad_mode(grad_mode, return_options):

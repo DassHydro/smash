@@ -58,6 +58,7 @@ from smash.core.simulation.estimate.estimate import _multiset_estimate
 from smash.core.simulation.optimize._standardize import (
     _standardize_bayesian_optimize_args,
     _standardize_grad_mode,
+    _standardize_input_derivatives,
     _standardize_optimize_args,
 )
 from smash.core.simulation.optimize._tools import _set_control
@@ -2933,12 +2934,14 @@ class Model:
         mapping: str = "uniform",
         optimizer: str = "lbfgsb",
         grad_mode: str = "j",
+        input_derivatives: np.ndarray | None = None,
         optimize_options: dict[str, Any] | None = None,
         cost_options: dict[str, Any] | None = None,
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,
     ):
         grad_mode, return_options = _standardize_grad_mode(grad_mode, return_options)
+        input_derivatives = _standardize_input_derivatives(input_derivatives, grad_mode, self)
 
         args_options = [
             deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
@@ -2958,6 +2961,6 @@ class Model:
                 self.mesh,
             )
 
-        grad = _backward_run(self, grad_mode, *args)
+        grad = _backward_run(self, grad_mode, input_derivatives, *args)
 
         return grad

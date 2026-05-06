@@ -72,10 +72,7 @@ contains
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
 
-        type(OptionsDT) :: option_d
-        option_d = options
-
-        call base_forward_run_q_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, option_d, returns)
+        call base_forward_run_q_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, returns)
 
     end subroutine forward_run_q_d
 

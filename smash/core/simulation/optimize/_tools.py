@@ -389,11 +389,16 @@ def _get_parameters_q_b(
     parameters: ParametersDT,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
+    input_derivatives,
 ) -> ParametersDT:
     parameters_b = parameters.copy()
     output_b = model._output.copy()
 
-    output_b.response.qac = np.float32(1.0)
+    # pass reverse derivative through th adjoin dependent output variable output_b (in-killed))
+    if input_derivatives is not None:
+        output_b.response.qac = input_derivatives
+    else:
+        output_b.response.qac = np.float32(1.0)
 
     wrap_forward_run_q_b(
         model.setup,
