@@ -160,6 +160,7 @@ py.extension_module(
     c_sources, f90_sources, f90wrap_f90_sources, f2py_f90wrap_sources,
     c_args: ['-O3', c_ignore_warnings],
     fortran_args: ['-O3', '-march=native', '-cpp', fortran_ignore_warnings],
+    #fortran_args: ['-Wall', '-Wextra', '-fmax-errors=1', '-cpp', '-g', '-fcheck=all', '-fbacktrace', fortran_ignore_warnings],
     link_args: link_args,
     dependencies: dependencies,
     install: true,

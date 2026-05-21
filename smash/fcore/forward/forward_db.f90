@@ -2077,6 +2077,72 @@ END MODULE MWD_OPTIONS_DIFF
 !%      Type
 !%      ----
 !%
+!%      - ResponseDT
+!%          Response simulated by the hydrological model.
+!%
+!%          ======================== =======================================
+!%          `Variables`              Description
+!%          ======================== =======================================
+!%          ``q``                    Simulated discharge at gauges              [m3/s]
+!%          ======================== =======================================
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - ResponseDT_initialise
+!%      - ResponseDT_copy
+MODULE MWD_RESPONSE_DIFF
+!% only: sp,lchar
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+  IMPLICIT NONE
+  TYPE RESPONSEDT
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qac
+  END TYPE RESPONSEDT
+
+CONTAINS
+  SUBROUTINE RESPONSEDT_INITIALISE(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(RESPONSEDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    ALLOCATE(this%q(mesh%ng, setup%ntime_step))
+    this%q = -99._sp
+!When conditionning this allocatation, tapenade force
+!its value to zeros before calling SIMULATION_B...
+!save memory, reallocate it latter
+    ALLOCATE(this%qac(1, 1))
+    this%qac = -99._sp
+  END SUBROUTINE RESPONSEDT_INITIALISE
+
+  SUBROUTINE RESPONSEDT_REALLOCATE_QAC(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(RESPONSEDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    DEALLOCATE(this%qac)
+    ALLOCATE(this%qac(mesh%nac, setup%ntime_step))
+    this%qac = -99._sp
+  END SUBROUTINE RESPONSEDT_REALLOCATE_QAC
+
+  SUBROUTINE RESPONSEDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(RESPONSEDT), INTENT(IN) :: this
+    TYPE(RESPONSEDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE RESPONSEDT_COPY
+
+END MODULE MWD_RESPONSE_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
 !%      - RR_StatesDT
 !%        Matrices containting spatialized states of hydrological operators.
 !%        (reservoir level ...) The matrices are updated at each time step.
@@ -2158,7 +2224,7 @@ MODULE MWD_OUTPUT_DIFF
 !% only: MeshDT
   USE MWD_MESH
 !% only: ResponseDT, ResponseDT_initialise
-  USE MWD_RESPONSE
+  USE MWD_RESPONSE_DIFF
 !% only: Rr_StatesDT, Rr_StatesDT_initialise
   USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
@@ -2673,7 +2739,7 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      - ReturnsDT_initialise
 !%      - ReturnsDT_copy
 MODULE MWD_RETURNS_DIFF
-!% only: sp
+!% only: sp, lchar
   USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
@@ -2706,6 +2772,9 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: log_h_flag=.false.
       REAL(sp), DIMENSION(:, :, :, :), ALLOCATABLE :: internal_fluxes
       LOGICAL :: internal_fluxes_flag=.false.
+      LOGICAL :: q_domain_kind_q_flag=.false.
+      LOGICAL :: q_domain_kind_qt_flag=.false.
+      LOGICAL :: grad_q_domain_flag=.false.
   END TYPE RETURNSDT
 
 CONTAINS
@@ -2760,6 +2829,12 @@ CONTAINS
         this%internal_fluxes_flag = .true.
         ALLOCATE(this%internal_fluxes(mesh%nrow, mesh%ncol, this%nmts, &
 &       setup%n_internal_fluxes))
+      CASE ('q_domain_kind_q') 
+        this%q_domain_kind_q_flag = .true.
+      CASE ('q_domain_kind_qt') 
+        this%q_domain_kind_qt_flag = .true.
+      CASE ('grad_q_domain') 
+        this%grad_q_domain_flag = .true.
       END SELECT
     END DO
   END SUBROUTINE RETURNSDT_INITIALISE
@@ -2967,7 +3042,8 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: r_d, a_d, b_d
     REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
 &   var_x, var_y, cov
-    REAL(sp) :: sum_y_d, sum_yy_d, sum_xy_d, mean_y_d, var_y_d, cov_d
+    REAL(sp) :: sum_y_d, sum_yy_d, sum_xy_d, mean_y_d, var_x_d, var_y_d&
+&   , cov_d
     INTEGER :: n, i
     INTRINSIC SIZE
     INTRINSIC SQRT
@@ -3044,7 +3120,8 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: r_b, a_b, b_b
     REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
 &   var_x, var_y, cov
-    REAL(sp) :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_y_b, cov_b
+    REAL(sp) :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_x_b, var_y_b&
+&   , cov_b
     INTEGER :: n, i
     INTRINSIC SIZE
     INTRINSIC SQRT
@@ -5780,8 +5857,7 @@ CONTAINS
 !  Differentiation of sbs_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
-!                parameters.control.u_raw:in
+!   Plus diff mem management of: parameters.control.x:in
   SUBROUTINE SBS_CONTROL_TFM_D(parameters, parameters_d)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -5820,8 +5896,7 @@ CONTAINS
 !  Differentiation of sbs_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
-!                parameters.control.u_raw:in
+!   Plus diff mem management of: parameters.control.x:in
   SUBROUTINE SBS_CONTROL_TFM_B(parameters, parameters_b)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -9799,7 +9874,8 @@ CONTAINS
     CHARACTER(len=lchar) :: mu_funk, sigma_funk
     REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs, uobs&
 &   , sim
-    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: sim_d
+    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs_d, &
+&   uobs_d, sim_d
     INTRINSIC SUM
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta_d
@@ -9898,7 +9974,8 @@ CONTAINS
     CHARACTER(len=lchar) :: mu_funk, sigma_funk
     REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs, uobs&
 &   , sim
-    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: sim_b
+    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs_b, &
+&   uobs_b, sim_b
     INTRINSIC SUM
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta_b
@@ -14842,6 +14919,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp0
@@ -14958,6 +15036,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp_b
@@ -15209,6 +15288,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp0
@@ -15381,6 +15461,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp_b
@@ -24686,10 +24767,13 @@ CONTAINS
   END SUBROUTINE ROLL_DISCHARGE
 
 !  Differentiation of store_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: *(output.response.q)
-!   with respect to varying inputs: *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
-!   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
+!   variations   of useful results: *(output.response.q) *(output.response.qac)
+!   with respect to varying inputs: *(checkpoint_variable.ac_qtz)
+!                *(checkpoint_variable.ac_qz) *(output.response.q)
+!                *(output.response.qac)
+!   Plus diff mem management of: checkpoint_variable.ac_qtz:in
+!                checkpoint_variable.ac_qz:in output.response.q:in
+!                output.response.qac:in
   SUBROUTINE STORE_TIME_STEP_D(setup, mesh, output, output_d, returns, &
 &   checkpoint_variable, checkpoint_variable_d, time_step)
     IMPLICIT NONE
@@ -24710,14 +24794,32 @@ CONTAINS
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
+    IF (returns%grad_q_domain_flag) THEN
+      IF (returns%q_domain_kind_qt_flag) THEN
+        DO i=1,mesh%nac
+          output_d%response%qac(i, time_step) = checkpoint_variable_d%&
+&           ac_qtz(i, setup%nqz)
+        END DO
+      END IF
+      IF (returns%q_domain_kind_q_flag) THEN
+        DO i=1,mesh%nac
+          output_d%response%qac(i, time_step) = checkpoint_variable_d%&
+&           ac_qz(i, setup%nqz)
+        END DO
+      END IF
+    END IF
   END SUBROUTINE STORE_TIME_STEP_D
 
 !  Differentiation of store_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
-!   gradient     of useful results: *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
-!   with respect to varying inputs: *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
-!   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
+!   gradient     of useful results: *(checkpoint_variable.ac_qtz)
+!                *(checkpoint_variable.ac_qz) *(output.response.q)
+!                *(output.response.qac)
+!   with respect to varying inputs: *(checkpoint_variable.ac_qtz)
+!                *(checkpoint_variable.ac_qz) *(output.response.q)
+!                *(output.response.qac)
+!   Plus diff mem management of: checkpoint_variable.ac_qtz:in
+!                checkpoint_variable.ac_qz:in output.response.q:in
+!                output.response.qac:in
   SUBROUTINE STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
 &   checkpoint_variable, checkpoint_variable_b, time_step)
     IMPLICIT NONE
@@ -24730,10 +24832,35 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_b
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
+    INTEGER :: branch
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
     END DO
+    IF (returns%grad_q_domain_flag) THEN
+      IF (returns%q_domain_kind_qt_flag) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (returns%q_domain_kind_q_flag) THEN
+        DO i=mesh%nac,1,-1
+          checkpoint_variable_b%ac_qz(i, setup%nqz) = &
+&           checkpoint_variable_b%ac_qz(i, setup%nqz) + output_b%&
+&           response%qac(i, time_step)
+          output_b%response%qac(i, time_step) = 0.0_4
+        END DO
+      END IF
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        DO i=mesh%nac,1,-1
+          checkpoint_variable_b%ac_qtz(i, setup%nqz) = &
+&           checkpoint_variable_b%ac_qtz(i, setup%nqz) + output_b%&
+&           response%qac(i, time_step)
+          output_b%response%qac(i, time_step) = 0.0_4
+        END DO
+      END IF
+    END IF
     DO i=mesh%ng,1,-1
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
@@ -24759,26 +24886,41 @@ CONTAINS
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
+    IF (returns%grad_q_domain_flag) THEN
+      IF (returns%q_domain_kind_qt_flag) THEN
+        DO i=1,mesh%nac
+          output%response%qac(i, time_step) = checkpoint_variable%ac_qtz&
+&           (i, setup%nqz)
+        END DO
+      END IF
+      IF (returns%q_domain_kind_q_flag) THEN
+        DO i=1,mesh%nac
+          output%response%qac(i, time_step) = checkpoint_variable%ac_qz(&
+&           i, setup%nqz)
+        END DO
+      END IF
+    END IF
   END SUBROUTINE STORE_TIME_STEP
 
 !  Differentiation of simulation_checkpoint in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(checkpoint_variable.ac_rr_states)
 !                *(checkpoint_variable.ac_mlt) *(checkpoint_variable.ac_qtz)
 !                *(checkpoint_variable.ac_qz) *(output.response.q)
+!                *(output.response.qac)
 !   with respect to varying inputs: *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
 !                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
 !                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.response.qac)
 !   Plus diff mem management of: parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.response.qac:in
   SUBROUTINE SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters&
 &   , parameters_d, output, output_d, options, returns, &
 &   checkpoint_variable, checkpoint_variable_d, start_time_step, &
@@ -25736,6 +25878,10 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
+      CASE ('zero') 
+! Only copy qt in q
+        checkpoint_variable_d%ac_qz = checkpoint_variable_d%ac_qtz
+        checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
       CASE ('lag0') 
 ! 'lag0' module
         CALL LAG0_TIME_STEP_D(setup, mesh, options, returns, t, &
@@ -25787,21 +25933,21 @@ CONTAINS
 !                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.response.qac)
 !   with respect to varying inputs: *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
 !                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
 !                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.response.qac)
 !   Plus diff mem management of: parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.response.qac:in
   SUBROUTINE SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters&
 &   , parameters_b, output, output_b, options, returns, &
 &   checkpoint_variable, checkpoint_variable_b, start_time_step, &
@@ -26594,6 +26740,10 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
+      CASE ('zero') 
+! Only copy qt in q
+        checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
+        CALL PUSHCONTROL3B(1)
       CASE ('lag0') 
 ! 'lag0' module
         CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
@@ -26602,7 +26752,7 @@ CONTAINS
         CALL LAG0_TIME_STEP(setup, mesh, options, returns, t, &
 &                     checkpoint_variable%ac_qtz, checkpoint_variable%&
 &                     ac_qz)
-        CALL PUSHCONTROL2B(1)
+        CALL PUSHCONTROL3B(2)
       CASE ('lr') 
 ! 'lr' module
 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -26619,7 +26769,7 @@ CONTAINS
 &                   ac_rr_parameters(:, rr_parameters_inc+1), h1, &
 &                   checkpoint_variable%ac_qz)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
-        CALL PUSHCONTROL2B(2)
+        CALL PUSHCONTROL3B(3)
       CASE ('kw') 
 ! 'kw' module
 ! % akw
@@ -26632,9 +26782,9 @@ CONTAINS
 &                   ac_rr_parameters(:, rr_parameters_inc+1), &
 &                   checkpoint_variable%ac_rr_parameters(:, &
 &                   rr_parameters_inc+2), checkpoint_variable%ac_qz)
-        CALL PUSHCONTROL2B(3)
+        CALL PUSHCONTROL3B(4)
       CASE DEFAULT
-        CALL PUSHCONTROL2B(0)
+        CALL PUSHCONTROL3B(0)
       END SELECT
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
 &                    checkpoint_variable, t)
@@ -26642,19 +26792,23 @@ CONTAINS
     DO t=end_time_step,start_time_step,-1
       CALL STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
 &                      checkpoint_variable, checkpoint_variable_b, t)
-      CALL POPCONTROL2B(branch)
+      CALL POPCONTROL3B(branch)
       IF (branch .LT. 2) THEN
         IF (branch .NE. 0) THEN
-          CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
-&                      checkpoint_variable%ac_qz, 1)*SIZE(&
-&                      checkpoint_variable%ac_qz, 2))
-          CALL LAG0_TIME_STEP_B(setup, mesh, options, returns, t, &
-&                         checkpoint_variable%ac_qtz, &
-&                         checkpoint_variable_b%ac_qtz, &
-&                         checkpoint_variable%ac_qz, &
-&                         checkpoint_variable_b%ac_qz)
+          checkpoint_variable_b%ac_qtz = checkpoint_variable_b%ac_qtz + &
+&           checkpoint_variable_b%ac_qz
+          checkpoint_variable_b%ac_qz = 0.0_4
         END IF
       ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
+&                    checkpoint_variable%ac_qz, 1)*SIZE(&
+&                    checkpoint_variable%ac_qz, 2))
+        CALL LAG0_TIME_STEP_B(setup, mesh, options, returns, t, &
+&                       checkpoint_variable%ac_qtz, &
+&                       checkpoint_variable_b%ac_qtz, &
+&                       checkpoint_variable%ac_qz, checkpoint_variable_b&
+&                       %ac_qz)
+      ELSE IF (branch .EQ. 3) THEN
         h1_b = 0.0_4
         h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
         CALL POPREAL4ARRAY(h1, mesh%nac)
@@ -28300,6 +28454,9 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
+      CASE ('zero') 
+! Only copy qt in q
+        checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
       CASE ('lag0') 
 ! 'lag0' module
         CALL LAG0_TIME_STEP(setup, mesh, options, returns, t, &
@@ -28336,7 +28493,7 @@ CONTAINS
   END SUBROUTINE SIMULATION_CHECKPOINT
 
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(output.response.q) *(output.response.qac)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
@@ -28347,6 +28504,7 @@ CONTAINS
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.response.qac:in
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -28367,6 +28525,7 @@ CONTAINS
     INTRINSIC SQRT
     INTRINSIC INT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
     REAL(sp) :: result1
 ! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
@@ -28417,6 +28576,7 @@ CONTAINS
 &                          checkpoint_variable_d%ac_rr_states(:, i))
     END DO
     output_d%response%q = 0.0_4
+    output_d%response%qac = 0.0_4
 ! % Checkpoints loop
     DO i=1,ncheckpoint
       start_time_step = (i-1)*checkpoint_size + 1
@@ -28433,6 +28593,7 @@ CONTAINS
 !  Differentiation of simulation in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
+!                *(output.response.qac)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
@@ -28443,6 +28604,7 @@ CONTAINS
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.response.qac:in
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -28463,6 +28625,7 @@ CONTAINS
     INTRINSIC SQRT
     INTRINSIC INT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
     REAL(sp) :: result1
 ! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
@@ -28660,7 +28823,8 @@ END MODULE MD_SIMULATION_DIFF
 !                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
 !                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
 !                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
-!                *(output.response.q):(loc) output.cost:out
+!                *(output.response.q):(loc) *(output.response.qac):(loc)
+!                output.cost:out
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_raw:in
 !                parameters.control.u_raw:in parameters.rr_parameters.values:in
@@ -28669,7 +28833,7 @@ END MODULE MD_SIMULATION_DIFF
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.response.qac:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, options_d, returns)
 !% only: sp
@@ -28728,7 +28892,8 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
 !                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
 !                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
-!                *(output.response.q):(loc) output.cost:in-killed
+!                *(output.response.q):(loc) *(output.response.qac):(loc)
+!                output.cost:in-killed
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_raw:in
 !                parameters.control.u_raw:in parameters.rr_parameters.values:in
@@ -28737,7 +28902,7 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.response.qac:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, options_b, returns)
 !% only: sp
@@ -28846,6 +29011,7 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 &             )
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
 &               , output, output_b, options, options_b, returns)
+  output_b%response%qac = 0.0_4
   CALL SIMULATION_B(setup, mesh, input_data, parameters, parameters_b, &
 &             output, output_b, options, returns)
   CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
@@ -28896,4 +29062,186 @@ SUBROUTINE BASE_FORWARD_RUN_NODIFF(setup, mesh, input_data, parameters, &
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, output, options&
 &             , returns)
 END SUBROUTINE BASE_FORWARD_RUN_NODIFF
+
+!  Differentiation of base_forward_run_q in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: *(output.response.qac)
+!   with respect to varying inputs: *(parameters.control.x)
+!   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):in-killed
+!                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
+!                *(parameters.serr_mu_parameters.values):(loc)
+!                *(parameters.serr_sigma_parameters.values):(loc)
+!                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
+!                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
+!                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
+!                *(output.response.q):(loc) output.response.qac:(loc)
+!                *(output.response.qac):out
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.response.qac:in
+SUBROUTINE BASE_FORWARD_RUN_Q_D(setup, mesh, input_data, parameters, &
+& parameters_d, output, output_d, options, returns)
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
+!% only: control_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: simulation
+  USE MD_SIMULATION_DIFF
+!% only: compute_cost
+  USE MWD_COST_DIFF
+  IMPLICIT NONE
+  TYPE(SETUPDT), INTENT(IN) :: setup
+  TYPE(MESHDT), INTENT(IN) :: mesh
+  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
+  TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(RETURNSDT), INTENT(INOUT) :: returns
+!% Map control to parameters
+  parameters_d%rr_parameters%values = 0.0_4
+  parameters_d%rr_initial_states%values = 0.0_4
+  CALL CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters, &
+&                        parameters_d, options)
+!% Simulation
+  CALL SIMULATION_D(setup, mesh, input_data, parameters, parameters_d, &
+&             output, output_d, options, returns)
+END SUBROUTINE BASE_FORWARD_RUN_Q_D
+
+!  Differentiation of base_forward_run_q in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: *(output.response.qac)
+!   with respect to varying inputs: *(parameters.control.x)
+!   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):out
+!                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
+!                *(parameters.serr_mu_parameters.values):(loc)
+!                *(parameters.serr_sigma_parameters.values):(loc)
+!                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
+!                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
+!                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
+!                *(output.response.q):(loc) output.response.qac:(loc)
+!                *(output.response.qac):in-killed
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.response.qac:in
+SUBROUTINE BASE_FORWARD_RUN_Q_B(setup, mesh, input_data, parameters, &
+& parameters_b, output, output_b, options, returns)
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
+!% only: control_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: simulation
+  USE MD_SIMULATION_DIFF
+!% only: compute_cost
+  USE MWD_COST_DIFF
+  IMPLICIT NONE
+  TYPE(SETUPDT), INTENT(IN) :: setup
+  TYPE(MESHDT), INTENT(IN) :: mesh
+  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
+  TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(RETURNSDT), INTENT(INOUT) :: returns
+!% Map control to parameters
+  CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
+&               ))
+  CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
+&                      options)
+!% Simulation
+  CALL SIMULATION(setup, mesh, input_data, parameters, output, options, &
+&           returns)
+  parameters_b%rr_parameters%values = 0.0_4
+  parameters_b%rr_initial_states%values = 0.0_4
+  output_b%response%q = 0.0_4
+  CALL SIMULATION_B(setup, mesh, input_data, parameters, parameters_b, &
+&             output, output_b, options, returns)
+  CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
+&             )
+  parameters_b%control%x = 0.0_4
+  parameters_b%serr_mu_parameters%values = 0.0_4
+  parameters_b%serr_sigma_parameters%values = 0.0_4
+  CALL CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters, &
+&                        parameters_b, options)
+END SUBROUTINE BASE_FORWARD_RUN_Q_B
+
+SUBROUTINE BASE_FORWARD_RUN_Q_NODIFF(setup, mesh, input_data, parameters&
+& , output, options, returns)
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
+!% only: control_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: simulation
+  USE MD_SIMULATION_DIFF
+!% only: compute_cost
+  USE MWD_COST_DIFF
+  IMPLICIT NONE
+  TYPE(SETUPDT), INTENT(IN) :: setup
+  TYPE(MESHDT), INTENT(IN) :: mesh
+  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output
+  TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(RETURNSDT), INTENT(INOUT) :: returns
+!% Map control to parameters
+  CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
+&                      options)
+!% Simulation
+  CALL SIMULATION(setup, mesh, input_data, parameters, output, options, &
+&           returns)
+END SUBROUTINE BASE_FORWARD_RUN_Q_NODIFF
 

@@ -20,7 +20,7 @@
 
 module mwd_response
 
-    use md_constant !% only: sp
+    use md_constant !% only: sp,lchar
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
 
@@ -29,6 +29,7 @@ module mwd_response
     type ResponseDT
 
         real(sp), dimension(:, :), allocatable :: q
+        real(sp), dimension(:, :), allocatable :: qac
 
     end type ResponseDT
 
@@ -45,7 +46,27 @@ contains
         allocate (this%q(mesh%ng, setup%ntime_step))
         this%q = -99._sp
 
+        !When conditionning this allocatation, tapenade force
+        !its value to zeros before calling SIMULATION_B...
+        !save memory, reallocate it latter
+        allocate (this%qac(1, 1))
+        this%qac = -99._sp
+
     end subroutine ResponseDT_initialise
+
+    subroutine ResponseDT_reallocate_qac(this, setup, mesh)
+
+        implicit none
+
+        type(ResponseDT), intent(inout) :: this
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+
+        deallocate (this%qac)
+        allocate (this%qac(mesh%nac, setup%ntime_step))
+        this%qac = -99._sp
+
+    end subroutine ResponseDT_reallocate_qac
 
     subroutine ResponseDT_copy(this, this_copy)
 

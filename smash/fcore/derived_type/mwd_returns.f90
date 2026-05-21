@@ -37,7 +37,7 @@
 
 module mwd_returns
 
-    use md_constant !% only: sp
+    use md_constant !% only: sp, lchar
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_rr_states !%only: RR_StatesDT, RR_StatesDT_initialise
@@ -77,6 +77,10 @@ module mwd_returns
 
         real(sp), dimension(:, :, :, :), allocatable :: internal_fluxes
         logical :: internal_fluxes_flag = .false.
+
+        logical :: q_domain_kind_q_flag = .False.
+        logical :: q_domain_kind_qt_flag = .false.
+        logical :: grad_q_domain_flag = .false.
 
     end type ReturnsDT
 
@@ -149,6 +153,15 @@ contains
             case ("internal_fluxes")
                 this%internal_fluxes_flag = .true.
                 allocate (this%internal_fluxes(mesh%nrow, mesh%ncol, this%nmts, setup%n_internal_fluxes))
+
+            case ("q_domain_kind_q")
+                this%q_domain_kind_q_flag = .true.
+
+            case ("q_domain_kind_qt")
+                this%q_domain_kind_qt_flag = .true.
+
+            case ("grad_q_domain")
+                this%grad_q_domain_flag = .true.
 
             end select
 

@@ -57,10 +57,13 @@ from smash.core.simulation.estimate._standardize import (
 from smash.core.simulation.estimate.estimate import _multiset_estimate
 from smash.core.simulation.optimize._standardize import (
     _standardize_bayesian_optimize_args,
+    _standardize_grad_mode,
+    _standardize_input_derivatives,
     _standardize_optimize_args,
 )
 from smash.core.simulation.optimize._tools import _set_control
 from smash.core.simulation.optimize.optimize import (
+    _backward_run,
     _bayesian_optimize,
     _optimize,
 )
@@ -78,6 +81,8 @@ from smash.fcore._mwd_parameters_manipulation import (
     get_serr_sigma as wrap_get_serr_sigma,
 )
 from smash.fcore._mwd_setup import SetupDT
+
+# from smash.fcore._mwd_response import reallocate_qac
 
 if TYPE_CHECKING:
     from typing import Any
@@ -141,6 +146,7 @@ class Model:
         routing_module : `str`, default 'lr'
             Name of routing module. Should be one of:
 
+            - ``'zero'``
             - ``'lag0'``
             - ``'lr'``
             - ``'kw'``
@@ -148,6 +154,7 @@ class Model:
             .. hint::
                 See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>`
                 section
+
 
         hidden_neuron : `int` or `list[int]`, default 16
             Number of neurons in hidden layer(s) of the parameterization neural network
@@ -2778,7 +2785,11 @@ class Model:
                 1.4       , 1.4       , 1.5       ]], dtype=float32)
         """
         _adjust_interception(
-            self.setup, self.mesh, self._input_data, self._parameters, active_cell_only=active_cell_only
+            self.setup,
+            self.mesh,
+            self._input_data,
+            self._parameters,
+            active_cell_only=active_cell_only,
         )
 
     @_model_forward_run_doc_substitution
@@ -2915,3 +2926,41 @@ class Model:
         # Cannot standardize 'control_vector' here before initializing model._parameters.control
         # it will be checked later after calling wrap_parameters_to_control
         _set_control(self, control_vector, *args)
+
+    @_set_control_bayesian_optimize_doc_substitution
+    @_set_control_bayesian_optimize_doc_appender
+    def backward_run(
+        self,
+        mapping: str = "uniform",
+        optimizer: str = "lbfgsb",
+        grad_mode: str = "j",
+        input_derivatives: np.ndarray | None = None,
+        optimize_options: dict[str, Any] | None = None,
+        cost_options: dict[str, Any] | None = None,
+        common_options: dict[str, Any] | None = None,
+        return_options: dict[str, Any] | None = None,
+    ):
+        grad_mode, return_options = _standardize_grad_mode(grad_mode, return_options)
+        input_derivatives = _standardize_input_derivatives(input_derivatives, grad_mode, self)
+
+        args_options = [
+            deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
+        ]
+
+        args = _standardize_optimize_args(
+            self,
+            mapping,
+            optimizer,
+            *args_options,
+            None,
+        )
+
+        if grad_mode in ["q", "qt"]:
+            self.response.reallocate_qac(
+                self.setup,
+                self.mesh,
+            )
+
+        grad = _backward_run(self, grad_mode, input_derivatives, *args)
+
+        return grad
