@@ -164,13 +164,14 @@ def read_model(path: FilePath) -> Model:
 
             model._output = OutputDT(model.setup, model.mesh)
 
-            # reallocate specific array under condtions bellow:
-            # array qac : only allocated if grad_mode in [qt, q], during the call of backward_run():
-            if model._output.response.qac.shape != h5m["response/qac"].shape:
-                model.response.reallocate_qac(
-                    model.setup,
-                    model.mesh,
-                )
+            # bellow, reallocate specific array under condtions:
+            # array qac : only allocated if calling backward_run) and if 'grad_mode' in [qt, q]:
+            if "qac" in h5m["response"].keys():  # for backward compatibility
+                if model._output.response.qac.shape != h5m["response/qac"].shape:
+                    model.response.reallocate_qac(
+                        model.setup,
+                        model.mesh,
+                    )
 
             for attr in dir(model):
                 if attr.startswith("_"):
