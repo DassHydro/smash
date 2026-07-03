@@ -48,7 +48,7 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}*
           CIBW_ARCHS: ${{ matrix.buildplat[2] }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15.0
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=26.0
 
       - uses: actions/upload-artifact@v6
         with:
