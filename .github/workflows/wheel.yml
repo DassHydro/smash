@@ -29,7 +29,7 @@ jobs:
         buildplat:
         - [ubuntu-latest, manylinux, x86_64]
         - [windows-latest, win, AMD64]
-        - [macos-latest, macosx, arm64]
+        - [macos-15, macosx, arm64]
 
         python-version: ['cp310', 'cp311', 'cp312', 'cp313']
 
