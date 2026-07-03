@@ -29,7 +29,7 @@ jobs:
         buildplat:
         - [ubuntu-latest, manylinux, x86_64]
         - [windows-latest, win, AMD64]
-        - [macos-latest, macosx, arm64]
+        - [macos-15, macosx, arm64]
 
         python-version: ['cp310', 'cp311', 'cp312', 'cp313']
 
@@ -48,7 +48,7 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}*
           CIBW_ARCHS: ${{ matrix.buildplat[2] }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=26.0
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15.0
 
       - uses: actions/upload-artifact@v6
         with:
