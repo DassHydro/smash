@@ -114,8 +114,10 @@ def test_forward_run_mlp():
     # % Test some multi layer perceptron models versus classical models
     mlp_to_cls_structure = {
         "zero-gr4_mlp-lr": "zero-gr4-lr",
+        "zero-gr4_ri_mlp-lr": "zero-gr4_ri-lr",
         "zero-gr4_ude-lr": "zero-gr4_ode-lr",
         "zero-gr5_mlp-lr": "zero-gr5-lr",
+        "zero-gr5_ri_mlp-lr": "zero-gr5_ri-lr",
         "zero-gr6_mlp-lr": "zero-gr6-lr",
         "zero-grd_mlp-lr": "zero-grd-lr",
         "zero-grc_mlp-lr": "zero-grc-lr",
