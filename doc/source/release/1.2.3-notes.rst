@@ -1,0 +1,24 @@
+.. _release.1.2.3-notes:
+
+=========================
+smash 1.2.3 Release Notes
+=========================
+
+The smash 1.2.3 release fixes an OS build compatibility issue:
+
+- ``'Update macos build wheel workflow``
+    Replace macos-latest with macos-15 in the workflow to build the wheel.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni (`<https://github.com/inoelloc>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* ENH: Update macos build wheel workflow (#532) by @inoelloc in https://github.com/DassHydro/smash/pull/533
