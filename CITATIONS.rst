@@ -63,6 +63,11 @@ Related papers
 
 Additional **smash**-related publications:
 
+    De Fournas, T., Folton, N., Huynh, N. N. T., Colleoni, F., and Garambois, P.A. (2026). 
+    Improving regional low-flow modeling in ungauged French catchments using the SMASH platform: A comparative assessment of grid-based parsimonious GR hydrological models and ANN-based regionalization strategies. 
+    J. Hydrol. : Reg. Stud., 66, 103629. 
+    `<https://doi.org/10.1016/j.ejrh.2026.103629>`_.
+
     Garambois, P.A., Colleoni, F., Huynh, N. N. T., Akhtari, A., Nguyen, N. B., El Baz, A., Jay-Allemand, M., and Javelle, P. (2025). 
     Spatially distributed gradient-based calibration and parametric sensitivity of a spatialized hydrological model over 235 French catchments. 
     J. Hydrol. : Reg. Stud., 60, 102485. 
