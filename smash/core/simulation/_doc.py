@@ -740,6 +740,48 @@ RETURN_OPTIONS_BASE_DOC = {
         from the Model object using the `Model.get_serr_sigma` method.
         """,
     ),
+    "q_domain_kind_q": (
+        """
+        `boolean`, default is False
+        """,
+        """
+        Return the discharges routed on the entire grid if
+        `q_domain=True`,
+        """,
+    ),
+    "q_domain_kind_qt": (
+        """
+        `boolean`, default is False
+        """,
+        """
+        Return the elementaries discharges produced by the hydrological module if
+        `q_domain=True`,
+        """,
+    ),
+    "grad_q_domain": (
+        """
+        `boolean`, default is False
+        """,
+        """
+        Whether to return the gradient of dJ/dX or dQ/dX or dQt/dX, where `X` are the model
+        control (parameters or states), J the cost function, Q the discharges routed over the
+        drainage area, Qt the discharge produced by the hydrological module for every cells.
+
+        If `q_domain_kind_qt` or `q_domain_kind_q` are True, the gradient is returned following
+        the diff rule base_forward_run_q(parameters.control.x)\\(output.response.qac) where
+        output.response.qac store either the elementaries discharges produced by the
+        hydrological module (`q_domain_kind_qt=True`, one cell, no routing) or the discharges
+        routed over the drainage area (q_domain_kind_q=True`).
+
+        If `False`, the gradient is returned following the diff rule
+        base_forward_run_q(parameters.control.x)\\(output.cost) where output.cost is the
+        cost computed with the cost function.
+
+        Remarks: if the routing module is set to `zero`, output.response.qac will store
+        the elementaries discharges produced by the hydrological module, thus the
+        gradient returned with `q_domain_kind_qt` or `q_domain_kind_q` will be equal.
+        """,
+    ),
 }
 
 

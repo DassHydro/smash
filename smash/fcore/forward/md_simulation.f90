@@ -74,6 +74,20 @@ contains
 
         end do
 
+        if (returns%grad_q_domain_flag) then
+            if (returns%q_domain_kind_qt_flag) then
+                do i = 1, mesh%nac
+                    output%response%qac(i, time_step) = checkpoint_variable%ac_qtz(i, setup%nqz)
+                end do
+            end if
+
+            if (returns%q_domain_kind_q_flag) then
+                do i = 1, mesh%nac
+                    output%response%qac(i, time_step) = checkpoint_variable%ac_qz(i, setup%nqz)
+                end do
+            end if
+        end if
+
         !$AD start-exclude
         if (allocated(returns%mask_time_step)) then
             if (returns%mask_time_step(time_step)) then
@@ -93,8 +107,13 @@ contains
 
                 !% Return discharge grid
                 if (returns%q_domain_flag) then
-                    call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qz(:, setup%nqz), &
-                    & returns%q_domain(:, :, time_step_returns))
+                    if (returns%q_domain_kind_q_flag) then
+                        call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qz(:, setup%nqz), &
+                        & returns%q_domain(:, :, time_step_returns))
+                    else if (returns%q_domain_kind_qt_flag) then
+                        call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qtz(:, setup%nqz), &
+                        & returns%q_domain(:, :, time_step_returns))
+                    end if
                 end if
 
             end if
@@ -774,6 +793,11 @@ contains
 
             ! Routing module
             select case (setup%routing_module)
+
+            case ("zero")
+
+                ! Only copy qt in q
+                checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
 
                 ! 'lag0' module
             case ("lag0")

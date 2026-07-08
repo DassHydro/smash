@@ -14,6 +14,7 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
     ncpu = min(5, max(1, os.cpu_count() - 1))
 
     for model in model_structure:
+        print(model.setup.structure, model.setup.snow_module_present)
         # % There is no snow data for the Cance dataset.
         # % TODO: Add a dataset to test snow module
         if model.setup.snow_module_present:

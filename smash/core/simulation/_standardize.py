@@ -965,7 +965,10 @@ def _standardize_simulation_common_options_ncpu(ncpu: Numeric) -> int:
     # Parallel computation not supported on Windows
     if platform.system() == "Windows" and ncpu > 1:
         ncpu = 1
-        warnings.warn("Parallel computation is not supported on Windows. ncpu is set to 1", stacklevel=2)
+        warnings.warn(
+            "Parallel computation is not supported on Windows. ncpu is set to 1",
+            stacklevel=2,
+        )
 
     return ncpu
 
@@ -1013,6 +1016,25 @@ def _standardize_simulation_return_options_bool(key: str, value: bool) -> bool:
         raise TypeError(f"{key} return_options must be boolean")
 
     return value
+
+
+def _standardize_simulation_return_options_q_domain_flags(return_options):
+    if return_options["q_domain"]:
+        if return_options["q_domain_kind_q"] is True and return_options["q_domain_kind_qt"] is True:
+            raise ValueError(
+                "Return options `q_domain_kind_q` and `q_domain_kind_qt` are both True."
+                " Set either one to False."
+            )
+
+        if return_options["q_domain_kind_q"] is False and return_options["q_domain_kind_qt"] is False:
+            warnings.warn(
+                "Both return_options `q_domain_kind_q` and `q_domain_kind_qt` are False,"
+                " ignoring `q_domain_kind_q=False` and assuming it to `True`.",
+                stacklevel=2,
+            )
+            return_options["q_domain_kind_q"] = True
+
+    return return_options
 
 
 def _standardize_simulation_return_options_time_step(
@@ -1092,6 +1114,8 @@ def _standardize_simulation_return_options(model: Model, func_name: str, return_
             return_options[key] = _standardize_simulation_return_options_time_step(model, return_options[key])
         else:
             _standardize_simulation_return_options_bool(key, return_options[key])
+
+    _standardize_simulation_return_options_q_domain_flags(return_options)
 
     return return_options
 
@@ -1329,7 +1353,15 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
     pop_keys = [
         k
         for k in return_options
-        if k not in ["nmts", "mask_time_step", "time_step_to_returns_time_step", "time_step", "fkeys", "keys"]
+        if k
+        not in [
+            "nmts",
+            "mask_time_step",
+            "time_step_to_returns_time_step",
+            "time_step",
+            "fkeys",
+            "keys",
+        ]
     ]
     for key in pop_keys:
         return_options.pop(key)

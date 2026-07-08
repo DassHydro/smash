@@ -4,6 +4,8 @@ import inspect
 import warnings
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from smash._constant import GRADIENT_BASED_OPTIMIZER, GRADIENT_FREE_OPTIMIZER, MAPPING
 from smash.core.simulation._standardize import (
     _standardize_simulation_common_options,
@@ -165,3 +167,44 @@ def _standardize_bayesian_optimize_args(
         return_options,
         callback,
     )
+
+
+def _standardize_input_derivatives(input_derivatives, grad_mode, model):
+    if input_derivatives is None:
+        return None
+
+    if not isinstance(input_derivatives, (np.ndarray, float)):
+        raise ValueError("input_derivaties option must be an np.ndarray.")
+
+    if grad_mode == "j" and len(input_derivatives) > 0:
+        raise ValueError(
+            f"""Inconsitant grad_mode value {grad_mode} and input_derivatives value.
+            Input_derivatives must be None if grade_mode is set to `j`"""
+        )
+
+    if grad_mode in ["qt", "q"]:
+        if input_derivatives.shape != (model.mesh.nac, model.setup.ntime_step):
+            raise ValueError(
+                f"""Wrong shape of input_derivatives with shape {input_derivatives.shape}.
+            Shape must be equal to model.output.response.qac {(model.mesh.nac, model.setup.ntime_step)}"""
+            )
+
+    return input_derivatives
+
+
+def _standardize_grad_mode(grad_mode, return_options):
+    if not isinstance(grad_mode, str):
+        raise ValueError(f"grade_mode option `{grad_mode}` must be a string but receive {type(grad_mode)}")
+
+    elif grad_mode not in ["j", "q", "qt"]:
+        raise ValueError(f"Unknown grade_mode value `{grad_mode}`. Choice are [ j | q | qt ].")
+
+    if return_options is None:
+        return_options = {}
+
+    if grad_mode == "q":
+        return_options.update({"q_domain_kind_qt": False, "q_domain_kind_q": True, "grad_q_domain": True})
+    elif grad_mode == "qt":
+        return_options.update({"q_domain_kind_qt": True, "q_domain_kind_q": False, "grad_q_domain": True})
+
+    return grad_mode, return_options
