@@ -194,6 +194,25 @@ def _standardize_generate_mesh_code(x: np.ndarray, code: str | ListLike | None) 
     return code
 
 
+def _standardize_generate_mesh_outlet_type(x: np.ndarray, outlet_type: str | ListLike | None) -> np.ndarray:
+    if outlet_type is None:
+        outlet_type = np.array(["gauge" for i in range(x.size)])
+
+    else:
+        if not isinstance(outlet_type, (str, list, tuple, np.ndarray)):
+            raise TypeError("outlet_type argument must be a str or ListLike type (List, Tuple, np.ndarray)")
+
+        for t in outlet_type:
+            if t not in ["outlet", "gauge", "dam", "inflow"]:
+                raise ValueError(f"Bad outlet type ({t}). Choice are {['outlet', 'gauge', 'dam', 'inflow']})")
+        outlet_type = np.array(outlet_type, ndmin=1)
+
+        # % Only check x (y and area already check)
+        if outlet_type.size != x.size:
+            raise ValueError(f"Inconsistent size between outlet_type ({outlet_type.size}) and x ({x.size})")
+    return outlet_type
+
+
 def _standardize_generate_mesh_shp_path(shp_path: FilePath | None) -> str | None:
     if shp_path is None:
         return shp_path
@@ -256,6 +275,7 @@ def _standardize_generate_mesh_args(
     y: Numeric | ListLike | None,
     area: Numeric | ListLike | None,
     code: str | ListLike | None,
+    outlet_type: str | ListLike | None,
     shp_path: FilePath | None,
     max_depth: Numeric,
     epsg: AlphaNumeric | None,
@@ -275,6 +295,7 @@ def _standardize_generate_mesh_args(
         x, y, area = _standardize_generate_mesh_x_y_area(flwdir_dataset, x, y, area)
 
         code = _standardize_generate_mesh_code(x, code)
+        outlet_type = _standardize_generate_mesh_outlet_type(x, outlet_type)
 
     shp_path = _standardize_generate_mesh_shp_path(shp_path)
 
@@ -293,6 +314,7 @@ def _standardize_generate_mesh_args(
         y,
         area,
         code,
+        outlet_type,
         shp_dataset,
         max_depth,
         epsg,

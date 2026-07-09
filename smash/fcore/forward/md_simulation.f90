@@ -792,19 +792,23 @@ contains
 
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hlr
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hd
 
                 call lr_time_step( &
                     setup, &
                     mesh, &
+                    input_data, &
                     options, &
                     returns, &
                     t, &
                     checkpoint_variable%ac_qtz, &
                     checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % llr
                     h1, & ! % hlr
+                    h2, & ! hd  dam
                     checkpoint_variable%ac_qz)
 
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
 
                 rr_parameters_inc = rr_parameters_inc + 1
                 rr_states_inc = rr_states_inc + 1

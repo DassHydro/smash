@@ -147,16 +147,14 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
 
 # % Following ROUTING_MODULE order
 ROUTING_MODULE_RR_STATES = dict(
-    zip(ROUTING_MODULE, [[], ["hlr"], []])  # % lag0  # % lr  # % kw
+    zip(ROUTING_MODULE, [[], ["hlr", "hd"], []])  # % lag0  # % lr  # % kw
 )
 
 # % Following MODULE order
 MODULE_RR_STATES = dict(**SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES)
 
 # % Following ROUTING_MODULE order
-ROUTING_MODULE_NQZ = dict(
-    zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
-)
+ROUTING_MODULE_NQZ = dict(zip(ROUTING_MODULE, [1, 2, 2]))  # % lag0  # % lr  # % kw
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_INTERNAL_FLUXES = dict(
@@ -174,17 +172,96 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
     zip(
         HYDROLOGICAL_MODULE,
         (
-            [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 3  # % gr4, gr4_mlp, gr4_ri
             + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ude
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 3  # % gr5, gr5_mlp, gr5_ri
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "pre",
+                    "qr",
+                    "qd",
+                    "qe",
+                    "qt",
+                ]
+            ]
             * 2  # % gr6, gr6_mlp
-            + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
+            + [
+                [
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "lexc",
+                    "prr",
+                    "prd",
+                    "prl",
+                    "qr",
+                    "qd",
+                    "ql",
+                    "qt",
+                ]
+            ]
             * 2  # % grc, grc_mlp
             + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
-            + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
+            + [
+                [
+                    "ei",
+                    "pn",
+                    "en",
+                    "pr",
+                    "perc",
+                    "ps",
+                    "es",
+                    "prr",
+                    "prd",
+                    "qr",
+                    "qd",
+                    "qt",
+                ]
+            ]
             * 2  # % loieau, loieau_mlp
             + [["pn", "en", "qr", "qb", "qt"]]  # % vic3l
         ),
@@ -320,6 +397,7 @@ RR_STATES = [
     "hmsl",  # % vic3l
     "hbsl",  # % vic3l
     "hlr",  # % lr
+    "hd",  # % h dam
 ]
 
 ### FEASIBLE PARAMETERS ###
@@ -377,6 +455,7 @@ FEASIBLE_RR_INITIAL_STATES = dict(
             (0, 1),  # % hmsl
             (0, 1),  # % hbsl
             (0, np.inf),  # % hlr
+            (0, np.inf),  # % dam
         ],
     )
 )
@@ -438,6 +517,7 @@ DEFAULT_RR_INITIAL_STATES = dict(
             1e-2,  # % hmsl
             1e-6,  # % hbsl
             1e-6,  # % hlr
+            0.1,  # % dam
         ],
     )
 )
@@ -497,6 +577,7 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
             (1e-6, 0.999999),  # % hmsl
             (1e-6, 0.999999),  # % hbsl
             (1e-6, 1e3),  # % hlr
+            (0.0, np.inf),  # % dam
         ],
     )
 )
@@ -890,7 +971,12 @@ DEFAULT_TERMINATION_CRIT = dict(
             ],
         )
     ),
-    **dict(zip(ADAPTIVE_OPTIMIZER, len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}])),
+    **dict(
+        zip(
+            ADAPTIVE_OPTIMIZER,
+            len(ADAPTIVE_OPTIMIZER) * [{"maxiter": 200, "early_stopping": 0}],
+        )
+    ),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -1006,11 +1092,15 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 }
 
 OPTIMIZER_CONTROL_TFM = {
-    (mapping, optimizer): ["sbs", "normalize", "keep"]  # in case of sbs optimizer
-    if optimizer == "sbs"
-    else ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
-    if mapping != "ann"
-    else ["keep"]  # no tfm applied for any optimizer used with ann mapping
+    (mapping, optimizer): (
+        ["sbs", "normalize", "keep"]  # in case of sbs optimizer
+        if optimizer == "sbs"
+        else (
+            ["normalize", "keep"]  # for other optimizers (not used with ann mapping)
+            if mapping != "ann"
+            else ["keep"]
+        )
+    )  # no tfm applied for any optimizer used with ann mapping
     for mapping, optimizer in SIMULATION_OPTIMIZE_OPTIONS_KEYS.keys()
 }  # first element of the list is the default tfm for each tuple key (mapping, optimizer)
 

@@ -39,7 +39,8 @@ mw_f90_sources = [
     'routine/mw_atmos_statistic.f90',
     'routine/mw_interception_capacity.f90',
     'routine/mw_mask.f90',
-
+    'routine/mw_hydr_struct_manipulation.f90',
+    
     'signal_analysis/mw_prcp_indices.f90',
 ]
 
@@ -63,6 +64,7 @@ mwd_f90_sources = [
     'derived_type/mwd_rr_states.f90',
     'derived_type/mwd_serr_mu_parameters.f90',
     'derived_type/mwd_serr_sigma_parameters.f90',
+    'derived_type/mwd_hydraulic_structure.f90',
     'derived_type/mwd_setup.f90',
     'derived_type/mwd_sparse_matrix.f90',
     'derived_type/mwd_u_response_data.f90',
@@ -159,7 +161,8 @@ py.extension_module(
     '_libfcore',
     c_sources, f90_sources, f90wrap_f90_sources, f2py_f90wrap_sources,
     c_args: ['-O3', c_ignore_warnings],
-    fortran_args: ['-O3', '-march=native', '-cpp', fortran_ignore_warnings],
+    #fortran_args: ['-O3', '-march=native', '-cpp', fortran_ignore_warnings],
+    fortran_args: ['-Wall', '-Wextra', '-fmax-errors=1', '-cpp', '-g', '-fcheck=all', '-fbacktrace', '-fallow-argument-mismatch', fortran_ignore_warnings],
     link_args: link_args,
     dependencies: dependencies,
     install: true,

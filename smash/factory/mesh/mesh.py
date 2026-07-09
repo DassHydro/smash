@@ -150,6 +150,7 @@ def generate_mesh(
     y: Numeric | ListLike[float] | None = None,
     area: Numeric | ListLike[float] | None = None,
     code: str | ListLike[str] | None = None,
+    outlet_type: str | ListLike[str] | None = None,
     shp_path: FilePath | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
@@ -198,6 +199,15 @@ def generate_mesh(
             If not given, the default code is:
 
             ``['_c0', '_c1', ..., '_cn-1']`` with :math:`n`, the number of gauges (i.e. the size of **x**)
+
+    outlet_type : `str`, list[str, ...] or None, default None
+        The kind of outlet(s) present in the mesh: 'outlet', 'gauge', 'dam', 'inflow'
+        The **outlet_type** size must be equal to **x**, **y** and **area**.
+
+        .. note::
+            If not given, the default outlet_type is 'gauge'
+
+            ``['gauge', 'gauge', ..., 'gauge']`` with :math:`n`, the number of gauges (i.e. the size of **x**)
 
     shp_path : `str` or None, default None
         Path to the shapefile containing the contours of the catchment(s) to mesh.
@@ -382,7 +392,17 @@ def generate_mesh(
     """
 
     args = _standardize_generate_mesh_args(
-        flwdir_path, bbox, x, y, area, code, shp_path, max_depth, epsg, area_error_th
+        flwdir_path,
+        bbox,
+        x,
+        y,
+        area,
+        code,
+        outlet_type,
+        shp_path,
+        max_depth,
+        epsg,
+        area_error_th,
     )
 
     return _generate_mesh(*args)
@@ -395,6 +415,7 @@ def _generate_mesh_from_xy(
     y: np.ndarray,
     area: np.ndarray,
     code: np.ndarray,
+    outlet_type: np.ndarray,
     shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int,
@@ -446,11 +467,19 @@ def _generate_mesh_from_xy(
 
         if shp_dataset is not None and code[ind] in shp_dataset["code"].values:
             transform = rasterio.transform.Affine(
-                xres, 0, xmin + slice_win[1].start * xres, 0, -yres, ymax - slice_win[0].start * yres
+                xres,
+                0,
+                xmin + slice_win[1].start * xres,
+                0,
+                -yres,
+                ymax - slice_win[0].start * yres,
             )
             geometry = shp_dataset.loc[shp_dataset["code"] == code[ind], "geometry"]
             mask = rasterio.features.rasterize(
-                [(geom, 1) for geom in geometry], out_shape=flwdir_win.shape, transform=transform, fill=0
+                [(geom, 1) for geom in geometry],
+                out_shape=flwdir_win.shape,
+                transform=transform,
+                fill=0,
             )
             mask_dln_win, row_dln_win, col_dln_win, sink_dln[ind] = mw_mesh.catchment_dln_contour_based(
                 flwdir_win, mask, row_win, col_win, max_depth
@@ -568,6 +597,35 @@ def _generate_mesh_from_xy(
     ng = x.size
     gauge_pos = np.column_stack((row_dln, col_dln))
 
+    # -------------------------  -- Hydraulic structure ---------------------------
+
+    ind_hs = []
+    hs_index_by_type = []
+    ni = -1
+    nd = -1
+    for i in range(x.size):
+        if outlet_type[i] != "gauge" and outlet_type[i] != "outlet":
+            ind_hs.append(i)
+        if outlet_type[i] == "dam":
+            nd += 1
+            hs_index_by_type.append(nd)
+        elif outlet_type[i] == "inflow":
+            ni += 1
+            hs_index_by_type.append(ni)
+        else:
+            hs_index_by_type.append(-99)
+
+    ind_hs = np.array(ind_hs)
+    hs_index_by_type = np.array(hs_index_by_type)
+    ndam = len(np.where(outlet_type == "dam"))
+    ninflow = len(np.where(outlet_type == "inflow"))
+
+    hs_index = np.zeros(shape=(flwdir.shape[0], flwdir.shape[1]))
+
+    for i in range(len(ind_hs)):
+        ind = ind_hs[i]
+        hs_index[row_dln[ind], col_dln[ind]] = ind
+
     mesh = {
         "xres": xres,
         "yres": yres,
@@ -591,8 +649,13 @@ def _generate_mesh_from_xy(
         "ng": ng,
         "gauge_pos": gauge_pos,
         "code": code,
+        "outlet_type": outlet_type,
         "area": area,
         "area_dln": area_dln,
+        "hs_index": hs_index,
+        "hs_index_by_type": hs_index_by_type.transpose(),
+        "ndam": ndam,
+        "ninflow": ninflow,
     }
 
     return mesh
@@ -674,6 +737,7 @@ def _generate_mesh(
     y: np.ndarray | None,
     area: np.ndarray | None,
     code: np.ndarray | None,
+    outlet_type: np.array | None,
     shp_dataset: gpd.GeoDataFrame | None,
     max_depth: int,
     epsg: int | None,
@@ -683,5 +747,15 @@ def _generate_mesh(
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
         return _generate_mesh_from_xy(
-            flwdir_dataset, bbox, x, y, area, code, shp_dataset, max_depth, epsg, area_error_th
+            flwdir_dataset,
+            bbox,
+            x,
+            y,
+            area,
+            code,
+            outlet_type,
+            shp_dataset,
+            max_depth,
+            epsg,
+            area_error_th,
         )

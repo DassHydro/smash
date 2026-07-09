@@ -32,6 +32,7 @@ module mwd_input_data
     use mwd_u_response_data !%: only: U_ResponseDataDT, U_ResponseDataDT_initialise
     use mwd_physio_data !%: only: Physio_DataDT, Physio_DataDT_initialise
     use mwd_atmos_data !%: only: Atmos_DataDT, Atmos_DataDT_initialise
+    use mwd_hydraulic_structure
 
     implicit none
 
@@ -44,6 +45,8 @@ module mwd_input_data
         type(Physio_DataDT) :: physio_data
 
         type(Atmos_DataDT) :: atmos_data
+
+        type(Hydraulic_StructureDT) :: hydraulic_structure
 
     end type Input_DataDT
 
@@ -64,6 +67,8 @@ contains
         call Physio_DataDT_initialise(this%physio_data, setup, mesh)
 
         call Atmos_DataDT_initialise(this%atmos_data, setup, mesh)
+
+        call Hydraulic_StructureDT_initialise(this%hydraulic_structure, setup, mesh)
 
     end subroutine Input_DataDT_initialise
 
