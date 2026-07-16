@@ -1019,7 +1019,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.hybrid_flux_correction:
 
-.. dropdown:: Hybrid GR for flux correction (gr4_mlp, gr5_mlp, gr6_mlp, grc_mlp, grd_mlp, loieau_mlp)
+.. dropdown:: Hybrid GR for flux correction (gr4_mlp, gr4_ri_mlp_exc, gr5_mlp, gr5_ri_mlp_exc, gr6_mlp, grc_mlp, grd_mlp, loieau_mlp)
     :animate: fade-in-slide-down
 
     These hydrological models are GR-like models embedded within a multilayer perceptron (MLP) to correct internal water fluxes. Such a neural network is referred to as a process-parameterization neural network. 
@@ -1089,6 +1089,41 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
             \end{eqnarray}
 
+    .. dropdown:: gr4_ri_mlp_exc
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``gr4_ri`` operators, with the integration of a neural network for correcting the exchange flux as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception.
+
+        **Process-parameterization neural network**
+
+        .. math::
+
+            f_l(x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}](x,t-1);\boldsymbol{\rho}\right)
+
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_l` is the correction applied to the exchange flux.
+
+        **Production**
+
+        Same as ``gr4_ri`` production.
+
+        **Exchange**
+
+        Compute the refined exchange flux
+
+        .. math::
+
+            l_{exc}(x, t) = (1 + f_l) k_{exc}(x) \tilde{h_t}(x, t - 1)^{7/2}
+
+        **Transfer**
+
+        Same as ``gr4_ri`` transfer.
+
     .. dropdown:: gr5_mlp
         :animate: fade-in-slide-down
 
@@ -1117,6 +1152,41 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         **Transfer**
 
         Same as ``gr4_mlp`` transfer.
+
+    .. dropdown:: gr5_ri_mlp_exc
+        :animate: fade-in-slide-down
+
+        This hydrological module is principally based on the ``gr5_ri`` operators, with the integration of a neural network for correcting the exchange flux as follows:
+
+        **Interception**
+
+        Same as ``gr4`` interception.
+
+        **Process-parameterization neural network**
+
+        .. math::
+
+            f_l(x,t) = \phi\left([p_n, e_n](x,t), [\tilde{h_p}, \tilde{h_t}](x,t-1);\boldsymbol{\rho}\right)
+
+        where :math:`p_n, e_n` are the neutralized precipitation and potential evapotranspiration obtained from interception; 
+        :math:`\tilde{h_p}, \tilde{h_t}` are the normalized states of the production and transfer reservoirs; 
+        :math:`f_l` is the correction applied to the exchange flux.
+
+        **Production**
+
+        Same as ``gr5_ri`` production.
+
+        **Exchange**
+
+        Compute the refined exchange flux
+
+        .. math::
+
+            l_{exc}(x, t) = (1 + f_l) k_{exc}(x) \left(\tilde{h_t}(x, t - 1) - a_{exc}(x)\right)
+
+        **Transfer**
+
+        Same as ``gr5_ri`` transfer.
 
     .. dropdown:: gr6_mlp
         :animate: fade-in-slide-down
