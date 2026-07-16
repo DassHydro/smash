@@ -126,8 +126,8 @@ class Model:
         hydrological_module : `str`, default 'gr4'
             Name of hydrological module. Should be one of:
 
-            - ``'gr4'``, ``'gr4_mlp'``, ``'gr4_ri'``, ``'gr4_ri_mlp'``, ``'gr4_ode'``, ``'gr4_ude'``
-            - ``'gr5'``, ``'gr5_mlp'``, ``'gr5_ri'``, ``'gr5_ri_mlp'``
+            - ``'gr4'``, ``'gr4_mlp'``, ``'gr4_ri'``, ``'gr4_ri_mlp_exc'``, ``'gr4_ode'``, ``'gr4_ude'``
+            - ``'gr5'``, ``'gr5_mlp'``, ``'gr5_ri'``, ``'gr5_ri_mlp_exc'``
             - ``'gr6'``, ``'gr6_mlp'``
             - ``'grc'``, ``'grc_mlp'``
             - ``'grd'``, ``'grd_mlp'``

@@ -21,9 +21,9 @@ module md_simulation
     use mwd_returns !% only: ReturnsDT
     use md_checkpoint_variable !% only: Checkpoint_VariableDT
     use md_snow_operator !% only: ssn_time_step
-    use md_gr_operator !% only: gr4_time_step, gr4_mlp_time_step, gr4_ri_time_step, gr4_ri_mlp_time_step, &
+    use md_gr_operator !% only: gr4_time_step, gr4_mlp_time_step, gr4_ri_time_step, gr4_ri_mlp_exc_time_step, &
     !% & gr4_ode_time_step, gr4_ude_time_step, gr5_time_step, gr5_mlp_time_step, gr5_ri_time_step, &
-    !% & gr5_ri_mlp_time_step, gr6_time_step, gr6_mlp_time_step, grc_time_step, grd_time_step, grd_mlp_time_step, &
+    !% & gr5_ri_mlp_exc_time_step, gr6_time_step, gr6_mlp_time_step, grc_time_step, grd_time_step, grd_mlp_time_step, &
     !% & loieau_time_step, loieau_mlp_time_step
     use md_vic3l_operator !% only: vic3l_time_step
     use md_routing_operator !% only: lag0_time_step, lr_time_step, kw_time_step
@@ -273,15 +273,15 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 6
                 rr_states_inc = rr_states_inc + 3
 
-                ! 'gr4_ri_mlp' module
-            case ("gr4_ri_mlp")
+                ! 'gr4_ri_mlp_exc' module
+            case ("gr4_ri_mlp_exc")
 
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
                 h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
                 h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
 
-                call gr4_ri_mlp_time_step( &
+                call gr4_ri_mlp_exc_time_step( &
                     setup, &
                     mesh, &
                     input_data, &
@@ -490,15 +490,15 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 7
                 rr_states_inc = rr_states_inc + 3
 
-                ! 'gr5_ri_mlp' module
-            case ("gr5_ri_mlp")
+                ! 'gr5_ri_mlp_exc' module
+            case ("gr5_ri_mlp_exc")
 
                 ! % To avoid potential aliasing tapenade warning (DF02)
                 h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % hi
                 h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hp
                 h3 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 3) ! % ht
 
-                call gr5_ri_mlp_time_step( &
+                call gr5_ri_mlp_exc_time_step( &
                     setup, &
                     mesh, &
                     input_data, &

@@ -1019,7 +1019,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
 .. _math_num_documentation.forward_structure.hydrological_module.hybrid_flux_correction:
 
-.. dropdown:: Hybrid GR for flux correction (gr4_mlp, gr4_ri_mlp, gr5_mlp, gr5_ri_mlp, gr6_mlp, grc_mlp, grd_mlp, loieau_mlp)
+.. dropdown:: Hybrid GR for flux correction (gr4_mlp, gr4_ri_mlp_exc, gr5_mlp, gr5_ri_mlp_exc, gr6_mlp, grc_mlp, grd_mlp, loieau_mlp)
     :animate: fade-in-slide-down
 
     These hydrological models are GR-like models embedded within a multilayer perceptron (MLP) to correct internal water fluxes. Such a neural network is referred to as a process-parameterization neural network. 
@@ -1089,7 +1089,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
             \end{eqnarray}
 
-    .. dropdown:: gr4_ri_mlp
+    .. dropdown:: gr4_ri_mlp_exc
         :animate: fade-in-slide-down
 
         This hydrological module is principally based on the ``gr4_ri`` operators, with the integration of a neural network for correcting the exchange flux as follows:
@@ -1153,7 +1153,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
 
         Same as ``gr4_mlp`` transfer.
 
-    .. dropdown:: gr5_ri_mlp
+    .. dropdown:: gr5_ri_mlp_exc
         :animate: fade-in-slide-down
 
         This hydrological module is principally based on the ``gr5_ri`` operators, with the integration of a neural network for correcting the exchange flux as follows:

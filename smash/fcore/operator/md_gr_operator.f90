@@ -13,13 +13,13 @@
 !%      - gr4_time_step
 !%      - gr4_mlp_time_step
 !%      - gr4_ri_time_step
-!%      - gr4_ri_mlp_time_step
+!%      - gr4_ri_mlp_exc_time_step
 !%      - gr4_ode_time_step
 !%      - gr4_ude_time_step
 !%      - gr5_time_step
 !%      - gr5_mlp_time_step
 !%      - gr5_ri_time_step
-!%      - gr5_ri_mlp_time_step
+!%      - gr5_ri_mlp_exc_time_step
 !%      - gr6_time_step
 !%      - gr6_mlp_time_step
 !%      - grc_time_step
@@ -692,7 +692,7 @@ contains
 #endif
     end subroutine gr4_ri_time_step
 
-    subroutine gr4_ri_mlp_time_step(setup, mesh, input_data, options, returns, time_step, &
+    subroutine gr4_ri_mlp_exc_time_step(setup, mesh, input_data, options, returns, time_step, &
     & weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, &
     & ac_cp, ac_ct, ac_alpha1, ac_alpha2, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -814,7 +814,7 @@ contains
 #ifdef _OPENMP
         !$OMP end parallel do
 #endif
-    end subroutine gr4_ri_mlp_time_step
+    end subroutine gr4_ri_mlp_exc_time_step
 
     subroutine gr4_ode_time_step(setup, mesh, input_data, options, returns, time_step, &
     & ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
@@ -1375,7 +1375,7 @@ contains
 #endif
     end subroutine gr5_ri_time_step
 
-    subroutine gr5_ri_mlp_time_step(setup, mesh, input_data, options, returns, time_step, &
+    subroutine gr5_ri_mlp_exc_time_step(setup, mesh, input_data, options, returns, time_step, &
     & weight_1, bias_1, weight_2, bias_2, weight_3, bias_3, ac_mlt, ac_ci, &
     & ac_cp, ac_ct, ac_alpha1, ac_alpha2, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
@@ -1497,7 +1497,7 @@ contains
 #ifdef _OPENMP
         !$OMP end parallel do
 #endif
-    end subroutine gr5_ri_mlp_time_step
+    end subroutine gr5_ri_mlp_exc_time_step
 
     subroutine gr6_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_be, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_he, ac_qt)
