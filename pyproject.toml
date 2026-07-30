@@ -179,6 +179,8 @@ ignore = [
   "PLR0912",
   # Too many statements
   "PLR0915",
+  # Too many positional arguments
+  "PLR0917",
   # Redefined loop name
   "PLW2901",
   # Checks for else blocks that consist of a single if statement
