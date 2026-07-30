@@ -363,6 +363,7 @@ def _get_parameters_b(
 ) -> ParametersDT:
     parameters_b = parameters.copy()
     output_b = model._output.copy()
+    options_b = wrap_options.copy()
     output_b.cost = np.float32(1)
 
     wrap_forward_run_b(
@@ -374,6 +375,7 @@ def _get_parameters_b(
         model._output,
         output_b,
         wrap_options,
+        options_b,
         wrap_returns,
     )
 
