@@ -41,7 +41,7 @@ contains
 
     end subroutine forward_run
 
-    subroutine forward_run_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, returns)
+    subroutine forward_run_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, options_d, returns)
 
         implicit none
 
@@ -50,14 +50,14 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters, parameters_d
         type(OutputDT), intent(inout) :: output, output_d
-        type(OptionsDT), intent(in) :: options
+        type(OptionsDT), intent(in) :: options, options_d
         type(ReturnsDT), intent(inout) :: returns
 
-        call base_forward_run_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, returns)
+        call base_forward_run_d(setup, mesh, input_data, parameters, parameters_d, output, output_d, options, options_d, returns)
 
     end subroutine forward_run_d
 
-    subroutine forward_run_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, returns)
+    subroutine forward_run_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, options_b, returns)
 
         implicit none
 
@@ -66,10 +66,10 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(inout) :: parameters, parameters_b
         type(OutputDT), intent(inout) :: output, output_b
-        type(OptionsDT), intent(in) :: options
+        type(OptionsDT), intent(in) :: options, options_b
         type(ReturnsDT), intent(inout) :: returns
 
-        call base_forward_run_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, returns)
+        call base_forward_run_b(setup, mesh, input_data, parameters, parameters_b, output, output_b, options, options_b, returns)
 
     end subroutine forward_run_b
 
