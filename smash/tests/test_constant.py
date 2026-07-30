@@ -74,7 +74,7 @@ def test_module_name():
     ]
 
     # % Check routing module
-    assert ROUTING_MODULE == ["lag0", "lr", "kw"]
+    assert ROUTING_MODULE == ["zero", "lag0", "lr", "kw"]
 
 
 def test_module_parameters():
@@ -139,15 +139,15 @@ def test_module_parameters():
     )
 
     # % Check routing module rr parameters
-    assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], ["llr"], ["akw", "bkw"]]
+    assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], [], ["llr"], ["akw", "bkw"]]
 
     # % Check routing module rr internal fluxes
-    assert list(ROUTING_MODULE_RR_INTERNAL_FLUXES.values()) == [["qup"], ["qup"], ["qim1j"]]
+    assert list(ROUTING_MODULE_RR_INTERNAL_FLUXES.values()) == [[], ["qup"], ["qup"], ["qim1j"]]
 
     # % Check routing module rr states
-    assert list(ROUTING_MODULE_RR_STATES.values()) == [[], ["hlr"], []]
+    assert list(ROUTING_MODULE_RR_STATES.values()) == [[], [], ["hlr"], []]
 
-    assert list(ROUTING_MODULE_NQZ.values()) == [1, 1, 2]
+    assert list(ROUTING_MODULE_NQZ.values()) == [1, 1, 1, 2]
 
 
 def test_parameters():

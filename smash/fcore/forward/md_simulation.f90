@@ -856,6 +856,11 @@ contains
             ! Routing module
             select case (setup%routing_module)
 
+                ! 'zero' module
+            case ("zero")
+
+                checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
+
                 ! 'lag0' module
             case ("lag0")
 
