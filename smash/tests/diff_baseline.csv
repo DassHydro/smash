@@ -1,8 +1,12 @@
-commit a19c8a96ecb0aff7235aded84b75bfa9060c16a0
-Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Sun Jul 5 15:08:16 2026 +0200
+commit a699068370a787ff737a6f51251c096b3f45b83b
+Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
+Date:   Thu Jul 16 23:06:50 2026 +0200
 
-    ENH: add new hybrid flux correction structures taking into account rain intensity
+    ENH: add new hybrid flux correction structures taking into account rain intensity (#537)
+    
+    * ENH: add new hybrid flux correction structures taking into account rain intensity
+    
+    * Apply suggestions from FC review
 
 TEST NAME                                                   |STATUS
 bbox_mesh.active_cell                                       |NON MODIFIED
@@ -104,6 +108,13 @@ forward_run.zero-gr4-lr.rr_states.hlr                       |NON MODIFIED
 forward_run.zero-gr4-lr.rr_states.hp                        |NON MODIFIED
 forward_run.zero-gr4-lr.rr_states.ht                        |NON MODIFIED
 forward_run.zero-gr4-lr.sim_q                               |NON MODIFIED
+forward_run.zero-gr4-zero.cost                              |ADDED
+forward_run.zero-gr4-zero.jobs                              |ADDED
+forward_run.zero-gr4-zero.q_domain                          |ADDED
+forward_run.zero-gr4-zero.rr_states.hi                      |ADDED
+forward_run.zero-gr4-zero.rr_states.hp                      |ADDED
+forward_run.zero-gr4-zero.rr_states.ht                      |ADDED
+forward_run.zero-gr4-zero.sim_q                             |ADDED
 forward_run.zero-gr4_mlp-lr.cost                            |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.jobs                            |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.q_domain                        |NON MODIFIED
@@ -128,14 +139,14 @@ forward_run.zero-gr4_ri-lr.rr_states.hlr                    |NON MODIFIED
 forward_run.zero-gr4_ri-lr.rr_states.hp                     |NON MODIFIED
 forward_run.zero-gr4_ri-lr.rr_states.ht                     |NON MODIFIED
 forward_run.zero-gr4_ri-lr.sim_q                            |NON MODIFIED
-forward_run.zero-gr4_ri_mlp_exc-lr.cost                     |ADDED
-forward_run.zero-gr4_ri_mlp_exc-lr.jobs                     |ADDED
-forward_run.zero-gr4_ri_mlp_exc-lr.q_domain                 |ADDED
-forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.hi             |ADDED
-forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.hlr            |ADDED
-forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.hp             |ADDED
-forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.ht             |ADDED
-forward_run.zero-gr4_ri_mlp_exc-lr.sim_q                    |ADDED
+forward_run.zero-gr4_ri_mlp_exc-lr.cost                     |NON MODIFIED
+forward_run.zero-gr4_ri_mlp_exc-lr.jobs                     |NON MODIFIED
+forward_run.zero-gr4_ri_mlp_exc-lr.q_domain                 |NON MODIFIED
+forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.hi             |NON MODIFIED
+forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.hlr            |NON MODIFIED
+forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.hp             |NON MODIFIED
+forward_run.zero-gr4_ri_mlp_exc-lr.rr_states.ht             |NON MODIFIED
+forward_run.zero-gr4_ri_mlp_exc-lr.sim_q                    |NON MODIFIED
 forward_run.zero-gr4_ude-lr.cost                            |NON MODIFIED
 forward_run.zero-gr4_ude-lr.jobs                            |NON MODIFIED
 forward_run.zero-gr4_ude-lr.q_domain                        |NON MODIFIED
@@ -168,14 +179,14 @@ forward_run.zero-gr5_ri-lr.rr_states.hlr                    |NON MODIFIED
 forward_run.zero-gr5_ri-lr.rr_states.hp                     |NON MODIFIED
 forward_run.zero-gr5_ri-lr.rr_states.ht                     |NON MODIFIED
 forward_run.zero-gr5_ri-lr.sim_q                            |NON MODIFIED
-forward_run.zero-gr5_ri_mlp_exc-lr.cost                     |ADDED
-forward_run.zero-gr5_ri_mlp_exc-lr.jobs                     |ADDED
-forward_run.zero-gr5_ri_mlp_exc-lr.q_domain                 |ADDED
-forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.hi             |ADDED
-forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.hlr            |ADDED
-forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.hp             |ADDED
-forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.ht             |ADDED
-forward_run.zero-gr5_ri_mlp_exc-lr.sim_q                    |ADDED
+forward_run.zero-gr5_ri_mlp_exc-lr.cost                     |NON MODIFIED
+forward_run.zero-gr5_ri_mlp_exc-lr.jobs                     |NON MODIFIED
+forward_run.zero-gr5_ri_mlp_exc-lr.q_domain                 |NON MODIFIED
+forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.hi             |NON MODIFIED
+forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.hlr            |NON MODIFIED
+forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.hp             |NON MODIFIED
+forward_run.zero-gr5_ri_mlp_exc-lr.rr_states.ht             |NON MODIFIED
+forward_run.zero-gr5_ri_mlp_exc-lr.sim_q                    |NON MODIFIED
 forward_run.zero-gr6-lr.cost                                |NON MODIFIED
 forward_run.zero-gr6-lr.jobs                                |NON MODIFIED
 forward_run.zero-gr6-lr.q_domain                            |NON MODIFIED
@@ -292,6 +303,18 @@ internal_fluxes.zero-gr4-lr.qd                              |NON MODIFIED
 internal_fluxes.zero-gr4-lr.qr                              |NON MODIFIED
 internal_fluxes.zero-gr4-lr.qt                              |NON MODIFIED
 internal_fluxes.zero-gr4-lr.qup                             |NON MODIFIED
+internal_fluxes.zero-gr4-zero.en                            |ADDED
+internal_fluxes.zero-gr4-zero.es                            |ADDED
+internal_fluxes.zero-gr4-zero.lexc                          |ADDED
+internal_fluxes.zero-gr4-zero.perc                          |ADDED
+internal_fluxes.zero-gr4-zero.pn                            |ADDED
+internal_fluxes.zero-gr4-zero.pr                            |ADDED
+internal_fluxes.zero-gr4-zero.prd                           |ADDED
+internal_fluxes.zero-gr4-zero.prr                           |ADDED
+internal_fluxes.zero-gr4-zero.ps                            |ADDED
+internal_fluxes.zero-gr4-zero.qd                            |ADDED
+internal_fluxes.zero-gr4-zero.qr                            |ADDED
+internal_fluxes.zero-gr4-zero.qt                            |ADDED
 internal_fluxes.zero-gr4_mlp-lr.en                          |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.es                          |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.lexc                        |NON MODIFIED
@@ -323,19 +346,19 @@ internal_fluxes.zero-gr4_ri-lr.qd                           |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.qr                           |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.qt                           |NON MODIFIED
 internal_fluxes.zero-gr4_ri-lr.qup                          |NON MODIFIED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.en                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.es                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.lexc                 |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.perc                 |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.pn                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.pr                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.prd                  |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.prr                  |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.ps                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.qd                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.qr                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.qt                   |ADDED
-internal_fluxes.zero-gr4_ri_mlp_exc-lr.qup                  |ADDED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.en                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.es                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.lexc                 |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.perc                 |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.pn                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.pr                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.prd                  |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.prr                  |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.ps                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.qd                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.qr                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.qt                   |NON MODIFIED
+internal_fluxes.zero-gr4_ri_mlp_exc-lr.qup                  |NON MODIFIED
 internal_fluxes.zero-gr4_ude-lr.en                          |NON MODIFIED
 internal_fluxes.zero-gr4_ude-lr.lexc                        |NON MODIFIED
 internal_fluxes.zero-gr4_ude-lr.pn                          |NON MODIFIED
@@ -380,19 +403,19 @@ internal_fluxes.zero-gr5_ri-lr.qd                           |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.qr                           |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.qt                           |NON MODIFIED
 internal_fluxes.zero-gr5_ri-lr.qup                          |NON MODIFIED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.en                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.es                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.lexc                 |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.perc                 |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.pn                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.pr                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.prd                  |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.prr                  |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.ps                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.qd                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.qr                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.qt                   |ADDED
-internal_fluxes.zero-gr5_ri_mlp_exc-lr.qup                  |ADDED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.en                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.es                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.lexc                 |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.perc                 |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.pn                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.pr                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.prd                  |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.prr                  |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.ps                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.qd                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.qr                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.qt                   |NON MODIFIED
+internal_fluxes.zero-gr5_ri_mlp_exc-lr.qup                  |NON MODIFIED
 internal_fluxes.zero-gr6-lr.en                              |NON MODIFIED
 internal_fluxes.zero-gr6-lr.es                              |NON MODIFIED
 internal_fluxes.zero-gr6-lr.lexc                            |NON MODIFIED
@@ -633,6 +656,16 @@ optimize.zero-gr4-lr.multi-power.control_vector             |NON MODIFIED
 optimize.zero-gr4-lr.multi-power.sim_q                      |NON MODIFIED
 optimize.zero-gr4-lr.uniform.control_vector                 |NON MODIFIED
 optimize.zero-gr4-lr.uniform.sim_q                          |NON MODIFIED
+optimize.zero-gr4-zero.ann.control_vector                   |ADDED
+optimize.zero-gr4-zero.ann.sim_q                            |ADDED
+optimize.zero-gr4-zero.distributed.control_vector           |ADDED
+optimize.zero-gr4-zero.distributed.sim_q                    |ADDED
+optimize.zero-gr4-zero.multi-linear.control_vector          |ADDED
+optimize.zero-gr4-zero.multi-linear.sim_q                   |ADDED
+optimize.zero-gr4-zero.multi-power.control_vector           |ADDED
+optimize.zero-gr4-zero.multi-power.sim_q                    |ADDED
+optimize.zero-gr4-zero.uniform.control_vector               |ADDED
+optimize.zero-gr4-zero.uniform.sim_q                        |ADDED
 optimize.zero-gr4_mlp-lr.ann.control_vector                 |NON MODIFIED
 optimize.zero-gr4_mlp-lr.ann.sim_q                          |NON MODIFIED
 optimize.zero-gr4_mlp-lr.distributed.control_vector         |NON MODIFIED
@@ -663,16 +696,16 @@ optimize.zero-gr4_ri-lr.multi-power.control_vector          |NON MODIFIED
 optimize.zero-gr4_ri-lr.multi-power.sim_q                   |NON MODIFIED
 optimize.zero-gr4_ri-lr.uniform.control_vector              |NON MODIFIED
 optimize.zero-gr4_ri-lr.uniform.sim_q                       |NON MODIFIED
-optimize.zero-gr4_ri_mlp_exc-lr.ann.control_vector          |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.ann.sim_q                   |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.distributed.control_vector  |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.distributed.sim_q           |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.multi-linear.control_vector |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.multi-linear.sim_q          |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.multi-power.control_vector  |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.multi-power.sim_q           |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.uniform.control_vector      |ADDED
-optimize.zero-gr4_ri_mlp_exc-lr.uniform.sim_q               |ADDED
+optimize.zero-gr4_ri_mlp_exc-lr.ann.control_vector          |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.ann.sim_q                   |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.distributed.control_vector  |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.distributed.sim_q           |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.multi-linear.control_vector |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.multi-linear.sim_q          |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.multi-power.control_vector  |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.multi-power.sim_q           |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.uniform.control_vector      |NON MODIFIED
+optimize.zero-gr4_ri_mlp_exc-lr.uniform.sim_q               |NON MODIFIED
 optimize.zero-gr4_ude-lr.ann.control_vector                 |NON MODIFIED
 optimize.zero-gr4_ude-lr.ann.sim_q                          |NON MODIFIED
 optimize.zero-gr4_ude-lr.distributed.control_vector         |NON MODIFIED
@@ -713,16 +746,16 @@ optimize.zero-gr5_ri-lr.multi-power.control_vector          |NON MODIFIED
 optimize.zero-gr5_ri-lr.multi-power.sim_q                   |NON MODIFIED
 optimize.zero-gr5_ri-lr.uniform.control_vector              |NON MODIFIED
 optimize.zero-gr5_ri-lr.uniform.sim_q                       |NON MODIFIED
-optimize.zero-gr5_ri_mlp_exc-lr.ann.control_vector          |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.ann.sim_q                   |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.distributed.control_vector  |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.distributed.sim_q           |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.multi-linear.control_vector |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.multi-linear.sim_q          |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.multi-power.control_vector  |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.multi-power.sim_q           |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.uniform.control_vector      |ADDED
-optimize.zero-gr5_ri_mlp_exc-lr.uniform.sim_q               |ADDED
+optimize.zero-gr5_ri_mlp_exc-lr.ann.control_vector          |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.ann.sim_q                   |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.distributed.control_vector  |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.distributed.sim_q           |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.multi-linear.control_vector |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.multi-linear.sim_q          |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.multi-power.control_vector  |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.multi-power.sim_q           |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.uniform.control_vector      |NON MODIFIED
+optimize.zero-gr5_ri_mlp_exc-lr.uniform.sim_q               |NON MODIFIED
 optimize.zero-gr6-lr.ann.control_vector                     |NON MODIFIED
 optimize.zero-gr6-lr.ann.sim_q                              |NON MODIFIED
 optimize.zero-gr6-lr.distributed.control_vector             |NON MODIFIED
