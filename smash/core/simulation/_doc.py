@@ -851,8 +851,7 @@ diff_target : `str`, default 'j'
     - ``'q'`` (discharge)
 
 cotangent : `float`, `numpy.ndarray` or None, default None
-    Cotangent vector associated with the differentiation target. If provided, the backward pass computes the
-    vector-Jacobian product (VJP) of the differentiation target with respect to the model control vector.
+    Cotangent vector associated with the differentiation target.
 
     .. note::
         If not given, the cotangent is set to 1 for a scalar differentiation target (``'j'``) or to an
