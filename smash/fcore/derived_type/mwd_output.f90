@@ -52,6 +52,7 @@ contains
 
         call ResponseDT_initialise(this%response, setup, mesh)
         call RR_StatesDT_initialise(this%rr_final_states, setup, mesh)
+        allocate (this%ac_q(1, 1))
 
     end subroutine OutputDT_initialise
 
@@ -87,6 +88,7 @@ contains
         type(OutputDT), intent(inout) :: this
 
         if (allocated(this%ac_q)) deallocate (this%ac_q)
+        allocate (this%ac_q(1, 1))
         this%ac_q_allocated = .false.
 
     end subroutine OutputDT_deallocate_ac_q

@@ -2184,6 +2184,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     CALL RESPONSEDT_INITIALISE(this%response, setup, mesh)
     CALL RR_STATESDT_INITIALISE(this%rr_final_states, setup, mesh)
+    ALLOCATE(this%ac_q(1, 1))
   END SUBROUTINE OUTPUTDT_INITIALISE
 
   SUBROUTINE OUTPUTDT_COPY(this, this_copy)
@@ -2213,6 +2214,7 @@ CONTAINS
     IF (ALLOCATED(this%ac_q)) THEN
       DEALLOCATE(this%ac_q)
     END IF
+    ALLOCATE(this%ac_q(1, 1))
     this%ac_q_allocated = .false.
   END SUBROUTINE OUTPUTDT_DEALLOCATE_AC_Q
 
