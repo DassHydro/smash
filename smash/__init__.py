@@ -21,8 +21,10 @@ from smash.core.simulation.options import (
     default_optimize_options,
 )
 from smash.core.simulation.run.run import (
+    BackwardRun,
     ForwardRun,
     MultipleForwardRun,
+    backward_run,
     forward_run,
     multiple_forward_run,
 )
@@ -34,6 +36,7 @@ def __getattr__(name):
 
 
 __all__ = [
+    "BackwardRun",
     "BayesianOptimize",
     "ForwardRun",
     "Model",
@@ -43,6 +46,7 @@ __all__ = [
     "PrecipitationIndices",
     "Samples",
     "Signatures",
+    "backward_run",
     "bayesian_optimize",
     "bayesian_optimize_control_info",
     "default_bayesian_optimize_options",

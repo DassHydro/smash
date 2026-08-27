@@ -848,6 +848,8 @@ PROBLEM_KEYS = ["num_vars", "names", "bounds"]
 ### SIMULATION ###
 ##################
 
+DIFF_TARGET = ["j", "q"]
+
 REGIONAL_MAPPING = ["multi-linear", "multi-power", "ann"]
 
 MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
@@ -1033,6 +1035,15 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "wgauge": "mean",
         "event_seg": dict(zip(EVENT_SEG_SIMULATION_KEYS, [PEAK_QUANT, PEAK_VALUE, MAX_DURATION])),
     },
+    "backward_run": {
+        "jobs_cmpt": "nse",
+        "wjobs_cmpt": "mean",
+        "jobs_cmpt_tfm": "keep",
+        "end_warmup": None,
+        "gauge": "dws",
+        "wgauge": "mean",
+        "event_seg": dict(zip(EVENT_SEG_SIMULATION_KEYS, [PEAK_QUANT, PEAK_VALUE, MAX_DURATION])),
+    },
     "optimize": {
         "jobs_cmpt": "nse",
         "wjobs_cmpt": "mean",
@@ -1062,6 +1073,15 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "internal_fluxes": False,
         "cost": False,
         "jobs": False,
+    },
+    "backward_run": {
+        "time_step": "all",
+        "rr_states": False,
+        "q_domain": False,
+        "internal_fluxes": False,
+        "cost": False,
+        "jobs": False,
+        "grad": False,
     },
     "optimize": {
         "time_step": "all",

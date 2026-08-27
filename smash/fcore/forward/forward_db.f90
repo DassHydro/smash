@@ -2141,8 +2141,9 @@ END MODULE MWD_RR_STATES_DIFF
 !%          `Variables`              Description
 !%          ======================== =======================================
 !%          ``cost``                 Value of cost function
+!%          ``ac_q``                 Active cell discharge
 !%          ``response``             ResponseDT
-!%          ``rr_final_states``      Rr_StatesDT
+!%          ``rr_final_states``      RR_StatesDT
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -2159,17 +2160,19 @@ MODULE MWD_OUTPUT_DIFF
   USE MWD_MESH
 !% only: ResponseDT, ResponseDT_initialise
   USE MWD_RESPONSE
-!% only: Rr_StatesDT, Rr_StatesDT_initialise
+!% only: RR_StatesDT, RR_StatesDT_initialise
   USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
   TYPE OUTPUTDT
       TYPE(RESPONSEDT) :: response
       TYPE(RR_STATESDT) :: rr_final_states
       REAL(sp) :: cost
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_q
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
       TYPE(RESPONSEDT) :: response
       REAL(sp) :: cost
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_q
   END TYPE OUTPUTDT_DIFF
 
 CONTAINS
@@ -2188,6 +2191,27 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(OUT) :: this_copy
     this_copy = this
   END SUBROUTINE OUTPUTDT_COPY
+
+  SUBROUTINE OUTPUTDT_ALLOCATE_AC_Q(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(OUTPUTDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTRINSIC ALLOCATED
+    IF (ALLOCATED(this%ac_q)) THEN
+      DEALLOCATE(this%ac_q)
+    END IF
+    ALLOCATE(this%ac_q(mesh%nac, setup%ntime_step))
+  END SUBROUTINE OUTPUTDT_ALLOCATE_AC_Q
+
+  SUBROUTINE OUTPUTDT_DEALLOCATE_AC_Q(this)
+    IMPLICIT NONE
+    TYPE(OUTPUTDT), INTENT(INOUT) :: this
+    INTRINSIC ALLOCATED
+    IF (ALLOCATED(this%ac_q)) THEN
+      DEALLOCATE(this%ac_q)
+    END IF
+  END SUBROUTINE OUTPUTDT_DEALLOCATE_AC_Q
 
 END MODULE MWD_OUTPUT_DIFF
 
@@ -2649,7 +2673,7 @@ END MODULE MWD_PARAMETERS_DIFF
 !%          ======================== =======================================
 !%          ``nmts``                 Number of time step to return
 !%          ``mask_time_step``       Mask of time step
-!%          ``rr_states``            Array of Rr_StatesDT
+!%          ``rr_states``            Array of RR_StatesDT
 !%          ``rr_states_flag``       Return flag of rr_states
 !%          ``q_domain``             Array of discharge
 !%          ``q_domain_flag``        Return flag of q_domain
@@ -2967,7 +2991,8 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: r_d, a_d, b_d
     REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
 &   var_x, var_y, cov
-    REAL(sp) :: sum_y_d, sum_yy_d, sum_xy_d, mean_y_d, var_y_d, cov_d
+    REAL(sp) :: sum_y_d, sum_yy_d, sum_xy_d, mean_y_d, var_x_d, var_y_d&
+&   , cov_d
     INTEGER :: n, i
     INTRINSIC SIZE
     INTRINSIC SQRT
@@ -3044,7 +3069,8 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: r_b, a_b, b_b
     REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
 &   var_x, var_y, cov
-    REAL(sp) :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_y_b, cov_b
+    REAL(sp) :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_x_b, var_y_b&
+&   , cov_b
     INTEGER :: n, i
     INTRINSIC SIZE
     INTRINSIC SQRT
@@ -5780,8 +5806,7 @@ CONTAINS
 !  Differentiation of sbs_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
-!                parameters.control.u_raw:in
+!   Plus diff mem management of: parameters.control.x:in
   SUBROUTINE SBS_CONTROL_TFM_D(parameters, parameters_d)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -5820,8 +5845,7 @@ CONTAINS
 !  Differentiation of sbs_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l_raw:in
-!                parameters.control.u_raw:in
+!   Plus diff mem management of: parameters.control.x:in
   SUBROUTINE SBS_CONTROL_TFM_B(parameters, parameters_b)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
@@ -9799,7 +9823,8 @@ CONTAINS
     CHARACTER(len=lchar) :: mu_funk, sigma_funk
     REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs, uobs&
 &   , sim
-    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: sim_d
+    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs_d, &
+&   uobs_d, sim_d
     INTRINSIC SUM
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta_d
@@ -9898,7 +9923,8 @@ CONTAINS
     CHARACTER(len=lchar) :: mu_funk, sigma_funk
     REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs, uobs&
 &   , sim
-    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: sim_b
+    REAL(dp), DIMENSION(setup%ntime_step, options%cost%nog) :: obs_b, &
+&   uobs_b, sim_b
     INTRINSIC SUM
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta
     REAL(dp), DIMENSION(SUM(parameters%control%nbk(1:2))) :: theta_b
@@ -11559,7 +11585,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options_d
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_d
     INTEGER :: i
@@ -11617,7 +11643,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(PARAMETERSDT) :: parameters_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(OPTIONSDT_DIFF) :: options_b
+    TYPE(OPTIONSDT) :: options_b
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_b
     INTEGER :: i
@@ -11843,7 +11869,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options_d
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
     REAL(sp) :: jobs_d, jreg_d
@@ -11880,7 +11906,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(OPTIONSDT_DIFF) :: options_b
+    TYPE(OPTIONSDT) :: options_b
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
     REAL(sp) :: jobs_b, jreg_b
@@ -11991,7 +12017,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options_d
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     IF (options%cost%bayesian) THEN
       CALL BAYESIAN_COMPUTE_COST_D(setup, mesh, input_data, parameters, &
@@ -12029,7 +12055,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(OPTIONSDT_DIFF) :: options_b
+    TYPE(OPTIONSDT) :: options_b
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     IF (options%cost%bayesian) THEN
       CALL BAYESIAN_COMPUTE_COST(setup, mesh, input_data, parameters, &
@@ -14844,6 +14870,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp0
@@ -14960,6 +14987,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp_b
@@ -15211,6 +15239,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp0
@@ -15383,6 +15412,7 @@ CONTAINS
     INTEGER, SAVE :: maxiter=10
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
     REAL(sp) :: result1
     REAL(sp) :: temp
     REAL(sp) :: temp_b
@@ -25582,10 +25612,11 @@ CONTAINS
   END SUBROUTINE ROLL_DISCHARGE
 
 !  Differentiation of store_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(output.response.q) *(output.ac_q)
 !   with respect to varying inputs: *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.ac_q)
 !   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
+!                output.ac_q:in
   SUBROUTINE STORE_TIME_STEP_D(setup, mesh, output, output_d, returns, &
 &   checkpoint_variable, checkpoint_variable_d, time_step)
     IMPLICIT NONE
@@ -25598,6 +25629,7 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable_d
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
+    INTRINSIC ALLOCATED
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
@@ -25606,14 +25638,17 @@ CONTAINS
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
+    IF (ALLOCATED(output%ac_q)) output_d%ac_q(:, time_step) = &
+&       checkpoint_variable_d%ac_qz(:, setup%nqz)
   END SUBROUTINE STORE_TIME_STEP_D
 
 !  Differentiation of store_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.ac_q)
 !   with respect to varying inputs: *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.ac_q)
 !   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
+!                output.ac_q:in
   SUBROUTINE STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
 &   checkpoint_variable, checkpoint_variable_b, time_step)
     IMPLICIT NONE
@@ -25626,10 +25661,16 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_b
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
+    INTRINSIC ALLOCATED
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
     END DO
+    IF (ALLOCATED(output%ac_q)) THEN
+      checkpoint_variable_b%ac_qz(:, setup%nqz) = checkpoint_variable_b%&
+&       ac_qz(:, setup%nqz) + output_b%ac_q(:, time_step)
+      output_b%ac_q(:, time_step) = 0.0_4
+    END IF
     DO i=mesh%ng,1,-1
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
@@ -25649,32 +25690,36 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
+    INTRINSIC ALLOCATED
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
+    IF (ALLOCATED(output%ac_q)) output%ac_q(:, time_step) = &
+&       checkpoint_variable%ac_qz(:, setup%nqz)
   END SUBROUTINE STORE_TIME_STEP
 
 !  Differentiation of simulation_checkpoint in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(checkpoint_variable.ac_rr_states)
 !                *(checkpoint_variable.ac_mlt) *(checkpoint_variable.ac_qtz)
 !                *(checkpoint_variable.ac_qz) *(output.response.q)
+!                *(output.ac_q)
 !   with respect to varying inputs: *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
 !                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
 !                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.ac_q)
 !   Plus diff mem management of: parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.ac_q:in
   SUBROUTINE SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters&
 &   , parameters_d, output, output_d, options, returns, &
 &   checkpoint_variable, checkpoint_variable_d, start_time_step, &
@@ -26832,21 +26877,21 @@ CONTAINS
 !                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.ac_q)
 !   with respect to varying inputs: *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
 !                *(parameters.nn_parameters.bias_2) *(parameters.nn_parameters.weight_3)
 !                *(parameters.nn_parameters.bias_3) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
 !                *(checkpoint_variable.ac_qtz) *(checkpoint_variable.ac_qz)
-!                *(output.response.q)
+!                *(output.response.q) *(output.ac_q)
 !   Plus diff mem management of: parameters.nn_parameters.weight_1:in
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.ac_q:in
   SUBROUTINE SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters&
 &   , parameters_b, output, output_b, options, returns, &
 &   checkpoint_variable, checkpoint_variable_b, start_time_step, &
@@ -29756,7 +29801,7 @@ CONTAINS
   END SUBROUTINE SIMULATION_CHECKPOINT
 
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(output.response.q) *(output.ac_q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
@@ -29767,6 +29812,7 @@ CONTAINS
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.ac_q:in
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -29787,6 +29833,7 @@ CONTAINS
     INTRINSIC SQRT
     INTRINSIC INT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
     REAL(sp) :: result1
 ! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
@@ -29837,6 +29884,7 @@ CONTAINS
 &                          checkpoint_variable_d%ac_rr_states(:, i))
     END DO
     output_d%response%q = 0.0_4
+    output_d%ac_q = 0.0_4
 ! % Checkpoints loop
     DO i=1,ncheckpoint
       start_time_step = (i-1)*checkpoint_size + 1
@@ -29853,6 +29901,7 @@ CONTAINS
 !  Differentiation of simulation in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
+!                *(output.ac_q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.nn_parameters.weight_1)
 !                *(parameters.nn_parameters.bias_1) *(parameters.nn_parameters.weight_2)
@@ -29863,6 +29912,7 @@ CONTAINS
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.ac_q:in
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -29883,6 +29933,7 @@ CONTAINS
     INTRINSIC SQRT
     INTRINSIC INT
     REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
     REAL(sp) :: result1
 ! % We use checkpoints to reduce the maximum memory usage of the adjoint model.
 ! % Without checkpoints, the maximum memory required is equal to K * T, where K in [0, +inf] is the
@@ -30080,7 +30131,7 @@ END MODULE MD_SIMULATION_DIFF
 !                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
 !                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
 !                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
-!                *(output.response.q):(loc) output.cost:out
+!                *(output.response.q):(loc) output.cost:out *(output.ac_q):(loc)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_raw:in
 !                parameters.control.u_raw:in parameters.rr_parameters.values:in
@@ -30089,11 +30140,9 @@ END MODULE MD_SIMULATION_DIFF
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.ac_q:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, options_d, returns)
-!% only: sp
-  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -30123,7 +30172,7 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
   TYPE(OPTIONSDT), INTENT(IN) :: options
-  TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
+  TYPE(OPTIONSDT), INTENT(IN) :: options_d
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
 !% Map control to parameters
   parameters_d%rr_parameters%values = 0.0_4
@@ -30149,6 +30198,7 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
 !                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
 !                *(output.response.q):(loc) output.cost:in-killed
+!                *(output.ac_q):(loc)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_raw:in
 !                parameters.control.u_raw:in parameters.rr_parameters.values:in
@@ -30157,11 +30207,9 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
 !                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
 !                parameters.nn_parameters.bias_3:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.ac_q:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, options_b, returns)
-!% only: sp
-  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -30191,7 +30239,7 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
   TYPE(OPTIONSDT), INTENT(IN) :: options
-  TYPE(OPTIONSDT_DIFF) :: options_b
+  TYPE(OPTIONSDT) :: options_b
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
 !% Map control to parameters
   CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
@@ -30266,6 +30314,7 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 &             )
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
 &               , output, output_b, options, options_b, returns)
+  output_b%ac_q = 0.0_4
   CALL SIMULATION_B(setup, mesh, input_data, parameters, parameters_b, &
 &             output, output_b, options, returns)
   CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
@@ -30276,8 +30325,6 @@ END SUBROUTINE BASE_FORWARD_RUN_B
 
 SUBROUTINE BASE_FORWARD_RUN_NODIFF(setup, mesh, input_data, parameters, &
 & output, options, returns)
-!% only: sp
-  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -30316,4 +30363,172 @@ SUBROUTINE BASE_FORWARD_RUN_NODIFF(setup, mesh, input_data, parameters, &
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, output, options&
 &             , returns)
 END SUBROUTINE BASE_FORWARD_RUN_NODIFF
+
+!  Differentiation of base_forward_run_q in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: *(output.ac_q)
+!   with respect to varying inputs: *(parameters.control.x)
+!   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):in-killed
+!                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
+!                *(parameters.serr_mu_parameters.values):(loc)
+!                *(parameters.serr_sigma_parameters.values):(loc)
+!                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
+!                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
+!                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
+!                *(output.response.q):(loc) output.ac_q:(loc) *(output.ac_q):out
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.ac_q:in
+SUBROUTINE BASE_FORWARD_RUN_Q_D(setup, mesh, input_data, parameters, &
+& parameters_d, output, output_d, options, returns)
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
+!% only: control_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: simulation
+  USE MD_SIMULATION_DIFF
+  IMPLICIT NONE
+  TYPE(SETUPDT), INTENT(IN) :: setup
+  TYPE(MESHDT), INTENT(IN) :: mesh
+  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
+  TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(RETURNSDT), INTENT(INOUT) :: returns
+!% Map control to parameters
+  parameters_d%rr_parameters%values = 0.0_4
+  parameters_d%rr_initial_states%values = 0.0_4
+  CALL CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters, &
+&                        parameters_d, options)
+!% Simulation
+  CALL SIMULATION_D(setup, mesh, input_data, parameters, parameters_d, &
+&             output, output_d, options, returns)
+END SUBROUTINE BASE_FORWARD_RUN_Q_D
+
+!  Differentiation of base_forward_run_q in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: *(output.ac_q)
+!   with respect to varying inputs: *(parameters.control.x)
+!   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):out
+!                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
+!                *(parameters.serr_mu_parameters.values):(loc)
+!                *(parameters.serr_sigma_parameters.values):(loc)
+!                *(parameters.nn_parameters.weight_1):(loc) *(parameters.nn_parameters.bias_1):(loc)
+!                *(parameters.nn_parameters.weight_2):(loc) *(parameters.nn_parameters.bias_2):(loc)
+!                *(parameters.nn_parameters.weight_3):(loc) *(parameters.nn_parameters.bias_3):(loc)
+!                *(output.response.q):(loc) output.ac_q:(loc) *(output.ac_q):in-killed
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_raw:in
+!                parameters.control.u_raw:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in parameters.nn_parameters.weight_1:in
+!                parameters.nn_parameters.bias_1:in parameters.nn_parameters.weight_2:in
+!                parameters.nn_parameters.bias_2:in parameters.nn_parameters.weight_3:in
+!                parameters.nn_parameters.bias_3:in output.response.q:in
+!                output.ac_q:in
+SUBROUTINE BASE_FORWARD_RUN_Q_B(setup, mesh, input_data, parameters, &
+& parameters_b, output, output_b, options, returns)
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
+!% only: control_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: simulation
+  USE MD_SIMULATION_DIFF
+  IMPLICIT NONE
+  TYPE(SETUPDT), INTENT(IN) :: setup
+  TYPE(MESHDT), INTENT(IN) :: mesh
+  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
+  TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(RETURNSDT), INTENT(INOUT) :: returns
+!% Map control to parameters
+  CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
+&               ))
+  CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
+&                      options)
+!% Simulation
+  CALL SIMULATION(setup, mesh, input_data, parameters, output, options, &
+&           returns)
+  parameters_b%rr_parameters%values = 0.0_4
+  parameters_b%rr_initial_states%values = 0.0_4
+  output_b%response%q = 0.0_4
+  CALL SIMULATION_B(setup, mesh, input_data, parameters, parameters_b, &
+&             output, output_b, options, returns)
+  CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
+&             )
+  parameters_b%control%x = 0.0_4
+  parameters_b%serr_mu_parameters%values = 0.0_4
+  parameters_b%serr_sigma_parameters%values = 0.0_4
+  CALL CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters, &
+&                        parameters_b, options)
+END SUBROUTINE BASE_FORWARD_RUN_Q_B
+
+SUBROUTINE BASE_FORWARD_RUN_Q_NODIFF(setup, mesh, input_data, parameters&
+& , output, options, returns)
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
+!% only: control_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: simulation
+  USE MD_SIMULATION_DIFF
+  IMPLICIT NONE
+  TYPE(SETUPDT), INTENT(IN) :: setup
+  TYPE(MESHDT), INTENT(IN) :: mesh
+  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output
+  TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(RETURNSDT), INTENT(INOUT) :: returns
+!% Map control to parameters
+  CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
+&                      options)
+!% Simulation
+  CALL SIMULATION(setup, mesh, input_data, parameters, output, options, &
+&           returns)
+END SUBROUTINE BASE_FORWARD_RUN_Q_NODIFF
 

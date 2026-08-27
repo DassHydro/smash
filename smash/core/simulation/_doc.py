@@ -642,6 +642,14 @@ RETURN_OPTIONS_BASE_DOC = {
         **mapping**.
         """,
     ),
+    "grad": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return gradient value.
+        """,
+    ),
     "cost": (
         """
         `bool`, default False
@@ -823,6 +831,116 @@ array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 2.2796249e+01,
         4.8079352e+00, 4.7862868e+00],
        [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 1.2818875e+00,
         1.2760198e+00, 1.2702127e+00]], dtype=float32)
+"""
+)
+
+
+_backward_run_doc = (
+    # % TODO FC: Add advanced user guide
+    """
+Run the backward Model.
+
+Parameters
+----------
+%(model_parameter)s
+
+diff_target : `str`, default 'j'
+    Differentiation target. Should be one of
+
+    - ``'j'`` (cost function)
+    - ``'q'`` (discharge)
+
+cotangent : `float`, `numpy.ndarray` or None, default None
+    Cotangent vector associated with the differentiation target. If provided, the backward pass computes the
+    vector-Jacobian product (VJP) of the differentiation target with respect to the model control vector.
+
+    .. note::
+        If not given, the cotangent is set to 1 for a scalar differentiation target (``'j'``) or to an
+        array of ones with the same shape as the target for a non-scalar differentiation target (``'q'``).
+        The expected shape for the differentiation target ``'q'`` is
+        (``mesh.nac``, ``setup.ntime_step``)
+
+"""
+    + _gen_docstring_from_base_doc(MAPPING_OPTIMIZER_BASE_DOC, ["mapping", "optimizer"], nindent=0)
+    + """
+
+optimize_options : `dict[str, Any]` or None, default None
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
+
+"""
+    + _gen_docstring_from_base_doc(
+        OPTIMIZE_OPTIONS_BASE_DOC,
+        OPTIMIZE_OPTIONS_KEYS_DOC,
+        nindent=1,
+    )
+    + """
+
+cost_options : `dict[str, Any]` or None, default None
+    Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COST_OPTIONS_BASE_DOC,
+        DEFAULT_SIMULATION_COST_OPTIONS["backward_run"].keys(),
+        nindent=1,
+    )
+    + """
+common_options : `dict[str, Any]` or None, default None
+    Dictionary containing common options with two elements:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COMMON_OPTIONS_BASE_DOC, DEFAULT_SIMULATION_COMMON_OPTIONS.keys(), nindent=1
+    )
+    + """
+return_options : `dict[str, Any]` or None, default None
+    Dictionary containing return options to save additional simulation results. The elements are:
+
+"""
+    + _gen_docstring_from_base_doc(
+        RETURN_OPTIONS_BASE_DOC,
+        DEFAULT_SIMULATION_RETURN_OPTIONS["backward_run"].keys(),
+        nindent=1,
+    )
+    + """
+Returns
+-------
+%(model_return)s
+backward_run : `BackwardRun` or None, default None
+    It returns an object containing additional simulation results with the keys defined in
+    **return_options**. If no keys are defined, it returns None.
+
+See Also
+--------
+BackwardRun : Represents backward run optional results.
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Run the inverse Model
+
+>>> %(model_example_func)s
+</> Backward Run
+
+Get the control info to retrieve the parameter names
+
+>>> control_info = smash.optimize_control_info(model)
+
+Get the gradient values
+
+>>> {str(name): float(grad) for name, grad in zip(control_info["name"], ret_bwd.grad)}
+{
+    'cp-0': 0.5914902091026306,
+    'ct-0': 0.5672875046730042,
+    'kexc-0': -0.01872028410434723,
+    'llr-0': -4.1801460611168295e-05
+}
+
 """
 )
 
@@ -1902,6 +2020,36 @@ _model_forward_run_doc_substitution = DocSubstitution(
     model_return="",
     model_example_func="model.forward_run()",
     model_example_response="model",
+    percent="%",
+)
+
+_backward_run_doc_appender = DocAppender(_backward_run_doc, indents=0)
+_smash_backward_run_doc_substitution = DocSubstitution(
+    model_parameter="model : `Model`\n\tPrimary data structure of the hydrological model `smash`.",
+    default_optimize_options_func="default_optimize_options",
+    mapping_ann="- ``'ann'``",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
+    default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
+    parameters_serr_mu_parameters="",
+    parameters_serr_sigma_parameters="",
+    parameters_note_serr_parameters="",
+    bounds_get_serr_parameters_bounds="",
+    model_return="model : `Model`\n\t It returns an updated copy of the initial Model object.",
+    model_example_func='model_bwd, ret_bwd = smash.backward_run(return_options={"grad": True})',
+    percent="%",
+)
+_model_backward_run_doc_substitution = DocSubstitution(
+    model_parameter="",
+    default_optimize_options_func="default_optimize_options",
+    mapping_ann="- ``'ann'``",
+    optimizer_lbfgsb="- ``'lbfgsb'`` (for all mappings except ``'ann'``)",
+    default_optimizer_for_ann_mapping="- ``'adam'`` for **mapping** = ``'ann'``",
+    parameters_serr_mu_parameters="",
+    parameters_serr_sigma_parameters="",
+    parameters_note_serr_parameters="",
+    bounds_get_serr_parameters_bounds="",
+    model_return="",
+    model_example_func='ret_bwd = model.backward_run(return_options={"grad": True})',
     percent="%",
 )
 

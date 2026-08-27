@@ -47,7 +47,7 @@ def _get_gradient_value(
         parameters,
         wrap_options,
     )
-    parameters_b = _get_parameters_b(instance, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(instance, parameters, wrap_options, wrap_returns, np.ones(1))
 
     wrap_control_to_parameters(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options

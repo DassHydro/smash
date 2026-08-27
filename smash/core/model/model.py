@@ -38,8 +38,10 @@ from smash.core.model._standardize import (
     _standardize_set_serr_sigma_parameters_args,
 )
 from smash.core.simulation._doc import (
+    _backward_run_doc_appender,
     _bayesian_optimize_doc_appender,
     _forward_run_doc_appender,
+    _model_backward_run_doc_substitution,
     _model_bayesian_optimize_doc_substitution,
     _model_forward_run_doc_substitution,
     _model_multiset_estimate_doc_substitution,
@@ -64,8 +66,11 @@ from smash.core.simulation.optimize.optimize import (
     _bayesian_optimize,
     _optimize,
 )
-from smash.core.simulation.run._standardize import _standardize_forward_run_args
-from smash.core.simulation.run.run import _forward_run
+from smash.core.simulation.run._standardize import (
+    _standardize_backward_run_args,
+    _standardize_forward_run_args,
+)
+from smash.core.simulation.run.run import BackwardRun, _backward_run, _forward_run
 from smash.factory.net._layers import _initialize_nn_parameter
 from smash.fcore._mwd_input_data import Input_DataDT
 from smash.fcore._mwd_mesh import MeshDT
@@ -2794,6 +2799,27 @@ class Model:
         args = _standardize_forward_run_args(self, *args_options)
 
         return _forward_run(self, *args)
+
+    @_model_backward_run_doc_substitution
+    @_backward_run_doc_appender
+    def backward_run(
+        self,
+        diff_target: str = "j",
+        cotangent: Numeric | NDArray[np.float32] | None = None,
+        mapping: str = "uniform",
+        optimizer: str | None = None,
+        optimize_options: dict[str, Any] | None = None,
+        cost_options: dict[str, Any] | None = None,
+        common_options: dict[str, Any] | None = None,
+        return_options: dict[str, Any] | None = None,
+    ) -> BackwardRun | None:
+        args_options = [
+            deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
+        ]
+
+        args = _standardize_backward_run_args(self, diff_target, cotangent, mapping, optimizer, *args_options)
+
+        return _backward_run(self, *args)
 
     @_model_optimize_doc_substitution
     @_optimize_doc_appender

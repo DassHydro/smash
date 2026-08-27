@@ -77,6 +77,8 @@ def generate_tapenade_file(fortran_files: list[str], module: str, openmp: bool) 
         module,
         "-head",
         r"base_forward_run(parameters.control.x)\(output.cost)",
+        "-head",
+        r"base_forward_run_q(parameters.control.x)\(output.ac_q)",
     ]
 
     if openmp:
@@ -94,12 +96,14 @@ def patch_tapenade_file(module: str) -> None:
             r"TYPE\(RR_PARAMETERSDT_DIFF\)",
             r"TYPE\(RR_STATESDT_DIFF\)",
             r"TYPE\(OUTPUTDT_DIFF\)",
+            r"TYPE\(OPTIONSDT_DIFF\)",
         ],
         [
             "TYPE(PARAMETERSDT)",
             "TYPE(RR_PARAMETERSDT)",
             "TYPE(RR_STATESDT)",
             "TYPE(OUTPUTDT)",
+            "TYPE(OPTIONSDT)",
         ],
     )
     tapenade_file = module + "_db.f90"

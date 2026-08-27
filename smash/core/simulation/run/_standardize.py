@@ -9,6 +9,12 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_common_options,
     _standardize_simulation_cost_options,
     _standardize_simulation_cost_options_finalize,
+    _standardize_simulation_cotangent,
+    _standardize_simulation_diff_target,
+    _standardize_simulation_mapping,
+    _standardize_simulation_optimize_options,
+    _standardize_simulation_optimize_options_finalize,
+    _standardize_simulation_optimizer,
     _standardize_simulation_parameters_feasibility,
     _standardize_simulation_return_options,
     _standardize_simulation_return_options_finalize,
@@ -46,6 +52,60 @@ def _standardize_forward_run_args(
     _standardize_simulation_return_options_finalize(model, return_options)
 
     return (cost_options, common_options, return_options)
+
+
+def _standardize_backward_run_args(
+    model: Model,
+    diff_target: str,
+    cotangent: np.ndarray | None,
+    mapping: str,
+    optimizer: str | None,
+    optimize_options: dict | None,
+    cost_options: dict | None,
+    common_options: dict | None,
+    return_options: dict | None,
+) -> AnyTuple:
+    func_name = "backward_run"
+    # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
+    _standardize_simulation_parameters_feasibility(model)
+
+    diff_target = _standardize_simulation_diff_target(diff_target)
+
+    cotangent = _standardize_simulation_cotangent(model, diff_target, cotangent)
+
+    mapping = _standardize_simulation_mapping(mapping)
+
+    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+
+    optimize_options = _standardize_simulation_optimize_options(
+        model, func_name, mapping, optimizer, optimize_options
+    )
+
+    # % Finalize optimize options
+    _standardize_simulation_optimize_options_finalize(model, mapping, optimizer, optimize_options)
+
+    cost_options = _standardize_simulation_cost_options(model, func_name, cost_options)
+
+    # % Finalize cost_options
+    _standardize_simulation_cost_options_finalize(model, func_name, cost_options)
+
+    common_options = _standardize_simulation_common_options(common_options)
+
+    return_options = _standardize_simulation_return_options(model, func_name, return_options)
+
+    # % Finalize return_options
+    _standardize_simulation_return_options_finalize(model, return_options)
+
+    return (
+        diff_target,
+        cotangent,
+        mapping,
+        optimizer,
+        optimize_options,
+        cost_options,
+        common_options,
+        return_options,
+    )
 
 
 def _standardize_multiple_forward_run_args(

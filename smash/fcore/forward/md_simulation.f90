@@ -71,8 +71,9 @@ contains
         do i = 1, mesh%ng
             k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2))
             output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, setup%nqz)
-
         end do
+
+        if (allocated(output%ac_q)) output%ac_q(:, time_step) = checkpoint_variable%ac_qz(:, setup%nqz)
 
         !$AD start-exclude
         if (allocated(returns%mask_time_step)) then

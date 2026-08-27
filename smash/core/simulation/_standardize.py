@@ -14,6 +14,7 @@ from smash._constant import (
     DEFAULT_SIMULATION_COST_OPTIONS,
     DEFAULT_SIMULATION_RETURN_OPTIONS,
     DEFAULT_TERMINATION_CRIT,
+    DIFF_TARGET,
     EVENT_SEG_SIMULATION_KEYS,
     F_PRECISION,
     FEASIBLE_RR_INITIAL_STATES,
@@ -92,6 +93,43 @@ def _standardize_simulation_optimizer(mapping: str, optimizer: str | None) -> st
             raise TypeError("optimizer argument must be a str")
 
     return optimizer.lower()
+
+
+def _standardize_simulation_diff_target(diff_target: str) -> str:
+    if isinstance(diff_target, str):
+        if diff_target.lower() not in DIFF_TARGET:
+            raise ValueError(f"Unknown diff_target '{diff_target}'. Choices: {DIFF_TARGET}")
+    else:
+        raise TypeError("diff_target argument must be a str")
+
+    return diff_target.lower()
+
+
+def _standardize_simulation_cotangent(
+    model: Model, diff_target: str, cotangent: Numeric | np.ndarray | None
+) -> np.ndarray:
+    if cotangent is None:
+        if diff_target == "j":
+            cotangent = np.ones(1)
+        elif diff_target == "q":
+            cotangent = np.ones((model.mesh.nac, model.setup.ntime_step))
+        else:  # Should be unreachable
+            pass
+    else:
+        if not isinstance(cotangent, (int, float, np.ndarray)):
+            return TypeError("cotangent argument must be of Numeric type (int, float) or np.ndarray or None")
+        cotangent = np.array(cotangent, ndmin=1)
+        if diff_target == "j":
+            expected_shape = (1,)
+        elif diff_target == "q":
+            expected_shape = (model.mesh.nac, model.setup.ntime_step)
+        if cotangent.shape != expected_shape and cotangent.size != 1:
+            raise ValueError(
+                f"Invalid shape for cotangent argument. Could not broadcast input array from shape "
+                f"{cotangent.shape} into shape {expected_shape}"
+            )
+
+    return cotangent
 
 
 def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:

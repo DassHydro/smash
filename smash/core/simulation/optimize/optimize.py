@@ -694,7 +694,7 @@ def _adaptive_optimize(
     has_upper_bound = np.isin(parameters.control.nbd, [2, 3])
 
     # % First evaluation
-    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns, np.ones(1))
     grad = parameters_b.control.x.copy()
     projg = _inf_norm(grad)
 
@@ -717,7 +717,7 @@ def _adaptive_optimize(
         # % Set control values and run adjoint model to get new gradients
         setattr(parameters.control, "x", x)
 
-        parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
+        parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns, np.ones(1))
         grad = parameters_b.control.x.copy()
 
         projg = _inf_norm(grad)
@@ -1183,7 +1183,7 @@ def _gradient_based_optimize_problem(
     setattr(parameters.control, "x", x)
 
     # % Get gradient J wrt control vector
-    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns)
+    parameters_b = _get_parameters_b(model, parameters, wrap_options, wrap_returns, np.ones(1))
     grad = parameters_b.control.x.copy()
 
     # % Callback

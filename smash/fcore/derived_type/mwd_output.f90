@@ -9,8 +9,9 @@
 !%          `Variables`              Description
 !%          ======================== =======================================
 !%          ``cost``                 Value of cost function
+!%          ``ac_q``                 Active cell discharge
 !%          ``response``             ResponseDT
-!%          ``rr_final_states``      Rr_StatesDT
+!%          ``rr_final_states``      RR_StatesDT
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -25,15 +26,16 @@ module mwd_output
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_response !% only: ResponseDT, ResponseDT_initialise
-    use mwd_rr_states !% only: Rr_StatesDT, Rr_StatesDT_initialise
+    use mwd_rr_states !% only: RR_StatesDT, RR_StatesDT_initialise
 
     implicit none
 
     type OutputDT
 
         type(ResponseDT) :: response
-        type(Rr_StatesDT) :: rr_final_states
+        type(RR_StatesDT) :: rr_final_states
         real(sp) :: cost
+        real(sp), dimension(:, :), allocatable :: ac_q
 
     end type OutputDT
 
@@ -48,7 +50,7 @@ contains
         type(MeshDT), intent(in) :: mesh
 
         call ResponseDT_initialise(this%response, setup, mesh)
-        call Rr_StatesDT_initialise(this%rr_final_states, setup, mesh)
+        call RR_StatesDT_initialise(this%rr_final_states, setup, mesh)
 
     end subroutine OutputDT_initialise
 
@@ -62,5 +64,28 @@ contains
         this_copy = this
 
     end subroutine OutputDT_copy
+
+    subroutine OutputDT_allocate_ac_q(this, setup, mesh)
+
+        implicit none
+
+        type(OutputDT), intent(inout) :: this
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+
+        if (allocated(this%ac_q)) deallocate (this%ac_q)
+        allocate (this%ac_q(mesh%nac, setup%ntime_step))
+
+    end subroutine OutputDT_allocate_ac_q
+
+    subroutine OutputDT_deallocate_ac_q(this)
+
+        implicit none
+
+        type(OutputDT), intent(inout) :: this
+
+        if (allocated(this%ac_q)) deallocate (this%ac_q)
+
+    end subroutine OutputDT_deallocate_ac_q
 
 end module mwd_output

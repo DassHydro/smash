@@ -11,7 +11,7 @@
 !%          ======================== =======================================
 !%          ``nmts``                 Number of time step to return
 !%          ``mask_time_step``       Mask of time step
-!%          ``rr_states``            Array of Rr_StatesDT
+!%          ``rr_states``            Array of RR_StatesDT
 !%          ``rr_states_flag``       Return flag of rr_states
 !%          ``q_domain``             Array of discharge
 !%          ``q_domain_flag``        Return flag of q_domain
@@ -51,7 +51,7 @@ module mwd_returns
         logical, dimension(:), allocatable :: mask_time_step
         integer, dimension(:), allocatable :: time_step_to_returns_time_step !$F90W index-array
 
-        type(Rr_StatesDT), dimension(:), allocatable :: rr_states
+        type(RR_StatesDT), dimension(:), allocatable :: rr_states
         logical :: rr_states_flag = .false.
 
         real(sp), dimension(:, :, :), allocatable :: q_domain

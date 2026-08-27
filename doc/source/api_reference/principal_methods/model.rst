@@ -39,6 +39,7 @@ Simulation
    :toctree: smash/
 
    Model.forward_run
+   Model.backward_run
    Model.optimize
    Model.multiset_estimate
    Model.bayesian_optimize

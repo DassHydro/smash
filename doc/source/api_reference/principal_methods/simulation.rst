@@ -13,6 +13,13 @@ Forward Run
 
       forward_run
 
+Backward Run
+************
+.. autosummary::
+      :toctree: smash/
+
+      backward_run
+
 Multiple Forward Run 
 ********************
 .. autosummary::
