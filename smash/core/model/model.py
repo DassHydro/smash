@@ -146,6 +146,7 @@ class Model:
         routing_module : `str`, default 'lr'
             Name of routing module. Should be one of:
 
+            - ``'zero'``
             - ``'lag0'``
             - ``'lr'``
             - ``'kw'``

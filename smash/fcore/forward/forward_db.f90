@@ -26826,6 +26826,10 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
+      CASE ('zero') 
+! 'zero' module
+        checkpoint_variable_d%ac_qz = checkpoint_variable_d%ac_qtz
+        checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
       CASE ('lag0') 
 ! 'lag0' module
         CALL LAG0_TIME_STEP_D(setup, mesh, options, returns, t, &
@@ -27793,6 +27797,10 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
+      CASE ('zero') 
+! 'zero' module
+        checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
+        CALL PUSHCONTROL3B(1)
       CASE ('lag0') 
 ! 'lag0' module
         CALL PUSHREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
@@ -27801,7 +27809,7 @@ CONTAINS
         CALL LAG0_TIME_STEP(setup, mesh, options, returns, t, &
 &                     checkpoint_variable%ac_qtz, checkpoint_variable%&
 &                     ac_qz)
-        CALL PUSHCONTROL2B(1)
+        CALL PUSHCONTROL3B(2)
       CASE ('lr') 
 ! 'lr' module
 ! % To avoid potential aliasing tapenade warning (DF02)
@@ -27818,7 +27826,7 @@ CONTAINS
 &                   ac_rr_parameters(:, rr_parameters_inc+1), h1, &
 &                   checkpoint_variable%ac_qz)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
-        CALL PUSHCONTROL2B(2)
+        CALL PUSHCONTROL3B(3)
       CASE ('kw') 
 ! 'kw' module
 ! % akw
@@ -27831,9 +27839,9 @@ CONTAINS
 &                   ac_rr_parameters(:, rr_parameters_inc+1), &
 &                   checkpoint_variable%ac_rr_parameters(:, &
 &                   rr_parameters_inc+2), checkpoint_variable%ac_qz)
-        CALL PUSHCONTROL2B(3)
+        CALL PUSHCONTROL3B(4)
       CASE DEFAULT
-        CALL PUSHCONTROL2B(0)
+        CALL PUSHCONTROL3B(0)
       END SELECT
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
 &                    checkpoint_variable, t)
@@ -27841,19 +27849,23 @@ CONTAINS
     DO t=end_time_step,start_time_step,-1
       CALL STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
 &                      checkpoint_variable, checkpoint_variable_b, t)
-      CALL POPCONTROL2B(branch)
+      CALL POPCONTROL3B(branch)
       IF (branch .LT. 2) THEN
         IF (branch .NE. 0) THEN
-          CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
-&                      checkpoint_variable%ac_qz, 1)*SIZE(&
-&                      checkpoint_variable%ac_qz, 2))
-          CALL LAG0_TIME_STEP_B(setup, mesh, options, returns, t, &
-&                         checkpoint_variable%ac_qtz, &
-&                         checkpoint_variable_b%ac_qtz, &
-&                         checkpoint_variable%ac_qz, &
-&                         checkpoint_variable_b%ac_qz)
+          checkpoint_variable_b%ac_qtz = checkpoint_variable_b%ac_qtz + &
+&           checkpoint_variable_b%ac_qz
+          checkpoint_variable_b%ac_qz = 0.0_4
         END IF
       ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL4ARRAY(checkpoint_variable%ac_qz, SIZE(&
+&                    checkpoint_variable%ac_qz, 1)*SIZE(&
+&                    checkpoint_variable%ac_qz, 2))
+        CALL LAG0_TIME_STEP_B(setup, mesh, options, returns, t, &
+&                       checkpoint_variable%ac_qtz, &
+&                       checkpoint_variable_b%ac_qtz, &
+&                       checkpoint_variable%ac_qz, checkpoint_variable_b&
+&                       %ac_qz)
+      ELSE IF (branch .EQ. 3) THEN
         h1_b = 0.0_4
         h1_b = checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1)
         CALL POPREAL4ARRAY(h1, mesh%nac)
@@ -29765,6 +29777,9 @@ CONTAINS
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
+      CASE ('zero') 
+! 'zero' module
+        checkpoint_variable%ac_qz = checkpoint_variable%ac_qtz
       CASE ('lag0') 
 ! 'lag0' module
         CALL LAG0_TIME_STEP(setup, mesh, options, returns, t, &

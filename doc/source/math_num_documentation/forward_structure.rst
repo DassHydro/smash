@@ -35,7 +35,7 @@ Snow operator :math:`\mathcal{M}_{snw}`
     :align: center
     :width: 300
 
-.. dropdown:: zero (Zero Snow)
+.. dropdown:: Zero Snow (zero)
     :animate: fade-in-slide-down
 
     This snow operator simply means that there is no snow operator.
@@ -46,7 +46,7 @@ Snow operator :math:`\mathcal{M}_{snw}`
 
     with :math:`m_{lt}` the melt flux.
 
-.. dropdown:: ssn (Simple Snow)
+.. dropdown:: Simple Snow (ssn)
     :animate: fade-in-slide-down
 
     This snow operator is a simple degree-day snow operator. It can be expressed as follows:
@@ -1735,6 +1735,19 @@ surface discharge can inflow the current cell :math:`x` - each cell has a unique
 .. image:: ../_static/routing_module.svg
     :align: center
     :width: 300
+
+.. _math_num_documentation.forward_structure.routing_module.zero:
+
+.. dropdown:: Zero Routing (zero)
+    :animate: fade-in-slide-down
+
+    This routing operator simply means that there is no routing operator.
+
+    .. math::
+
+        Q(x, t) = \alpha(x) q_t(x, t)
+
+    with :math:`\alpha` a conversion factor from :math:`mm.\Delta t^{-1}` to :math:`m^3.s^{-1}` for a single cell.
 
 .. _math_num_documentation.forward_structure.routing_module.lag0:
 
