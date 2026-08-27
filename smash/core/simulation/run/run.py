@@ -384,6 +384,7 @@ def _backward_run(
     )
 
     fret = {}
+    pyret = {}
 
     for key in return_options["keys"]:
         try:
@@ -395,7 +396,7 @@ def _backward_run(
         fret[key] = value
 
     if "grad" in return_options["keys"]:
-        pyret = {"grad": grad}
+        pyret["grad"] = grad
 
     ret = {**fret, **pyret}
 

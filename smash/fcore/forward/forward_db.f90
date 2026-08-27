@@ -2168,6 +2168,7 @@ MODULE MWD_OUTPUT_DIFF
       TYPE(RR_STATESDT) :: rr_final_states
       REAL(sp) :: cost
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ac_q
+      LOGICAL :: ac_q_allocated=.false.
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
       TYPE(RESPONSEDT) :: response
@@ -2202,6 +2203,7 @@ CONTAINS
       DEALLOCATE(this%ac_q)
     END IF
     ALLOCATE(this%ac_q(mesh%nac, setup%ntime_step))
+    this%ac_q_allocated = .true.
   END SUBROUTINE OUTPUTDT_ALLOCATE_AC_Q
 
   SUBROUTINE OUTPUTDT_DEALLOCATE_AC_Q(this)
@@ -2211,6 +2213,7 @@ CONTAINS
     IF (ALLOCATED(this%ac_q)) THEN
       DEALLOCATE(this%ac_q)
     END IF
+    this%ac_q_allocated = .false.
   END SUBROUTINE OUTPUTDT_DEALLOCATE_AC_Q
 
 END MODULE MWD_OUTPUT_DIFF
@@ -25629,7 +25632,6 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable_d
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
-    INTRINSIC ALLOCATED
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
@@ -25638,7 +25640,7 @@ CONTAINS
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
-    IF (ALLOCATED(output%ac_q)) output_d%ac_q(:, time_step) = &
+    IF (output%ac_q_allocated) output_d%ac_q(:, time_step) = &
 &       checkpoint_variable_d%ac_qz(:, setup%nqz)
   END SUBROUTINE STORE_TIME_STEP_D
 
@@ -25661,12 +25663,11 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_b
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
-    INTRINSIC ALLOCATED
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
     END DO
-    IF (ALLOCATED(output%ac_q)) THEN
+    IF (output%ac_q_allocated) THEN
       checkpoint_variable_b%ac_qz(:, setup%nqz) = checkpoint_variable_b%&
 &       ac_qz(:, setup%nqz) + output_b%ac_q(:, time_step)
       output_b%ac_q(:, time_step) = 0.0_4
@@ -25690,14 +25691,13 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     INTEGER, INTENT(IN) :: time_step
     INTEGER :: i, k, time_step_returns
-    INTRINSIC ALLOCATED
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
       output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, &
 &       setup%nqz)
     END DO
-    IF (ALLOCATED(output%ac_q)) output%ac_q(:, time_step) = &
+    IF (output%ac_q_allocated) output%ac_q(:, time_step) = &
 &       checkpoint_variable%ac_qz(:, setup%nqz)
   END SUBROUTINE STORE_TIME_STEP
 

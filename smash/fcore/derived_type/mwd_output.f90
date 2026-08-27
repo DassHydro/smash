@@ -36,6 +36,7 @@ module mwd_output
         type(RR_StatesDT) :: rr_final_states
         real(sp) :: cost
         real(sp), dimension(:, :), allocatable :: ac_q
+        logical :: ac_q_allocated = .false.
 
     end type OutputDT
 
@@ -75,6 +76,7 @@ contains
 
         if (allocated(this%ac_q)) deallocate (this%ac_q)
         allocate (this%ac_q(mesh%nac, setup%ntime_step))
+        this%ac_q_allocated = .true.
 
     end subroutine OutputDT_allocate_ac_q
 
@@ -85,6 +87,7 @@ contains
         type(OutputDT), intent(inout) :: this
 
         if (allocated(this%ac_q)) deallocate (this%ac_q)
+        this%ac_q_allocated = .false.
 
     end subroutine OutputDT_deallocate_ac_q
 
