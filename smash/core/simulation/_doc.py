@@ -840,6 +840,48 @@ _backward_run_doc = (
     """
 Run the backward Model.
 
+Let us define the models :math:`y = A(x)`, :math:`z = B(y)`, and their
+composition :math:`C = B \\circ A`.
+
+The backward run of model :math:`A` returns
+
+.. math::
+
+    \\bar{x} =
+    \\left(\\frac{\\partial y}{\\partial x}\\right)^T \\bar{y},
+
+where :math:`\\bar{y}` is the cotangent vector associated with the output
+:math:`y` of model :math:`A`.
+
+For model :math:`B`, the cotangent vector is propagated according to
+
+.. math::
+
+    \\bar{y} =
+    \\left(\\frac{\\partial z}{\\partial y}\\right)^T \\bar{z},
+
+where :math:`\\bar{z}` is the cotangent vector associated with the output
+:math:`z` of model :math:`B`.
+
+The cotangent vector can therefore be used to couple models :math:`A` and
+:math:`B` and compute the gradient of the composed model :math:`C`.
+
+In reverse mode, the backward runs are applied in reverse order. Starting
+from the cotangent vector :math:`\\bar{z}` of the output of model :math:`B`,
+the cotangent vector is first propagated through :math:`B` and then through
+:math:`A`. Combining the two steps gives
+
+.. math::
+
+    \\bar{x}
+    =
+    \\left(\\frac{\\partial y}{\\partial x}\\right)^T
+    \\left(\\frac{\\partial z}{\\partial y}\\right)^T
+    \\bar{z}
+    =
+    \\left(\\frac{\\partial z}{\\partial x}\\right)^T
+    \\bar{z}.
+
 Parameters
 ----------
 %(model_parameter)s
