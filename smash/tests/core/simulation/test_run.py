@@ -156,3 +156,68 @@ def test_forward_run_mlp():
         assert np.allclose(mlp_ret.cost, cls_ret.cost, atol=1e-06, equal_nan=True), (
             f"forward_run_mlp.{mlp_model.setup.structure}.cost"
         )
+
+
+def generic_backward_run(model_structure: list[smash.Model], **kwargs) -> dict:
+    res = {}
+
+    ncpu = min(5, max(1, os.cpu_count() - 1))
+
+    for model in model_structure:
+        # % There is no snow data for the Cance dataset.
+        # % TODO: Add a dataset to test snow module
+        if model.setup.snow_module_present:
+            continue
+
+        # % Hybrid forward hydrological model with NN
+        if model.setup.n_layers > 0:
+            model.set_nn_parameters_weight(initializer="glorot_normal", random_state=11)
+
+        instance, ret = smash.backward_run(
+            model,
+            diff_target="j",
+            common_options={"verbose": False, "ncpu": ncpu},
+            return_options={"cost": True, "grad": True},
+        )
+
+        res[f"backward_run.{instance.setup.structure}.cost"] = np.array(ret.cost, ndmin=1)
+        res[f"backward_run.{instance.setup.structure}.grad_j"] = np.array(ret.grad, ndmin=1)
+
+        instance, ret = smash.backward_run(
+            model,
+            diff_target="q",
+            common_options={"verbose": False, "ncpu": ncpu},
+            return_options={"grad": True},
+        )
+
+        res[f"backward_run.{instance.setup.structure}.grad_q"] = np.array(ret.grad, ndmin=1)
+
+    return res
+
+
+def test_backward_run():
+    res = generic_backward_run(pytest.model_structure)
+
+    for key, value in res.items():
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), key
+
+
+def test_backward_run_contangent():
+    ncpu = min(5, max(1, os.cpu_count() - 1))
+    _, ret_cv1 = smash.backward_run(
+        pytest.model,
+        diff_target="j",
+        common_options={"verbose": False, "ncpu": ncpu},
+        return_options={"grad": True},
+    )
+
+    cotangent = 0.5
+    _, ret_cv05 = smash.backward_run(
+        pytest.model,
+        diff_target="j",
+        cotangent=cotangent,
+        common_options={"verbose": False, "ncpu": ncpu},
+        return_options={"grad": True},
+    )
+
+    assert np.allclose(ret_cv1.grad * cotangent, ret_cv05.grad)

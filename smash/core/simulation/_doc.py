@@ -863,13 +863,18 @@ For model :math:`B`, the cotangent vector is propagated according to
 where :math:`\\bar{z}` is the cotangent vector associated with the output
 :math:`z` of model :math:`B`.
 
-The cotangent vector can therefore be used to couple models :math:`A` and
-:math:`B` and compute the gradient of the composed model :math:`C`.
+The cotangent vector represents the sensitivity of a model's output with respect to a
+quantity of interest. For an output :math:`y`, the corresponding cotangent vector, denoted :math:`\\bar{y}`,
+describes how a small variation of :math:`y` affects the quantity being differentiated.
+:math:`\\bar{y}` is the information received by model :math:`A` from the subsequent part of the computation,
+and :math:`\\bar{x}` is the corresponding sensitivity propagated back to its input :math:`x`.
 
-In reverse mode, the backward runs are applied in reverse order. Starting
-from the cotangent vector :math:`\\bar{z}` of the output of model :math:`B`,
-the cotangent vector is first propagated through :math:`B` and then through
-:math:`A`. Combining the two steps gives
+In reverse mode, the backward runs are applied in the reverse order of the forward computation.
+Starting from the cotangent vector :math:`\\bar{z}` of the output of model :math:`B`, it is first
+propagated backward through :math:`B`, producing the cotangent :math:`\\bar{y}` associated with :math:`y`.
+This cotangent can then be passed to the backward run of :math:`A`. The cotangent vector therefore provides
+the mechanism for coupling models :math:`A` and :math:`B` and computing the gradient of the composed
+model :math:`C`. Combining the two steps gives
 
 .. math::
 
