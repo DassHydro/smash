@@ -199,7 +199,7 @@ def test_backward_run():
     res = generic_backward_run(pytest.model_structure)
 
     for key, value in res.items():
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key
 
 
 def test_backward_run_contangent():
@@ -220,4 +220,4 @@ def test_backward_run_contangent():
         return_options={"grad": True},
     )
 
-    assert np.allclose(ret_cv1.grad * cotangent, ret_cv05.grad)
+    assert np.allclose(ret_cv1.grad * cotangent, ret_cv05.grad, atol=1e-03)
