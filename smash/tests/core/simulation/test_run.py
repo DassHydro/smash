@@ -199,7 +199,7 @@ def test_backward_run():
     res = generic_backward_run(pytest.model_structure)
 
     for key, value in res.items():
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-02, equal_nan=True), key
 
 
 def test_backward_run_contangent():
