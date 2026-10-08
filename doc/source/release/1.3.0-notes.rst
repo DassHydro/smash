@@ -7,7 +7,7 @@ smash 1.3.0 Release Notes
 The smash 1.3.0 release adds several new functionalities and fixes compatibility issues, including:
 
 - ``Descriptor transformation``
-    It is now possible to specify the transformation applied to descriptors. The previous behavior, which normalizes descriptors between 0 and 1, remains the default. It is now also possible to keep descriptors unchanged or to standardize them.
+    It is now possible to specify the transformation applied to descriptors. The new default behavior is to standardize descriptors. It is also possible to normalize descriptors between 0 and 1 or to keep them unchanged.
     This can be configured through the ``descriptor_tfm`` argument in ``setup``.
 
 - ``New hybrid flux correction structures with rain intensity``
