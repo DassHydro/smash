@@ -1,0 +1,53 @@
+.. _release.1.3.0-notes:
+
+=========================
+smash 1.3.0 Release Notes
+=========================
+
+The smash 1.3.0 release adds several new functionalities and fixes compatibility issues, including:
+
+- ``Descriptor transformation``
+    It is now possible to specify the transformation applied to descriptors. The new default behavior is to standardize descriptors. It is also possible to normalize descriptors between 0 and 1 or to keep them unchanged.
+    This can be configured through the ``descriptor_tfm`` argument in ``setup``.
+
+- ``New hybrid flux correction structures with rain intensity``
+    Two new hybrid structures have been added: ``gr4_ri_mlp_exc`` and ``gr5_ri_mlp_exc``. These hybrid structures only correct the exchange flux and account for rain intensity.
+    These structures are available through the ``hydrological_module`` argument in ``setup``.
+
+- ``Zero routing module``
+    A new routing module, ``zero``, has been added. By definition, this module performs no routing and directly returns the elementary discharge. It can therefore be used to facilitate coupling with external routing models.
+    The new routing module is available through the ``routing_module`` argument in ``setup``.
+
+- ``Backward run``
+    A new model method, ``backward_run``, has been added. It computes the transposed Jacobian multiplied by the cotangent vector of either the cost function or the routed discharge.
+    See the `smash backward_run API documentation <https://smash.recover.inrae.fr/api_reference/principal_methods/smash/smash.Model.backward_run.html>`_ for more information.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
+- François Colleoni (`<https://github.com/inoelloc>`__)
+- Ngo Nghi Truyen Huynh (`<https://github.com/nghi-truyen>`__)
+
+--------------------
+Pull requests merged
+--------------------
+
+* MAINT: Update Makefile .PHONY and clean command by @inoelloc in https://github.com/DassHydro/smash/pull/515
+* MAINT: Add tests folder to package to solve module import by @inoelloc in https://github.com/DassHydro/smash/pull/514
+* MAINT: Prepare release v1.2.1 by @inoelloc in https://github.com/DassHydro/smash/pull/516
+* ENH: add transformation method for descriptors by @nghi-truyen in https://github.com/DassHydro/smash/pull/525
+* MAINT: 1.2.2 Release Note by @inoelloc in https://github.com/DassHydro/smash/pull/526
+* MAINT: Update json version for release 1.2.2 by @inoelloc in https://github.com/DassHydro/smash/pull/527
+* MAINT: Update workflow action upload-artifact from v4 to v6 by @inoelloc in https://github.com/DassHydro/smash/pull/530
+* MAINT: Update cibuildwheel actions from v3.1.4 to v3.4.0 by @inoelloc in https://github.com/DassHydro/smash/pull/531
+* MAINT: 1.2.3 Release Note by @nghi-truyen in https://github.com/DassHydro/smash/pull/534
+* DOC: add ref paper defournas et al. 2026 by @nghi-truyen in https://github.com/DassHydro/smash/pull/536
+* ENH: add new hybrid flux correction structures taking into account rain intensity by @nghi-truyen in https://github.com/DassHydro/smash/pull/537
+* MAINT: Update for ruff 0.16.0 by @inoelloc in https://github.com/DassHydro/smash/pull/538
+* FIX: Mismatch with tapenade subroutine arguments by @inoelloc in https://github.com/DassHydro/smash/pull/540
+* ENH: Add Zero Routing module (zero) by @inoelloc in https://github.com/DassHydro/smash/pull/539
+* ENH: add backward run by @inoelloc in https://github.com/DassHydro/smash/pull/541
