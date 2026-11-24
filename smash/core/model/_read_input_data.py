@@ -316,6 +316,64 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         warnings.warn(f"Warning(s) linked to precipitation reading.\n{msg}", stacklevel=2)
 
 
+def _read_lai(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+    date_range = pd.date_range(
+        start=setup.start_time,
+        end=setup.end_time,
+        freq=f"{int(setup.dt)}s",
+    )[1:]
+
+    reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
+
+    if setup.lai_format == "tif":
+        files = _get_atmos_files(setup.lai_directory, setup.lai_format, setup.lai_access, date_range)
+
+        for i, date in enumerate(tqdm(date_range, desc="</> Reading leaf area index")):
+            ind = _find_index_files_containing_date(files, date, setup.dt)
+
+            if ind == -1:
+                reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
+                if setup.sparse_storage:
+                    matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
+                    matrix.fill(np.float32(-99))
+                    wrap_matrix_to_sparse_matrix(
+                        mesh,
+                        matrix,
+                        np.float32(-99),
+                        input_data.atmos_data.sparse_lai[i],
+                    )
+
+                else:
+                    input_data.atmos_data.lai[..., i] = np.float32(-99)
+
+            else:
+                matrix, warning = _read_windowed_raster(files[ind], mesh)
+                matrix *= setup.lai_conversion_factor
+                reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
+
+                if setup.sparse_storage:
+                    wrap_matrix_to_sparse_matrix(
+                        mesh,
+                        matrix,
+                        np.float32(0),
+                        input_data.atmos_data.sparse_lai[i],
+                    )
+
+                else:
+                    input_data.atmos_data.lai[..., i] = matrix
+
+                files = files[ind + 1 :]
+
+    # % WIP
+    elif setup.lai_format == "nc":
+        raise NotImplementedError("NetCDF format not implemented yet")
+
+    msg = _get_reading_warning_message(reading_warning)
+
+    if msg:
+        warnings.warn(f"Warning(s) linked to leaf area index reading.\n{msg}", stacklevel=2)
+
+
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     date_range = pd.date_range(
         start=setup.start_time,

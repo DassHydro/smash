@@ -12566,6 +12566,13 @@ CONTAINS
       ELSE
         vle = input_data%atmos_data%pet(:, :, time_step)
       END IF
+    CASE ('lai') 
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_lai(time_step), vle)
+      ELSE
+        vle = input_data%atmos_data%lai(:, :, time_step)
+      END IF
     CASE ('snow') 
 !% assert (setup%snow_module_present)
       IF (setup%sparse_storage) THEN
@@ -12609,6 +12616,13 @@ CONTAINS
 &                              atmos_data%sparse_pet(time_step))
       ELSE
         input_data%atmos_data%pet(:, :, time_step) = vle
+      END IF
+    CASE ('lai') 
+      IF (setup%sparse_storage) THEN
+        CALL MATRIX_TO_SPARSE_MATRIX(mesh, vle, 0._sp, input_data%&
+&                              atmos_data%sparse_lai(time_step))
+      ELSE
+        input_data%atmos_data%lai(:, :, time_step) = vle
       END IF
     CASE ('snow') 
 !% assert (setup%snow_module_present)

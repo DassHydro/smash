@@ -11,14 +11,17 @@
 !%          ======================== =======================================
 !%          ``prcp``                 Precipitation field                         [mm]
 !%          ``pet``                  Potential evapotranspiration field          [mm]
+!%          ``lai``                  Leaf area index field                       [-]
 !%          ``snow``                 Snow field                                  [mm]
 !%          ``temp``                 Temperature field                           [C]
 !%          ``sparse_prcp``          Sparse precipitation field                  [mm]
 !%          ``sparse_pet``           Sparse potential evapotranspiration field   [mm]
+!%          ``sparse_lai``           Sparse leaf area index field                [-]
 !%          ``sparse_snow``          Sparse snow field                           [mm]
 !%          ``sparse_temp``          Sparse temperature field                    [C]
 !%          ``mean_prcp``            Mean precipitation at gauge                 [mm]
 !%          ``mean_pet``             Mean potential evapotranspiration at gauge  [mm]
+!%          ``mean_lai``             Mean leaf area index at gauge               [-]
 !%          ``mean_snow``            Mean snow at gauge                          [mm]
 !%          ``mean_temp``            Mean temperature at gauge                   [C]
 !%          ======================== =======================================
@@ -42,16 +45,19 @@ module mwd_atmos_data
 
         real(sp), dimension(:, :, :), allocatable :: prcp
         real(sp), dimension(:, :, :), allocatable :: pet
+        real(sp), dimension(:, :, :), allocatable :: lai
         real(sp), dimension(:, :, :), allocatable :: snow
         real(sp), dimension(:, :, :), allocatable :: temp
 
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_prcp
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_pet
+        type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_lai
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_snow
         type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_temp
 
         real(sp), dimension(:, :), allocatable :: mean_prcp
         real(sp), dimension(:, :), allocatable :: mean_pet
+        real(sp), dimension(:, :), allocatable :: mean_lai
         real(sp), dimension(:, :), allocatable :: mean_snow
         real(sp), dimension(:, :), allocatable :: mean_temp
 
@@ -73,6 +79,8 @@ contains
             call Sparse_MatrixDT_initialise_array(this%sparse_prcp, 0, .true., -99._sp)
             allocate (this%sparse_pet(setup%ntime_step))
             call Sparse_MatrixDT_initialise_array(this%sparse_pet, 0, .true., -99._sp)
+            allocate (this%sparse_lai(setup%ntime_step))
+            call Sparse_MatrixDT_initialise_array(this%sparse_lai, 0, .true., -99._sp)
 
             if (setup%snow_module_present) then
                 allocate (this%sparse_snow(setup%ntime_step))
@@ -87,6 +95,8 @@ contains
             this%prcp = -99._sp
             allocate (this%pet(mesh%nrow, mesh%ncol, setup%ntime_step))
             this%pet = -99._sp
+            allocate (this%lai(mesh%nrow, mesh%ncol, setup%ntime_step))
+            this%lai = -99._sp
 
             if (setup%snow_module_present) then
                 allocate (this%snow(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -101,6 +111,8 @@ contains
         this%mean_prcp = -99._sp
         allocate (this%mean_pet(mesh%ng, setup%ntime_step))
         this%mean_pet = -99._sp
+        allocate (this%mean_lai(mesh%ng, setup%ntime_step))
+        this%mean_lai = -99._sp
 
         if (setup%snow_module_present) then
             allocate (this%mean_snow(mesh%ng, setup%ntime_step))

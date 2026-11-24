@@ -33,6 +33,11 @@
 !%          ``pet_directory``          Potential evapotranspiration directory path
 !%          ``pet_access``             Potential evapotranspiration access tree
 !%          ``daily_interannual_pet``  Read daily interannual potential evapotranspiration
+!%          ``read_lai``               Read leaf area index
+!%          ``lai_format``             Leaf area index format
+!%          ``lai_conversion_factor``  Leaf area index conversion factor
+!%          ``lai_directory``          Leaf area index directory path
+!%          ``lai_access``             Leaf area index access tree
 !%          ``read_snow``              Read snow
 !%          ``snow_format``            Snow format
 !%          ``snow_conversion_factor`` Snow conversion factor
@@ -114,6 +119,12 @@ module mwd_setup
         character(2*lchar) :: pet_directory = "..." !$F90W char
         character(lchar) :: pet_access = "..." !$F90W char
         logical :: daily_interannual_pet = .false.
+
+        logical :: read_lai = .false.
+        character(lchar) :: lai_format = "..." !$F90W char
+        real(sp) :: lai_conversion_factor = 1._sp
+        character(2*lchar) :: lai_directory = "..." !$F90W char
+        character(lchar) :: lai_access = "..." !$F90W char
 
         logical :: read_snow = .false.
         character(lchar) :: snow_format = "..." !$F90W char

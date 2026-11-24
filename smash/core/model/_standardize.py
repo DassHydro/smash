@@ -329,6 +329,26 @@ def _standardize_model_setup_daily_interannual_pet(daily_interannual_pet: bool, 
     return _standardize_model_setup_bool("daily_interannual_pet", daily_interannual_pet)
 
 
+def _standardize_model_setup_read_lai(read_lai: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("read_lai", read_lai)
+
+
+def _standardize_model_setup_lai_format(lai_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("lai_format", lai_format)
+
+
+def _standardize_model_setup_lai_conversion_factor(lai_conversion_factor: str, **kwargs) -> str:
+    return _standardize_model_setup_conversion_factor("lai_conversion_factor", lai_conversion_factor)
+
+
+def _standardize_model_setup_lai_directory(read_lai: bool, lai_directory: str | None, **kwargs) -> str:
+    return _standardize_model_setup_directory(read_lai, "lai_directory", lai_directory)
+
+
+def _standardize_model_setup_lai_access(lai_access: str, **kwargs) -> str:
+    return _standardize_model_setup_access("lai_access", lai_access)
+
+
 def _standardize_model_setup_read_snow(snow_module: str, read_snow: bool, **kwrags) -> bool:
     read_snow = _standardize_model_setup_bool("read_snow", read_snow)
 

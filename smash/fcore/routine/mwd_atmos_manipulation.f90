@@ -54,6 +54,16 @@ contains
 
             end if
 
+        case ("lai")
+
+            if (setup%sparse_storage) then
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_lai(time_step), vle)
+
+            else
+                vle = input_data%atmos_data%lai(:, :, time_step)
+
+            end if
+
         case ("snow")
 
             !% assert (setup%snow_module_present)
@@ -110,6 +120,16 @@ contains
 
             else
                 input_data%atmos_data%pet(:, :, time_step) = vle
+
+            end if
+
+        case ("lai")
+
+            if (setup%sparse_storage) then
+                call matrix_to_sparse_matrix(mesh, vle, 0._sp, input_data%atmos_data%sparse_lai(time_step))
+
+            else
+                input_data%atmos_data%lai(:, :, time_step) = vle
 
             end if
 
