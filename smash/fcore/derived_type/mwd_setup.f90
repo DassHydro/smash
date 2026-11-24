@@ -38,6 +38,8 @@
 !%          ``lai_conversion_factor``  Leaf area index conversion factor
 !%          ``lai_directory``          Leaf area index directory path
 !%          ``lai_access``             Leaf area index access tree
+!%          ``kc_min``                 Minimum crop coefficient for bare soil (FAO-56)
+!%          ``lai_extinction_coef``    Coefficient of the exponential leaf area index term (FAO-56)
 !%          ``read_snow``              Read snow
 !%          ``snow_format``            Snow format
 !%          ``snow_conversion_factor`` Snow conversion factor
@@ -125,6 +127,8 @@ module mwd_setup
         real(sp) :: lai_conversion_factor = 1._sp
         character(2*lchar) :: lai_directory = "..." !$F90W char
         character(lchar) :: lai_access = "..." !$F90W char
+        real(sp) :: kc_min = 0.15_sp
+        real(sp) :: lai_extinction_coef = 0.7_sp
 
         logical :: read_snow = .false.
         character(lchar) :: snow_format = "..." !$F90W char

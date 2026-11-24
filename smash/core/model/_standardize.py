@@ -349,6 +349,30 @@ def _standardize_model_setup_lai_access(lai_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("lai_access", lai_access)
 
 
+def _standardize_model_setup_kc_min(kc_min: Numeric, **kwargs) -> float:
+    if isinstance(kc_min, (int, float)):
+        kc_min = float(kc_min)
+        if kc_min < 0 or kc_min >= 1:
+            raise ValueError("kc_min model setup must be greater than or equal to 0 and lower than 1")
+
+    else:
+        raise TypeError("kc_min model setup must be of Numeric type (int, float)")
+
+    return kc_min
+
+
+def _standardize_model_setup_lai_extinction_coef(lai_extinction_coef: Numeric, **kwargs) -> float:
+    if isinstance(lai_extinction_coef, (int, float)):
+        lai_extinction_coef = float(lai_extinction_coef)
+        if lai_extinction_coef <= 0:
+            raise ValueError("lai_extinction_coef model setup must be greater than 0")
+
+    else:
+        raise TypeError("lai_extinction_coef model setup must be of Numeric type (int, float)")
+
+    return lai_extinction_coef
+
+
 def _standardize_model_setup_read_snow(snow_module: str, read_snow: bool, **kwrags) -> bool:
     read_snow = _standardize_model_setup_bool("read_snow", read_snow)
 

@@ -4,6 +4,7 @@
 !%      ----------
 !%
 !%      - gr_interception
+!%      - gr_interception_etc
 !%      - gr_production
 !%      - gr_exchange
 !%      - gr_threshold_exchange
@@ -16,6 +17,7 @@
 !%      - gr4_ri_mlp_exc_time_step
 !%      - gr4_ode_time_step
 !%      - gr4_ude_time_step
+!%      - gr4_lai_time_step
 !%      - gr5_time_step
 !%      - gr5_mlp_time_step
 !%      - gr5_ri_time_step
@@ -64,6 +66,30 @@ contains
         hi = hi + (prcp - ei - pn)/ci
 
     end subroutine gr_interception
+
+    ! % Same as gr_interception but with crop evapotranspiration (etc) as evaporative demand. etc depends on
+    ! % a calibrated parameter (kcb_full), so it is active for differentiation, whereas pet is not active in
+    ! % gr_interception. Keeping a distinct subroutine leaves the differentiated gr_interception (and the
+    ! % modules calling it) unchanged.
+    subroutine gr_interception_etc(prcp, etc, ci, hi, pn, en)
+
+        implicit none
+
+        real(sp), intent(in) :: prcp, etc, ci
+        real(sp), intent(inout) :: hi
+        real(sp), intent(out) :: pn, en
+
+        real(sp) :: ei
+
+        ei = min(etc, prcp + hi*ci)
+
+        pn = max(0._sp, prcp - ci*(1._sp - hi) - ei)
+
+        en = etc - ei
+
+        hi = hi + (prcp - ei - pn)/ci
+
+    end subroutine gr_interception_etc
 
     subroutine gr_production(fq_ps, fq_es, pn, en, imperviousness, cp, beta, hp, pr, perc, ps, es)
 
@@ -1054,6 +1080,117 @@ contains
         end do
 
     end subroutine gr4_ude_time_step
+
+    subroutine gr4_lai_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, &
+    & ac_ct, ac_kexc, ac_kcb_full, ac_hi, ac_hp, ac_ht, ac_qt)
+        ! % GR4 with potential evapotranspiration corrected by a basal crop coefficient computed from
+        ! % leaf area index (FAO-56, Allen et al., 1998, Eq. 97):
+        ! %     kcb = kc_min + (kcb_full - kc_min) * (1 - exp(-lai_extinction_coef * lai))
+        ! %     etc = kcb * pet
+        ! % Where leaf area index is missing (lai < 0), etc = pet.
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_kcb_full
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, ac_lai, ac_etc
+        integer :: row, col, k, time_step_returns
+        real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "lai", ac_lai)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Crop evapotranspiration (potential evapotranspiration is kept where lai or pet is missing)
+        where (ac_lai .ge. 0._sp .and. ac_pet .ge. 0._sp)
+            ac_etc = (setup%kc_min + (ac_kcb_full - setup%kc_min)* &
+            & (1._sp - exp(-setup%lai_extinction_coef*ac_lai)))*ac_pet
+        elsewhere
+            ac_etc = ac_pet
+        end where
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, returns, ac_prcp, ac_etc, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
+        !$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, time_step_returns, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                imperviousness = input_data%physio_data%imperviousness(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_etc(k) .ge. 0._sp) then
+
+                    call gr_interception_etc(ac_prcp(k), ac_etc(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
+
+                    call gr_production(0._sp, 0._sp, pn, en, imperviousness, ac_cp(k), beta, ac_hp(k), pr, perc, ps, es)
+
+                    call gr_exchange(0._sp, ac_kexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                prr = 0.9_sp*(pr + perc) + l
+                prd = 0.1_sp*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%internal_fluxes_flag) then
+                    if (allocated(returns%mask_time_step)) then
+                        if (returns%mask_time_step(time_step)) then
+                            time_step_returns = returns%time_step_to_returns_time_step(time_step)
+                            ! the fluxes of the snow module are the first ones inside internal fluxes
+                            ! due to the building of the modules so n_snow_fluxes
+                            ! moves the index of the array
+                            returns%internal_fluxes( &
+                                row, &
+                                col, &
+                                time_step_returns, &
+                                setup%n_snow_fluxes + 1:setup%n_snow_fluxes + setup%n_hydro_fluxes &
+                                ) = (/pn, en, pr, perc, ps, es, l, prr, prd, qr, qd, ac_qt(k)/)
+                        end if
+                    end if
+                end if
+                !$AD end-exclude
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+    end subroutine gr4_lai_time_step
 
     subroutine gr5_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
     & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
