@@ -323,46 +323,47 @@ def _read_lai(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         freq=f"{int(setup.dt)}s",
     )[1:]
 
+    # % Leaf area index maps are daily (file names matching %Y%m%d), whatever the time step. Following the
+    # % same convention as the daily interannual potential evapotranspiration, each time step uses the map of
+    # % the day of its date (i.e. the end of the time step). Each map is read once and, for a sub-daily time
+    # % step, it is used for all the time steps of the corresponding day.
+    step_day = date_range.normalize()
+    day_range = pd.date_range(start=step_day[0], end=step_day[-1], freq=f"{86_400}s")
+    step_day_index = ((step_day - day_range[0]) // pd.Timedelta(days=1)).to_numpy()
+
     reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.lai_format == "tif":
-        files = _get_atmos_files(setup.lai_directory, setup.lai_format, setup.lai_access, date_range)
+        files = _get_atmos_files(setup.lai_directory, setup.lai_format, setup.lai_access, day_range)
 
-        for i, date in enumerate(tqdm(date_range, desc="</> Reading leaf area index")):
-            ind = _find_index_files_containing_date(files, date, setup.dt)
+        for j, day in enumerate(tqdm(day_range, desc="</> Reading leaf area index")):
+            ind = _find_index_files_containing_date(files, day, 86_400)
 
             if ind == -1:
-                reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
-                if setup.sparse_storage:
-                    matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
-                    matrix.fill(np.float32(-99))
-                    wrap_matrix_to_sparse_matrix(
-                        mesh,
-                        matrix,
-                        np.float32(-99),
-                        input_data.atmos_data.sparse_lai[i],
-                    )
-
-                else:
-                    input_data.atmos_data.lai[..., i] = np.float32(-99)
+                reading_warning["miss"].append(day.strftime("%Y-%m-%d"))
+                matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
+                matrix.fill(np.float32(-99))
+                zero_value = np.float32(-99)
 
             else:
                 matrix, warning = _read_windowed_raster(files[ind], mesh)
                 matrix *= setup.lai_conversion_factor
                 reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
+                zero_value = np.float32(0)
 
+                files = files[ind + 1 :]
+
+            for i in np.flatnonzero(step_day_index == j):
                 if setup.sparse_storage:
                     wrap_matrix_to_sparse_matrix(
                         mesh,
                         matrix,
-                        np.float32(0),
+                        zero_value,
                         input_data.atmos_data.sparse_lai[i],
                     )
 
                 else:
                     input_data.atmos_data.lai[..., i] = matrix
-
-                files = files[ind + 1 :]
 
     # % WIP
     elif setup.lai_format == "nc":
