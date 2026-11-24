@@ -22,6 +22,7 @@ from smash._constant import (
     HYDROLOGICAL_MODULE_RR_PARAMETERS,
     HYDROLOGICAL_MODULE_RR_STATES,
     INPUT_DATA_FORMAT,
+    LAI_HYDROLOGICAL_MODULE,
     MAX_DURATION,
     NN_PARAMETERS_KEYS,
     PEAK_QUANT,
@@ -58,6 +59,7 @@ def test_module_name():
         "gr4_ri_mlp_exc",
         "gr4_ode",
         "gr4_ude",
+        "gr4_lai",
         "gr5",
         "gr5_mlp",
         "gr5_ri",
@@ -75,6 +77,9 @@ def test_module_name():
 
     # % Check routing module
     assert ROUTING_MODULE == ["zero", "lag0", "lr", "kw"]
+
+    # % Check hydrological modules using leaf area index
+    assert LAI_HYDROLOGICAL_MODULE == ["gr4_lai"]
 
 
 def test_module_parameters():
@@ -101,6 +106,7 @@ def test_module_parameters():
         [["ci", "cp", "ct", "kexc"]] * 2  # % gr4, gr4_mlp,
         + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc"]] * 2  # % gr4_ri, gr4_ri_mlp_exc
         + [["ci", "cp", "ct", "kexc"]] * 2  # % gr4_ode, gr4_ude
+        + [["ci", "cp", "ct", "kexc", "kcb_full"]]  # % gr4_lai
         + [["ci", "cp", "ct", "kexc", "aexc"]] * 2  # % gr5, gr5_mlp
         + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"]] * 2  # % gr5_ri, gr5_ri_mlp_exc
         + [["ci", "cp", "ct", "be", "kexc", "aexc"]] * 2  # % gr6, gr6_mlp
@@ -112,7 +118,8 @@ def test_module_parameters():
 
     # % Check hydrological module rr states
     assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == (
-        [["hi", "hp", "ht"]] * 10  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr5, gr5_mlp,
+        [["hi", "hp", "ht"]] * 11  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai, gr5,
+        # % gr5_mlp,
         # % gr5_ri, gr5_ri_mlp_exc
         + [["hi", "hp", "ht", "he"]] * 2  # % gr6, gr6_mlp
         + [["hi", "hp", "ht", "hl"]] * 2  # % grc, grc_mlp
@@ -127,7 +134,7 @@ def test_module_parameters():
         * 4  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc
         + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ude
         + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
-        * 4  # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc
+        * 5  # % gr4_lai, gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc
         + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
         * 2  # % gr6, gr6_mlp
         + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
@@ -166,6 +173,7 @@ def test_parameters():
         "be",  # % gr6, gr6_mlp
         "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr5, gr5_mlp, gr6, gr6_mlp,
         # % grc, grc_mlp
+        "kcb_full",  # % gr4_lai
         "aexc",  # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6, gr6_mlp
         "ca",  # % loieau, loieau_mlp
         "cc",  # % loieau, loieau_mlp
@@ -261,6 +269,7 @@ def test_parameterization_neural_network_structure():
                     (4, 1),  # % gr4_ri_mlp_exc
                     (0, 0),  # % gr4_ode
                     (4, 4),  # % gr4_ude
+                    (0, 0),  # % gr4_lai
                     (0, 0),  # % gr5
                     (4, 4),  # % gr5_mlp
                     (0, 0),  # % gr5_ri
@@ -292,6 +301,7 @@ def test_feasible_domain():
         (0, np.inf),  # % cl
         (0, np.inf),  # % be
         (-np.inf, np.inf),  # % kexc
+        (0, np.inf),  # % kcb_full
         (0, 1),  # % aexc
         (0, np.inf),  # % ca
         (0, np.inf),  # % cc
@@ -353,6 +363,7 @@ def test_default_parameters():
         500,  # % cl
         10,  # % be
         0,  # % kexc
+        1.15,  # % kcb_full
         0.1,  # % aexc
         200,  # % ca
         500,  # % cc
@@ -414,6 +425,7 @@ def test_default_bounds_parameters():
         (1e-6, 1e3),  # % cl
         (1e-3, 20),  # % be
         (-50, 50),  # % kexc
+        (0.75, 1.6),  # % kcb_full
         (1e-6, 0.999999),  # % aexc
         (1e-6, 1e3),  # % ca
         (1e-6, 1e3),  # % cc
