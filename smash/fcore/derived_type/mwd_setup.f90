@@ -58,6 +58,7 @@
 !%          ``descriptor_tfm``         Descriptor transformation method
 !%          ``structure``              Structure combaining all modules
 !%          ``snow_module_present``    Presence of snow module
+!%          ``lai_present``            Presence of leaf area index (used by the hydrological module)
 !%          ``ntime_step``             Number of time steps
 !%          ``nd``                     Number of descriptor maps
 !%          ``hidden_neuron``          Number of neurons in hidden layers
@@ -158,6 +159,7 @@ module mwd_setup
         ! Post processed variables
         character(lchar) :: structure = "..." !$F90W char
         logical :: snow_module_present = .false.
+        logical :: lai_present = .false.
 
         integer :: ntime_step = -99
         integer :: nd = -99

@@ -71,8 +71,8 @@ contains
         logical, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: mask_gauge
         real(sp), dimension(mesh%nrow, mesh%ncol) :: mat_prcp, mat_pet
         logical, dimension(mesh%nrow, mesh%ncol) :: mask_prcp, mask_pet
-        real(sp), dimension(:, :), allocatable :: mat_snow, mat_temp
-        logical, dimension(:, :), allocatable :: mask_snow, mask_temp
+        real(sp), dimension(:, :), allocatable :: mat_snow, mat_temp, mat_lai
+        logical, dimension(:, :), allocatable :: mask_snow, mask_temp, mask_lai
 
         mask_gauge = .false.
 
@@ -89,6 +89,11 @@ contains
             allocate (mask_snow(mesh%nrow, mesh%ncol), mask_temp(mesh%nrow, mesh%ncol))
         end if
 
+        !% Only allocate lai variables if the hydrological module uses leaf area index
+        if (setup%lai_present) then
+            allocate (mat_lai(mesh%nrow, mesh%ncol), mask_lai(mesh%nrow, mesh%ncol))
+        end if
+
         do t = 1, setup%ntime_step
 
             call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
@@ -99,12 +104,20 @@ contains
                 call get_atmos_data_time_step(setup, mesh, input_data, t, "temp", mat_temp)
             end if
 
+            if (setup%lai_present) then
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "lai", mat_lai)
+            end if
+
             mask_prcp = (mat_prcp .ge. 0._sp)
             mask_pet = (mat_pet .ge. 0._sp)
 
             if (setup%snow_module_present) then
                 mask_snow = (mat_snow .ge. 0._sp)
                 mask_temp = (mat_temp .gt. -99._sp)
+            end if
+
+            if (setup%lai_present) then
+                mask_lai = (mat_lai .ge. 0._sp)
             end if
 
             do i = 1, mesh%ng
@@ -119,6 +132,11 @@ contains
                     & input_data%atmos_data%mean_snow(i, t))
                     call get_mean_gauge_atmos_data(mesh, mask_gauge(:, :, i), mask_temp, mat_temp, &
                     & input_data%atmos_data%mean_temp(i, t))
+                end if
+
+                if (setup%lai_present) then
+                    call get_mean_gauge_atmos_data(mesh, mask_gauge(:, :, i), mask_lai, mat_lai, &
+                    & input_data%atmos_data%mean_lai(i, t))
                 end if
 
             end do

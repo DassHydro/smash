@@ -56,6 +56,7 @@ contains
 
         case ("lai")
 
+            !% assert (setup%lai_present)
             if (setup%sparse_storage) then
                 call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_lai(time_step), vle)
 
@@ -125,6 +126,7 @@ contains
 
         case ("lai")
 
+            !% assert (setup%lai_present)
             if (setup%sparse_storage) then
                 call matrix_to_sparse_matrix(mesh, vle, 0._sp, input_data%atmos_data%sparse_lai(time_step))
 

@@ -12565,6 +12565,7 @@ CONTAINS
         vle = input_data%atmos_data%pet(:, :, time_step)
       END IF
     CASE ('lai') 
+!% assert (setup%lai_present)
       IF (setup%sparse_storage) THEN
         CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
 &                              sparse_lai(time_step), vle)
@@ -12616,6 +12617,7 @@ CONTAINS
         input_data%atmos_data%pet(:, :, time_step) = vle
       END IF
     CASE ('lai') 
+!% assert (setup%lai_present)
       IF (setup%sparse_storage) THEN
         CALL MATRIX_TO_SPARSE_MATRIX(mesh, vle, 0._sp, input_data%&
 &                              atmos_data%sparse_lai(time_step))

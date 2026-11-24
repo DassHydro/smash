@@ -79,8 +79,10 @@ contains
             call Sparse_MatrixDT_initialise_array(this%sparse_prcp, 0, .true., -99._sp)
             allocate (this%sparse_pet(setup%ntime_step))
             call Sparse_MatrixDT_initialise_array(this%sparse_pet, 0, .true., -99._sp)
-            allocate (this%sparse_lai(setup%ntime_step))
-            call Sparse_MatrixDT_initialise_array(this%sparse_lai, 0, .true., -99._sp)
+            if (setup%lai_present) then
+                allocate (this%sparse_lai(setup%ntime_step))
+                call Sparse_MatrixDT_initialise_array(this%sparse_lai, 0, .true., -99._sp)
+            end if
 
             if (setup%snow_module_present) then
                 allocate (this%sparse_snow(setup%ntime_step))
@@ -95,8 +97,10 @@ contains
             this%prcp = -99._sp
             allocate (this%pet(mesh%nrow, mesh%ncol, setup%ntime_step))
             this%pet = -99._sp
-            allocate (this%lai(mesh%nrow, mesh%ncol, setup%ntime_step))
-            this%lai = -99._sp
+            if (setup%lai_present) then
+                allocate (this%lai(mesh%nrow, mesh%ncol, setup%ntime_step))
+                this%lai = -99._sp
+            end if
 
             if (setup%snow_module_present) then
                 allocate (this%snow(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -111,8 +115,10 @@ contains
         this%mean_prcp = -99._sp
         allocate (this%mean_pet(mesh%ng, setup%ntime_step))
         this%mean_pet = -99._sp
-        allocate (this%mean_lai(mesh%ng, setup%ntime_step))
-        this%mean_lai = -99._sp
+        if (setup%lai_present) then
+            allocate (this%mean_lai(mesh%ng, setup%ntime_step))
+            this%mean_lai = -99._sp
+        end if
 
         if (setup%snow_module_present) then
             allocate (this%mean_snow(mesh%ng, setup%ntime_step))

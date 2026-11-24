@@ -19,6 +19,7 @@ from smash._constant import (
     HYDROLOGICAL_MODULE,
     HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES,
     INPUT_DATA_FORMAT,
+    LAI_HYDROLOGICAL_MODULE,
     NN_PARAMETERS_KEYS,
     ROUTING_MODULE,
     ROUTING_MODULE_NQZ,
@@ -329,8 +330,24 @@ def _standardize_model_setup_daily_interannual_pet(daily_interannual_pet: bool, 
     return _standardize_model_setup_bool("daily_interannual_pet", daily_interannual_pet)
 
 
-def _standardize_model_setup_read_lai(read_lai: bool, **kwrags) -> bool:
-    return _standardize_model_setup_bool("read_lai", read_lai)
+def _standardize_model_setup_read_lai(hydrological_module: str, read_lai: bool, **kwrags) -> bool:
+    read_lai = _standardize_model_setup_bool("read_lai", read_lai)
+
+    if read_lai and hydrological_module not in LAI_HYDROLOGICAL_MODULE:
+        raise ValueError(
+            f"read_lai model setup can not be set to True if the hydrological module does not use leaf area "
+            f"index. Hydrological module(s) using leaf area index: {LAI_HYDROLOGICAL_MODULE}"
+        )
+
+    if not read_lai and hydrological_module in LAI_HYDROLOGICAL_MODULE:
+        warnings.warn(
+            f"The '{hydrological_module}' hydrological module uses leaf area index but read_lai model setup "
+            f"is set to False. Unless leaf area index is filled in afterwards in Model.atmos_data, missing "
+            f"values lead to crop evapotranspiration equal to potential evapotranspiration",
+            stacklevel=2,
+        )
+
+    return read_lai
 
 
 def _standardize_model_setup_lai_format(lai_format: str, **kwargs) -> str:
@@ -570,6 +587,8 @@ def _standardize_model_setup_finalize(setup: dict):
     )
 
     setup["snow_module_present"] = setup["snow_module"] != "zero"
+
+    setup["lai_present"] = setup["hydrological_module"] in LAI_HYDROLOGICAL_MODULE
 
     setup["neurons"] = get_neurons_from_hydrological_module(
         setup["hydrological_module"], setup["hidden_neuron"]

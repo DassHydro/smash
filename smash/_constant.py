@@ -89,6 +89,9 @@ ROUTING_MODULE = ["zero", "lag0", "lr", "kw"]
 
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
 
+# % Hydrological modules that use leaf area index (LAI) as atmospheric input data
+LAI_HYDROLOGICAL_MODULE = ["gr4_lai"]
+
 
 # % Following SNOW_MODULE order
 SNOW_MODULE_RR_PARAMETERS = dict(
