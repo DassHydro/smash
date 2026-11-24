@@ -38,6 +38,21 @@ time step ``dt`` using the following distribution.
     :align: center
     :width: 600
 
+Leaf area index
+***************
+
+The leaf area index files (used by the ``gr4_lai`` hydrological module) must be stored for each day of the simulation in ``tif`` format,
+whatever the time step ``dt``. For one day, `smash` will recursively search in the ``lai_directory``, a file with the following name
+structure: ``*%Y%m%d*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the day 2014-09-15: ``LAI_20140915.tif``.
+
+For a sub-daily time step, the leaf area index of a day is used for all the time steps whose date (end of the time step)
+belongs to this day, as for the daily interannual potential evapotranspiration. Each file is read once.
+
+.. note::
+    ``%Y%m%d`` is a unique key, the ``lai_directory`` (and all subdirectories) can not contains files with similar dates.
+    Negative values (or missing files) are considered as no data: crop evapotranspiration is then equal to potential evapotranspiration.
+
 Snow
 ****
 

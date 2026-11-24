@@ -1410,6 +1410,81 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     .. math::
         q_{t} = 0.1\tilde{h_p}^{\alpha_1}p_n(1+f_p) + k_{exc}\tilde{h_t}^{\alpha_3}(1+f_l) + \frac{c_t}{\alpha_2-1}\tilde{h_t}^{\alpha_2}(1+f_t)
 
+.. _math_num_documentation.forward_structure.hydrological_module.gr4_lai:
+
+.. dropdown:: Génie Rural with 4 parameters and leaf area index (gr4_lai)
+    :animate: fade-in-slide-down
+
+    This hydrological operator is the ``gr4`` operator (see :ref:`gr4 <math_num_documentation.forward_structure.hydrological_module.gr4>`)
+    in which the potential evapotranspiration :math:`E` is replaced by a crop evapotranspiration :math:`E_c` depending on the vegetation.
+    The basal crop coefficient :math:`k_{cb}` is computed from the leaf area index :math:`L` following the FAO-56 approach
+    :cite:p:`allen1998crop` (Equation 97, similar to a procedure used by Ritchie, 1974):
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &k_{cb}(x, t)& &=& &k_{c,min} + \left(k_{cb,full}(x) - k_{c,min}\right)\left(1 - \exp\left(-\alpha_{L} L(x, t)\right)\right)\\
+
+            &E_c(x, t)& &=& &k_{cb}(x, t) \times E(x, t)
+
+        \end{eqnarray}
+
+    with :math:`k_{cb,full}` the basal crop coefficient for vegetation with full ground cover (:math:`L > 3`), :math:`k_{c,min}` the minimum
+    crop coefficient for bare soil and :math:`\alpha_{L}` the coefficient of the exponential leaf area index term. The basal crop coefficient
+    increases from :math:`k_{c,min}` for bare soil (:math:`L = 0`) to :math:`k_{cb,full}` for a dense vegetation (:math:`k_{cb} \approx k_{cb,full}` for :math:`L > 3`).
+
+    It can be expressed as follows:
+
+    .. math::
+
+        q_{t}(x, t) = f\left(\left[P, E, L\right](x, t), m_{lt}(x, t), \left[c_i, c_p, c_t, k_{exc}, k_{cb,full}\right](x), \left[h_i, h_p, h_t\right](x, t)\right)
+
+    The function :math:`f` is resolved numerically as for the ``gr4`` operator, :math:`E` being replaced by :math:`E_c` in the interception
+    (and therefore in the neutralized evapotranspiration :math:`e_n` feeding the production reservoir):
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &e_i(x, t)& &=& &\min(E_c(x, t), P(x, t) + m_{lt}(x, t) + \tilde{h_i}(x, t - 1)\times c_i(x))\\
+
+            &e_n(x, t)& &=& &E_c(x, t) - e_i(x, t)
+
+        \end{eqnarray}
+
+    .. note::
+
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
+
+        - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+        - Atmospheric forcings: :math:`\{P, E, L\}\in\boldsymbol{\mathcal{I}}`
+        - Parameters: :math:`\{c_i, c_p, c_t, k_{exc}, k_{cb,full}\}\in\boldsymbol{\theta}`
+        - Normalized states: :math:`\{\tilde{h_i}, \tilde{h_p}, \tilde{h_t}\}`, as for ``gr4``
+
+    .. note::
+
+        - The constants :math:`k_{c,min}` and :math:`\alpha_{L}` are set with the ``kc_min`` (default 0.15, FAO-56 gives
+          :math:`k_{c,min} \approx 0.15 - 0.20`) and ``lai_extinction_coef`` (default 0.7, FAO-56 Equation 97) setup options.
+        - The leaf area index is read with the ``read_lai`` and ``lai_directory`` setup options (see the
+          :ref:`user_guide.data_and_format_description.format_description` section). Leaf area index maps are daily: for a sub-daily
+          time step, the map of a day is used for all the time steps of this day.
+        - Where the leaf area index is missing (negative value), the crop evapotranspiration is equal to the potential evapotranspiration.
+          In particular, ``gr4_lai`` gives the same results as ``gr4`` if no leaf area index is available.
+
+    .. hint::
+
+        The default value of :math:`k_{cb,full}` (1.15) is a typical FAO-56 mid-season basal crop coefficient for vegetation with full
+        ground cover. For crops, FAO-56 takes :math:`k_{cb,full}` as the mid-season value of Table 17 adjusted for the climate
+        (Equation 99). For natural vegetation, it is approximated from the mean plant height :math:`h` by :math:`1.0 + 0.1h`, limited to
+        1.20, the general upper limit for tall vegetation with full ground cover under sub-humid and calm wind conditions
+        (Equation 101), then adjusted for the climate (Equation 100).
+        The default bounds of :math:`k_{cb,full}` used for calibration, :math:`[0.75, 1.6]`, are deliberately wider than this range
+        because the calibrated value also compensates for biases of the potential evapotranspiration forcing and of the model
+        structure. They can be changed with the ``bounds`` key of the ``optimize_options`` argument.
+
 .. _math_num_documentation.forward_structure.hydrological_module.imperviousness:
 
 .. dropdown:: Génie Rural with imperviousness 
