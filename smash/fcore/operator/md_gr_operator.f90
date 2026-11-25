@@ -5,6 +5,7 @@
 !%
 !%      - gr_interception
 !%      - gr_interception_etc
+!%      - get_ac_crop_evapotranspiration
 !%      - gr_production
 !%      - gr_exchange
 !%      - gr_threshold_exchange
@@ -90,6 +91,37 @@ contains
         hi = hi + (prcp - ei - pn)/ci
 
     end subroutine gr_interception_etc
+
+    subroutine get_ac_crop_evapotranspiration(setup, mesh, input_data, time_step, ac_kcb_full, ac_etc)
+        ! % Crop evapotranspiration of the hydrological modules using leaf area index (FAO-56, Allen et al.,
+        ! % 1998, Eq. 97):
+        ! %     kcb = kc_min + (kcb_full - kc_min) * (1 - exp(-lai_extinction_coef * lai))
+        ! %     etc = kcb * pet
+        ! % Potential evapotranspiration is kept where leaf area index or potential evapotranspiration is
+        ! % missing (negative value).
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_kcb_full
+        real(sp), dimension(mesh%nac), intent(out) :: ac_etc
+
+        real(sp), dimension(mesh%nac) :: ac_pet, ac_lai
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "lai", ac_lai)
+
+        where (ac_lai .ge. 0._sp .and. ac_pet .ge. 0._sp)
+            ac_etc = (setup%kc_min + (ac_kcb_full - setup%kc_min)* &
+            & (1._sp - exp(-setup%lai_extinction_coef*ac_lai)))*ac_pet
+        elsewhere
+            ac_etc = ac_pet
+        end where
+
+    end subroutine get_ac_crop_evapotranspiration
 
     subroutine gr_production(fq_ps, fq_es, pn, en, imperviousness, cp, beta, hp, pr, perc, ps, es)
 
@@ -1083,11 +1115,8 @@ contains
 
     subroutine gr4_lai_time_step(setup, mesh, input_data, options, returns, time_step, ac_mlt, ac_ci, ac_cp, &
     & ac_ct, ac_kexc, ac_kcb_full, ac_hi, ac_hp, ac_ht, ac_qt)
-        ! % GR4 with potential evapotranspiration corrected by a basal crop coefficient computed from
-        ! % leaf area index (FAO-56, Allen et al., 1998, Eq. 97):
-        ! %     kcb = kc_min + (kcb_full - kc_min) * (1 - exp(-lai_extinction_coef * lai))
-        ! %     etc = kcb * pet
-        ! % Where leaf area index is missing (lai < 0), etc = pet.
+        ! % GR4 with potential evapotranspiration replaced by crop evapotranspiration computed from leaf
+        ! % area index (see get_ac_crop_evapotranspiration)
 
         implicit none
 
@@ -1102,23 +1131,14 @@ contains
         real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
         real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet, ac_lai, ac_etc
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_etc
         integer :: row, col, k, time_step_returns
         real(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, prd, qr, qd
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
-        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
-        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "lai", ac_lai)
+        call get_ac_crop_evapotranspiration(setup, mesh, input_data, time_step, ac_kcb_full, ac_etc)
 
         ac_prcp = ac_prcp + ac_mlt
-
-        ! Crop evapotranspiration (potential evapotranspiration is kept where lai or pet is missing)
-        where (ac_lai .ge. 0._sp .and. ac_pet .ge. 0._sp)
-            ac_etc = (setup%kc_min + (ac_kcb_full - setup%kc_min)* &
-            & (1._sp - exp(-setup%lai_extinction_coef*ac_lai)))*ac_pet
-        elsewhere
-            ac_etc = ac_pet
-        end where
 
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp

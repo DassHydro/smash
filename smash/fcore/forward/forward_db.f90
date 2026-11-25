@@ -13655,6 +13655,7 @@ END MODULE MD_NEURAL_NETWORK_DIFF
 !%
 !%      - gr_interception
 !%      - gr_interception_etc
+!%      - get_ac_crop_evapotranspiration
 !%      - gr_production
 !%      - gr_exchange
 !%      - gr_threshold_exchange
@@ -13945,6 +13946,89 @@ CONTAINS
     en = etc - ei
     hi = hi + (prcp-ei-pn)/ci
   END SUBROUTINE GR_INTERCEPTION_ETC
+
+!  Differentiation of get_ac_crop_evapotranspiration in forward (tangent) mode (with options fixinterface noISIZE context):
+!   variations   of useful results: ac_etc
+!   with respect to varying inputs: ac_kcb_full
+  SUBROUTINE GET_AC_CROP_EVAPOTRANSPIRATION_D(setup, mesh, input_data, &
+&   time_step, ac_kcb_full, ac_kcb_full_d, ac_etc, ac_etc_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_kcb_full
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_kcb_full_d
+    REAL(sp), DIMENSION(mesh%nac), INTENT(OUT) :: ac_etc
+    REAL(sp), DIMENSION(mesh%nac), INTENT(OUT) :: ac_etc_d
+    REAL(sp), DIMENSION(mesh%nac) :: ac_pet, ac_lai
+    INTRINSIC EXP
+    REAL(sp), DIMENSION(mesh%nac) :: temp
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'lai', ac_lai)
+    ac_etc_d = 0.0_4
+    WHERE (ac_lai .GE. 0._sp .AND. ac_pet .GE. 0._sp) 
+      temp = -EXP(-(setup%lai_extinction_coef*ac_lai)) + 1._sp
+      ac_etc_d = ac_pet*temp*ac_kcb_full_d
+      ac_etc = ac_pet*(setup%kc_min+temp*(ac_kcb_full-setup%kc_min))
+    ELSEWHERE
+      ac_etc_d = 0.0_4
+      ac_etc = ac_pet
+    END WHERE
+  END SUBROUTINE GET_AC_CROP_EVAPOTRANSPIRATION_D
+
+!  Differentiation of get_ac_crop_evapotranspiration in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!   gradient     of useful results: ac_etc ac_kcb_full
+!   with respect to varying inputs: ac_kcb_full
+  SUBROUTINE GET_AC_CROP_EVAPOTRANSPIRATION_B(setup, mesh, input_data, &
+&   time_step, ac_kcb_full, ac_kcb_full_b, ac_etc, ac_etc_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_kcb_full
+    REAL(sp), DIMENSION(mesh%nac) :: ac_kcb_full_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_etc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_etc_b
+    REAL(sp), DIMENSION(mesh%nac) :: ac_pet, ac_lai
+    INTRINSIC EXP
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'lai', ac_lai)
+    WHERE (.NOT.(ac_lai .GE. 0._sp .AND. ac_pet .GE. 0._sp)) 
+      ac_etc_b = 0.0_4
+    ELSEWHERE
+      ac_kcb_full_b = ac_kcb_full_b + (1._sp-EXP(-(setup%&
+&       lai_extinction_coef*ac_lai)))*ac_pet*ac_etc_b
+    END WHERE
+  END SUBROUTINE GET_AC_CROP_EVAPOTRANSPIRATION_B
+
+  SUBROUTINE GET_AC_CROP_EVAPOTRANSPIRATION(setup, mesh, input_data, &
+&   time_step, ac_kcb_full, ac_etc)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_kcb_full
+    REAL(sp), DIMENSION(mesh%nac), INTENT(OUT) :: ac_etc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_pet, ac_lai
+    INTRINSIC EXP
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'pet', ac_pet)
+    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
+&                              , 'lai', ac_lai)
+    WHERE (ac_lai .GE. 0._sp .AND. ac_pet .GE. 0._sp) 
+      ac_etc = (setup%kc_min+(ac_kcb_full-setup%kc_min)*(1._sp-EXP(-(&
+&       setup%lai_extinction_coef*ac_lai))))*ac_pet
+    ELSEWHERE
+      ac_etc = ac_pet
+    END WHERE
+  END SUBROUTINE GET_AC_CROP_EVAPOTRANSPIRATION
 
 !  Differentiation of gr_production in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: hp perc pr
@@ -18219,34 +18303,21 @@ CONTAINS
 &   ac_ht_d
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_d
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ac_lai, ac_etc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_etc
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d, ac_etc_d
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
 &   prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
-    INTRINSIC EXP
     INTRINSIC MAX
-    REAL(sp), DIMENSION(mesh%nac) :: temp
-    REAL(sp) :: temp0
+    REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
-    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
-&                              , 'pet', ac_pet)
-    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
-&                              , 'lai', ac_lai)
+    CALL GET_AC_CROP_EVAPOTRANSPIRATION_D(setup, mesh, input_data, &
+&                                   time_step, ac_kcb_full, &
+&                                   ac_kcb_full_d, ac_etc, ac_etc_d)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
-! Crop evapotranspiration (potential evapotranspiration is kept where lai or pet is missing)
-    ac_etc_d = 0.0_4
-    WHERE (ac_lai .GE. 0._sp .AND. ac_pet .GE. 0._sp) 
-      temp = -EXP(-(setup%lai_extinction_coef*ac_lai)) + 1._sp
-      ac_etc_d = ac_pet*temp*ac_kcb_full_d
-      ac_etc = ac_pet*(setup%kc_min+temp*(ac_kcb_full-setup%kc_min))
-    ELSEWHERE
-      ac_etc_d = 0.0_4
-      ac_etc = ac_pet
-    END WHERE
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
     DO col=1,mesh%ncol
@@ -18291,9 +18362,9 @@ CONTAINS
           ac_qt_d(k) = qr_d + qd_d
           ac_qt(k) = qr + qd
 ! Transform from mm/dt to m3/s
-          temp0 = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
-          ac_qt_d(k) = temp0*ac_qt_d(k)/setup%dt
-          ac_qt(k) = temp0*(ac_qt(k)/setup%dt)
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
+          ac_qt(k) = temp*(ac_qt(k)/setup%dt)
         END IF
       END DO
     END DO
@@ -18326,13 +18397,12 @@ CONTAINS
 &   ac_ht_b
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt_b
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ac_lai, ac_etc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_etc
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b, ac_etc_b
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
 &   prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
-    INTRINSIC EXP
     INTRINSIC MAX
     REAL(sp) :: dummydiff_b
     REAL(sp) :: dummydiff_b0
@@ -18340,18 +18410,9 @@ CONTAINS
     INTEGER :: branch
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
-    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
-&                              , 'pet', ac_pet)
-    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
-&                              , 'lai', ac_lai)
+    CALL GET_AC_CROP_EVAPOTRANSPIRATION(setup, mesh, input_data, &
+&                                 time_step, ac_kcb_full, ac_etc)
     ac_prcp = ac_prcp + ac_mlt
-! Crop evapotranspiration (potential evapotranspiration is kept where lai or pet is missing)
-    WHERE (ac_lai .GE. 0._sp .AND. ac_pet .GE. 0._sp) 
-      ac_etc = (setup%kc_min+(ac_kcb_full-setup%kc_min)*(1._sp-EXP(-(&
-&       setup%lai_extinction_coef*ac_lai))))*ac_pet
-    ELSEWHERE
-      ac_etc = ac_pet
-    END WHERE
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
     DO col=1,mesh%ncol
@@ -18444,13 +18505,10 @@ CONTAINS
         END IF
       END DO
     END DO
-    WHERE (.NOT.(ac_lai .GE. 0._sp .AND. ac_pet .GE. 0._sp)) 
-      ac_etc_b = 0.0_4
-    ELSEWHERE
-      ac_kcb_full_b = ac_kcb_full_b + (1._sp-EXP(-(setup%&
-&       lai_extinction_coef*ac_lai)))*ac_pet*ac_etc_b
-    END WHERE
     ac_mlt_b = ac_mlt_b + ac_prcp_b
+    CALL GET_AC_CROP_EVAPOTRANSPIRATION_B(setup, mesh, input_data, &
+&                                   time_step, ac_kcb_full, &
+&                                   ac_kcb_full_b, ac_etc, ac_etc_b)
   END SUBROUTINE GR4_LAI_TIME_STEP_B
 
   SUBROUTINE GR4_LAI_TIME_STEP(setup, mesh, input_data, options, returns&
@@ -18468,25 +18526,16 @@ CONTAINS
 &   ac_kexc, ac_kcb_full
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_hi, ac_hp, ac_ht
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
-    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet, ac_lai, ac_etc
+    REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_etc
     INTEGER :: row, col, k, time_step_returns
     REAL(sp) :: beta, pn, en, imperviousness, pr, perc, ps, es, l, prr, &
 &   prd, qr, qd
-    INTRINSIC EXP
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
-    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
-&                              , 'pet', ac_pet)
-    CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
-&                              , 'lai', ac_lai)
+    CALL GET_AC_CROP_EVAPOTRANSPIRATION(setup, mesh, input_data, &
+&                                 time_step, ac_kcb_full, ac_etc)
     ac_prcp = ac_prcp + ac_mlt
-    WHERE (ac_lai .GE. 0._sp .AND. ac_pet .GE. 0._sp) 
-      ac_etc = (setup%kc_min+(ac_kcb_full-setup%kc_min)*(1._sp-EXP(-(&
-&       setup%lai_extinction_coef*ac_lai))))*ac_pet
-    ELSEWHERE
-      ac_etc = ac_pet
-    END WHERE
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
     DO col=1,mesh%ncol
