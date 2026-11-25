@@ -24,7 +24,7 @@ module md_simulation
     use md_gr_operator !% only: gr4_time_step, gr4_mlp_time_step, gr4_ri_time_step, gr4_ri_mlp_exc_time_step, &
     !% & gr4_ode_time_step, gr4_ude_time_step, gr4_lai_time_step, gr5_time_step, gr5_mlp_time_step, gr5_ri_time_step, &
     !% & gr5_ri_mlp_exc_time_step, gr6_time_step, gr6_mlp_time_step, grc_time_step, grd_time_step, grd_mlp_time_step, &
-    !% & loieau_time_step, loieau_mlp_time_step
+    !% & loieau_time_step, loieau_mlp_time_step, loieau_lai_time_step
     use md_vic3l_operator !% only: vic3l_time_step
     use md_routing_operator !% only: lag0_time_step, lr_time_step, kw_time_step
     use mwd_sparse_matrix_manipulation !% only: matrix_to_ac_vector, &
@@ -843,6 +843,35 @@ contains
                 checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
 
                 rr_parameters_inc = rr_parameters_inc + 3
+                rr_states_inc = rr_states_inc + 2
+
+                ! 'loieau_lai' module
+            case ("loieau_lai")
+
+                ! % To avoid potential aliasing tapenade warning (DF02)
+                h1 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) ! % ha
+                h2 = checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) ! % hc
+
+                call loieau_lai_time_step( &
+                    setup, &
+                    mesh, &
+                    input_data, &
+                    options, &
+                    returns, &
+                    t, &
+                    checkpoint_variable%ac_mlt, &
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 1), & ! % ca
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 2), & ! % cc
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 3), & ! % kb
+                    checkpoint_variable%ac_rr_parameters(:, rr_parameters_inc + 4), & ! % kcb_full
+                    h1, & ! % ha
+                    h2, & ! % hc
+                    checkpoint_variable%ac_qtz(:, setup%nqz))
+
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 1) = h1
+                checkpoint_variable%ac_rr_states(:, rr_states_inc + 2) = h2
+
+                rr_parameters_inc = rr_parameters_inc + 4
                 rr_states_inc = rr_states_inc + 2
 
                 ! 'vic3l' module

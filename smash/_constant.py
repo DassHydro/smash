@@ -82,6 +82,7 @@ HYDROLOGICAL_MODULE = [
     "grd_mlp",
     "loieau",
     "loieau_mlp",
+    "loieau_lai",
     "vic3l",
 ]
 
@@ -90,7 +91,7 @@ ROUTING_MODULE = ["zero", "lag0", "lr", "kw"]
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
 
 # % Hydrological modules that use leaf area index (LAI) as atmospheric input data
-LAI_HYDROLOGICAL_MODULE = ["gr4_lai"]
+LAI_HYDROLOGICAL_MODULE = ["gr4_lai", "loieau_lai"]
 
 
 # % Following SNOW_MODULE order
@@ -119,6 +120,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
             + [["ci", "cp", "ct", "cl", "kexc"]] * 2  # % grc, grc_mlp
             + [["cp", "ct"]] * 2  # % grd, grd_mlp
             + [["ca", "cc", "kb"]] * 2  # % loieau, loieau_mlp
+            + [["ca", "cc", "kb", "kcb_full"]]  # % loieau_lai
             + [["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"]]  # % vic3l
         ),
     )
@@ -151,7 +153,7 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
             + [["hi", "hp", "ht", "he"]] * 2  # % gr6, gr6_mlp
             + [["hi", "hp", "ht", "hl"]] * 2  # % grc, grc_mlp
             + [["hp", "ht"]] * 2  # % grd, grd_mlp
-            + [["ha", "hc"]] * 2  # % loieau, loieau_mlp
+            + [["ha", "hc"]] * 3  # % loieau, loieau_mlp, loieau_lai
             + [["hcl", "husl", "hmsl", "hbsl"]]  # % vic3l
         ),
     )
@@ -194,7 +196,7 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
             * 2  # % grc, grc_mlp
             + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
             + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
-            * 2  # % loieau, loieau_mlp
+            * 3  # % loieau, loieau_mlp, loieau_lai
             + [["pn", "en", "qr", "qb", "qt"]]  # % vic3l
         ),
     )
@@ -271,6 +273,7 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
                 (4, 2),  # % grd_mlp
                 (0, 0),  # % loieau
                 (4, 3),  # % loieau_mlp
+                (0, 0),  # % loieau_lai
                 (0, 0),  # % vic3l
             ]
         ),
@@ -294,11 +297,11 @@ RR_PARAMETERS = [
     "be",  # % gr6, gr6_mlp
     "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai,
     # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp
-    "kcb_full",  # % gr4_lai
+    "kcb_full",  # % gr4_lai, loieau_lai
     "aexc",  # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6,	gr6_mlp
-    "ca",  # % loieau, loieau_mlp
-    "cc",  # % loieau, loieau_mlp
-    "kb",  # % loieau, loieau_mlp
+    "ca",  # % loieau, loieau_mlp, loieau_lai
+    "cc",  # % loieau, loieau_mlp, loieau_lai
+    "kb",  # % loieau, loieau_mlp, loieau_lai
     "b",  # % vic3l
     "cusl",  # % vic3l
     "cmsl",  # % vic3l
@@ -323,8 +326,8 @@ RR_STATES = [
     # % gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp, grd, grd_mlp
     "hl",  # % grc, grc_mlp
     "he",  # % gr6, gr6_mlp
-    "ha",  # % loieau, loieau_mlp
-    "hc",  # % loieau, loieau_mlp
+    "ha",  # % loieau, loieau_mlp, loieau_lai
+    "hc",  # % loieau, loieau_mlp, loieau_lai
     "hcl",  # % vic3l
     "husl",  # % vic3l
     "hmsl",  # % vic3l
