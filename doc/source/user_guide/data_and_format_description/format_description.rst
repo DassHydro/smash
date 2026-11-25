@@ -47,7 +47,7 @@ structure: ``*%Y%m%d*.tif`` (``*`` means that we can match any character).
 An example of file name in tif format for the day 2014-09-15: ``LAI_20140915.tif``.
 
 For a sub-daily time step, the leaf area index of a day is used for all the time steps whose date (end of the time step)
-belongs to this day, as for the daily interannual potential evapotranspiration. Each file is read once.
+belongs to this day, as for the daily interannual potential evapotranspiration.
 
 .. note::
     ``%Y%m%d`` is a unique key, the ``lai_directory`` (and all subdirectories) can not contains files with similar dates.

@@ -323,12 +323,10 @@ def _read_lai(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    # % Leaf area index maps are daily (file names matching %Y%m%d), whatever the time step. Following the
-    # % same convention as the daily interannual potential evapotranspiration, each time step uses the map of
-    # % the day of its date (i.e. the end of the time step). Each map is read once and, for a sub-daily time
-    # % step, it is used for all the time steps of the corresponding day.
+    # % Daily maps: each time step uses the map of the day of its date (end of the time step), as for the
+    # % daily interannual potential evapotranspiration
     step_day = date_range.normalize()
-    day_range = pd.date_range(start=step_day[0], end=step_day[-1], freq=f"{86_400}s")
+    day_range = pd.date_range(start=step_day[0], end=step_day[-1], freq="86400s")
     step_day_index = ((step_day - day_range[0]) // pd.Timedelta(days=1)).to_numpy()
 
     reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}

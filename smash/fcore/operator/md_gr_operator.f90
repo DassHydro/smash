@@ -69,10 +69,8 @@ contains
 
     end subroutine gr_interception
 
-    ! % Same as gr_interception but with crop evapotranspiration (etc) as evaporative demand. etc depends on
-    ! % a calibrated parameter (kcb_full), so it is active for differentiation, whereas pet is not active in
-    ! % gr_interception. Keeping a distinct subroutine leaves the differentiated gr_interception (and the
-    ! % modules calling it) unchanged.
+    ! % Same as gr_interception with crop evapotranspiration (etc) instead of pet. etc depends on kcb_full:
+    ! % a distinct subroutine keeps the differentiated gr_interception of the other modules unchanged.
     subroutine gr_interception_etc(prcp, etc, ci, hi, pn, en)
 
         implicit none

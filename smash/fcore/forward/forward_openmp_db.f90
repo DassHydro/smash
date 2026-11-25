@@ -13840,10 +13840,8 @@ CONTAINS
 !  Differentiation of gr_interception_etc in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hi en pn
 !   with respect to varying inputs: prcp hi etc ci
-! % Same as gr_interception but with crop evapotranspiration (etc) as evaporative demand. etc depends on
-! % a calibrated parameter (kcb_full), so it is active for differentiation, whereas pet is not active in
-! % gr_interception. Keeping a distinct subroutine leaves the differentiated gr_interception (and the
-! % modules calling it) unchanged.
+! % Same as gr_interception with crop evapotranspiration (etc) instead of pet. etc depends on kcb_full:
+! % a distinct subroutine keeps the differentiated gr_interception of the other modules unchanged.
   SUBROUTINE GR_INTERCEPTION_ETC_D(prcp, prcp_d, etc, etc_d, ci, ci_d, &
 &   hi, hi_d, pn, pn_d, en, en_d)
     IMPLICIT NONE
@@ -13882,10 +13880,8 @@ CONTAINS
 !  Differentiation of gr_interception_etc in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: prcp hi en etc ci pn
 !   with respect to varying inputs: prcp hi etc ci
-! % Same as gr_interception but with crop evapotranspiration (etc) as evaporative demand. etc depends on
-! % a calibrated parameter (kcb_full), so it is active for differentiation, whereas pet is not active in
-! % gr_interception. Keeping a distinct subroutine leaves the differentiated gr_interception (and the
-! % modules calling it) unchanged.
+! % Same as gr_interception with crop evapotranspiration (etc) instead of pet. etc depends on kcb_full:
+! % a distinct subroutine keeps the differentiated gr_interception of the other modules unchanged.
   SUBROUTINE GR_INTERCEPTION_ETC_B(prcp, prcp_b, etc, etc_b, ci, ci_b, &
 &   hi, hi_b, pn, pn_b, en, en_b)
     IMPLICIT NONE
@@ -13948,10 +13944,8 @@ CONTAINS
     END IF
   END SUBROUTINE GR_INTERCEPTION_ETC_B
 
-! % Same as gr_interception but with crop evapotranspiration (etc) as evaporative demand. etc depends on
-! % a calibrated parameter (kcb_full), so it is active for differentiation, whereas pet is not active in
-! % gr_interception. Keeping a distinct subroutine leaves the differentiated gr_interception (and the
-! % modules calling it) unchanged.
+! % Same as gr_interception with crop evapotranspiration (etc) instead of pet. etc depends on kcb_full:
+! % a distinct subroutine keeps the differentiated gr_interception of the other modules unchanged.
   SUBROUTINE GR_INTERCEPTION_ETC(prcp, etc, ci, hi, pn, en)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: prcp, etc, ci

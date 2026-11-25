@@ -1418,7 +1418,7 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
     This hydrological operator is the ``gr4`` operator (see :ref:`gr4 <math_num_documentation.forward_structure.hydrological_module.gr4>`)
     in which the potential evapotranspiration :math:`E` is replaced by a crop evapotranspiration :math:`E_c` depending on the vegetation.
     The basal crop coefficient :math:`k_{cb}` is computed from the leaf area index :math:`L` following the FAO-56 approach
-    :cite:p:`allen1998crop` (Equation 97, similar to a procedure used by Ritchie, 1974):
+    :cite:p:`allen1998crop` (Equation 97):
 
     .. math::
         :nowrap:

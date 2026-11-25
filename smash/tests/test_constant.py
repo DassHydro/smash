@@ -121,8 +121,7 @@ def test_module_parameters():
     # % Check hydrological module rr states
     assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == (
         [["hi", "hp", "ht"]] * 11  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai, gr5,
-        # % gr5_mlp,
-        # % gr5_ri, gr5_ri_mlp_exc
+        # % gr5_mlp, gr5_ri, gr5_ri_mlp_exc
         + [["hi", "hp", "ht", "he"]] * 2  # % gr6, gr6_mlp
         + [["hi", "hp", "ht", "hl"]] * 2  # % grc, grc_mlp
         + [["hp", "ht"]] * 2  # % grd, grd_mlp
