@@ -137,7 +137,7 @@ class Model:
             - ``'gr6'``, ``'gr6_mlp'``
             - ``'grc'``, ``'grc_mlp'``
             - ``'grd'``, ``'grd_mlp'``
-            - ``'loieau'``, ``'loieau_mlp'``
+            - ``'loieau'``, ``'loieau_mlp'``, ``'loieau_lai'``
             - ``'vic3l'``
 
             .. hint::
@@ -284,7 +284,8 @@ class Model:
         read_lai : `bool`, default False
             Whether or not to read leaf area index file(s). Leaf area index files are daily: for a sub-daily
             time step **dt**, the leaf area index of a day is used for all the time steps of this day.
-            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``).
+            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``,
+            ``loieau_lai``).
 
             .. hint::
                 See the :ref:`user_guide.data_and_format_description.format_description` section
@@ -315,7 +316,8 @@ class Model:
         kc_min : `float`, default 0.15
             Minimum crop coefficient for bare soil, used to compute the basal crop coefficient from leaf area
             index (FAO-56, Allen et al., 1998, Eq. 97, which gives values between 0.15 and 0.20).
-            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``).
+            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``,
+            ``loieau_lai``).
 
             .. hint::
                 See the :ref:`Hydrological Module
@@ -324,7 +326,8 @@ class Model:
         lai_extinction_coef : `float`, default 0.7
             Coefficient of the exponential leaf area index term used to compute the basal crop coefficient
             (FAO-56, Allen et al., 1998, Eq. 97).
-            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``).
+            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``,
+            ``loieau_lai``).
 
         read_snow : `bool`, default False
             Whether or not to read snow file(s).

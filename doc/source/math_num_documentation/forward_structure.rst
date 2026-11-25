@@ -1485,6 +1485,50 @@ Hydrological processes can be described at pixel scale in `smash` with one of th
         because the calibrated value also compensates for biases of the potential evapotranspiration forcing and of the model
         structure. They can be changed with the ``bounds`` key of the ``optimize_options`` argument.
 
+.. _math_num_documentation.forward_structure.hydrological_module.loieau_lai:
+
+.. dropdown:: Génie Rural LoiEau with leaf area index (loieau_lai)
+    :animate: fade-in-slide-down
+
+    This hydrological operator is the ``loieau`` operator (see :ref:`loieau <math_num_documentation.forward_structure.hydrological_module.loieau>`)
+    in which the potential evapotranspiration :math:`E` is replaced by the crop evapotranspiration :math:`E_c` computed from the leaf
+    area index :math:`L`, as for the ``gr4_lai`` operator (see :ref:`gr4_lai <math_num_documentation.forward_structure.hydrological_module.gr4_lai>`).
+
+    It can be expressed as follows:
+
+    .. math::
+
+        q_{t}(x, t) = f\left(\left[P, E, L\right](x, t), m_{lt}(x, t), \left[c_a, c_c, k_b, k_{cb,full}\right](x), \left[h_a, h_c\right](x, t)\right)
+
+    The function :math:`f` is resolved numerically as for the ``loieau`` operator, :math:`E` being replaced by :math:`E_c` in the
+    interception (and therefore in the neutralized evapotranspiration :math:`e_n` feeding the production reservoir):
+
+    .. math::
+        :nowrap:
+
+        \begin{eqnarray}
+
+            &e_i(x, t)& &=& &\min(E_c(x, t), P(x, t) + m_{lt}(x, t))\\
+
+            &e_n(x, t)& &=& &E_c(x, t) - e_i(x, t)
+
+        \end{eqnarray}
+
+    .. note::
+
+        Linking with the forward problem equation :eq:`math_num_documentation.forward_inverse_problem.forward_problem_M_1`
+
+        - Internal fluxes: :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+        - Atmospheric forcings: :math:`\{P, E, L\}\in\boldsymbol{\mathcal{I}}`
+        - Parameters: :math:`\{c_a, c_c, k_b, k_{cb,full}\}\in\boldsymbol{\theta}`
+        - Normalized states: :math:`\{\tilde{h_a}, \tilde{h_c}\}`, as for ``loieau``
+
+    .. note::
+
+        The basal crop coefficient, the ``kc_min`` and ``lai_extinction_coef`` setup options, the reading of the leaf area index, the
+        missing values and the default value and bounds of :math:`k_{cb,full}` are the same as for ``gr4_lai``. In particular,
+        ``loieau_lai`` gives the same results as ``loieau`` if no leaf area index is available.
+
 .. _math_num_documentation.forward_structure.hydrological_module.imperviousness:
 
 .. dropdown:: Génie Rural with imperviousness 

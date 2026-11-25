@@ -41,7 +41,7 @@ time step ``dt`` using the following distribution.
 Leaf area index
 ***************
 
-The leaf area index files (used by the ``gr4_lai`` hydrological module) must be stored for each day of the simulation in ``tif`` format,
+The leaf area index files (used by the ``gr4_lai`` and ``loieau_lai`` hydrological modules) must be stored for each day of the simulation in ``tif`` format,
 whatever the time step ``dt``. For one day, `smash` will recursively search in the ``lai_directory``, a file with the following name
 structure: ``*%Y%m%d*.tif`` (``*`` means that we can match any character).
 An example of file name in tif format for the day 2014-09-15: ``LAI_20140915.tif``.
