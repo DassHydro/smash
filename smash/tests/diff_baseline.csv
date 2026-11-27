@@ -1,76 +1,82 @@
-commit 68235982518d502d3536219d1398d801523e5e90
-Author: Francois Colleoni <colleoni.francois@gmail.com>
-Date:   Wed Sep 2 14:58:14 2026 +0200
+commit ff746c4f9e402428eec51d62a83e9dc81e5fc14a
+Author: Thomas de Fournas <thomas.de-fournas@inrae.fr>
+Date:   Wed Nov 25 08:54:24 2026 +0100
 
-    ENH: Update backward run documentation
+    ENH: add loieau_lai hydrological module
 
 TEST NAME                                                   |STATUS
-backward_run.zero-gr4-kw.cost                               |ADDED
-backward_run.zero-gr4-kw.grad_j                             |ADDED
-backward_run.zero-gr4-kw.grad_q                             |ADDED
-backward_run.zero-gr4-lag0.cost                             |ADDED
-backward_run.zero-gr4-lag0.grad_j                           |ADDED
-backward_run.zero-gr4-lag0.grad_q                           |ADDED
-backward_run.zero-gr4-lr.cost                               |ADDED
-backward_run.zero-gr4-lr.grad_j                             |ADDED
-backward_run.zero-gr4-lr.grad_q                             |ADDED
-backward_run.zero-gr4-zero.cost                             |ADDED
-backward_run.zero-gr4-zero.grad_j                           |ADDED
-backward_run.zero-gr4-zero.grad_q                           |ADDED
-backward_run.zero-gr4_mlp-lr.cost                           |ADDED
-backward_run.zero-gr4_mlp-lr.grad_j                         |ADDED
-backward_run.zero-gr4_mlp-lr.grad_q                         |ADDED
-backward_run.zero-gr4_ode-lr.cost                           |ADDED
-backward_run.zero-gr4_ode-lr.grad_j                         |ADDED
-backward_run.zero-gr4_ode-lr.grad_q                         |ADDED
-backward_run.zero-gr4_ri-lr.cost                            |ADDED
-backward_run.zero-gr4_ri-lr.grad_j                          |ADDED
-backward_run.zero-gr4_ri-lr.grad_q                          |ADDED
-backward_run.zero-gr4_ri_mlp_exc-lr.cost                    |ADDED
-backward_run.zero-gr4_ri_mlp_exc-lr.grad_j                  |ADDED
-backward_run.zero-gr4_ri_mlp_exc-lr.grad_q                  |ADDED
-backward_run.zero-gr4_ude-lr.cost                           |ADDED
-backward_run.zero-gr4_ude-lr.grad_j                         |ADDED
-backward_run.zero-gr4_ude-lr.grad_q                         |ADDED
-backward_run.zero-gr5-lr.cost                               |ADDED
-backward_run.zero-gr5-lr.grad_j                             |ADDED
-backward_run.zero-gr5-lr.grad_q                             |ADDED
-backward_run.zero-gr5_mlp-lr.cost                           |ADDED
-backward_run.zero-gr5_mlp-lr.grad_j                         |ADDED
-backward_run.zero-gr5_mlp-lr.grad_q                         |ADDED
-backward_run.zero-gr5_ri-lr.cost                            |ADDED
-backward_run.zero-gr5_ri-lr.grad_j                          |ADDED
-backward_run.zero-gr5_ri-lr.grad_q                          |ADDED
-backward_run.zero-gr5_ri_mlp_exc-lr.cost                    |ADDED
-backward_run.zero-gr5_ri_mlp_exc-lr.grad_j                  |ADDED
-backward_run.zero-gr5_ri_mlp_exc-lr.grad_q                  |ADDED
-backward_run.zero-gr6-lr.cost                               |ADDED
-backward_run.zero-gr6-lr.grad_j                             |ADDED
-backward_run.zero-gr6-lr.grad_q                             |ADDED
-backward_run.zero-gr6_mlp-lr.cost                           |ADDED
-backward_run.zero-gr6_mlp-lr.grad_j                         |ADDED
-backward_run.zero-gr6_mlp-lr.grad_q                         |ADDED
-backward_run.zero-grc-lr.cost                               |ADDED
-backward_run.zero-grc-lr.grad_j                             |ADDED
-backward_run.zero-grc-lr.grad_q                             |ADDED
-backward_run.zero-grc_mlp-lr.cost                           |ADDED
-backward_run.zero-grc_mlp-lr.grad_j                         |ADDED
-backward_run.zero-grc_mlp-lr.grad_q                         |ADDED
-backward_run.zero-grd-lr.cost                               |ADDED
-backward_run.zero-grd-lr.grad_j                             |ADDED
-backward_run.zero-grd-lr.grad_q                             |ADDED
-backward_run.zero-grd_mlp-lr.cost                           |ADDED
-backward_run.zero-grd_mlp-lr.grad_j                         |ADDED
-backward_run.zero-grd_mlp-lr.grad_q                         |ADDED
-backward_run.zero-loieau-lr.cost                            |ADDED
-backward_run.zero-loieau-lr.grad_j                          |ADDED
-backward_run.zero-loieau-lr.grad_q                          |ADDED
-backward_run.zero-loieau_mlp-lr.cost                        |ADDED
-backward_run.zero-loieau_mlp-lr.grad_j                      |ADDED
-backward_run.zero-loieau_mlp-lr.grad_q                      |ADDED
-backward_run.zero-vic3l-lr.cost                             |ADDED
-backward_run.zero-vic3l-lr.grad_j                           |ADDED
-backward_run.zero-vic3l-lr.grad_q                           |ADDED
+backward_run.zero-gr4-kw.cost                               |NON MODIFIED
+backward_run.zero-gr4-kw.grad_j                             |NON MODIFIED
+backward_run.zero-gr4-kw.grad_q                             |NON MODIFIED
+backward_run.zero-gr4-lag0.cost                             |NON MODIFIED
+backward_run.zero-gr4-lag0.grad_j                           |NON MODIFIED
+backward_run.zero-gr4-lag0.grad_q                           |NON MODIFIED
+backward_run.zero-gr4-lr.cost                               |NON MODIFIED
+backward_run.zero-gr4-lr.grad_j                             |NON MODIFIED
+backward_run.zero-gr4-lr.grad_q                             |NON MODIFIED
+backward_run.zero-gr4-zero.cost                             |NON MODIFIED
+backward_run.zero-gr4-zero.grad_j                           |NON MODIFIED
+backward_run.zero-gr4-zero.grad_q                           |NON MODIFIED
+backward_run.zero-gr4_lai-lr.cost                           |NON MODIFIED
+backward_run.zero-gr4_lai-lr.grad_j                         |NON MODIFIED
+backward_run.zero-gr4_lai-lr.grad_q                         |NON MODIFIED
+backward_run.zero-gr4_mlp-lr.cost                           |NON MODIFIED
+backward_run.zero-gr4_mlp-lr.grad_j                         |NON MODIFIED
+backward_run.zero-gr4_mlp-lr.grad_q                         |NON MODIFIED
+backward_run.zero-gr4_ode-lr.cost                           |NON MODIFIED
+backward_run.zero-gr4_ode-lr.grad_j                         |NON MODIFIED
+backward_run.zero-gr4_ode-lr.grad_q                         |NON MODIFIED
+backward_run.zero-gr4_ri-lr.cost                            |NON MODIFIED
+backward_run.zero-gr4_ri-lr.grad_j                          |NON MODIFIED
+backward_run.zero-gr4_ri-lr.grad_q                          |NON MODIFIED
+backward_run.zero-gr4_ri_mlp_exc-lr.cost                    |NON MODIFIED
+backward_run.zero-gr4_ri_mlp_exc-lr.grad_j                  |NON MODIFIED
+backward_run.zero-gr4_ri_mlp_exc-lr.grad_q                  |NON MODIFIED
+backward_run.zero-gr4_ude-lr.cost                           |NON MODIFIED
+backward_run.zero-gr4_ude-lr.grad_j                         |NON MODIFIED
+backward_run.zero-gr4_ude-lr.grad_q                         |NON MODIFIED
+backward_run.zero-gr5-lr.cost                               |NON MODIFIED
+backward_run.zero-gr5-lr.grad_j                             |NON MODIFIED
+backward_run.zero-gr5-lr.grad_q                             |NON MODIFIED
+backward_run.zero-gr5_mlp-lr.cost                           |NON MODIFIED
+backward_run.zero-gr5_mlp-lr.grad_j                         |NON MODIFIED
+backward_run.zero-gr5_mlp-lr.grad_q                         |NON MODIFIED
+backward_run.zero-gr5_ri-lr.cost                            |NON MODIFIED
+backward_run.zero-gr5_ri-lr.grad_j                          |NON MODIFIED
+backward_run.zero-gr5_ri-lr.grad_q                          |NON MODIFIED
+backward_run.zero-gr5_ri_mlp_exc-lr.cost                    |NON MODIFIED
+backward_run.zero-gr5_ri_mlp_exc-lr.grad_j                  |NON MODIFIED
+backward_run.zero-gr5_ri_mlp_exc-lr.grad_q                  |NON MODIFIED
+backward_run.zero-gr6-lr.cost                               |NON MODIFIED
+backward_run.zero-gr6-lr.grad_j                             |NON MODIFIED
+backward_run.zero-gr6-lr.grad_q                             |NON MODIFIED
+backward_run.zero-gr6_mlp-lr.cost                           |NON MODIFIED
+backward_run.zero-gr6_mlp-lr.grad_j                         |NON MODIFIED
+backward_run.zero-gr6_mlp-lr.grad_q                         |NON MODIFIED
+backward_run.zero-grc-lr.cost                               |NON MODIFIED
+backward_run.zero-grc-lr.grad_j                             |NON MODIFIED
+backward_run.zero-grc-lr.grad_q                             |NON MODIFIED
+backward_run.zero-grc_mlp-lr.cost                           |NON MODIFIED
+backward_run.zero-grc_mlp-lr.grad_j                         |NON MODIFIED
+backward_run.zero-grc_mlp-lr.grad_q                         |NON MODIFIED
+backward_run.zero-grd-lr.cost                               |NON MODIFIED
+backward_run.zero-grd-lr.grad_j                             |NON MODIFIED
+backward_run.zero-grd-lr.grad_q                             |NON MODIFIED
+backward_run.zero-grd_mlp-lr.cost                           |NON MODIFIED
+backward_run.zero-grd_mlp-lr.grad_j                         |NON MODIFIED
+backward_run.zero-grd_mlp-lr.grad_q                         |NON MODIFIED
+backward_run.zero-loieau-lr.cost                            |NON MODIFIED
+backward_run.zero-loieau-lr.grad_j                          |NON MODIFIED
+backward_run.zero-loieau-lr.grad_q                          |NON MODIFIED
+backward_run.zero-loieau_lai-lr.cost                        |ADDED
+backward_run.zero-loieau_lai-lr.grad_j                      |ADDED
+backward_run.zero-loieau_lai-lr.grad_q                      |ADDED
+backward_run.zero-loieau_mlp-lr.cost                        |NON MODIFIED
+backward_run.zero-loieau_mlp-lr.grad_j                      |NON MODIFIED
+backward_run.zero-loieau_mlp-lr.grad_q                      |NON MODIFIED
+backward_run.zero-vic3l-lr.cost                             |NON MODIFIED
+backward_run.zero-vic3l-lr.grad_j                           |NON MODIFIED
+backward_run.zero-vic3l-lr.grad_q                           |NON MODIFIED
 bbox_mesh.active_cell                                       |NON MODIFIED
 bbox_mesh.cpar_to_rowcol                                    |NON MODIFIED
 bbox_mesh.cscpar                                            |NON MODIFIED
@@ -177,6 +183,14 @@ forward_run.zero-gr4-zero.rr_states.hi                      |NON MODIFIED
 forward_run.zero-gr4-zero.rr_states.hp                      |NON MODIFIED
 forward_run.zero-gr4-zero.rr_states.ht                      |NON MODIFIED
 forward_run.zero-gr4-zero.sim_q                             |NON MODIFIED
+forward_run.zero-gr4_lai-lr.cost                            |NON MODIFIED
+forward_run.zero-gr4_lai-lr.jobs                            |NON MODIFIED
+forward_run.zero-gr4_lai-lr.q_domain                        |NON MODIFIED
+forward_run.zero-gr4_lai-lr.rr_states.hi                    |NON MODIFIED
+forward_run.zero-gr4_lai-lr.rr_states.hlr                   |NON MODIFIED
+forward_run.zero-gr4_lai-lr.rr_states.hp                    |NON MODIFIED
+forward_run.zero-gr4_lai-lr.rr_states.ht                    |NON MODIFIED
+forward_run.zero-gr4_lai-lr.sim_q                           |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.cost                            |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.jobs                            |NON MODIFIED
 forward_run.zero-gr4_mlp-lr.q_domain                        |NON MODIFIED
@@ -306,6 +320,13 @@ forward_run.zero-loieau-lr.rr_states.ha                     |NON MODIFIED
 forward_run.zero-loieau-lr.rr_states.hc                     |NON MODIFIED
 forward_run.zero-loieau-lr.rr_states.hlr                    |NON MODIFIED
 forward_run.zero-loieau-lr.sim_q                            |NON MODIFIED
+forward_run.zero-loieau_lai-lr.cost                         |ADDED
+forward_run.zero-loieau_lai-lr.jobs                         |ADDED
+forward_run.zero-loieau_lai-lr.q_domain                     |ADDED
+forward_run.zero-loieau_lai-lr.rr_states.ha                 |ADDED
+forward_run.zero-loieau_lai-lr.rr_states.hc                 |ADDED
+forward_run.zero-loieau_lai-lr.rr_states.hlr                |ADDED
+forward_run.zero-loieau_lai-lr.sim_q                        |ADDED
 forward_run.zero-loieau_mlp-lr.cost                         |NON MODIFIED
 forward_run.zero-loieau_mlp-lr.jobs                         |NON MODIFIED
 forward_run.zero-loieau_mlp-lr.q_domain                     |NON MODIFIED
@@ -377,6 +398,19 @@ internal_fluxes.zero-gr4-zero.ps                            |NON MODIFIED
 internal_fluxes.zero-gr4-zero.qd                            |NON MODIFIED
 internal_fluxes.zero-gr4-zero.qr                            |NON MODIFIED
 internal_fluxes.zero-gr4-zero.qt                            |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.en                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.es                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.lexc                        |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.perc                        |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.pn                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.pr                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.prd                         |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.prr                         |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.ps                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.qd                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.qr                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.qt                          |NON MODIFIED
+internal_fluxes.zero-gr4_lai-lr.qup                         |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.en                          |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.es                          |NON MODIFIED
 internal_fluxes.zero-gr4_mlp-lr.lexc                        |NON MODIFIED
@@ -573,6 +607,19 @@ internal_fluxes.zero-loieau-lr.qd                           |NON MODIFIED
 internal_fluxes.zero-loieau-lr.qr                           |NON MODIFIED
 internal_fluxes.zero-loieau-lr.qt                           |NON MODIFIED
 internal_fluxes.zero-loieau-lr.qup                          |NON MODIFIED
+internal_fluxes.zero-loieau_lai-lr.ei                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.en                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.es                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.perc                     |ADDED
+internal_fluxes.zero-loieau_lai-lr.pn                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.pr                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.prd                      |ADDED
+internal_fluxes.zero-loieau_lai-lr.prr                      |ADDED
+internal_fluxes.zero-loieau_lai-lr.ps                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.qd                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.qr                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.qt                       |ADDED
+internal_fluxes.zero-loieau_lai-lr.qup                      |ADDED
 internal_fluxes.zero-loieau_mlp-lr.ei                       |NON MODIFIED
 internal_fluxes.zero-loieau_mlp-lr.en                       |NON MODIFIED
 internal_fluxes.zero-loieau_mlp-lr.es                       |NON MODIFIED
@@ -728,6 +775,16 @@ optimize.zero-gr4-zero.multi-power.control_vector           |NON MODIFIED
 optimize.zero-gr4-zero.multi-power.sim_q                    |NON MODIFIED
 optimize.zero-gr4-zero.uniform.control_vector               |NON MODIFIED
 optimize.zero-gr4-zero.uniform.sim_q                        |NON MODIFIED
+optimize.zero-gr4_lai-lr.ann.control_vector                 |NON MODIFIED
+optimize.zero-gr4_lai-lr.ann.sim_q                          |NON MODIFIED
+optimize.zero-gr4_lai-lr.distributed.control_vector         |NON MODIFIED
+optimize.zero-gr4_lai-lr.distributed.sim_q                  |NON MODIFIED
+optimize.zero-gr4_lai-lr.multi-linear.control_vector        |NON MODIFIED
+optimize.zero-gr4_lai-lr.multi-linear.sim_q                 |NON MODIFIED
+optimize.zero-gr4_lai-lr.multi-power.control_vector         |NON MODIFIED
+optimize.zero-gr4_lai-lr.multi-power.sim_q                  |NON MODIFIED
+optimize.zero-gr4_lai-lr.uniform.control_vector             |NON MODIFIED
+optimize.zero-gr4_lai-lr.uniform.sim_q                      |NON MODIFIED
 optimize.zero-gr4_mlp-lr.ann.control_vector                 |NON MODIFIED
 optimize.zero-gr4_mlp-lr.ann.sim_q                          |NON MODIFIED
 optimize.zero-gr4_mlp-lr.distributed.control_vector         |NON MODIFIED
@@ -888,6 +945,16 @@ optimize.zero-loieau-lr.multi-power.control_vector          |NON MODIFIED
 optimize.zero-loieau-lr.multi-power.sim_q                   |NON MODIFIED
 optimize.zero-loieau-lr.uniform.control_vector              |NON MODIFIED
 optimize.zero-loieau-lr.uniform.sim_q                       |NON MODIFIED
+optimize.zero-loieau_lai-lr.ann.control_vector              |ADDED
+optimize.zero-loieau_lai-lr.ann.sim_q                       |ADDED
+optimize.zero-loieau_lai-lr.distributed.control_vector      |ADDED
+optimize.zero-loieau_lai-lr.distributed.sim_q               |ADDED
+optimize.zero-loieau_lai-lr.multi-linear.control_vector     |ADDED
+optimize.zero-loieau_lai-lr.multi-linear.sim_q              |ADDED
+optimize.zero-loieau_lai-lr.multi-power.control_vector      |ADDED
+optimize.zero-loieau_lai-lr.multi-power.sim_q               |ADDED
+optimize.zero-loieau_lai-lr.uniform.control_vector          |ADDED
+optimize.zero-loieau_lai-lr.uniform.sim_q                   |ADDED
 optimize.zero-loieau_mlp-lr.ann.control_vector              |NON MODIFIED
 optimize.zero-loieau_mlp-lr.ann.sim_q                       |NON MODIFIED
 optimize.zero-loieau_mlp-lr.distributed.control_vector      |NON MODIFIED

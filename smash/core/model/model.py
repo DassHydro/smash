@@ -131,12 +131,13 @@ class Model:
         hydrological_module : `str`, default 'gr4'
             Name of hydrological module. Should be one of:
 
-            - ``'gr4'``, ``'gr4_mlp'``, ``'gr4_ri'``, ``'gr4_ri_mlp_exc'``, ``'gr4_ode'``, ``'gr4_ude'``
+            - ``'gr4'``, ``'gr4_mlp'``, ``'gr4_ri'``, ``'gr4_ri_mlp_exc'``, ``'gr4_ode'``, ``'gr4_ude'``,
+              ``'gr4_lai'``
             - ``'gr5'``, ``'gr5_mlp'``, ``'gr5_ri'``, ``'gr5_ri_mlp_exc'``
             - ``'gr6'``, ``'gr6_mlp'``
             - ``'grc'``, ``'grc_mlp'``
             - ``'grd'``, ``'grd_mlp'``
-            - ``'loieau'``, ``'loieau_mlp'``
+            - ``'loieau'``, ``'loieau_mlp'``, ``'loieau_lai'``
             - ``'vic3l'``
 
             .. hint::
@@ -279,6 +280,54 @@ class Model:
         daily_interannual_pet : `bool`, default False
             Whether or not to read daily interannual potential evapotranspiration.
             This replaces the conventional way of reading a file in time steps.
+
+        read_lai : `bool`, default False
+            Whether or not to read leaf area index file(s). Leaf area index files are daily: for a sub-daily
+            time step **dt**, the leaf area index of a day is used for all the time steps of this day.
+            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``,
+            ``loieau_lai``).
+
+            .. hint::
+                See the :ref:`user_guide.data_and_format_description.format_description` section
+
+        lai_format : `str`, default 'tif'
+            Leaf area index file format. This option is only applicable if **read_lai** is set to True.
+
+            .. note::
+                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf``
+                format in future version.
+
+        lai_conversion_factor : `float`, default 1
+            Leaf area index conversion factor. The leaf area index will be ``multiplied`` by the conversion
+            factor to get leaf area index in :math:`m^2.m^{-2}`.
+            This option is only applicable if **read_lai** is set to True.
+
+        lai_directory : `str`
+            Path to the root directory of the leaf area index file(s).
+            This option is ``mandatory`` if **read_lai** is set to True.
+
+        lai_access : `str`, default ''
+            Leaf area index directory structure access.
+            By default, files are read using a recursive search from the root directory **lai_directory**.
+            This option makes it possible to specify the directory structure and allow faster access according
+            to **start_time** and **end_time** dates.
+            This option is only applicable if **read_lai** is set to True.
+
+        kc_min : `float`, default 0.15
+            Minimum crop coefficient for bare soil, used to compute the basal crop coefficient from leaf area
+            index (FAO-56, Allen et al., 1998, Eq. 97, which gives values between 0.15 and 0.20).
+            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``,
+            ``loieau_lai``).
+
+            .. hint::
+                See the :ref:`Hydrological Module
+                <math_num_documentation.forward_structure.hydrological_module.gr4_lai>` section
+
+        lai_extinction_coef : `float`, default 0.7
+            Coefficient of the exponential leaf area index term used to compute the basal crop coefficient
+            (FAO-56, Allen et al., 1998, Eq. 97).
+            This option is only applicable if **hydrological_module** uses leaf area index (``gr4_lai``,
+            ``loieau_lai``).
 
         read_snow : `bool`, default False
             Whether or not to read snow file(s).
@@ -848,9 +897,9 @@ class Model:
 
         .. warning::
             If the Model object has been initialised with the ``sparse_storage`` option in setup
-            (see `Model`), the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are
-            unavailable and replaced by ``sparse_prcp``, ``sparse_pet`` (``sparse_snow`` and ``sparse_temp``,
-            optionally) and vice versa if the sparse_storage option has not been chosen.
+            (see `Model`), the variables ``prcp``, ``pet`` (``lai``, ``snow`` and ``temp``, optionally) are
+            unavailable and replaced by ``sparse_prcp``, ``sparse_pet`` (``sparse_lai``, ``sparse_snow`` and
+            ``sparse_temp``, optionally) and vice versa if the sparse_storage option has not been chosen.
 
         Access to a specific gauge mean precipitation time serie
 

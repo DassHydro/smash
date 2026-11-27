@@ -69,6 +69,7 @@ HYDROLOGICAL_MODULE = [
     "gr4_ri_mlp_exc",
     "gr4_ode",
     "gr4_ude",
+    "gr4_lai",
     "gr5",
     "gr5_mlp",
     "gr5_ri",
@@ -81,12 +82,16 @@ HYDROLOGICAL_MODULE = [
     "grd_mlp",
     "loieau",
     "loieau_mlp",
+    "loieau_lai",
     "vic3l",
 ]
 
 ROUTING_MODULE = ["zero", "lag0", "lr", "kw"]
 
 MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
+
+# % Hydrological modules that use leaf area index (LAI) as atmospheric input data
+LAI_HYDROLOGICAL_MODULE = ["gr4_lai", "loieau_lai"]
 
 
 # % Following SNOW_MODULE order
@@ -108,12 +113,14 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
             [["ci", "cp", "ct", "kexc"]] * 2  # % gr4, gr4_mlp
             + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc"]] * 2  # % gr4_ri, gr4_ri_mlp_exc
             + [["ci", "cp", "ct", "kexc"]] * 2  # % gr4_ode, gr4_ude
+            + [["ci", "cp", "ct", "kexc", "kcb_full"]]  # % gr4_lai
             + [["ci", "cp", "ct", "kexc", "aexc"]] * 2  # % gr5, gr5_mlp
             + [["ci", "cp", "ct", "alpha1", "alpha2", "kexc", "aexc"]] * 2  # % gr5_ri, gr5_ri_mlp_exc
             + [["ci", "cp", "ct", "be", "kexc", "aexc"]] * 2  # % gr6, gr6_mlp
             + [["ci", "cp", "ct", "cl", "kexc"]] * 2  # % grc, grc_mlp
             + [["cp", "ct"]] * 2  # % grd, grd_mlp
             + [["ca", "cc", "kb"]] * 2  # % loieau, loieau_mlp
+            + [["ca", "cc", "kb", "kcb_full"]]  # % loieau_lai
             + [["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"]]  # % vic3l
         ),
     )
@@ -141,12 +148,12 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
         HYDROLOGICAL_MODULE,
         (
             [["hi", "hp", "ht"]]
-            * 10  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr5, gr5_mlp,
+            * 11  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai, gr5, gr5_mlp,
             # % gr5_ri, gr5_ri_mlp_exc
             + [["hi", "hp", "ht", "he"]] * 2  # % gr6, gr6_mlp
             + [["hi", "hp", "ht", "hl"]] * 2  # % grc, grc_mlp
             + [["hp", "ht"]] * 2  # % grd, grd_mlp
-            + [["ha", "hc"]] * 2  # % loieau, loieau_mlp
+            + [["ha", "hc"]] * 3  # % loieau, loieau_mlp, loieau_lai
             + [["hcl", "husl", "hmsl", "hbsl"]]  # % vic3l
         ),
     )
@@ -182,14 +189,14 @@ HYDROLOGICAL_MODULE_RR_INTERNAL_FLUXES = dict(
             * 4  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc
             + [["pn", "en", "lexc", "qt"]] * 2  # % gr4_ode, gr4_ude
             + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "qr", "qd", "qt"]]
-            * 4  # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc
+            * 5  # % gr4_lai, gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc
             + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "pre", "qr", "qd", "qe", "qt"]]
             * 2  # % gr6, gr6_mlp
             + [["pn", "en", "pr", "perc", "ps", "es", "lexc", "prr", "prd", "prl", "qr", "qd", "ql", "qt"]]
             * 2  # % grc, grc_mlp
             + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "qr", "qt"]] * 2  # % grd, grd_mlp
             + [["ei", "pn", "en", "pr", "perc", "ps", "es", "prr", "prd", "qr", "qd", "qt"]]
-            * 2  # % loieau, loieau_mlp
+            * 3  # % loieau, loieau_mlp, loieau_lai
             + [["pn", "en", "qr", "qb", "qt"]]  # % vic3l
         ),
     )
@@ -253,6 +260,7 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
                 (4, 1),  # % gr4_ri_mlp_exc
                 (0, 0),  # % gr4_ode
                 (4, 4),  # % gr4_ude
+                (0, 0),  # % gr4_lai
                 (0, 0),  # % gr5
                 (4, 4),  # % gr5_mlp
                 (0, 0),  # % gr5_ri
@@ -265,6 +273,7 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
                 (4, 2),  # % grd_mlp
                 (0, 0),  # % loieau
                 (4, 3),  # % loieau_mlp
+                (0, 0),  # % loieau_lai
                 (0, 0),  # % vic3l
             ]
         ),
@@ -276,22 +285,23 @@ HYDROLOGICAL_MODULE_INOUT_NEURONS = dict(
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude,
+    "ci",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai,
     # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp
-    "cp",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude,
+    "cp",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai,
     # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp, grd, grd_mlp
-    "ct",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude,
+    "ct",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai,
     # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp, grd, grd_mlp
     "alpha1",  # % gr4_ri, gr4_ri_mlp_exc, gr5_ri, gr5_ri_mlp_exc
     "alpha2",  # % gr4_ri, gr4_ri_mlp_exc, gr5_ri, gr5_ri_mlp_exc
     "cl",  # % grc, grc_mlp
     "be",  # % gr6, gr6_mlp
-    "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude,
+    "kexc",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai,
     # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp
+    "kcb_full",  # % gr4_lai, loieau_lai
     "aexc",  # % gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc, gr6,	gr6_mlp
-    "ca",  # % loieau, loieau_mlp
-    "cc",  # % loieau, loieau_mlp
-    "kb",  # % loieau, loieau_mlp
+    "ca",  # % loieau, loieau_mlp, loieau_lai
+    "cc",  # % loieau, loieau_mlp, loieau_lai
+    "kb",  # % loieau, loieau_mlp, loieau_lai
     "b",  # % vic3l
     "cusl",  # % vic3l
     "cmsl",  # % vic3l
@@ -308,16 +318,16 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc,
-    # % gr6, gr6_mlp, grc, grc_mlp
-    "hp",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc,
-    # % gr6, gr6_mlp, grc, grc_mlp, grd, grd_mlp
-    "ht",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr5, gr5_mlp, gr5_ri, gr5_ri_mlp_exc,
-    # % gr6, gr6_mlp, grc, grc_mlp, grd, grd_mlp
+    "hi",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai, gr5, gr5_mlp, gr5_ri,
+    # % gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp
+    "hp",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai, gr5, gr5_mlp, gr5_ri,
+    # % gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp, grd, grd_mlp
+    "ht",  # % gr4, gr4_mlp, gr4_ri, gr4_ri_mlp_exc, gr4_ode, gr4_ude, gr4_lai, gr5, gr5_mlp, gr5_ri,
+    # % gr5_ri_mlp_exc, gr6, gr6_mlp, grc, grc_mlp, grd, grd_mlp
     "hl",  # % grc, grc_mlp
     "he",  # % gr6, gr6_mlp
-    "ha",  # % loieau, loieau_mlp
-    "hc",  # % loieau, loieau_mlp
+    "ha",  # % loieau, loieau_mlp, loieau_lai
+    "hc",  # % loieau, loieau_mlp, loieau_lai
     "hcl",  # % vic3l
     "husl",  # % vic3l
     "hmsl",  # % vic3l
@@ -342,6 +352,7 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % cl
             (0, np.inf),  # % be
             (-np.inf, np.inf),  # % kexc
+            (0, np.inf),  # % kcb_full
             (0, 1),  # % aexc
             (0, np.inf),  # % ca
             (0, np.inf),  # % cc
@@ -403,6 +414,7 @@ DEFAULT_RR_PARAMETERS = dict(
             500,  # % cl
             10,  # % be
             0,  # % kexc
+            1.15,  # % kcb_full
             0.1,  # % aexc
             200,  # % ca
             500,  # % cc
@@ -462,6 +474,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e3),  # % cl
             (1e-3, 20),  # % be
             (-50, 50),  # % kexc
+            (0.75, 1.6),  # % kcb_full
             (1e-6, 0.999999),  # % aexc
             (1e-6, 1e3),  # % ca
             (1e-6, 1e3),  # % cc
@@ -697,6 +710,13 @@ DEFAULT_MODEL_SETUP = {
     "pet_directory": None,
     "pet_access": "",
     "daily_interannual_pet": False,
+    "read_lai": False,
+    "lai_format": "tif",
+    "lai_conversion_factor": 1,
+    "lai_directory": None,
+    "lai_access": "",
+    "kc_min": 0.15,
+    "lai_extinction_coef": 0.7,
     "read_snow": False,
     "snow_format": "tif",
     "snow_conversion_factor": 1,

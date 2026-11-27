@@ -33,6 +33,13 @@
 !%          ``pet_directory``          Potential evapotranspiration directory path
 !%          ``pet_access``             Potential evapotranspiration access tree
 !%          ``daily_interannual_pet``  Read daily interannual potential evapotranspiration
+!%          ``read_lai``               Read leaf area index
+!%          ``lai_format``             Leaf area index format
+!%          ``lai_conversion_factor``  Leaf area index conversion factor
+!%          ``lai_directory``          Leaf area index directory path
+!%          ``lai_access``             Leaf area index access tree
+!%          ``kc_min``                 Minimum crop coefficient for bare soil (FAO-56)
+!%          ``lai_extinction_coef``    Coefficient of the exponential leaf area index term (FAO-56)
 !%          ``read_snow``              Read snow
 !%          ``snow_format``            Snow format
 !%          ``snow_conversion_factor`` Snow conversion factor
@@ -51,6 +58,7 @@
 !%          ``descriptor_tfm``         Descriptor transformation method
 !%          ``structure``              Structure combaining all modules
 !%          ``snow_module_present``    Presence of snow module
+!%          ``lai_present``            Presence of leaf area index (used by the hydrological module)
 !%          ``ntime_step``             Number of time steps
 !%          ``nd``                     Number of descriptor maps
 !%          ``hidden_neuron``          Number of neurons in hidden layers
@@ -115,6 +123,14 @@ module mwd_setup
         character(lchar) :: pet_access = "..." !$F90W char
         logical :: daily_interannual_pet = .false.
 
+        logical :: read_lai = .false.
+        character(lchar) :: lai_format = "..." !$F90W char
+        real(sp) :: lai_conversion_factor = 1._sp
+        character(2*lchar) :: lai_directory = "..." !$F90W char
+        character(lchar) :: lai_access = "..." !$F90W char
+        real(sp) :: kc_min = 0.15_sp
+        real(sp) :: lai_extinction_coef = 0.7_sp
+
         logical :: read_snow = .false.
         character(lchar) :: snow_format = "..." !$F90W char
         real(sp) :: snow_conversion_factor = 1._sp
@@ -143,6 +159,7 @@ module mwd_setup
         ! Post processed variables
         character(lchar) :: structure = "..." !$F90W char
         logical :: snow_module_present = .false.
+        logical :: lai_present = .false.
 
         integer :: ntime_step = -99
         integer :: nd = -99
