@@ -113,6 +113,9 @@ autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
 autodoc_typehints = "none"
 
+# The ^^^/+++ card separators used in index.rst are deprecated since sphinx-design 0.8.0
+suppress_warnings = ["design.card_legacy"]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
